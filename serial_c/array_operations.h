@@ -98,6 +98,8 @@ static void get_state_norms( P* __restrict__  vi,
              ( *ref_state( vo, dims, ix, iy, iz, ie, im, iu ) -
                *ref_state( vi, dims, ix, iy, iz, ie, im, iu ) );
   }
+  assert( normsq >= P_zero() );
+  assert( normsqdiff >= P_zero() );
 
   *normsqp     = normsq;
   *normsqdiffp = normsqdiff;

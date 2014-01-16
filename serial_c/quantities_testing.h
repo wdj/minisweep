@@ -11,7 +11,6 @@
 #ifndef _serial_c__quantities_testing_h_
 #define _serial_c__quantities_testing_h_
 
-#include <stdio.h>
 #include "dimensions.h"
 #include "array_accessors.h"
 
@@ -43,6 +42,7 @@ static inline int Quantities_scalefactor_energy__( int ie )
   /*---Power-of-two multiplier for each energy group, to help catch errors
        regarding indexing of energy groups.
   ---*/
+  assert( ie >= 0 );
 
   return 1 << ( ie & ( (1<<2) - 1 ) );
 }
@@ -56,6 +56,9 @@ static inline int Quantities_scalefactor_space__( int ix, int iy, int iz )
   /*---Red/black checkerboard pattern in space, either "1" or "2",
        to help catch spatial indexing errors.
   --*/
+  assert( ix >= -1 );
+  assert( iy >= -1 );
+  assert( iz >= -1 );
 
   return 1. + 1. * ( ( (ix+2) + (iy+2) + (iz+2) ) % 2 );
 }
@@ -69,6 +72,7 @@ static inline int Quantities_scalefactor_angle__( int ia )
   /*---Create a "random" power of 2. Limit the size by taking only
        the low order bits of ia
   ---*/
+  assert( ia >= 0 );
 
   return 1 << ( ia & ( (1<<3) - 1 ) );
 }
@@ -79,6 +83,8 @@ static inline int Quantities_scalefactor_angle__( int ia )
 
 static inline P Quantities_xfluxweight__( int ia )
 {
+  assert( ia >= 0 );
+
   return (P) ( 1 / (P) 2 );
 }
 
@@ -88,6 +94,8 @@ static inline P Quantities_xfluxweight__( int ia )
 
 static inline P Quantities_yfluxweight__( int ia )
 {
+  assert( ia >= 0 );
+
   return (P) ( 1 / (P) 4 );
 }
 
@@ -117,6 +125,7 @@ static inline P Quantities_zfluxweight__( int ia )
        Powers of 2 are used so that the divides are exact in
        floating point arithmetic.
   ---*/
+  assert( ia >= 0 );
 
   return (P) ( 1 / (P) 4 - 1 / (P) Quantities_scalefactor_angle__( ia ) );
 }
@@ -208,6 +217,16 @@ static inline void Quantities_solve(
   Quantities quan,
   Dimensions dims )
 {
+  assert( v_local );
+  assert( facexy );
+  assert( facexz );
+  assert( faceyz );
+  assert( ix >= 0 && ix < dims.nx );
+  assert( iy >= 0 && iy < dims.ny );
+  assert( iz >= 0 && iz < dims.nz );
+  assert( ie >= 0 && ie < dims.ne );
+  assert( ioctant >= 0 && ioctant < NOCTANT );
+
   int iu = 0;
   int ia = 0;
 
@@ -230,17 +249,17 @@ static inline void Quantities_solve(
   {
     const P result = (
           *ref_v_local( v_local, dims, ia, iu )
-                             / Quantities_scalefactor_space__( ix, iy, iz )
+                           / Quantities_scalefactor_space__( ix, iy, iz )
         + *ref_facexy( facexy, dims, ix, iy, ie, ia, iu, ioctant )
-                             * Quantities_xfluxweight__( ia )
-                             / Quantities_scalefactor_space__( ix-idirx, iy, iz )
+                           * Quantities_xfluxweight__( ia )
+                           / Quantities_scalefactor_space__( ix-idirx, iy, iz )
         + *ref_facexz( facexz, dims, ix, iz, ie, ia, iu, ioctant )
-                             * Quantities_yfluxweight__( ia )
-                             / Quantities_scalefactor_space__( ix, iy-idiry, iz )
+                           * Quantities_yfluxweight__( ia )
+                           / Quantities_scalefactor_space__( ix, iy-idiry, iz )
         + *ref_faceyz( faceyz, dims, iy, iz, ie, ia, iu, ioctant )
-                             * Quantities_zfluxweight__( ia )
-                             / Quantities_scalefactor_space__( ix, iy, iz-idirz )
-      )                      * Quantities_scalefactor_space__( ix, iy, iz );
+                           * Quantities_zfluxweight__( ia )
+                           / Quantities_scalefactor_space__( ix, iy, iz-idirz )
+      )                    * Quantities_scalefactor_space__( ix, iy, iz );
 
     *ref_v_local( v_local, dims, ia, iu ) = result;
     *ref_facexy( facexy, dims, ix, iy, ie, ia, iu, ioctant ) = result;

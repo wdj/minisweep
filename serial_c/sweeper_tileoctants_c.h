@@ -61,6 +61,10 @@ void Sweeper_sweep(
   Quantities       quan,
   Dimensions       dims )
 {
+  assert( sweeper );
+  assert( vi );
+  assert( vo );
+
   /*---Declarations---*/
   int tile_step = 0;
 

@@ -11,15 +11,35 @@
 #ifndef _serial_c__environment_h_
 #define _serial_c__environment_h_
 
+#include <stdio.h>
+#include <stdlib.h>
+#include "assert.h"
+
 #include <sys/time.h>
 
 #ifdef USE_MPI
 #include "mpi.h"
 #endif
 
+#ifndef Insist
+#define Insist( condition, message ) \
+  (void)((condition) || (insist_ (#condition, __FILE__, __LINE__, message),0))
+#endif
+
 /*===========================================================================*/
 
 #define PROGRAMMING_API serial
+
+/*===========================================================================*/
+/*---Insist: an always-on assert---*/
+
+static void insist_( const char *condition_string, const char *file, int line,
+                     const char *message )
+{
+  fprintf( stderr, "Insist error: \"%s\". At file %s, line %i. %s\n",
+                   condition_string, file, line, message );
+  exit( EXIT_FAILURE );
+}
 
 /*===========================================================================*/
 /*---Initialize for execution---*/

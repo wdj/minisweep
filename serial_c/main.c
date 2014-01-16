@@ -60,6 +60,16 @@ int main( int argc, char** argv )
   tile_octants  = ( argc>7 && argv[7]!="" ) ? atoi(argv[7]) : 0;
   numiterations = ( argc>8 && argv[8]!="" ) ? atoi(argv[8]) : 1;
 
+  Insist( dims.nx > 0, "Invalid nx supplied." );
+  Insist( dims.ny > 0, "Invalid ny supplied." );
+  Insist( dims.nz > 0, "Invalid nz supplied." );
+  Insist( dims.ne > 0, "Invalid ne supplied." );
+  Insist( dims.nm > 0, "Invalid nm supplied." );
+  Insist( dims.na > 0, "Invalid na supplied." );
+  Insist( tile_octants==0 || tile_octants==1,
+                       "Invalid octant tiling supplied." );
+  Insist( numiterations >= 0, "Invalid iteration count supplied." );
+
   /*---Initialize quantities---*/
 
   Quantities_ctor( &quan, dims );
@@ -113,7 +123,7 @@ int main( int argc, char** argv )
             2    * dims.nm * dims.na ) *
           numiterations;
 
-  floprate = time == 0. ? 0. : flops / time / 1e9;
+  floprate = time <= 0. ? 0. : flops / time / 1e9;
 
   /*---Compute, print norm squared of result---*/
 

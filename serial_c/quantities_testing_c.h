@@ -23,9 +23,6 @@ void Quantities_ctor( Quantities* quan, Dimensions dims )
 {
   /*---Declarations---*/
 
-  const P zero = (P)0.;
-  const P one  = (P)1.;
-
   int im = 0;
   int ia = 0;
   int i  = 0;
@@ -50,7 +47,7 @@ void Quantities_ctor( Quantities* quan, Dimensions dims )
   for( im=0; im<dims.nm; ++im )
   for( ia=0; ia<dims.na; ++ia )
   {
-    *ref_a_from_m( quan->a_from_m, dims, im, ia ) = zero;
+    *ref_a_from_m( quan->a_from_m, dims, im, ia ) = P_zero();
   }
 
   /*---Map a linear vector of values to a similar linear vector of values---*/
@@ -70,8 +67,8 @@ void Quantities_ctor( Quantities* quan, Dimensions dims )
     *ref_a_from_m( quan->a_from_m, dims, dims.nm-1, i ) += quot;
     if( rem != 0 )
     {
-      *ref_a_from_m( quan->a_from_m, dims, 0,   i ) += -one;
-      *ref_a_from_m( quan->a_from_m, dims, rem, i ) +=  one;
+      *ref_a_from_m( quan->a_from_m, dims, 0,   i ) += -P_one();
+      *ref_a_from_m( quan->a_from_m, dims, rem, i ) +=  P_one();
     }
   }
 
@@ -86,9 +83,9 @@ void Quantities_ctor( Quantities* quan, Dimensions dims )
   {
     const int randvalue = 21 + ( im + dims.nm * ia ) % 17;
 
-    *ref_a_from_m( quan->a_from_m, dims, im+0, ia ) +=  -one * randvalue;
-    *ref_a_from_m( quan->a_from_m, dims, im+1, ia ) += 2*one * randvalue;
-    *ref_a_from_m( quan->a_from_m, dims, im+2, ia ) +=  -one * randvalue;
+    *ref_a_from_m( quan->a_from_m, dims, im+0, ia ) +=  -P_one() * randvalue;
+    *ref_a_from_m( quan->a_from_m, dims, im+1, ia ) += 2*P_one() * randvalue;
+    *ref_a_from_m( quan->a_from_m, dims, im+2, ia ) +=  -P_one() * randvalue;
   }
 
   /*-----------------------------*/
@@ -100,7 +97,7 @@ void Quantities_ctor( Quantities* quan, Dimensions dims )
   for( im=0; im<dims.nm; ++im )
   for( ia=0; ia<dims.na; ++ia )
   {
-    *ref_m_from_a( quan->m_from_a, dims, im, ia ) = zero;
+    *ref_m_from_a( quan->m_from_a, dims, im, ia ) = P_zero();
   }
 
   /*---Map a linear vector of values to a similar linear vector of values---*/
@@ -119,8 +116,8 @@ void Quantities_ctor( Quantities* quan, Dimensions dims )
     *ref_m_from_a( quan->m_from_a, dims, i, dims.na-1 ) += quot;
     if( rem != 0 )
     {
-      *ref_m_from_a( quan->m_from_a, dims, i, 0   ) += -one;
-      *ref_m_from_a( quan->m_from_a, dims, i, rem ) +=  one;
+      *ref_m_from_a( quan->m_from_a, dims, i, 0   ) += -P_one();
+      *ref_m_from_a( quan->m_from_a, dims, i, rem ) +=  P_one();
     }
   }
 
@@ -135,9 +132,9 @@ void Quantities_ctor( Quantities* quan, Dimensions dims )
   {
     const int randvalue = 37 + ( im + dims.nm * ia ) % 19;
 
-    *ref_m_from_a( quan->m_from_a, dims, im, ia+0 ) +=  -one * randvalue;
-    *ref_m_from_a( quan->m_from_a, dims, im, ia+1 ) += 2*one * randvalue;
-    *ref_m_from_a( quan->m_from_a, dims, im, ia+2 ) +=  -one * randvalue;
+    *ref_m_from_a( quan->m_from_a, dims, im, ia+0 ) +=  -P_one() * randvalue;
+    *ref_m_from_a( quan->m_from_a, dims, im, ia+1 ) += 2*P_one() * randvalue;
+    *ref_m_from_a( quan->m_from_a, dims, im, ia+2 ) +=  -P_one() * randvalue;
   }
 
   /*---Scale matrix to compensate for 8 octants and also angle scale factor---*/

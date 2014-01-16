@@ -9,6 +9,7 @@
 /*---------------------------------------------------------------------------*/
 
 #include <stdlib.h>
+#include "environment.h"
 #include "definitions.h"
 #include "memory.h"
 
@@ -17,7 +18,9 @@
 
 P* pmalloc( size_t n )
 {
-  return (P*) malloc( n * sizeof( P ) );
+  P* p = (P*) malloc( n * sizeof( P ) );
+  assert( p );
+  return p;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -25,6 +28,7 @@ P* pmalloc( size_t n )
 
 void pfree( P* p )
 {
+  assert( p );
   free( (void*) p );
 }
 
