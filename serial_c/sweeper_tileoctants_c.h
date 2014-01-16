@@ -11,11 +11,12 @@
 #ifndef _serial_c__sweeper_tileoctants_c_h_
 #define _serial_c__sweeper_tileoctants_c_h_
 
-#include "sweeper_tileoctants.h"
 #include "definitions.h"
 #include "quantities.h"
 #include "array_accessors.h"
+#include "array_operations.h"
 #include "memory.h"
+#include "sweeper_tileoctants.h"
 
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
@@ -30,11 +31,11 @@ void Sweeper_ctor( Sweeper*    sweeper,
 
   sweeper->v_local = pmalloc( dims.na * NU );
   sweeper->facexy  = pmalloc( dims.nx * dims.ny * dims.ne * dims.na * NU
-                                         * ( sweeper->tile_octants ? 8 : 1 ) );
+                                   * ( sweeper->tile_octants ? NOCTANT : 1 ) );
   sweeper->facexz  = pmalloc( dims.nx * dims.nz * dims.ne * dims.na * NU
-                                         * ( sweeper->tile_octants ? 8 : 1 ) );
+                                   * ( sweeper->tile_octants ? NOCTANT : 1 ) );
   sweeper->faceyz  = pmalloc( dims.ny * dims.nz * dims.ne * dims.na * NU
-                                         * ( sweeper->tile_octants ? 8 : 1 ) );
+                                   * ( sweeper->tile_octants ? NOCTANT : 1 ) );
 }
 
 /*===========================================================================*/
@@ -61,29 +62,11 @@ void Sweeper_sweep(
   Dimensions       dims )
 {
   /*---Declarations---*/
-  int ix = 0;
-  int iy = 0;
-  int iz = 0;
-  int ie = 0;
-  int im = 0;
-  int ia = 0;
-  int iu = 0;
-  int ioctant = 0;
   int tile_step = 0;
-
-  const P zero = 0.;
 
   /*---Initialize result array to zero---*/
 
-  for( iz=0; iz<dims.nz; ++iz )
-  for( iy=0; iy<dims.ny; ++iy )
-  for( ix=0; ix<dims.nx; ++ix )
-  for( ie=0; ie<dims.ne; ++ie )
-  for( im=0; im<dims.nm; ++im )
-  for( iu=0; iu<NU; ++iu )
-  {
-    *ref_state( vo, dims, ix, iy, iz, ie, im, iu ) = zero;
-  }
+  initialize_state_zero( vo, dims );
 
   /*---Loop over octant tiles---*/
 
@@ -96,8 +79,16 @@ void Sweeper_sweep(
        tiles of the domain.
   ---*/
 
-  for( tile_step=0; tile_step<(sweeper->tile_octants?8:1); ++tile_step )
+  for( tile_step=0; tile_step<(sweeper->tile_octants?NOCTANT:1); ++tile_step )
   {
+    int ix = 0;
+    int iy = 0;
+    int iz = 0;
+    int ie = 0;
+    int im = 0;
+    int ia = 0;
+    int iu = 0;
+    int ioctant = 0;
 
     /*---Loop over octants---*/
 
@@ -252,12 +243,11 @@ void Sweeper_sweep(
           for( iu=0; iu<NU; ++iu )
           for( ia=0; ia<dims.na; ++ia )
           {
-            P result = zero;
+            P result = P_zero();
             for( im=0; im<dims.nm; ++im )
             {
-              result +=
-                *ref_a_from_m( quan.a_from_m, dims, im, ia ) *
-                *ref_state( vi, dims, ix, iy, iz, ie, im, iu );
+              result += *ref_a_from_m( quan.a_from_m, dims, im, ia ) *
+                        *ref_state( vi, dims, ix, iy, iz, ie, im, iu );
             }
             *ref_v_local( sweeper->v_local, dims, ia, iu ) = result;
           }
@@ -277,12 +267,11 @@ void Sweeper_sweep(
           for( iu=0; iu<NU; ++iu )
           for( im=0; im<dims.nm; ++im )
           {
-            P result = zero;
+            P result = P_zero();
             for( ia=0; ia<dims.na; ++ia )
             {
-              result +=
-                *ref_m_from_a( quan.m_from_a, dims, im, ia ) *
-                *ref_v_local( sweeper->v_local, dims, ia, iu );
+              result += *ref_m_from_a( quan.m_from_a, dims, im, ia ) *
+                        *ref_v_local( sweeper->v_local, dims, ia, iu );
             }
             *ref_state( vo, dims, ix, iy, iz, ie, im, iu ) += result;
           }
