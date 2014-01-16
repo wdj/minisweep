@@ -11,7 +11,8 @@
 #ifndef _common_c__memory_h_
 #define _common_c__memory_h_
 
-#include "defs.h"
+#include <stdlib.h>
+#include "definitions.h"
 
 /*---------------------------------------------------------------------------*/
 /*---Allocate array of type "P"---*/

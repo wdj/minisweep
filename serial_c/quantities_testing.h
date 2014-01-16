@@ -205,14 +205,15 @@ static inline void Quantities_solve(
   int iz,
   int ie,
   int ioctant,
-  int my_rank,
-  int my_group,
-  int my_octant,
   Quantities quan,
   Dimensions dims )
 {
   int iu = 0;
   int ia = 0;
+
+  int idirx = ioctant & (1<<0) ? -1 : 1;
+  int idiry = ioctant & (1<<1) ? -1 : 1;
+  int idirz = ioctant & (1<<2) ? -1 : 1;
 
   /*---Average the face values and accumulate---*/
 
@@ -228,7 +229,7 @@ static inline void Quantities_solve(
   for( ia=0; ia<dims.na; ++ia )
   {
     const P result = (
-          *ref_v_local( v_local, dims, ia, iu, my_group, my_octant, my_rank )
+          *ref_v_local( v_local, dims, ia, iu )
                              / Quantities_scalefactor_space__( ix, iy, iz )
         + *ref_facexy( facexy, dims, ix, iy, ie, ia, iu, ioctant )
                              * Quantities_xfluxweight__( ia )
@@ -241,8 +242,7 @@ static inline void Quantities_solve(
                              / Quantities_scalefactor_space__( ix, iy, iz-idirz )
       )                      * Quantities_scalefactor_space__( ix, iy, iz );
 
-    *ref_v_local( v_local, dims, ia, iu, my_group, my_octant, my_rank )
-                                                                      = result;
+    *ref_v_local( v_local, dims, ia, iu ) = result;
     *ref_facexy( facexy, dims, ix, iy, ie, ia, iu, ioctant ) = result;
     *ref_facexz( facexz, dims, ix, iz, ie, ia, iu, ioctant ) = result;
     *ref_faceyz( faceyz, dims, iy, iz, ie, ia, iu, ioctant ) = result;

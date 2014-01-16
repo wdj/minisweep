@@ -20,17 +20,19 @@
 
 typedef struct
 {
-  P* __restrict__ facexy;
-  P* __restrict__ facexz;
-  P* __restrict__ faceyz;
-  P* __restrict__ v_local;
+  P* __restrict__  facexy;
+  P* __restrict__  facexz;
+  P* __restrict__  faceyz;
+  P* __restrict__  v_local;
+  int              tile_octants;
 } Sweeper;
 
 /*---------------------------------------------------------------------------*/
 /*---Pseudo-constructor for Sweeper struct---*/
 
-void Sweeper_ctor( Sweeper* sweeper,
-                   Dimensions dims );
+void Sweeper_ctor( Sweeper*    sweeper,
+                   Dimensions  dims,
+                   int         tile_octants );
   
 /*---------------------------------------------------------------------------*/
 /*---Pseudo-destructor for Sweeper struct---*/

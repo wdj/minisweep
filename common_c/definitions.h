@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   defs.h
+ * \file   definitions.h
  * \author Wayne Joubert
  * \date   Wed Jan 15 16:06:28 EST 2014
  * \brief  Basic definitions.
@@ -8,8 +8,8 @@
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _common_c__defs_h_
-#define _common_c__defs_h_
+#ifndef _common_c__definitions_h_
+#define _common_c__definitions_h_
 
 /*---------------------------------------------------------------------------*/
 
@@ -29,8 +29,11 @@ enum{ NOCTANT = 8 };
 /*---Currently hardwired, this could be changed in the future---*/
 enum{ NU = 1 };
 
+static inline P P_zero() { return (P)0.; }
+static inline P P_one()  { return (P)1.; }
+
 /*---------------------------------------------------------------------------*/
 
-#endif /*---_common_c__defs_h_---*/
+#endif /*---_common_c__definitions_h_---*/
 
 /*---------------------------------------------------------------------------*/

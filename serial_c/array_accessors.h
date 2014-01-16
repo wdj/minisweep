@@ -44,12 +44,7 @@ static inline P* ref_v_local(
     P* __restrict__ v,
     Dimensions dims,
     int ia,
-    int iu,
-    int ie,
-    int ioctant,
-    int ix,
-    int iy,
-    int iz)
+    int iu )
 {
   return & v[
               ia + dims.na * (
