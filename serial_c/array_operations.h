@@ -36,8 +36,7 @@ static void initialize_state( P* __restrict__ v, Dimensions dims )
   for( iu=0; iu<NU; ++iu )
   {
     *ref_state( v, dims, ix, iy, iz, ie, im, iu )
-                            = Quantities_init_state( ix, iy, iz, ie, im, iu );
-
+                       = Quantities_init_state( ix, iy, iz, ie, im, iu, dims );
   }
 }
 
@@ -73,6 +72,9 @@ static void get_state_norms( P* __restrict__  vi,
                              P*               normsqp,
                              P*               normsqdiffp )
 {
+  assert( normsqp );
+  assert( normsqdiffp );
+
   int ix = 0;
   int iy = 0;
   int iz = 0;
@@ -98,7 +100,7 @@ static void get_state_norms( P* __restrict__  vi,
              ( *ref_state( vo, dims, ix, iy, iz, ie, im, iu ) -
                *ref_state( vi, dims, ix, iy, iz, ie, im, iu ) );
   }
-  assert( normsq >= P_zero() );
+  assert( normsq     >= P_zero() );
   assert( normsqdiff >= P_zero() );
 
   *normsqp     = normsq;
@@ -109,4 +111,4 @@ static void get_state_norms( P* __restrict__  vi,
 
 #endif /*---_serial_c__array_operations_h_---*/
 
-/*===========================================================================*/
+/*---------------------------------------------------------------------------*/

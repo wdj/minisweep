@@ -49,6 +49,11 @@ void Sweeper_dtor( Sweeper* sweeper )
   pfree( sweeper->facexy );
   pfree( sweeper->facexz );
   pfree( sweeper->faceyz );
+
+  sweeper->v_local = 0;
+  sweeper->facexy  = 0;
+  sweeper->facexz  = 0;
+  sweeper->faceyz  = 0;
 }
 
 /*===========================================================================*/
@@ -182,7 +187,7 @@ void Sweeper_sweep(
         for( ia=0; ia<dims.na; ++ia )
         {
           *ref_facexy( sweeper->facexy, dims, ix, iy, ie, ia, iu, octant_index )
-                            = Quantities_init_facexy( ix, iy, iz, ie, ia, iu );
+                      = Quantities_init_facexy( ix, iy, iz, ie, ia, iu, dims );
         }
       }
 
@@ -196,7 +201,7 @@ void Sweeper_sweep(
         for( ia=0; ia<dims.na; ++ia )
         {
           *ref_facexz( sweeper->facexz, dims, ix, iz, ie, ia, iu, octant_index )
-                            = Quantities_init_facexz( ix, iy, iz, ie, ia, iu );
+                      = Quantities_init_facexz( ix, iy, iz, ie, ia, iu, dims );
         }
       }
 
@@ -210,7 +215,7 @@ void Sweeper_sweep(
         for( ia=0; ia<dims.na; ++ia )
         {
           *ref_faceyz( sweeper->faceyz, dims, iy, iz, ie, ia, iu, octant_index )
-                            = Quantities_init_faceyz( ix, iy, iz, ie, ia, iu );
+                      = Quantities_init_faceyz( ix, iy, iz, ie, ia, iu, dims );
         }
       }
 
@@ -235,7 +240,9 @@ void Sweeper_sweep(
         for( ix=ixbeg; ix!=ixend+idirx; ix+=idirx )
         {
 
+          /*--------------------*/
           /*---Transform state vector from moments to angles---*/
+          /*--------------------*/
 
           /*---This loads values from the input state vector,
                does the small dense matrix-vector product,
@@ -256,13 +263,17 @@ void Sweeper_sweep(
             *ref_v_local( sweeper->v_local, dims, ia, iu ) = result;
           }
 
+          /*--------------------*/
           /*---Perform solve---*/
+          /*--------------------*/
 
           Quantities_solve( sweeper->v_local,
                             sweeper->facexy, sweeper->facexz, sweeper->faceyz,
                             ix, iy, iz, ie, octant_index, quan, dims );
 
+          /*--------------------*/
           /*---Transform state vector from angles to moments---*/
+          /*--------------------*/
 
           /*---Perform small dense matrix-vector products and store
                the result in the output state vector.
@@ -294,4 +305,4 @@ void Sweeper_sweep(
 
 #endif /*---_serial_c__sweeper_tileoctants_c_h_---*/
 
-/*===========================================================================*/
+/*---------------------------------------------------------------------------*/

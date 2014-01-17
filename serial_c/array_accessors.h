@@ -15,7 +15,7 @@
 #include "definitions.h"
 #include "dimensions.h"
 
-/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
 static inline P* ref_state(
@@ -36,8 +36,7 @@ static inline P* ref_state(
   assert( im >= 0 && im < dims.nm );
   assert( iu >= 0 && iu < NU );
 
-  return & v[
-              im + dims.nm * (
+  return & v[ im + dims.nm * (
               iu + NU      * (
               ix + dims.nx * (
               iy + dims.ny * (
@@ -46,7 +45,7 @@ static inline P* ref_state(
               0 )))))) ];
 }
 
-/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
 static inline P* ref_v_local(
@@ -59,13 +58,12 @@ static inline P* ref_v_local(
   assert( ia >= 0 && ia < dims.na );
   assert( iu >= 0 && iu < NU );
 
-  return & v[
-              ia + dims.na * (
+  return & v[ ia + dims.na * (
               iu + NU      * (
               0 )) ];
 }
 
-/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
 static inline P* ref_a_from_m(
@@ -78,13 +76,12 @@ static inline P* ref_a_from_m(
   assert( im >= 0 && im < dims.nm );
   assert( ia >= 0 && ia < dims.na );
 
-  return & v[
-              im + dims.nm * (
+  return & v[ im + dims.nm * (
               ia + dims.na * (
               0 )) ];
 }
 
-/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
 static inline P* ref_m_from_a(
@@ -97,13 +94,12 @@ static inline P* ref_m_from_a(
   assert( im >= 0 && im < dims.nm );
   assert( ia >= 0 && ia < dims.na );
 
-  return & v[
-              ia + dims.na * (
+  return & v[ ia + dims.na * (
               im + dims.nm * (
               0 )) ];
 }
 
-/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
 static inline P* ref_facexy(
@@ -123,8 +119,7 @@ static inline P* ref_facexy(
   assert( iu >= 0 && iu < NU );
   assert( ioctant >= 0 && ioctant < NOCTANT );
 
-  return & v[
-              ia + dims.na * (
+  return & v[ ia + dims.na * (
               iu + NU      * (
               ix + dims.nx * (
               iy + dims.ny * (
@@ -132,7 +127,7 @@ static inline P* ref_facexy(
               0 ))))) ];
 }
 
-/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
 static inline P* ref_facexz(
@@ -152,8 +147,7 @@ static inline P* ref_facexz(
   assert( iu >= 0 && iu < NU );
   assert( ioctant >= 0 && ioctant < NOCTANT );
 
-  return & v[
-              ia + dims.na * (
+  return & v[ ia + dims.na * (
               iu + NU      * (
               ix + dims.nx * (
               iz + dims.nz * (
@@ -161,7 +155,7 @@ static inline P* ref_facexz(
               0 ))))) ];
 }
 
-/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
 static inline P* ref_faceyz(
@@ -182,8 +176,7 @@ static inline P* ref_faceyz(
   assert( iu >= 0 && iu < NU );
   assert( ioctant >= 0 && ioctant < NOCTANT );
 
-  return & v[
-              ia + dims.na * (
+  return & v[ ia + dims.na * (
               iu + NU      * (
               iy + dims.ny * (
               iz + dims.nz * (
@@ -191,7 +184,7 @@ static inline P* ref_faceyz(
               0 ))))) ];
 }
 
-/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
 
 #endif /*---_serial_c__array_accessors_h_---*/
 

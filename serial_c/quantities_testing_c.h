@@ -16,7 +16,7 @@
 #include "array_accessors.h"
 #include "quantities_testing.h"
 
-/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
 /*---Pseudo-constructor for Quantities struct---*/
 
 void Quantities_ctor( Quantities* quan, Dimensions dims )
@@ -123,7 +123,7 @@ void Quantities_ctor( Quantities* quan, Dimensions dims )
 
   /*---Fill matrix with entries that leave linears unaffected---*/
 
-  /*---As before, create more complex matrix by adding to rows
+  /*---As before, create more complicated matrix by adding to rows
        entries that do not affect the scaled-affine input values expected.
   ---*/
 
@@ -149,7 +149,7 @@ void Quantities_ctor( Quantities* quan, Dimensions dims )
 
 } /*---Quantities_ctor---*/
 
-/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
 /*---Pseudo-destructor for Quantities struct---*/
 
 void Quantities_dtor( Quantities* quan )
@@ -159,9 +159,20 @@ void Quantities_dtor( Quantities* quan )
   pfree( quan->a_from_m );
   pfree( quan->m_from_a );
 
+  quan->a_from_m = 0;
+  quan->m_from_a = 0;
+
 } /*---Quantities_dtor---*/
 
-/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/*---Flops cost of solve per element---*/
+
+double Quantities_flops_per_solve( const Dimensions dims )
+{
+  return 2. + 3. * NDIM;
+}
+
+/*===========================================================================*/
 
 #endif /*---_serial_c__quantities_testing_c_h_---*/
 

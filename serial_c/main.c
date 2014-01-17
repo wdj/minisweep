@@ -76,8 +76,8 @@ int main( int argc, char** argv )
 
   /*---Allocate arrays---*/
 
-  vi = pmalloc( dims.nx * dims.ny * dims.nz * dims.ne * dims.nm * NU );
-  vo = pmalloc( dims.nx * dims.ny * dims.nz * dims.ne * dims.nm * NU );
+  vi = pmalloc( Dimensions_size_state( dims ) );
+  vo = pmalloc( Dimensions_size_state( dims ) );
 
   /*---Initialize input state array---*/
 
@@ -112,16 +112,11 @@ int main( int argc, char** argv )
 
   /*---Compute flops used---*/
 
-  flops = 1. * NOCTANT *
-          1. * dims.ne *
-          1. * dims.nx *
-          1. * dims.ny *
-          1. * dims.nz *
-          1. * NU *
-          ( 2    * dims.nm * dims.na +
-            NDIM * dims.na +
-            2    * dims.nm * dims.na ) *
-          numiterations;
+  flops = ( Dimensions_size_state( dims ) * NOCTANT * 2. * dims.na
+          + Dimensions_size_state_angles( dims )
+                                           * Quantities_flops_per_solve( dims )
+          + Dimensions_size_state( dims ) * NOCTANT * 2. * dims.na )
+        * numiterations;
 
   floprate = time <= 0. ? 0. : flops / time / 1e9;
 
@@ -150,4 +145,4 @@ int main( int argc, char** argv )
 
 } /*---main---*/
 
-/*===========================================================================*/
+/*---------------------------------------------------------------------------*/
