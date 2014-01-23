@@ -37,7 +37,7 @@ void Sweeper_ctor( Sweeper*    sweeper,
 
 static Bool_t Sweeper_tile_octants()
 {
-  return 0; //FIX
+  return 1;
 }
 
 /*===========================================================================*/

@@ -27,7 +27,7 @@ enum{ NOCTANT = 8 };
 
 /*---Number of unknowns per gridcell---*/
 /*---Currently hardwired, this could be changed in the future---*/
-enum{ NU = 4 };
+enum{ NU = 1 }; /*FIX*/
 
 static inline P P_zero() { return (P)0.; }
 static inline P P_one()  { return (P)1.; }

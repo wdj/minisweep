@@ -50,9 +50,9 @@ int main( int argc, char** argv )
 
   /*---Set problem size---*/
 
-  dims.nx       = ( argc>1 && argv[1]!="" ) ? atoi(argv[1]) : 10;
-  dims.ny       = ( argc>2 && argv[2]!="" ) ? atoi(argv[2]) : 10;
-  dims.nz       = ( argc>3 && argv[3]!="" ) ? atoi(argv[3]) : 10;
+  dims.nx       = ( argc>1 && argv[1]!="" ) ? atoi(argv[1]) : 5;
+  dims.ny       = ( argc>2 && argv[2]!="" ) ? atoi(argv[2]) : 5;
+  dims.nz       = ( argc>3 && argv[3]!="" ) ? atoi(argv[3]) : 5;
   dims.ne       = ( argc>4 && argv[4]!="" ) ? atoi(argv[4]) : 30;
   dims.nm       = ( argc>5 && argv[5]!="" ) ? atoi(argv[5]) : 16;
   dims.na       = ( argc>6 && argv[6]!="" ) ? atoi(argv[6]) : 33;

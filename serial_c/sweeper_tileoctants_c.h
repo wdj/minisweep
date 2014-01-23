@@ -82,6 +82,9 @@ void Sweeper_sweep(
 
   int tile_step = 0;
 
+  const int LO = -1;
+  const int HI = +1;
+
   /*---Initialize result array to zero---*/
 
   initialize_state_zero( vo, dims );
@@ -131,11 +134,11 @@ void Sweeper_sweep(
     ---*/
 
     const int tile_x = (!tile_octants) ? 0 :
-               ( ( tile_step & (1<<0) ) == 0 ) == ( idirx == +1 ) ? -1 : 1;
+               ( ( tile_step & (1<<0) ) == 0 ) == ( idirx == +1 ) ? LO : HI;
     const int tile_y = (!tile_octants) ? 0 :
-               ( ( tile_step & (1<<1) ) == 0 ) == ( idiry == +1 ) ? -1 : 1;
+               ( ( tile_step & (1<<1) ) == 0 ) == ( idiry == +1 ) ? LO : HI;
     const int tile_z = (!tile_octants) ? 0 :
-               ( ( tile_step & (1<<2) ) == 0 ) == ( idirz == +1 ) ? -1 : 1;
+               ( ( tile_step & (1<<2) ) == 0 ) == ( idirz == +1 ) ? LO : HI;
 
     /*---Compute tile boundaries---*/
 
@@ -143,19 +146,19 @@ void Sweeper_sweep(
          domain in each direction
     ---*/
 
-    const int tile_xmin = (!tile_octants) ? 0 :
-                          tile_x==-1           ? 0 : dims.nx/2;
-    const int tile_ymin = (!tile_octants) ? 0 :
-                          tile_y==-1           ? 0 : dims.ny/2;
-    const int tile_zmin = (!tile_octants) ? 0 :
-                          tile_z==-1           ? 0 : dims.nz/2;
+    const int tile_xmin = (!tile_octants) ? 0         :
+                          tile_x==LO      ? 0         : dims.nx/2;
+    const int tile_ymin = (!tile_octants) ? 0         :
+                          tile_y==LO      ? 0         : dims.ny/2;
+    const int tile_zmin = (!tile_octants) ? 0         :
+                          tile_z==LO      ? 0         : dims.nz/2;
 
     const int tile_xmax = (!tile_octants) ? dims.nx   :
-                          tile_x==-1           ? dims.nx/2 : dims.nx;
+                          tile_x==LO      ? dims.nx/2 : dims.nx;
     const int tile_ymax = (!tile_octants) ? dims.ny   :
-                          tile_y==-1           ? dims.ny/2 : dims.ny;
+                          tile_y==LO      ? dims.ny/2 : dims.ny;
     const int tile_zmax = (!tile_octants) ? dims.nz   :
-                          tile_z==-1           ? dims.nz/2 : dims.nz;
+                          tile_z==LO      ? dims.nz/2 : dims.nz;
 
     /*---Initialize faces---*/
 
