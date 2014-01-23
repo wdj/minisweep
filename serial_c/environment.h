@@ -30,6 +30,10 @@
 
 #define PROGRAMMING_API serial
 
+/*---Boolean type---*/
+
+typedef int Bool_t;
+
 /*===========================================================================*/
 /*---Insist: an always-on assert---*/
 
@@ -63,7 +67,7 @@ static void finalize()
 /*===========================================================================*/
 /*---Indicate whether to do output---*/
 
-static int do_output()
+static Bool_t do_output()
 {
 #ifdef USE_MPI
   int rank;
@@ -79,11 +83,10 @@ static int do_output()
   
 static double get_time() 
 {
-    struct timeval tp;
-    struct timezone tzp;
-    int i = gettimeofday( &tp, &tzp );
-    double result = ( (double) tp.tv_sec +
-                      (double) tp.tv_usec * 1.e-6 );
+    struct timeval tv;
+    int i = gettimeofday( &tv, 0 );
+    double result = ( (double) tv.tv_sec +
+                      (double) tv.tv_usec * 1.e-6 );
     return result;
 } 
 

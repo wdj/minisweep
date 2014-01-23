@@ -37,7 +37,6 @@ int main( int argc, char** argv )
 
   int iteration = 0;
   int numiterations = 0;
-  int tile_octants = 0;
 
   double t1 = 0.;
   double t2 = 0.;
@@ -57,8 +56,7 @@ int main( int argc, char** argv )
   dims.ne       = ( argc>4 && argv[4]!="" ) ? atoi(argv[4]) : 30;
   dims.nm       = ( argc>5 && argv[5]!="" ) ? atoi(argv[5]) : 16;
   dims.na       = ( argc>6 && argv[6]!="" ) ? atoi(argv[6]) : 33;
-  tile_octants  = ( argc>7 && argv[7]!="" ) ? atoi(argv[7]) : 0;
-  numiterations = ( argc>8 && argv[8]!="" ) ? atoi(argv[8]) : 1;
+  numiterations = ( argc>7 && argv[7]!="" ) ? atoi(argv[7]) : 1;
 
   Insist( dims.nx > 0, "Invalid nx supplied." );
   Insist( dims.ny > 0, "Invalid ny supplied." );
@@ -66,8 +64,6 @@ int main( int argc, char** argv )
   Insist( dims.ne > 0, "Invalid ne supplied." );
   Insist( dims.nm > 0, "Invalid nm supplied." );
   Insist( dims.na > 0, "Invalid na supplied." );
-  Insist( tile_octants==0 || tile_octants==1,
-                       "Invalid octant tiling supplied." );
   Insist( numiterations >= 0, "Invalid iteration count supplied." );
 
   /*---Initialize quantities---*/
@@ -92,7 +88,7 @@ int main( int argc, char** argv )
 
   /*---Initialize sweeper---*/
 
-  Sweeper_ctor( &sweeper, dims, tile_octants );
+  Sweeper_ctor( &sweeper, dims );
 
   /*---Call sweeper---*/
 
@@ -124,7 +120,7 @@ int main( int argc, char** argv )
 
   get_state_norms( vi, vo, dims, &normsq, &normsqdiff );
 
-  if( do_output )
+  if( do_output() )
   {
     printf( "Normsq result: %e  diff: %e  %s  time: %.3f  GF/s %.4f\n",
             (double)normsq, (double)normsqdiff,

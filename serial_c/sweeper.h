@@ -11,7 +11,10 @@
 #ifndef _serial_c__sweep_h_
 #define _serial_c__sweep_h_
 
+#if 0
 #include "sweeper_tileoctants.h"
+#endif
+#include "sweeper_simple.h"
 
 #endif /*---_serial_c__sweep_h_---*/
 

@@ -5,12 +5,12 @@ SOURCES = *.c ../common_c/*.c
 EXECUTABLE = sweep
 
 debug:
-	gcc -o $(EXECUTABLE) $(SOURCES) $(INCLUDES)
+	gcc -o $(EXECUTABLE) $(SOURCES) $(INCLUDES) -ansi -Dinline= -Wmissing-prototypes
 
 release: release_gnu
 
 release_gnu:
-	gcc -o $(EXECUTABLE) $(SOURCES) $(INCLUDES) -DNDEBUG -O3 -fomit-frame-pointer -funroll-loops
+	gcc -o $(EXECUTABLE) $(SOURCES) $(INCLUDES) -DNDEBUG -O3 -fomit-frame-pointer -funroll-loops -finline-limit=100000000
 
 release_pgi:
 	pgcc -o $(EXECUTABLE) $(SOURCES) $(INCLUDES) -DNDEBUG -fast -Mfprelaxed -alias=ansi -Msafeptr -tp=istanbul-64

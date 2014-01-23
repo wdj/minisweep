@@ -1,15 +1,15 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   sweeper_tileoctants.h
+ * \file   sweeper_simple.h
  * \author Wayne Joubert
  * \date   Wed Jan 15 16:06:28 EST 2014
- * \brief  Declarations for performing a sweep, tileoctants version.
+ * \brief  Declarations for performing a sweep, simple version.
  * \note   Copyright (C) 2014 Oak Ridge National Laboratory, UT-Battelle, LLC.
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _serial_c__sweeper_tileoctants_h_
-#define _serial_c__sweeper_tileoctants_h_
+#ifndef _serial_c__sweeper_simple_h_
+#define _serial_c__sweeper_simple_h_
 
 #include "definitions.h"
 #include "dimensions.h"
@@ -33,14 +33,6 @@ void Sweeper_ctor( Sweeper*    sweeper,
                    Dimensions  dims );
 
 /*===========================================================================*/
-/*---Specify whether to tile octants---*/
-
-static Bool_t Sweeper_tile_octants()
-{
-  return 0; //FIX
-}
-
-/*===========================================================================*/
 /*---Pseudo-destructor for Sweeper struct---*/
 
 void Sweeper_dtor( Sweeper* sweeper );
@@ -57,6 +49,6 @@ void Sweeper_sweep(
 
 /*===========================================================================*/
 
-#endif /*---_sweeper_tileoctants_h_---*/
+#endif /*---_sweeper_simple_h_---*/
 
 /*---------------------------------------------------------------------------*/
