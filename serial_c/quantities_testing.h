@@ -275,9 +275,9 @@ static inline void Quantities_solve(
   int iu = 0;
   int ia = 0;
 
-  int idirx = Dir_x( octant );
-  int idiry = Dir_y( octant );
-  int idirz = Dir_z( octant );
+  int dir_x = Dir_x( octant );
+  int dir_y = Dir_y( octant );
+  int dir_z = Dir_z( octant );
 
   /*---Average the face values and accumulate---*/
 
@@ -297,13 +297,13 @@ static inline void Quantities_solve(
                   / Quantities_scalefactor_space__( ix, iy, iz )
         + *ref_facexy( facexy, dims, NU, ix, iy, ie, ia, iu, octant_ind )
                   * Quantities_xfluxweight__( ia )
-                  / Quantities_scalefactor_space__( ix-Dir_inc(idirx), iy, iz )
+                  / Quantities_scalefactor_space__( ix-Dir_inc(dir_x), iy, iz )
         + *ref_facexz( facexz, dims, NU, ix, iz, ie, ia, iu, octant_ind )
                   * Quantities_yfluxweight__( ia )
-                  / Quantities_scalefactor_space__( ix, iy-Dir_inc(idiry), iz )
+                  / Quantities_scalefactor_space__( ix, iy-Dir_inc(dir_y), iz )
         + *ref_faceyz( faceyz, dims, NU, iy, iz, ie, ia, iu, octant_ind )
                   * Quantities_zfluxweight__( ia )
-                  / Quantities_scalefactor_space__( ix, iy, iz-Dir_inc(idirz) )
+                  / Quantities_scalefactor_space__( ix, iy, iz-Dir_inc(dir_z) )
       )           * Quantities_scalefactor_space__( ix, iy, iz );
 
     *ref_v_local( v_local, dims, NU, ia, iu ) = result;

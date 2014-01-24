@@ -11,7 +11,7 @@
 #ifndef _serial_c__array_accessors_h_
 #define _serial_c__array_accessors_h_
 
-#include "environment.h"
+#include "env.h"
 #include "definitions.h"
 #include "dimensions.h"
 

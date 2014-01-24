@@ -114,9 +114,9 @@ void Sweeper_sweep(
 
     /*---Decode octant directions from octant number---*/
 
-    const int idirx = Dir_x( octant );
-    const int idiry = Dir_y( octant );
-    const int idirz = Dir_z( octant );
+    const int dir_x = Dir_x( octant );
+    const int dir_y = Dir_y( octant );
+    const int dir_z = Dir_z( octant );
 
     /*---Determine tile to be computed---*/
 
@@ -131,13 +131,13 @@ void Sweeper_sweep(
     ---*/
 
     const int tile_x = (!tile_octants) ? 0 :
-           ( ( tile_step & (1<<0) ) == 0 ) == ( idirx == Dir_up() ) ? Dir_lo()
+           ( ( tile_step & (1<<0) ) == 0 ) == ( dir_x == Dir_up() ) ? Dir_lo()
                                                                     : Dir_hi();
     const int tile_y = (!tile_octants) ? 0 :
-           ( ( tile_step & (1<<1) ) == 0 ) == ( idiry == Dir_up() ) ? Dir_lo()
+           ( ( tile_step & (1<<1) ) == 0 ) == ( dir_y == Dir_up() ) ? Dir_lo()
                                                                     : Dir_hi();
     const int tile_z = (!tile_octants) ? 0 :
-           ( ( tile_step & (1<<2) ) == 0 ) == ( idirz == Dir_up() ) ? Dir_lo()
+           ( ( tile_step & (1<<2) ) == 0 ) == ( dir_z == Dir_up() ) ? Dir_lo()
                                                                     : Dir_hi();
 
     /*---Compute tile boundaries---*/
@@ -181,9 +181,9 @@ void Sweeper_sweep(
          tiling step.
     ---*/
 
-    if( tile_z != idirz || !tile_octants )
+    if( tile_z != dir_z || !tile_octants )
     {
-      iz = idirz==Dir_up() ? -1 : dims.nz;
+      iz = dir_z==Dir_up() ? -1 : dims.nz;
       for( iu=0; iu<NU; ++iu )
       for( iy=tile_ymin; iy<tile_ymax; ++iy )
       for( ix=tile_xmin; ix<tile_xmax; ++ix )
@@ -195,9 +195,9 @@ void Sweeper_sweep(
       }
     }
 
-    if( tile_y != idiry || !tile_octants )
+    if( tile_y != dir_y || !tile_octants )
     {
-      iy = idiry==Dir_up() ? -1 : dims.ny;
+      iy = dir_y==Dir_up() ? -1 : dims.ny;
       for( iu=0; iu<NU; ++iu )
       for( iz=tile_zmin; iz<tile_zmax; ++iz )
       for( ix=tile_xmin; ix<tile_xmax; ++ix )
@@ -209,9 +209,9 @@ void Sweeper_sweep(
       }
     }
 
-    if( tile_x != idirx || !tile_octants )
+    if( tile_x != dir_x || !tile_octants )
     {
-      ix = idirx==Dir_up() ? -1 : dims.nx;
+      ix = dir_x==Dir_up() ? -1 : dims.nx;
       for( iu=0; iu<NU; ++iu )
       for( iz=tile_zmin; iz<tile_zmax; ++iz )
       for( iy=tile_ymin; iy<tile_ymax; ++iy )
@@ -229,19 +229,19 @@ void Sweeper_sweep(
     {
       /*---Calculate spatial loop extents, possibly based on tiling---*/
 
-      const int ixbeg = idirx==Dir_up() ? tile_xmin : tile_xmax-1;
-      const int iybeg = idiry==Dir_up() ? tile_ymin : tile_ymax-1;
-      const int izbeg = idirz==Dir_up() ? tile_zmin : tile_zmax-1;
+      const int ixbeg = dir_x==Dir_up() ? tile_xmin : tile_xmax-1;
+      const int iybeg = dir_y==Dir_up() ? tile_ymin : tile_ymax-1;
+      const int izbeg = dir_z==Dir_up() ? tile_zmin : tile_zmax-1;
 
-      const int ixend = idirx==Dir_dn() ? tile_xmin : tile_xmax-1;
-      const int iyend = idiry==Dir_dn() ? tile_ymin : tile_ymax-1;
-      const int izend = idirz==Dir_dn() ? tile_zmin : tile_zmax-1;
+      const int ixend = dir_x==Dir_dn() ? tile_xmin : tile_xmax-1;
+      const int iyend = dir_y==Dir_dn() ? tile_ymin : tile_ymax-1;
+      const int izend = dir_z==Dir_dn() ? tile_zmin : tile_zmax-1;
 
       /*---Loop over gridcells, in proper direction---*/
 
-    for( iz=izbeg; iz!=izend+Dir_inc(idirz); iz+=Dir_inc(idirz) )
-    for( iy=iybeg; iy!=iyend+Dir_inc(idiry); iy+=Dir_inc(idiry) )
-    for( ix=ixbeg; ix!=ixend+Dir_inc(idirx); ix+=Dir_inc(idirx) )
+    for( iz=izbeg; iz!=izend+Dir_inc(dir_z); iz+=Dir_inc(dir_z) )
+    for( iy=iybeg; iy!=iyend+Dir_inc(dir_y); iy+=Dir_inc(dir_y) )
+    for( ix=ixbeg; ix!=ixend+Dir_inc(dir_x); ix+=Dir_inc(dir_x) )
     {
 
       /*--------------------*/

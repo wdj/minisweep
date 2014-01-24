@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   environment.h
+ * \file   env.h
  * \author Wayne Joubert
  * \date   Wed Jan 15 16:06:28 EST 2014
  * \brief  Environment settings specific to this programming API.
@@ -8,8 +8,8 @@
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _serial_c__environment_h_
-#define _serial_c__environment_h_
+#ifndef _serial_c__env_h_
+#define _serial_c__env_h_
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,6 +41,18 @@ static void insist_( const char *condition_string, const char *file, int line,
 /*---Boolean type---*/
 
 typedef int Bool_t;
+
+/*===========================================================================*/
+/*---Struct with environment information---*/
+
+typedef struct
+{
+  /*---number of procs along x axis---*/
+  int nproc_x;
+
+  /*---number of procs along y axis---*/
+  int nproc_y;
+} Env;
 
 /*===========================================================================*/
 /*---Timer utility---*/
@@ -95,19 +107,29 @@ static Comm_t Env_default_comm()
 /*===========================================================================*/
 /*---Number of procs---*/
 
-static int Env_nproc()
+static int Env_nproc( Env env )
 {
-  int result = 0;
+  int result = 1;
 #ifdef USE_MPI
   MPI_Comm_size( Env_default_comm(), &result );
 #endif
   return result;
 }
 
+static int Env_nproc_x( Env env )
+{
+  return env.nproc_x;
+}
+
+static int Env_nproc_y( Env env )
+{
+  return env.nproc_y;
+}
+
 /*===========================================================================*/
 /*---Proc number---*/
 
-static int Env_proc()
+static int Env_proc( Env env )
 {
   int result = 0;
 #ifdef USE_MPI
@@ -119,13 +141,13 @@ static int Env_proc()
 /*===========================================================================*/
 /*---Indicate whether to do output---*/
 
-static Bool_t Env_do_output()
+static Bool_t Env_do_output( Env env )
 {
-  return ( Env_proc() == 0 );
+  return ( Env_proc( env ) == 0 );
 }
 
 /*===========================================================================*/
 
-#endif /*---_serial_c__environment_h_---*/
+#endif /*---_serial_c__env_h_---*/
 
 /*---------------------------------------------------------------------------*/

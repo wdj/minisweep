@@ -90,9 +90,9 @@ void Sweeper_sweep(
 
     /*---Decode octant directions from octant number---*/
 
-    const int idirx = Dir_x( octant );
-    const int idiry = Dir_y( octant );
-    const int idirz = Dir_z( octant );
+    const int dir_x = Dir_x( octant );
+    const int dir_y = Dir_y( octant );
+    const int dir_z = Dir_z( octant );
 
     /*---Initialize faces---*/
 
@@ -113,7 +113,7 @@ void Sweeper_sweep(
     ---*/
 
     {
-      iz = idirz == Dir_up() ? -1 : dims.nz;
+      iz = dir_z == Dir_up() ? -1 : dims.nz;
       for( iu=0; iu<NU; ++iu )
       for( iy=0; iy<dims.ny; ++iy )
       for( ix=0; ix<dims.nx; ++ix )
@@ -126,7 +126,7 @@ void Sweeper_sweep(
     }
 
     {
-      iy = idiry == Dir_up() ? -1 : dims.ny;
+      iy = dir_y == Dir_up() ? -1 : dims.ny;
       for( iu=0; iu<NU; ++iu )
       for( iz=0; iz<dims.nz; ++iz )
       for( ix=0; ix<dims.nx; ++ix )
@@ -139,7 +139,7 @@ void Sweeper_sweep(
     }
 
     {
-      ix = idirx == Dir_up() ? -1 : dims.nx;
+      ix = dir_x == Dir_up() ? -1 : dims.nx;
       for( iu=0; iu<NU; ++iu )
       for( iz=0; iz<dims.nz; ++iz )
       for( iy=0; iy<dims.ny; ++iy )
@@ -157,19 +157,19 @@ void Sweeper_sweep(
     {
       /*---Calculate spatial loop extents---*/
 
-      int ixbeg = idirx==Dir_up() ? 0 : dims.nx-1;
-      int iybeg = idiry==Dir_up() ? 0 : dims.ny-1;
-      int izbeg = idirz==Dir_up() ? 0 : dims.nz-1;
+      int ixbeg = dir_x==Dir_up() ? 0 : dims.nx-1;
+      int iybeg = dir_y==Dir_up() ? 0 : dims.ny-1;
+      int izbeg = dir_z==Dir_up() ? 0 : dims.nz-1;
 
-      int ixend = idirx==Dir_dn() ? 0 : dims.nx-1;
-      int iyend = idiry==Dir_dn() ? 0 : dims.ny-1;
-      int izend = idirz==Dir_dn() ? 0 : dims.nz-1;
+      int ixend = dir_x==Dir_dn() ? 0 : dims.nx-1;
+      int iyend = dir_y==Dir_dn() ? 0 : dims.ny-1;
+      int izend = dir_z==Dir_dn() ? 0 : dims.nz-1;
 
       /*---Loop over gridcells, in proper direction---*/
 
-    for( iz=izbeg; iz!=izend+Dir_inc(idirz); iz+=Dir_inc(idirz) )
-    for( iy=iybeg; iy!=iyend+Dir_inc(idiry); iy+=Dir_inc(idiry) )
-    for( ix=ixbeg; ix!=ixend+Dir_inc(idirx); ix+=Dir_inc(idirx) )
+    for( iz=izbeg; iz!=izend+Dir_inc(dir_z); iz+=Dir_inc(dir_z) )
+    for( iy=iybeg; iy!=iyend+Dir_inc(dir_y); iy+=Dir_inc(dir_y) )
+    for( ix=ixbeg; ix!=ixend+Dir_inc(dir_x); ix+=Dir_inc(dir_x) )
     {
 
       /*--------------------*/
