@@ -25,12 +25,26 @@ enum{ NDIM = 3 };
 /*---Number of octant directions---*/
 enum{ NOCTANT = 8 };
 
-/*---Number of unknowns per gridcell---*/
-/*---Currently hardwired, this could be changed in the future---*/
-enum{ NU = 1 }; /*FIX*/
-
 static inline P P_zero() { return (P)0.; }
 static inline P P_one()  { return (P)1.; }
+
+/*===========================================================================*/
+/*---Functions to manipulate sweep directions---*/
+
+static inline int Dir_up() { return +1; }
+static inline int Dir_dn() { return -1; }
+
+static inline int Dir_hi() { return +1; }
+static inline int Dir_lo() { return -1; }
+
+static inline int Dir_x( int octant ) { return octant & (1<<0) ? Dir_dn()
+                                                               : Dir_up(); }
+static inline int Dir_y( int octant ) { return octant & (1<<1) ? Dir_dn()
+                                                               : Dir_up(); }
+static inline int Dir_z( int octant ) { return octant & (1<<2) ? Dir_dn()
+                                                               : Dir_up(); }
+
+static inline int Dir_inc( int dir ) { return dir; }
 
 /*===========================================================================*/
 

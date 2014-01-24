@@ -38,6 +38,14 @@ void Sweeper_ctor( Sweeper*    sweeper,
 void Sweeper_dtor( Sweeper* sweeper );
 
 /*===========================================================================*/
+/*---Number of octants to store for each face---*/
+
+static int Sweeper_num_face_octants()
+{
+  return 1;
+}
+
+/*===========================================================================*/
 /*---Perform a sweep---*/
 
 void Sweeper_sweep(

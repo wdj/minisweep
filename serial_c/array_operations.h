@@ -19,7 +19,7 @@
 /*===========================================================================*/
 /*---Initialize state vector to required input value---*/
 
-static void initialize_state( P* __restrict__ v, Dimensions dims )
+static void initialize_state( P* __restrict__ v, Dimensions dims, int nu )
 {
   int ix = 0;
   int iy = 0;
@@ -33,9 +33,9 @@ static void initialize_state( P* __restrict__ v, Dimensions dims )
   for( ix=0; ix<dims.nx; ++ix )
   for( ie=0; ie<dims.ne; ++ie )
   for( im=0; im<dims.nm; ++im )
-  for( iu=0; iu<NU; ++iu )
+  for( iu=0; iu<nu; ++iu )
   {
-    *ref_state( v, dims, ix, iy, iz, ie, im, iu )
+    *ref_state( v, dims, nu, ix, iy, iz, ie, im, iu )
                        = Quantities_init_state( ix, iy, iz, ie, im, iu, dims );
   }
 }
@@ -43,7 +43,7 @@ static void initialize_state( P* __restrict__ v, Dimensions dims )
 /*===========================================================================*/
 /*---Initialize state vector to zero---*/
 
-static void initialize_state_zero( P* __restrict__ v, Dimensions dims )
+static void initialize_state_zero( P* __restrict__ v, Dimensions dims, int nu )
 {
   int ix = 0;
   int iy = 0;
@@ -57,9 +57,9 @@ static void initialize_state_zero( P* __restrict__ v, Dimensions dims )
   for( ix=0; ix<dims.nx; ++ix )
   for( ie=0; ie<dims.ne; ++ie )
   for( im=0; im<dims.nm; ++im )
-  for( iu=0; iu<NU; ++iu )
+  for( iu=0; iu<nu; ++iu )
   {
-    *ref_state( v, dims, ix, iy, iz, ie, im, iu ) = P_zero();
+    *ref_state( v, dims, nu, ix, iy, iz, ie, im, iu ) = P_zero();
   }
 }
 
@@ -69,6 +69,7 @@ static void initialize_state_zero( P* __restrict__ v, Dimensions dims )
 static void get_state_norms( P* __restrict__  vi,
                              P* __restrict__  vo,
                              Dimensions       dims,
+                             int              nu,
                              P*               normsqp,
                              P*               normsqdiffp )
 {
@@ -90,15 +91,15 @@ static void get_state_norms( P* __restrict__  vi,
   for( ix=0; ix<dims.nx; ++ix )
   for( ie=0; ie<dims.ne; ++ie )
   for( im=0; im<dims.nm; ++im )
-  for( iu=0; iu<NU; ++iu )
+  for( iu=0; iu<nu; ++iu )
   {
-    normsq += *ref_state( vo, dims, ix, iy, iz, ie, im, iu ) *
-              *ref_state( vo, dims, ix, iy, iz, ie, im, iu );
+    normsq += *ref_state( vo, dims, nu, ix, iy, iz, ie, im, iu ) *
+              *ref_state( vo, dims, nu, ix, iy, iz, ie, im, iu );
     normsqdiff +=
-             ( *ref_state( vo, dims, ix, iy, iz, ie, im, iu ) -
-               *ref_state( vi, dims, ix, iy, iz, ie, im, iu ) ) *
-             ( *ref_state( vo, dims, ix, iy, iz, ie, im, iu ) -
-               *ref_state( vi, dims, ix, iy, iz, ie, im, iu ) );
+             ( *ref_state( vo, dims, nu, ix, iy, iz, ie, im, iu ) -
+               *ref_state( vi, dims, nu, ix, iy, iz, ie, im, iu ) ) *
+             ( *ref_state( vo, dims, nu, ix, iy, iz, ie, im, iu ) -
+               *ref_state( vi, dims, nu, ix, iy, iz, ie, im, iu ) );
   }
   assert( normsq     >= P_zero() );
   assert( normsqdiff >= P_zero() );

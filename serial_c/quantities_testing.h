@@ -15,6 +15,11 @@
 #include "array_accessors.h"
 
 /*===========================================================================*/
+/*---Number of unknowns per gridcell---*/
+
+enum{ NU = 1 };
+
+/*===========================================================================*/
 /*---Struct to hold pointers to arrays associated with physical quantities---*/
 
 typedef struct
@@ -250,7 +255,8 @@ static inline void Quantities_solve(
   int iy,
   int iz,
   int ie,
-  int ioctant,
+  int octant,
+  int octant_ind,
   Quantities quan,
   Dimensions dims )
 {
@@ -262,14 +268,16 @@ static inline void Quantities_solve(
   assert( iy >= 0 && iy < dims.ny );
   assert( iz >= 0 && iz < dims.nz );
   assert( ie >= 0 && ie < dims.ne );
-  assert( ioctant >= 0 && ioctant < NOCTANT );
+  assert( octant >= 0 && octant < NOCTANT );
+  /*---NOTE: the following may not be tight---*/
+  assert( octant_ind >= 0 && octant_ind < NOCTANT );
 
   int iu = 0;
   int ia = 0;
 
-  int idirx = ioctant & (1<<0) ? -1 : 1;
-  int idiry = ioctant & (1<<1) ? -1 : 1;
-  int idirz = ioctant & (1<<2) ? -1 : 1;
+  int idirx = Dir_x( octant );
+  int idiry = Dir_y( octant );
+  int idirz = Dir_z( octant );
 
   /*---Average the face values and accumulate---*/
 
@@ -285,23 +293,23 @@ static inline void Quantities_solve(
   for( ia=0; ia<dims.na; ++ia )
   {
     const P result = (
-          *ref_v_local( v_local, dims, ia, iu )
-                           / Quantities_scalefactor_space__( ix, iy, iz )
-        + *ref_facexy( facexy, dims, ix, iy, ie, ia, iu, ioctant )
-                           * Quantities_xfluxweight__( ia )
-                           / Quantities_scalefactor_space__( ix-idirx, iy, iz )
-        + *ref_facexz( facexz, dims, ix, iz, ie, ia, iu, ioctant )
-                           * Quantities_yfluxweight__( ia )
-                           / Quantities_scalefactor_space__( ix, iy-idiry, iz )
-        + *ref_faceyz( faceyz, dims, iy, iz, ie, ia, iu, ioctant )
-                           * Quantities_zfluxweight__( ia )
-                           / Quantities_scalefactor_space__( ix, iy, iz-idirz )
-      )                    * Quantities_scalefactor_space__( ix, iy, iz );
+          *ref_v_local( v_local, dims, NU, ia, iu )
+                  / Quantities_scalefactor_space__( ix, iy, iz )
+        + *ref_facexy( facexy, dims, NU, ix, iy, ie, ia, iu, octant_ind )
+                  * Quantities_xfluxweight__( ia )
+                  / Quantities_scalefactor_space__( ix-Dir_inc(idirx), iy, iz )
+        + *ref_facexz( facexz, dims, NU, ix, iz, ie, ia, iu, octant_ind )
+                  * Quantities_yfluxweight__( ia )
+                  / Quantities_scalefactor_space__( ix, iy-Dir_inc(idiry), iz )
+        + *ref_faceyz( faceyz, dims, NU, iy, iz, ie, ia, iu, octant_ind )
+                  * Quantities_zfluxweight__( ia )
+                  / Quantities_scalefactor_space__( ix, iy, iz-Dir_inc(idirz) )
+      )           * Quantities_scalefactor_space__( ix, iy, iz );
 
-    *ref_v_local( v_local, dims, ia, iu ) = result;
-    *ref_facexy( facexy, dims, ix, iy, ie, ia, iu, ioctant ) = result;
-    *ref_facexz( facexz, dims, ix, iz, ie, ia, iu, ioctant ) = result;
-    *ref_faceyz( faceyz, dims, iy, iz, ie, ia, iu, ioctant ) = result;
+    *ref_v_local( v_local, dims, NU, ia, iu ) = result;
+    *ref_facexy( facexy, dims, NU, ix, iy, ie, ia, iu, octant_ind ) = result;
+    *ref_facexz( facexz, dims, NU, ix, iz, ie, ia, iu, octant_ind ) = result;
+    *ref_faceyz( faceyz, dims, NU, iy, iz, ie, ia, iu, octant_ind ) = result;
   }
 
 } /*---Quantities_solve---*/

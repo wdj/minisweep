@@ -36,12 +36,12 @@ typedef struct
 /*===========================================================================*/
 /*---Size of state vector---*/
 
-size_t Dimensions_size_state( const Dimensions dims );
+size_t Dimensions_size_state( const Dimensions dims, int nu );
 
 /*===========================================================================*/
 /*---Size of state vector in angles space---*/
 
-size_t Dimensions_size_state_angles( const Dimensions dims );
+size_t Dimensions_size_state_angles( const Dimensions dims, int nu );
 
 /*===========================================================================*/
 

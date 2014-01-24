@@ -46,7 +46,7 @@ int main( int argc, char** argv )
 
   /*---Initialize for execution---*/
 
-  initialize( argc, argv );
+  Env_initialize( argc, argv );
 
   /*---Set problem size---*/
 
@@ -72,19 +72,19 @@ int main( int argc, char** argv )
 
   /*---Allocate arrays---*/
 
-  vi = pmalloc( Dimensions_size_state( dims ) );
-  vo = pmalloc( Dimensions_size_state( dims ) );
+  vi = pmalloc( Dimensions_size_state( dims, NU ) );
+  vo = pmalloc( Dimensions_size_state( dims, NU ) );
 
   /*---Initialize input state array---*/
 
-  initialize_state( vi, dims );
+  initialize_state( vi, dims, NU );
 
   /*---Initialize output state array---*/
   /*---This is not strictly required for the output vector but might
        have a performance effect from pre-touching pages.
   ---*/
 
-  initialize_state_zero( vo, dims );
+  initialize_state_zero( vo, dims, NU );
 
   /*---Initialize sweeper---*/
 
@@ -92,7 +92,7 @@ int main( int argc, char** argv )
 
   /*---Call sweeper---*/
 
-  t1 = get_time();
+  t1 = Env_get_time();
 
   for( iteration=0; iteration<numiterations; ++iteration )
   {
@@ -103,24 +103,24 @@ int main( int argc, char** argv )
                    dims );
   }
 
-  t2 = get_time();
+  t2 = Env_get_time();
   time = t2 - t1;
 
   /*---Compute flops used---*/
 
-  flops = ( Dimensions_size_state( dims ) * NOCTANT * 2. * dims.na
-          + Dimensions_size_state_angles( dims )
+  flops = ( Dimensions_size_state( dims, NU ) * NOCTANT * 2. * dims.na
+          + Dimensions_size_state_angles( dims, NU )
                                            * Quantities_flops_per_solve( dims )
-          + Dimensions_size_state( dims ) * NOCTANT * 2. * dims.na )
+          + Dimensions_size_state( dims, NU ) * NOCTANT * 2. * dims.na )
         * numiterations;
 
   floprate = time <= 0. ? 0. : flops / time / 1e9;
 
   /*---Compute, print norm squared of result---*/
 
-  get_state_norms( vi, vo, dims, &normsq, &normsqdiff );
+  get_state_norms( vi, vo, dims, NU, &normsq, &normsqdiff );
 
-  if( do_output() )
+  if( Env_do_output() )
   {
     printf( "Normsq result: %e  diff: %e  %s  time: %.3f  GF/s %.4f\n",
             (double)normsq, (double)normsqdiff,
@@ -137,7 +137,7 @@ int main( int argc, char** argv )
 
   /*---Finalize execution---*/
 
-  finalize();
+  Env_finalize();
 
 } /*---main---*/
 

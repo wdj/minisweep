@@ -21,21 +21,13 @@
 #include "mpi.h"
 #endif
 
+/*===========================================================================*/
+/*---Assertions---*/
+
 #ifndef Insist
 #define Insist( condition, message ) \
   (void)((condition) || (insist_ (#condition, __FILE__, __LINE__, message),0))
 #endif
-
-/*===========================================================================*/
-
-#define PROGRAMMING_API serial
-
-/*---Boolean type---*/
-
-typedef int Bool_t;
-
-/*===========================================================================*/
-/*---Insist: an always-on assert---*/
 
 static void insist_( const char *condition_string, const char *file, int line,
                      const char *message )
@@ -46,9 +38,26 @@ static void insist_( const char *condition_string, const char *file, int line,
 }
 
 /*===========================================================================*/
+/*---Boolean type---*/
+
+typedef int Bool_t;
+
+/*===========================================================================*/
+/*---Timer utility---*/
+  
+static double Env_get_time() 
+{
+    struct timeval tv;
+    int i = gettimeofday( &tv, NULL );
+    double result = ( (double) tv.tv_sec +
+                      (double) tv.tv_usec * 1.e-6 );
+    return result;
+} 
+
+/*===========================================================================*/
 /*---Initialize for execution---*/
   
-static void initialize( int argc, char** argv )
+static void Env_initialize( int argc, char** argv )
 { 
 #ifdef USE_MPI
   MPI_Init( &argc, &argv );
@@ -58,37 +67,62 @@ static void initialize( int argc, char** argv )
 /*===========================================================================*/
 /*---Finalize execution---*/
 
-static void finalize() 
+static void Env_finalize() 
 { 
 #ifdef USE_MPI
   MPI_Finalize(); 
 #endif
-} 
-/*===========================================================================*/
-/*---Indicate whether to do output---*/
+}
 
-static Bool_t do_output()
+/*===========================================================================*/
+/*---Default communicator---*/
+
+#ifdef USE_MPI
+typedef MPI_Comm Comm_t;
+#else
+typedef int Comm_t;
+#endif
+
+static Comm_t Env_default_comm()
 {
 #ifdef USE_MPI
-  int rank;
-  MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-  return ( rank == 0 );
+  return MPI_COMM_WORLD;
 #else
-  return 1;
+  return 0;
 #endif
 }
 
 /*===========================================================================*/
-/*---Timer utility---*/
-  
-static double get_time() 
+/*---Number of procs---*/
+
+static int Env_nproc()
 {
-    struct timeval tv;
-    int i = gettimeofday( &tv, 0 );
-    double result = ( (double) tv.tv_sec +
-                      (double) tv.tv_usec * 1.e-6 );
-    return result;
-} 
+  int result = 0;
+#ifdef USE_MPI
+  MPI_Comm_size( Env_default_comm(), &result );
+#endif
+  return result;
+}
+
+/*===========================================================================*/
+/*---Proc number---*/
+
+static int Env_proc()
+{
+  int result = 0;
+#ifdef USE_MPI
+  MPI_Comm_rank( Env_default_comm(), &result );
+#endif
+  return result;
+}
+ 
+/*===========================================================================*/
+/*---Indicate whether to do output---*/
+
+static Bool_t Env_do_output()
+{
+  return ( Env_proc() == 0 );
+}
 
 /*===========================================================================*/
 

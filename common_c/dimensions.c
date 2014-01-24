@@ -16,27 +16,27 @@
 /*===========================================================================*/
 /*---Size of state vector---*/
 
-size_t Dimensions_size_state( const Dimensions dims )
+size_t Dimensions_size_state( const Dimensions dims, int nu )
 {
     return ( (size_t)dims.nx )
          * ( (size_t)dims.ny )
          * ( (size_t)dims.nz )
          * ( (size_t)dims.ne )
          * ( (size_t)dims.nm )
-         * ( (size_t)NU );
+         * ( (size_t)nu );
 }
 
 /*===========================================================================*/
 /*---Size of state vector in angles space---*/
 
-size_t Dimensions_size_state_angles( const Dimensions dims )
+size_t Dimensions_size_state_angles( const Dimensions dims, int nu )
 {
     return ( (size_t)dims.nx )
          * ( (size_t)dims.ny )
          * ( (size_t)dims.nz )
          * ( (size_t)dims.ne )
          * ( (size_t)dims.na )
-         * ( (size_t)NU )
+         * ( (size_t)nu )
          * ( (size_t)NOCTANT );
 }
 

@@ -21,6 +21,7 @@
 static inline P* ref_state(
     P* __restrict__  v,
     Dimensions       dims,
+    int              nu,
     int              ix,
     int              iy,
     int              iz,
@@ -34,10 +35,10 @@ static inline P* ref_state(
   assert( iz >= 0 && iz < dims.nz );
   assert( ie >= 0 && ie < dims.ne );
   assert( im >= 0 && im < dims.nm );
-  assert( iu >= 0 && iu < NU );
+  assert( iu >= 0 && iu < nu );
 
   return & v[ im + dims.nm * (
-              iu + NU      * (
+              iu + nu      * (
               ix + dims.nx * (
               iy + dims.ny * (
               iz + dims.nz * (
@@ -51,15 +52,16 @@ static inline P* ref_state(
 static inline P* ref_v_local(
     P* __restrict__  v,
     Dimensions       dims,
+    int              nu,
     int              ia,
     int              iu )
 {
   assert( v );
   assert( ia >= 0 && ia < dims.na );
-  assert( iu >= 0 && iu < NU );
+  assert( iu >= 0 && iu < nu );
 
   return & v[ ia + dims.na * (
-              iu + NU      * (
+              iu + nu      * (
               0 )) ];
 }
 
@@ -105,26 +107,28 @@ static inline P* ref_m_from_a(
 static inline P* ref_facexy(
     P* __restrict__  v,
     Dimensions       dims,
+    int              nu,
     int              ix,
     int              iy,
     int              ie,
     int              ia,
     int              iu,
-    int              ioctant )
+    int              octant_ind )
 {
   assert( ix >= 0 && ix < dims.nx );
   assert( iy >= 0 && iy < dims.ny );
   assert( ie >= 0 && ie < dims.ne );
   assert( ia >= 0 && ia < dims.na );
-  assert( iu >= 0 && iu < NU );
-  assert( ioctant >= 0 && ioctant < NOCTANT );
+  assert( iu >= 0 && iu < nu );
+  /*---NOTE: the following may not be tight---*/
+  assert( octant_ind >= 0 && octant_ind < NOCTANT );
 
   return & v[ ia + dims.na * (
-              iu + NU      * (
+              iu + nu      * (
               ix + dims.nx * (
               iy + dims.ny * (
               ie + dims.ne * (
-              ioctant ))))) ];
+              octant_ind ))))) ];
 }
 
 /*===========================================================================*/
@@ -133,26 +137,28 @@ static inline P* ref_facexy(
 static inline P* ref_facexz(
     P* __restrict__  v,
     Dimensions       dims,
+    int              nu,
     int              ix,
     int              iz,
     int              ie,
     int              ia,
     int              iu,
-    int              ioctant )
+    int              octant_ind )
 {
   assert( ix >= 0 && ix < dims.nx );
   assert( iz >= 0 && iz < dims.nz );
   assert( ie >= 0 && ie < dims.ne );
   assert( ia >= 0 && ia < dims.na );
-  assert( iu >= 0 && iu < NU );
-  assert( ioctant >= 0 && ioctant < NOCTANT );
+  assert( iu >= 0 && iu < nu );
+  /*---NOTE: the following may not be tight---*/
+  assert( octant_ind >= 0 && octant_ind < NOCTANT );
 
   return & v[ ia + dims.na * (
-              iu + NU      * (
+              iu + nu      * (
               ix + dims.nx * (
               iz + dims.nz * (
               ie + dims.ne * (
-              ioctant ))))) ];
+              octant_ind ))))) ];
 }
 
 /*===========================================================================*/
@@ -161,27 +167,29 @@ static inline P* ref_facexz(
 static inline P* ref_faceyz(
     P* __restrict__  v,
     Dimensions       dims,
+    int              nu,
     int              iy,
     int              iz,
     int              ie,
     int              ia,
     int              iu,
-    int              ioctant )
+    int              octant_ind )
 {
   assert( v );
   assert( iy >= 0 && iy < dims.ny );
   assert( iz >= 0 && iz < dims.nz );
   assert( ie >= 0 && ie < dims.ne );
   assert( ia >= 0 && ia < dims.na );
-  assert( iu >= 0 && iu < NU );
-  assert( ioctant >= 0 && ioctant < NOCTANT );
+  assert( iu >= 0 && iu < nu );
+  /*---NOTE: the following may not be tight---*/
+  assert( octant_ind >= 0 && octant_ind < NOCTANT );
 
   return & v[ ia + dims.na * (
-              iu + NU      * (
+              iu + nu      * (
               iy + dims.ny * (
               iz + dims.nz * (
               ie + dims.ne * (
-              ioctant ))))) ];
+              octant_ind ))))) ];
 }
 
 /*===========================================================================*/

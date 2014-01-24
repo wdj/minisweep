@@ -29,12 +29,12 @@ void Sweeper_ctor( Sweeper*    sweeper,
   /*---Allocate arrays---*/
 
   sweeper->v_local = pmalloc( dims.na * NU );
-  sweeper->facexy  = pmalloc( dims.nx * dims.ny * dims.ne * dims.na * NU
-                                            * ( tile_octants ? NOCTANT : 1 ) );
-  sweeper->facexz  = pmalloc( dims.nx * dims.nz * dims.ne * dims.na * NU
-                                            * ( tile_octants ? NOCTANT : 1 ) );
-  sweeper->faceyz  = pmalloc( dims.ny * dims.nz * dims.ne * dims.na * NU
-                                            * ( tile_octants ? NOCTANT : 1 ) );
+  sweeper->facexy  = pmalloc( dims.nx * dims.ny * dims.ne * dims.na * 
+                                             NU * Sweeper_num_face_octants() );
+  sweeper->facexz  = pmalloc( dims.nx * dims.nz * dims.ne * dims.na * 
+                                             NU * Sweeper_num_face_octants() );
+  sweeper->faceyz  = pmalloc( dims.ny * dims.nz * dims.ne * dims.na * 
+                                             NU * Sweeper_num_face_octants() );
 }
 
 /*===========================================================================*/
@@ -82,12 +82,9 @@ void Sweeper_sweep(
 
   int tile_step = 0;
 
-  const int LO = -1;
-  const int HI = +1;
-
   /*---Initialize result array to zero---*/
 
-  initialize_state_zero( vo, dims );
+  initialize_state_zero( vo, dims, NU );
 
   /*---Loop over octant tiles---*/
 
@@ -112,14 +109,14 @@ void Sweeper_sweep(
          intermittently, thus a need to remember its state.
     ---*/
 
-    const int octant_index = tile_octants ? octant : 0;
+    const int octant_ind = tile_octants ? octant : 0;
+    assert( octant_ind >= 0 && octant_ind < Sweeper_num_face_octants() );
 
     /*---Decode octant directions from octant number---*/
-    /*--- -1 for downward direction, +1 for upward direction---*/
 
-    const int idirx = octant & (1<<0) ? -1 : 1;
-    const int idiry = octant & (1<<1) ? -1 : 1;
-    const int idirz = octant & (1<<2) ? -1 : 1;
+    const int idirx = Dir_x( octant );
+    const int idiry = Dir_y( octant );
+    const int idirz = Dir_z( octant );
 
     /*---Determine tile to be computed---*/
 
@@ -134,11 +131,14 @@ void Sweeper_sweep(
     ---*/
 
     const int tile_x = (!tile_octants) ? 0 :
-               ( ( tile_step & (1<<0) ) == 0 ) == ( idirx == +1 ) ? LO : HI;
+           ( ( tile_step & (1<<0) ) == 0 ) == ( idirx == Dir_up() ) ? Dir_lo()
+                                                                    : Dir_hi();
     const int tile_y = (!tile_octants) ? 0 :
-               ( ( tile_step & (1<<1) ) == 0 ) == ( idiry == +1 ) ? LO : HI;
+           ( ( tile_step & (1<<1) ) == 0 ) == ( idiry == Dir_up() ) ? Dir_lo()
+                                                                    : Dir_hi();
     const int tile_z = (!tile_octants) ? 0 :
-               ( ( tile_step & (1<<2) ) == 0 ) == ( idirz == +1 ) ? LO : HI;
+           ( ( tile_step & (1<<2) ) == 0 ) == ( idirz == Dir_up() ) ? Dir_lo()
+                                                                    : Dir_hi();
 
     /*---Compute tile boundaries---*/
 
@@ -146,19 +146,19 @@ void Sweeper_sweep(
          domain in each direction
     ---*/
 
-    const int tile_xmin = (!tile_octants) ? 0         :
-                          tile_x==LO      ? 0         : dims.nx/2;
-    const int tile_ymin = (!tile_octants) ? 0         :
-                          tile_y==LO      ? 0         : dims.ny/2;
-    const int tile_zmin = (!tile_octants) ? 0         :
-                          tile_z==LO      ? 0         : dims.nz/2;
+    const int tile_xmin = (!tile_octants)  ? 0         :
+                          tile_x==Dir_lo() ? 0         : dims.nx/2;
+    const int tile_ymin = (!tile_octants)  ? 0         :
+                          tile_y==Dir_lo() ? 0         : dims.ny/2;
+    const int tile_zmin = (!tile_octants)  ? 0         :
+                          tile_z==Dir_lo() ? 0         : dims.nz/2;
 
-    const int tile_xmax = (!tile_octants) ? dims.nx   :
-                          tile_x==LO      ? dims.nx/2 : dims.nx;
-    const int tile_ymax = (!tile_octants) ? dims.ny   :
-                          tile_y==LO      ? dims.ny/2 : dims.ny;
-    const int tile_zmax = (!tile_octants) ? dims.nz   :
-                          tile_z==LO      ? dims.nz/2 : dims.nz;
+    const int tile_xmax = (!tile_octants)  ? dims.nx   :
+                          tile_x==Dir_lo() ? dims.nx/2 : dims.nx;
+    const int tile_ymax = (!tile_octants)  ? dims.ny   :
+                          tile_y==Dir_lo() ? dims.ny/2 : dims.ny;
+    const int tile_zmax = (!tile_octants)  ? dims.nz   :
+                          tile_z==Dir_lo() ? dims.nz/2 : dims.nz;
 
     /*---Initialize faces---*/
 
@@ -183,42 +183,42 @@ void Sweeper_sweep(
 
     if( tile_z != idirz || !tile_octants )
     {
-      iz = idirz==+1 ? -1 : dims.nz;
+      iz = idirz==Dir_up() ? -1 : dims.nz;
       for( iu=0; iu<NU; ++iu )
       for( iy=tile_ymin; iy<tile_ymax; ++iy )
       for( ix=tile_xmin; ix<tile_xmax; ++ix )
       for( ie=0; ie<dims.ne; ++ie )
       for( ia=0; ia<dims.na; ++ia )
       {
-        *ref_facexy( sweeper->facexy, dims, ix, iy, ie, ia, iu, octant_index )
+        *ref_facexy( sweeper->facexy, dims, NU, ix, iy, ie, ia, iu, octant_ind )
                     = Quantities_init_facexy( ix, iy, iz, ie, ia, iu, dims );
       }
     }
 
     if( tile_y != idiry || !tile_octants )
     {
-      iy = idiry==+1 ? -1 : dims.ny;
+      iy = idiry==Dir_up() ? -1 : dims.ny;
       for( iu=0; iu<NU; ++iu )
       for( iz=tile_zmin; iz<tile_zmax; ++iz )
       for( ix=tile_xmin; ix<tile_xmax; ++ix )
       for( ie=0; ie<dims.ne; ++ie )
       for( ia=0; ia<dims.na; ++ia )
       {
-        *ref_facexz( sweeper->facexz, dims, ix, iz, ie, ia, iu, octant_index )
+        *ref_facexz( sweeper->facexz, dims, NU, ix, iz, ie, ia, iu, octant_ind )
                     = Quantities_init_facexz( ix, iy, iz, ie, ia, iu, dims );
       }
     }
 
     if( tile_x != idirx || !tile_octants )
     {
-      ix = idirx==+1 ? -1 : dims.nx;
+      ix = idirx==Dir_up() ? -1 : dims.nx;
       for( iu=0; iu<NU; ++iu )
       for( iz=tile_zmin; iz<tile_zmax; ++iz )
       for( iy=tile_ymin; iy<tile_ymax; ++iy )
       for( ie=0; ie<dims.ne; ++ie )
       for( ia=0; ia<dims.na; ++ia )
       {
-        *ref_faceyz( sweeper->faceyz, dims, iy, iz, ie, ia, iu, octant_index )
+        *ref_faceyz( sweeper->faceyz, dims, NU, iy, iz, ie, ia, iu, octant_ind )
                     = Quantities_init_faceyz( ix, iy, iz, ie, ia, iu, dims );
       }
     }
@@ -229,19 +229,19 @@ void Sweeper_sweep(
     {
       /*---Calculate spatial loop extents, possibly based on tiling---*/
 
-      const int ixbeg = idirx==+1 ? tile_xmin : tile_xmax-1;
-      const int iybeg = idiry==+1 ? tile_ymin : tile_ymax-1;
-      const int izbeg = idirz==+1 ? tile_zmin : tile_zmax-1;
+      const int ixbeg = idirx==Dir_up() ? tile_xmin : tile_xmax-1;
+      const int iybeg = idiry==Dir_up() ? tile_ymin : tile_ymax-1;
+      const int izbeg = idirz==Dir_up() ? tile_zmin : tile_zmax-1;
 
-      const int ixend = idirx==-1 ? tile_xmin : tile_xmax-1;
-      const int iyend = idiry==-1 ? tile_ymin : tile_ymax-1;
-      const int izend = idirz==-1 ? tile_zmin : tile_zmax-1;
+      const int ixend = idirx==Dir_dn() ? tile_xmin : tile_xmax-1;
+      const int iyend = idiry==Dir_dn() ? tile_ymin : tile_ymax-1;
+      const int izend = idirz==Dir_dn() ? tile_zmin : tile_zmax-1;
 
       /*---Loop over gridcells, in proper direction---*/
 
-    for( iz=izbeg; iz!=izend+idirz; iz+=idirz )
-    for( iy=iybeg; iy!=iyend+idiry; iy+=idiry )
-    for( ix=ixbeg; ix!=ixend+idirx; ix+=idirx )
+    for( iz=izbeg; iz!=izend+Dir_inc(idirz); iz+=Dir_inc(idirz) )
+    for( iy=iybeg; iy!=iyend+Dir_inc(idiry); iy+=Dir_inc(idiry) )
+    for( ix=ixbeg; ix!=ixend+Dir_inc(idirx); ix+=Dir_inc(idirx) )
     {
 
       /*--------------------*/
@@ -262,9 +262,9 @@ void Sweeper_sweep(
         for( im=0; im<dims.nm; ++im )
         {
           result += *ref_a_from_m( quan.a_from_m, dims, im, ia ) *
-                    *ref_state( vi, dims, ix, iy, iz, ie, im, iu );
+                    *ref_state( vi, dims, NU, ix, iy, iz, ie, im, iu );
         }
-        *ref_v_local( sweeper->v_local, dims, ia, iu ) = result;
+        *ref_v_local( sweeper->v_local, dims, NU, ia, iu ) = result;
       }
 
       /*--------------------*/
@@ -273,7 +273,7 @@ void Sweeper_sweep(
 
       Quantities_solve( sweeper->v_local,
                         sweeper->facexy, sweeper->facexz, sweeper->faceyz,
-                        ix, iy, iz, ie, octant_index, quan, dims );
+                        ix, iy, iz, ie, octant, octant_ind, quan, dims );
 
       /*--------------------*/
       /*---Transform state vector from angles to moments---*/
@@ -290,9 +290,9 @@ void Sweeper_sweep(
         for( ia=0; ia<dims.na; ++ia )
         {
           result += *ref_m_from_a( quan.m_from_a, dims, im, ia ) *
-                    *ref_v_local( sweeper->v_local, dims, ia, iu );
+                    *ref_v_local( sweeper->v_local, dims, NU, ia, iu );
         }
-        *ref_state( vo, dims, ix, iy, iz, ie, im, iu ) += result;
+        *ref_state( vo, dims, NU, ix, iy, iz, ie, im, iu ) += result;
       }
 
     } /*---ix/iy/iz---*/

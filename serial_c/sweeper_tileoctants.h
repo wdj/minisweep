@@ -41,6 +41,14 @@ static Bool_t Sweeper_tile_octants()
 }
 
 /*===========================================================================*/
+/*---Number of octants to store for each face---*/
+
+static int Sweeper_num_face_octants()
+{
+  return Sweeper_tile_octants ? NOCTANT : 1;
+}
+
+/*===========================================================================*/
 /*---Pseudo-destructor for Sweeper struct---*/
 
 void Sweeper_dtor( Sweeper* sweeper );
