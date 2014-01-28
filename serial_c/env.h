@@ -64,27 +64,21 @@ typedef int Bool_t;
 
 typedef struct
 {
-  /*---number of procs along x axis---*/
-  int nproc_x;
-
-  /*---number of procs along y axis---*/
-  int nproc_y;
-
-  /*---Next free message tag---*/
-  int tag;
-
+  int nproc_x;    /*---Number of procs along x axis---*/
+  int nproc_y;    /*---Number of procs along y axis---*/
+  int tag;        /*---Next free message tag---*/
 } Env;
 
 /*===========================================================================*/
 /*---Initialize for execution---*/
 
-static void Env_initialize( Env env, int argc, char** argv )
+static void Env_initialize( Env *env, int argc, char** argv )
 {
 #ifdef USE_MPI
   MPI_Init( &argc, &argv );
 #endif
 
-  env.tag = 0;
+  env->tag = 0;
 }
 
 /*===========================================================================*/
@@ -170,7 +164,8 @@ static int Env_proc_y( Env env, int proc )
   return result;
 }
 
-/*---------------------------------------------------------------------------*/
+/*===========================================================================*/
+/*---Proc number this proc---*/
 
 static int Env_proc_this( Env env )
 {
@@ -211,7 +206,7 @@ static double Env_sum_d( double value )
 {
   double result = 0.;
 #ifdef USE_MPI
-  MPI_Allreduce( &value &result, 1, MPI_DOUBLE, MPI_SUM, Env_default_comm() );
+  MPI_Allreduce( &value, &result, 1, MPI_DOUBLE, MPI_SUM, Env_default_comm() );
 #else
   result = value;
 #endif
@@ -229,7 +224,7 @@ static P Env_sum_P( P value )
 /*===========================================================================*/
 /*---MPI functions: point to point---*/
 
-static void Env_send_i( int* p, int n, int proc, int tag )
+static void Env_send_i( const int* p, int n, int proc, int tag )
 {
 #ifdef USE_MPI
   MPI_Send( (void*)p, n, MPI_INT, proc, tag, Env_default_comm() );

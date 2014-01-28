@@ -4,6 +4,11 @@ INCLUDES = -I. -I../common_c
 SOURCES = *.c ../common_c/*.c
 EXECUTABLE = sweep
 
+all: debug_mpi
+
+debug_mpi:
+	gcc -o $(EXECUTABLE) $(SOURCES) $(INCLUDES) -ansi -Dinline= -Wmissing-prototypes -DUSE_MPI -I$(MPICH_DIR)/include -L$(MPICH_DIR)/lib -lmpich
+
 debug:
 	gcc -o $(EXECUTABLE) $(SOURCES) $(INCLUDES) -ansi -Dinline= -Wmissing-prototypes
 

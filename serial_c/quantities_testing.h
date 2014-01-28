@@ -37,12 +37,24 @@ typedef struct
 /*===========================================================================*/
 /*---Pseudo-constructor for Quantities struct---*/
 
-void Quantities_ctor( Quantities* quan, Dimensions dims, Env env );
+void Quantities_ctor( Quantities* quan, Dimensions dims, Env* env );
 
 /*===========================================================================*/
 /*---Pseudo-destructor for Quantities struct---*/
 
 void Quantities_dtor( Quantities* quan );
+
+/*===========================================================================*/
+/*---Initialize Quantities a_from_m, m_from_a matrices---*/
+/*---pseudo-private member function---*/
+
+void Quantities_init_am_matrices__( Quantities* quan, Dimensions dims );
+
+/*===========================================================================*/
+/*---Initialize Quantities subgrid decomp info---*/
+/*---pseudo-private member function---*/
+
+void Quantities_init_decomp__( Quantities* quan, Dimensions dims, Env* env );
 
 /*===========================================================================*/
 /*---Flops cost of solve per element---*/

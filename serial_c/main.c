@@ -49,7 +49,7 @@ int main( int argc, char** argv )
 
   /*---Initialize for execution---*/
 
-  Env_initialize( env, argc, argv );
+  Env_initialize( &env, argc, argv );
 
   /*---Set problem size---*/
 
@@ -60,7 +60,8 @@ int main( int argc, char** argv )
   dims_global.nm = ( argc> 5 && argv[ 5]!="" ) ? atoi(argv[ 5]) : 16;
   dims_global.na = ( argc> 6 && argv[ 6]!="" ) ? atoi(argv[ 6]) : 33;
   numiterations  = ( argc> 7 && argv[ 7]!="" ) ? atoi(argv[ 7]) : 1;
-  env.nproc_x    = ( argc> 8 && argv[ 8]!="" ) ? atoi(argv[ 8]) : 1;
+  env.nproc_x    = ( argc> 8 && argv[ 8]!="" ) ? atoi(argv[ 8]) :
+                                                              Env_nproc( env );
   env.nproc_y    = ( argc> 9 && argv[ 9]!="" ) ? atoi(argv[ 9]) : 1;
   nblock_z       = ( argc>10 && argv[10]!="" ) ? atoi(argv[10]) :
                                                                 dims_global.nz;
@@ -92,8 +93,7 @@ int main( int argc, char** argv )
 
   /*---Initialize quantities---*/
 
-/*FIX*/
-  Quantities_ctor( &quan, dims, env );
+  Quantities_ctor( &quan, dims, &env );
 
   /*---Allocate arrays---*/
 
@@ -102,7 +102,6 @@ int main( int argc, char** argv )
 
   /*---Initialize input state array---*/
 
-/*FIX*/
   initialize_state( vi, dims, NU, quan );
 
   /*---Initialize output state array---*/

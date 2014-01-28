@@ -19,7 +19,16 @@
 /*===========================================================================*/
 /*---Pseudo-constructor for Quantities struct---*/
 
-void Quantities_ctor( Quantities* quan, Dimensions dims, Env env )
+void Quantities_ctor( Quantities* quan, Dimensions dims, Env *env )
+{
+  Quantities_init_am_matrices__( quan, dims );
+  Quantities_init_decomp__( quan, dims, env );
+} /*---Quantities_ctor---*/
+
+/*===========================================================================*/
+/*---Initialize Quantities a_from_m, m_from_a matrices---*/
+
+void Quantities_init_am_matrices__( Quantities* quan, Dimensions dims )
 {
   /*---Declarations---*/
 
@@ -29,10 +38,8 @@ void Quantities_ctor( Quantities* quan, Dimensions dims, Env env )
 
   /*---Allocate arrays---*/
 
-  quan->a_from_m     = malloc_P( dims.nm * dims.na );
-  quan->m_from_a     = malloc_P( dims.nm * dims.na );
-  quan->ix_base_vals = malloc_i( env.nproc_x + 1 );
-  quan->iy_base_vals = malloc_i( env.nproc_y + 1 );
+  quan->a_from_m = malloc_P( dims.nm * dims.na );
+  quan->m_from_a = malloc_P( dims.nm * dims.na );
 
   /*-----------------------------*/
   /*---Set entries of a_from_m---*/
@@ -148,64 +155,132 @@ void Quantities_ctor( Quantities* quan, Dimensions dims, Env env )
     *ref_m_from_a( quan->m_from_a, dims, im, ia ) /=
                                          Quantities_scalefactor_angle__( ia );
   }
+} /*---Quantities_init_am_matrices__---*/
+
+/*===========================================================================*/
+/*---Initialize Quantities subgrid decomp info---*/
+
+void Quantities_init_decomp__( Quantities* quan, Dimensions dims, Env* env )
+{
+  /*---Declarations---*/
+
+  int i  = 0;
+
+  /*---Allocate arrays---*/
+
+  quan->ix_base_vals = malloc_i( env->nproc_x + 1 );
+  quan->iy_base_vals = malloc_i( env->nproc_y + 1 );
 
   /*---------------------------------*/
   /*---Set entries of ix_base_vals---*/
   /*---------------------------------*/
 
+  /*---Collect values to base proc along axis---*/
 
+  if( Env_proc_x_this( *env ) == 0 )
+  {
+    int proc_x = 0;
+    quan->ix_base_vals[ 1+0 ] = dims.nx;
+    for( proc_x=1; proc_x<Env_nproc_x( *env ); ++proc_x )
+    {
+      Env_recv_i( & quan->ix_base_vals[ 1+proc_x ], 1,
+                  Env_proc( *env, proc_x, Env_proc_y_this( *env ) ), env->tag );
+    }
+  }
+  else
+  {
+    Env_send_i( & dims.nx, 1,
+                Env_proc( *env, 0, Env_proc_y_this( *env ) ), env->tag );
+  }
+  env->tag++;
 
+  /*---Broadcast collected array to all other procs along axis---*/
 
-#if 0
-
-fan in
-broadcast
-
-#endif
-
-
-/*FIX*/
-  quan->ix_base_vals[ Env_proc_x_this( env ) ] = dims.nx;
-
-
-
-
+  if( Env_proc_x_this( *env ) == 0 )
+  {
+    int proc_x = 0;
+    for( proc_x=1; proc_x<Env_nproc_x( *env ); ++proc_x )
+    {
+      Env_send_i( & quan->ix_base_vals[ 1 ], Env_nproc_x( *env ),
+                  Env_proc( *env, proc_x, Env_proc_y_this( *env ) ), env->tag );
+    }
+  }
+  else
+  {
+    Env_recv_i( & quan->ix_base_vals[ 1 ], Env_nproc_x( *env ),
+                Env_proc( *env, 0, Env_proc_y_this( *env ) ), env->tag );
+  }
+  env->tag++;
 
   /*---Scan sum---*/
 
   quan->ix_base_vals[0] = 0;
-  for( i=0; i<Env_nproc_x( env ); ++i )
+  for( i=0; i<Env_nproc_x( *env ); ++i )
   {
-    quan->ix_base_vals[i+1] += quan->ix_base_vals[i];
+    quan->ix_base_vals[1+i] += quan->ix_base_vals[i];
   }
 
-  quan->ix_base   = quan->ix_base_vals[ Env_proc_x_this( env ) ];
-  quan->nx_global = quan->ix_base_vals[ Env_nproc_x(     env ) ];
+  quan->ix_base   = quan->ix_base_vals[ Env_proc_x_this( *env ) ];
+  quan->nx_global = quan->ix_base_vals[ Env_nproc_x(     *env ) ];
+
+  assert( quan->ix_base_vals[ Env_proc_x_this( *env )+1 ] -
+          quan->ix_base_vals[ Env_proc_x_this( *env )   ] == dims.nx );
 
   /*---------------------------------*/
   /*---Set entries of iy_base_vals---*/
   /*---------------------------------*/
 
+  /*---Collect values to base proc along axis---*/
 
+  if( Env_proc_y_this( *env ) == 0 )
+  {
+    int proc_y = 0;
+    quan->iy_base_vals[ 1+0 ] = dims.ny;
+    for( proc_y=1; proc_y<Env_nproc_y( *env ); ++proc_y )
+    {
+      Env_recv_i( & quan->iy_base_vals[ 1+proc_y ], 1,
+                  Env_proc( *env, Env_proc_x_this( *env ), proc_y ), env->tag );
+    }
+  }
+  else
+  {
+    Env_send_i( & dims.ny, 1,
+                Env_proc( *env, Env_proc_x_this( *env ), 0 ), env->tag );
+  }
+  env->tag++;
 
+  /*---Broadcast collected array to all other procs along axis---*/
 
-/*FIX*/
-  quan->iy_base_vals[ Env_proc_y_this( env ) ] = dims.ny;
-
-
+  if( Env_proc_y_this( *env ) == 0 )
+  {
+    int proc_y = 0;
+    for( proc_y=1; proc_y<Env_nproc_y( *env ); ++proc_y )
+    {
+      Env_send_i( & quan->iy_base_vals[ 1 ], Env_nproc_y( *env ),
+                  Env_proc( *env, Env_proc_x_this( *env ), proc_y ), env->tag );
+    }
+  }
+  else
+  {
+    Env_recv_i( & quan->iy_base_vals[ 1 ], Env_nproc_y( *env ),
+                Env_proc( *env, Env_proc_x_this( *env ), 0 ), env->tag );
+  }
+  env->tag++;
 
   /*---Scan sum---*/
 
   quan->iy_base_vals[0] = 0;
-  for( i=0; i<Env_nproc_y( env ); ++i )
+  for( i=0; i<Env_nproc_y( *env ); ++i )
   {
-    quan->iy_base_vals[i+1] += quan->iy_base_vals[i];
+    quan->iy_base_vals[1+i] += quan->iy_base_vals[i];
   }
 
-  quan->iy_base   = quan->iy_base_vals[ Env_proc_y_this( env ) ];
-  quan->ny_global = quan->iy_base_vals[ Env_nproc_y(     env ) ];
+  quan->iy_base   = quan->iy_base_vals[ Env_proc_y_this( *env ) ];
+  quan->ny_global = quan->iy_base_vals[ Env_nproc_y(     *env ) ];
 
-} /*---Quantities_ctor---*/
+  assert( quan->iy_base_vals[ Env_proc_y_this( *env )+1 ] -
+          quan->iy_base_vals[ Env_proc_y_this( *env )   ] == dims.ny );
+} /*---Quantities_init_decomp__---*/
 
 /*===========================================================================*/
 /*---Pseudo-destructor for Quantities struct---*/
