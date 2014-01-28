@@ -11,6 +11,7 @@
 #ifndef _serial_c__sweeper_tileoctants_h_
 #define _serial_c__sweeper_tileoctants_h_
 
+#include "env.h"
 #include "definitions.h"
 #include "dimensions.h"
 #include "quantities.h"
@@ -30,7 +31,9 @@ typedef struct
 /*---Pseudo-constructor for Sweeper struct---*/
 
 void Sweeper_ctor( Sweeper*    sweeper,
-                   Dimensions  dims );
+                   Dimensions  dims,
+                   Env*        env,
+                   int         nblock_z );
 
 /*===========================================================================*/
 /*---Specify whether to tile octants---*/
@@ -61,7 +64,8 @@ void Sweeper_sweep(
   P* __restrict__  vo,
   P* __restrict__  vi,
   Quantities       quan,
-  Dimensions       dims );
+  Dimensions       dims,
+  Env*             env );
 
 /*===========================================================================*/
 

@@ -11,6 +11,7 @@
 #ifndef _serial_c__sweeper_tileoctants_c_h_
 #define _serial_c__sweeper_tileoctants_c_h_
 
+#include "env.h"
 #include "definitions.h"
 #include "quantities.h"
 #include "array_accessors.h"
@@ -22,7 +23,9 @@
 /*---Pseudo-constructor for Sweeper struct---*/
 
 void Sweeper_ctor( Sweeper*    sweeper,
-                   Dimensions  dims )
+                   Dimensions  dims,
+                   Env*        env,
+                   int         nblock_z )
 {
   const Bool_t tile_octants = Sweeper_tile_octants();
 
@@ -63,7 +66,8 @@ void Sweeper_sweep(
   P* __restrict__  vo,
   P* __restrict__  vi,
   Quantities       quan,
-  Dimensions       dims )
+  Dimensions       dims,
+  Env*             env )
 {
   assert( sweeper );
   assert( vi );

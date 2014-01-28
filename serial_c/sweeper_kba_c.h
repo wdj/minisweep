@@ -1,15 +1,15 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   sweeper_simple_c.h
+ * \file   sweeper_kba_c.h
  * \author Wayne Joubert
- * \date   Wed Jan 15 16:06:28 EST 2014
- * \brief  Definitions for performing a sweep, simple version.
+ * \date   Tue Jan 28 16:37:41 EST 2014
+ * \brief  Definitions for performing a sweep, kba version.
  * \note   Copyright (C) 2014 Oak Ridge National Laboratory, UT-Battelle, LLC.
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _serial_c__sweeper_simple_c_h_
-#define _serial_c__sweeper_simple_c_h_
+#ifndef _serial_c__sweeper_kba_c_h_
+#define _serial_c__sweeper_kba_c_h_
 
 #include "env.h"
 #include "definitions.h"
@@ -17,7 +17,7 @@
 #include "array_accessors.h"
 #include "array_operations.h"
 #include "memory.h"
-#include "sweeper_simple.h"
+#include "sweeper_kba.h"
 
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
@@ -27,14 +27,28 @@ void Sweeper_ctor( Sweeper*    sweeper,
                    Env*        env,
                    int         nblock_z )
 {
+  Insist( dims.nz % nblock_z == 0 &&
+          "KBA sweeper currently requires all blocks have same z dimension" );
+  Insist( dims.nx > 0 && "KBA sweeper currently requires all blocks nonempty" );
+  Insist( dims.ny > 0 && "KBA sweeper currently requires all blocks nonempty" );
+  Insist( dims.nz > 0 && "KBA sweeper currently requires all blocks nonempty" );
+
+  /*---Set up dimensions of kba block---*/
+  sweeper->nblock_z = nblock_z;
+  sweeper->dims_block = dims;
+  sweeper->dims_block.nz = dims.nz / nblock_z;
+
   /*---Allocate arrays---*/
 
-  sweeper->v_local = malloc_P( dims.na * NU );
-  sweeper->facexy  = malloc_P( dims.nx * dims.ny * dims.ne * dims.na *
+  sweeper->v_local = malloc_P( sweeper->dims_block.na * NU );
+  sweeper->facexy  = malloc_P( sweeper->dims_block.nx * sweeper->dims_block.ny *
+                               sweeper->dims_block.ne * sweeper->dims_block.na *
                                              NU * Sweeper_num_face_octants() );
-  sweeper->facexz  = malloc_P( dims.nx * dims.nz * dims.ne * dims.na *
+  sweeper->facexz  = malloc_P( sweeper->dims_block.nx * sweeper->dims_block.nz *
+                               sweeper->dims_block.ne * sweeper->dims_block.na *
                                              NU * Sweeper_num_face_octants() );
-  sweeper->faceyz  = malloc_P( dims.ny * dims.nz * dims.ne * dims.na *
+  sweeper->faceyz  = malloc_P( sweeper->dims_block.ny * sweeper->dims_block.nz *
+                               sweeper->dims_block.ne * sweeper->dims_block.na *
                                              NU * Sweeper_num_face_octants() );
 }
 
@@ -57,6 +71,56 @@ void Sweeper_dtor( Sweeper* sweeper )
 }
 
 /*===========================================================================*/
+/*---Number of kba parallel steps---*/
+
+int Sweeper_nstep( Sweeper* sweeper, 
+                   Env env )
+{
+  const int num_stacked_blocks = sweeper->nblock_z;
+
+  const int nstep = NOCTANT * num_stacked_blocks
+                                              + 3 * ( Env_nproc_x( env ) - 1 )
+                                              + 2 * ( Env_nproc_y( env ) - 1 );
+  return nstep;
+}
+
+/*===========================================================================*/
+/*---Wehther this proc active for a given sweep step---*/
+
+Bool_t Sweeper_step_active( Sweeper* sweeper, 
+                            int      step,
+                            int      proc_x,
+                            int      proc_y,
+                            Env      env )
+{
+
+}
+
+/*===========================================================================*/
+/*---Octant to compute for a given sweep step---*/
+
+int Sweeper_octant( Sweeper* sweeper, 
+                     int     step,
+                     int     proc_x,
+                     int     proc_y,
+                     Env     env )
+{
+
+}
+
+/*===========================================================================*/
+/*---Z block number to compute for a given sweep step---*/
+
+int Sweeper_block_z( Sweeper* sweeper, 
+                     int      step,
+                     int      proc_x,
+                     int      proc_y,
+                     Env      env )
+{
+
+}
+
+/*===========================================================================*/
 /*---Perform a sweep---*/
 
 void Sweeper_sweep(
@@ -70,6 +134,8 @@ void Sweeper_sweep(
   assert( sweeper );
   assert( vi );
   assert( vo );
+
+#if 0
 
   /*---Declarations---*/
   int ix = 0;
@@ -233,10 +299,14 @@ void Sweeper_sweep(
 
   } /*---octant---*/
 
+#endif
+
+
+
 } /*---sweep---*/
 
 /*===========================================================================*/
 
-#endif /*---_serial_c__sweeper_simple_c_h_---*/
+#endif /*---_serial_c__sweeper_kba_c_h_---*/
 
 /*---------------------------------------------------------------------------*/

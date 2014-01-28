@@ -63,21 +63,23 @@ int main( int argc, char** argv )
   env.nproc_x    = ( argc> 8 && argv[ 8]!="" ) ? atoi(argv[ 8]) :
                                                               Env_nproc( env );
   env.nproc_y    = ( argc> 9 && argv[ 9]!="" ) ? atoi(argv[ 9]) : 1;
-  nblock_z       = ( argc>10 && argv[10]!="" ) ? atoi(argv[10]) :
+  nblock_z       = ( argc>10 && argv[10]!="" ) ? atoi(argv[10]) : 1;
+/*
                                                                 dims_global.nz;
+*/
 
-  Insist( dims_global.nx > 0, "Invalid nx supplied." );
-  Insist( dims_global.ny > 0, "Invalid ny supplied." );
-  Insist( dims_global.nz > 0, "Invalid nz supplied." );
-  Insist( dims_global.ne > 0, "Invalid ne supplied." );
-  Insist( dims_global.nm > 0, "Invalid nm supplied." );
-  Insist( dims_global.na > 0, "Invalid na supplied." );
-  Insist( numiterations >= 0, "Invalid iteration count supplied." );
-  Insist( Env_nproc_x( env ) > 0, "Invalid nproc_x supplied." );
-  Insist( Env_nproc_y( env ) > 0, "Invalid nproc_y supplied." );
-  Insist( Env_nproc_x( env ) * Env_nproc_y( env ) ==  Env_nproc( env ),
+  Insist( dims_global.nx > 0 && "Invalid nx supplied." );
+  Insist( dims_global.ny > 0 && "Invalid ny supplied." );
+  Insist( dims_global.nz > 0 && "Invalid nz supplied." );
+  Insist( dims_global.ne > 0 && "Invalid ne supplied." );
+  Insist( dims_global.nm > 0 && "Invalid nm supplied." );
+  Insist( dims_global.na > 0 && "Invalid na supplied." );
+  Insist( numiterations >= 0 && "Invalid iteration count supplied." );
+  Insist( Env_nproc_x( env ) > 0 && "Invalid nproc_x supplied." );
+  Insist( Env_nproc_y( env ) > 0 && "Invalid nproc_y supplied." );
+  Insist( Env_nproc_x( env ) * Env_nproc_y( env ) ==  Env_nproc( env ) &&
                            "Invalid process decomposition supplied." );
-  Insist( nblock_z > 0, "Invalid z blocking factor supplied." );
+  Insist( nblock_z > 0 && "Invalid z blocking factor supplied." );
 
   /*---Initialize (local) dimensions---*/
 
@@ -113,8 +115,7 @@ int main( int argc, char** argv )
 
   /*---Initialize sweeper---*/
 
-/*FIX*/
-  Sweeper_ctor( &sweeper, dims );
+  Sweeper_ctor( &sweeper, dims, &env, nblock_z );
 
   /*---Call sweeper---*/
 
@@ -126,7 +127,8 @@ int main( int argc, char** argv )
                    iteration%2==0 ? vo : vi,
                    iteration%2==0 ? vi : vo,
                    quan,
-                   dims );
+                   dims,
+                   &env );
   }
 
   t2 = Env_get_synced_time();

@@ -25,15 +25,14 @@
 /*---Assertions---*/
 
 #ifndef Insist
-#define Insist( condition, message ) \
-  (void)((condition) || (insist_ (#condition, __FILE__, __LINE__, message),0))
+#define Insist( condition ) \
+  (void)((condition) || (insist_ (#condition, __FILE__, __LINE__),0))
 #endif
 
-static void insist_( const char *condition_string, const char *file, int line,
-                     const char *message )
+static void insist_( const char *condition_string, const char *file, int line )
 {
-  fprintf( stderr, "Insist error: \"%s\". At file %s, line %i. %s\n",
-                   condition_string, file, line, message );
+  fprintf( stderr, "Insist error: \"%s\". At file %s, line %i.\n",
+                   condition_string, file, line );
   exit( EXIT_FAILURE );
 }
 

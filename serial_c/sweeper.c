@@ -8,12 +8,16 @@
  */
 /*---------------------------------------------------------------------------*/
 
-#if 1
-#include "sweeper_tileoctants_c.h"
+#if 0
+#include "sweeper_simple_c.h"
 #endif
 
 #if 0
-#include "sweeper_simple_c.h"
+#include "sweeper_tileoctants_c.h"
+#endif
+
+#if 1
+#include "sweeper_kba_c.h"
 #endif
 
 /*---------------------------------------------------------------------------*/
