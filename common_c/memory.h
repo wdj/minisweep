@@ -12,19 +12,31 @@
 #define _common_c__memory_h_
 
 #include <stdlib.h>
-#include "definitions.h"
+#include "env.h"
 
 /*===========================================================================*/
-/*---Allocate array of type "P"---*/
+/*---Allocate array of type int---*/
 
-P* pmalloc( size_t n );
-
-/*===========================================================================*/
-/*---Deallocate array of type "P"---*/
-
-void pfree( P* p );
+int* malloc_i( size_t n );
 
 /*===========================================================================*/
+/*---Deallocate array of type int---*/
+
+void free_i( int* p );
+
+/*===========================================================================*/
+/*---Allocate array of type P---*/
+
+P* malloc_P( size_t n );
+
+/*===========================================================================*/
+/*---Deallocate array of type P---*/
+
+void free_P( P* p );
+
+/*===========================================================================*/
+
+
 
 #endif /*---_common_c__memory_h_---*/
 

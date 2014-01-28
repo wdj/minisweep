@@ -45,7 +45,7 @@ static Bool_t Sweeper_tile_octants()
 
 static int Sweeper_num_face_octants()
 {
-  return Sweeper_tile_octants ? NOCTANT : 1;
+  return Sweeper_tile_octants() ? NOCTANT : 1;
 }
 
 /*===========================================================================*/

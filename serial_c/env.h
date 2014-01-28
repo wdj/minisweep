@@ -37,6 +37,23 @@ static void insist_( const char *condition_string, const char *file, int line,
   exit( EXIT_FAILURE );
 }
 
+#ifndef NDEBUG
+#define Static_Assert( condition ) { int a[ ( condition ) ? 1 : -1 ]; }
+#else
+#define Static_Assert( condition )
+#endif
+
+/*===========================================================================*/
+/*---Basic types---*/
+
+/*---Floating point type for sweep---*/
+
+typedef double P;
+enum{ P_IS_DOUBLE = 1 };
+
+static inline P P_zero() { return (P)0.; }
+static inline P P_one()  { return (P)1.; }
+
 /*===========================================================================*/
 /*---Boolean type---*/
 
@@ -52,37 +69,31 @@ typedef struct
 
   /*---number of procs along y axis---*/
   int nproc_y;
+
+  /*---Next free message tag---*/
+  int tag;
+
 } Env;
 
 /*===========================================================================*/
-/*---Timer utility---*/
-  
-static double Env_get_time() 
-{
-    struct timeval tv;
-    int i = gettimeofday( &tv, NULL );
-    double result = ( (double) tv.tv_sec +
-                      (double) tv.tv_usec * 1.e-6 );
-    return result;
-} 
-
-/*===========================================================================*/
 /*---Initialize for execution---*/
-  
-static void Env_initialize( int argc, char** argv )
-{ 
+
+static void Env_initialize( Env env, int argc, char** argv )
+{
 #ifdef USE_MPI
   MPI_Init( &argc, &argv );
 #endif
+
+  env.tag = 0;
 }
-  
+
 /*===========================================================================*/
 /*---Finalize execution---*/
 
-static void Env_finalize() 
-{ 
+static void Env_finalize( Env env )
+{
 #ifdef USE_MPI
-  MPI_Finalize(); 
+  MPI_Finalize();
 #endif
 }
 
@@ -116,10 +127,14 @@ static int Env_nproc( Env env )
   return result;
 }
 
+/*---------------------------------------------------------------------------*/
+
 static int Env_nproc_x( Env env )
 {
   return env.nproc_x;
 }
+
+/*---------------------------------------------------------------------------*/
 
 static int Env_nproc_y( Env env )
 {
@@ -129,7 +144,35 @@ static int Env_nproc_y( Env env )
 /*===========================================================================*/
 /*---Proc number---*/
 
-static int Env_proc( Env env )
+static int Env_proc( Env env, int proc_x, int proc_y )
+{
+  assert( proc_x >= 0 && proc_x < Env_nproc_x( env ) );
+  assert( proc_y >= 0 && proc_y < Env_nproc_y( env ) );
+  int result = proc_x + Env_nproc_x( env ) * proc_y;
+  return result;
+}
+
+/*---------------------------------------------------------------------------*/
+
+static int Env_proc_x( Env env, int proc )
+{
+  assert( proc >= 0 && proc < Env_nproc( env ) );
+  int result = proc % Env_nproc_x( env );
+  return result;
+}
+
+/*---------------------------------------------------------------------------*/
+
+static int Env_proc_y( Env env, int proc )
+{
+  assert( proc >= 0 && proc < Env_nproc( env ) );
+  int result = proc / Env_nproc_x( env );
+  return result;
+}
+
+/*---------------------------------------------------------------------------*/
+
+static int Env_proc_this( Env env )
 {
   int result = 0;
 #ifdef USE_MPI
@@ -137,13 +180,103 @@ static int Env_proc( Env env )
 #endif
   return result;
 }
- 
+
+/*---------------------------------------------------------------------------*/
+
+static int Env_proc_x_this( Env env )
+{
+  return Env_proc_x( env, Env_proc_this( env ) );
+}
+
+/*---------------------------------------------------------------------------*/
+
+static int Env_proc_y_this( Env env )
+{
+  return Env_proc_y( env, Env_proc_this( env ) );
+}
+
+/*===========================================================================*/
+/*---MPI functions: global---*/
+
+static void Env_barrier()
+{
+#ifdef USE_MPI
+  MPI_Barrier( Env_default_comm() );
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+static double Env_sum_d( double value )
+{
+  double result = 0.;
+#ifdef USE_MPI
+  MPI_Allreduce( &value &result, 1, MPI_DOUBLE, MPI_SUM, Env_default_comm() );
+#else
+  result = value;
+#endif
+  return result;
+}
+
+/*---------------------------------------------------------------------------*/
+
+static P Env_sum_P( P value )
+{
+  Static_Assert( P_IS_DOUBLE );
+  return Env_sum_d( value );
+}
+
+/*===========================================================================*/
+/*---MPI functions: point to point---*/
+
+static void Env_send_i( int* p, int n, int proc, int tag )
+{
+#ifdef USE_MPI
+  MPI_Send( (void*)p, n, MPI_INT, proc, tag, Env_default_comm() );
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void Env_recv_i( int* p, int n, int proc, int tag )
+{
+#ifdef USE_MPI
+  MPI_Status status;
+  MPI_Recv( (void*)p, n, MPI_INT, proc, tag, Env_default_comm(), &status );
+#endif
+}
+
 /*===========================================================================*/
 /*---Indicate whether to do output---*/
 
 static Bool_t Env_do_output( Env env )
 {
-  return ( Env_proc( env ) == 0 );
+  return ( Env_proc_this( env ) == 0 );
+}
+
+/*===========================================================================*/
+/*---Timer type---*/
+
+typedef double Timer_t;
+
+/*===========================================================================*/
+/*---Timer utilities---*/
+
+static Timer_t Env_get_time()
+{
+    struct timeval tv;
+    int i = gettimeofday( &tv, NULL );
+    Timer_t result = ( (Timer_t) tv.tv_sec +
+                       (Timer_t) tv.tv_usec * 1.e-6 );
+    return result;
+}
+
+/*---------------------------------------------------------------------------*/
+
+static Timer_t Env_get_synced_time()
+{
+  Env_barrier();
+  return Env_get_time();
 }
 
 /*===========================================================================*/

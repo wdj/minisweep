@@ -13,6 +13,8 @@
 
 #include <stdlib.h>
 
+#include "env.h"
+
 /*===========================================================================*/
 /*---Struct to hold problem dimensions---*/
 

@@ -26,12 +26,12 @@ void Sweeper_ctor( Sweeper*    sweeper,
 {
   /*---Allocate arrays---*/
 
-  sweeper->v_local = pmalloc( dims.na * NU );
-  sweeper->facexy  = pmalloc( dims.nx * dims.ny * dims.ne * dims.na *
+  sweeper->v_local = malloc_P( dims.na * NU );
+  sweeper->facexy  = malloc_P( dims.nx * dims.ny * dims.ne * dims.na *
                                              NU * Sweeper_num_face_octants() );
-  sweeper->facexz  = pmalloc( dims.nx * dims.nz * dims.ne * dims.na *
+  sweeper->facexz  = malloc_P( dims.nx * dims.nz * dims.ne * dims.na *
                                              NU * Sweeper_num_face_octants() );
-  sweeper->faceyz  = pmalloc( dims.ny * dims.nz * dims.ne * dims.na *
+  sweeper->faceyz  = malloc_P( dims.ny * dims.nz * dims.ne * dims.na *
                                              NU * Sweeper_num_face_octants() );
 }
 
@@ -42,15 +42,15 @@ void Sweeper_dtor( Sweeper* sweeper )
 {
   /*---Deallocate arrays---*/
 
-  pfree( sweeper->v_local );
-  pfree( sweeper->facexy );
-  pfree( sweeper->facexz );
-  pfree( sweeper->faceyz );
+  free_P( sweeper->v_local );
+  free_P( sweeper->facexy );
+  free_P( sweeper->facexz );
+  free_P( sweeper->faceyz );
 
-  sweeper->v_local = 0;
-  sweeper->facexy  = 0;
-  sweeper->facexz  = 0;
-  sweeper->faceyz  = 0;
+  sweeper->v_local = NULL;
+  sweeper->facexy  = NULL;
+  sweeper->facexz  = NULL;
+  sweeper->faceyz  = NULL;
 }
 
 /*===========================================================================*/

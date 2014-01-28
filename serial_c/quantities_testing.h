@@ -24,14 +24,20 @@ enum{ NU = 1 };
 
 typedef struct
 {
-  P* __restrict__ a_from_m;
-  P* __restrict__ m_from_a;
+  P* __restrict__  a_from_m;
+  P* __restrict__  m_from_a;
+  int*             ix_base_vals;
+  int*             iy_base_vals;
+  int              ix_base;
+  int              iy_base;
+  int              nx_global;
+  int              ny_global;
 } Quantities;
 
 /*===========================================================================*/
 /*---Pseudo-constructor for Quantities struct---*/
 
-void Quantities_ctor( Quantities* quan, Dimensions dims );
+void Quantities_ctor( Quantities* quan, Dimensions dims, Env env );
 
 /*===========================================================================*/
 /*---Pseudo-destructor for Quantities struct---*/
@@ -144,13 +150,13 @@ static inline P Quantities_zfluxweight__( int ia )
 /*---Initial values for boundary array---*/
 
 static inline P Quantities_init_facexy(
-  int        ix,
-  int        iy,
-  int        iz,
-  int        ie,
-  int        ia,
-  int        iu,
-  Dimensions dims )
+  int              ix,
+  int              iy,
+  int              iz,
+  int              ie,
+  int              ia,
+  int              iu,
+  const Dimensions dims )
 {
   assert( ix >=  0 && ix < dims.nx );
   assert( iy >=  0 && iy < dims.ny );
@@ -173,13 +179,13 @@ static inline P Quantities_init_facexy(
 /*---Initial values for boundary array---*/
 
 static inline P Quantities_init_facexz(
-  int        ix,
-  int        iy,
-  int        iz,
-  int        ie,
-  int        ia,
-  int        iu,
-  Dimensions dims )
+  int              ix,
+  int              iy,
+  int              iz,
+  int              ie,
+  int              ia,
+  int              iu,
+  const Dimensions dims )
 {
   assert( ix >=  0 && ix < dims.nx );
   assert( iy >= -1 && iy < dims.ny+1 );
@@ -198,13 +204,13 @@ static inline P Quantities_init_facexz(
 /*---Initial values for boundary array---*/
 
 static inline P Quantities_init_faceyz(
-  int        ix,
-  int        iy,
-  int        iz,
-  int        ie,
-  int        ia,
-  int        iu,
-  Dimensions dims )
+  int              ix,
+  int              iy,
+  int              iz,
+  int              ie,
+  int              ia,
+  int              iu,
+  const Dimensions dims )
 {
   assert( ix >= -1 && ix < dims.nx+1 );
   assert( iy >=  0 && iy < dims.ny );
@@ -223,23 +229,25 @@ static inline P Quantities_init_faceyz(
 /*---Initial values for state vector---*/
 
 static inline P Quantities_init_state(
-  int        ix,
-  int        iy,
-  int        iz,
-  int        ie,
-  int        im,
-  int        iu,
-  Dimensions dims )
+  int              ix,
+  int              iy,
+  int              iz,
+  int              ie,
+  int              im,
+  int              iu,
+  const Dimensions dims,
+  const Quantities quan )
 {
-  assert( ix >= 0 && ix < dims.nx );
-  assert( iy >= 0 && iy < dims.ny );
+  assert( ix >= 0 && ix < quan.nx_global);
+  assert( iy >= 0 && iy < quan.ny_global );
   assert( iz >= 0 && iz < dims.nz );
   assert( ie >= 0 && ie < dims.ne );
   assert( im >= 0 && im < dims.nm );
   assert( iu >= 0 && iu < NU );
 
   return (P) Quantities_affinefunction__( im )
-           * Quantities_scalefactor_space__( ix, iy, iz )
+           * Quantities_scalefactor_space__( ix+quan.ix_base,
+                                             iy+quan.iy_base, iz )
            * Quantities_scalefactor_energy__( ie );
 }
 
@@ -247,18 +255,18 @@ static inline P Quantities_init_state(
 /*---Perform equation solve at a gridcell---*/
 
 static inline void Quantities_solve(
-  P* __restrict__ v_local,
-  P* __restrict__ facexy,
-  P* __restrict__ facexz,
-  P* __restrict__ faceyz,
-  int ix,
-  int iy,
-  int iz,
-  int ie,
-  int octant,
-  int octant_ind,
-  Quantities quan,
-  Dimensions dims )
+  P* __restrict__  v_local,
+  P* __restrict__  facexy,
+  P* __restrict__  facexz,
+  P* __restrict__  faceyz,
+  int              ix,
+  int              iy,
+  int              iz,
+  int              ie,
+  int              octant,
+  int              octant_ind,
+  const Quantities quan,
+  const Dimensions dims )
 {
   assert( v_local );
   assert( facexy );

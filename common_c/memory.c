@@ -10,13 +10,31 @@
 
 #include <stdlib.h>
 #include "env.h"
-#include "definitions.h"
 #include "memory.h"
 
 /*===========================================================================*/
-/*---Allocate array of type "P"---*/
+/*---Allocate array of type int---*/
 
-P* pmalloc( size_t n )
+int* malloc_i( size_t n )
+{
+  int* p = (int*) malloc( n * sizeof( int ) );
+  assert( p );
+  return p;
+}
+
+/*===========================================================================*/
+/*---Deallocate array of type int---*/
+
+void free_i( int* p )
+{
+  assert( p );
+  free( (void*) p );
+}
+
+/*===========================================================================*/
+/*---Allocate array of type P---*/
+
+P* malloc_P( size_t n )
 {
   P* p = (P*) malloc( n * sizeof( P ) );
   assert( p );
@@ -24,9 +42,9 @@ P* pmalloc( size_t n )
 }
 
 /*===========================================================================*/
-/*---Deallocate array of type "P"---*/
+/*---Deallocate array of type P---*/
 
-void pfree( P* p )
+void free_P( P* p )
 {
   assert( p );
   free( (void*) p );

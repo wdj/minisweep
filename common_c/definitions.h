@@ -13,10 +13,6 @@
 
 /*===========================================================================*/
 
-/*---Floating point type for sweep---*/
-
-typedef double P;
-
 /*---Initializations---*/
 
 /*---Number of physical dimensions---*/
@@ -24,9 +20,6 @@ enum{ NDIM = 3 };
 
 /*---Number of octant directions---*/
 enum{ NOCTANT = 8 };
-
-static inline P P_zero() { return (P)0.; }
-static inline P P_one()  { return (P)1.; }
 
 /*===========================================================================*/
 /*---Functions to manipulate sweep directions---*/

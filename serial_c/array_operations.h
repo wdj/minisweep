@@ -11,6 +11,7 @@
 #ifndef _serial_c__array_operations_h_
 #define _serial_c__array_operations_h_
 
+#include "env.h"
 #include "definitions.h"
 #include "dimensions.h"
 #include "array_accessors.h"
@@ -19,7 +20,10 @@
 /*===========================================================================*/
 /*---Initialize state vector to required input value---*/
 
-static void initialize_state( P* __restrict__ v, Dimensions dims, int nu )
+static void initialize_state( P* __restrict__   v,
+                              const Dimensions  dims,
+                              int               nu,
+                              const Quantities  quan )
 {
   int ix = 0;
   int iy = 0;
@@ -36,45 +40,38 @@ static void initialize_state( P* __restrict__ v, Dimensions dims, int nu )
   for( iu=0; iu<nu; ++iu )
   {
     *ref_state( v, dims, nu, ix, iy, iz, ie, im, iu )
-                       = Quantities_init_state( ix, iy, iz, ie, im, iu, dims );
+                = Quantities_init_state( ix, iy, iz, ie, im, iu, dims, quan );
   }
 }
 
 /*===========================================================================*/
 /*---Initialize state vector to zero---*/
 
-static void initialize_state_zero( P* __restrict__ v, Dimensions dims, int nu )
+static void initialize_state_zero( P* __restrict__   v,
+                                   const Dimensions  dims,
+                                   int               nu )
 {
-  int ix = 0;
-  int iy = 0;
-  int iz = 0;
-  int ie = 0;
-  int im = 0;
-  int iu = 0;
+  size_t i = 0;
+  size_t n = Dimensions_size_state( dims, nu );
 
-  for( iz=0; iz<dims.nz; ++iz )
-  for( iy=0; iy<dims.ny; ++iy )
-  for( ix=0; ix<dims.nx; ++ix )
-  for( ie=0; ie<dims.ne; ++ie )
-  for( im=0; im<dims.nm; ++im )
-  for( iu=0; iu<nu; ++iu )
+  for( i=0; i<n; ++i )
   {
-    *ref_state( v, dims, nu, ix, iy, iz, ie, im, iu ) = P_zero();
+    v[i] = P_zero();
   }
 }
 
 /*===========================================================================*/
 /*---Compute vector norm info for state vector---*/
 
-static void get_state_norms( P* __restrict__  vi,
-                             P* __restrict__  vo,
-                             Dimensions       dims,
-                             int              nu,
-                             P*               normsqp,
-                             P*               normsqdiffp )
+static void get_state_norms( P* __restrict__   vi,
+                             P* __restrict__   vo,
+                             const Dimensions  dims,
+                             int               nu,
+                             P*                normsqp,
+                             P*                normsqdiffp )
 {
-  assert( normsqp );
-  assert( normsqdiffp );
+  assert( normsqp     && "Null pointer encountered" );
+  assert( normsqdiffp && "Null pointer encountered" );
 
   int ix = 0;
   int iy = 0;
@@ -93,16 +90,16 @@ static void get_state_norms( P* __restrict__  vi,
   for( im=0; im<dims.nm; ++im )
   for( iu=0; iu<nu; ++iu )
   {
-    normsq += *ref_state( vo, dims, nu, ix, iy, iz, ie, im, iu ) *
-              *ref_state( vo, dims, nu, ix, iy, iz, ie, im, iu );
-    normsqdiff +=
-             ( *ref_state( vo, dims, nu, ix, iy, iz, ie, im, iu ) -
-               *ref_state( vi, dims, nu, ix, iy, iz, ie, im, iu ) ) *
-             ( *ref_state( vo, dims, nu, ix, iy, iz, ie, im, iu ) -
-               *ref_state( vi, dims, nu, ix, iy, iz, ie, im, iu ) );
+    const P val_vi = *ref_state( vi, dims, nu, ix, iy, iz, ie, im, iu );
+    const P val_vo = *ref_state( vi, dims, nu, ix, iy, iz, ie, im, iu );
+    const P diff   = val_vi - val_vo;
+    normsq        += val_vo * val_vo;
+    normsqdiff    += diff   * diff;
   }
   assert( normsq     >= P_zero() );
   assert( normsqdiff >= P_zero() );
+  Env_sum_P( normsq );
+  Env_sum_P( normsqdiff );
 
   *normsqp     = normsq;
   *normsqdiffp = normsqdiff;

@@ -19,7 +19,7 @@
 /*===========================================================================*/
 /*---Pseudo-constructor for Quantities struct---*/
 
-void Quantities_ctor( Quantities* quan, Dimensions dims )
+void Quantities_ctor( Quantities* quan, Dimensions dims, Env env )
 {
   /*---Declarations---*/
 
@@ -29,8 +29,10 @@ void Quantities_ctor( Quantities* quan, Dimensions dims )
 
   /*---Allocate arrays---*/
 
-  quan->a_from_m = pmalloc( dims.nm * dims.na );
-  quan->m_from_a = pmalloc( dims.nm * dims.na );
+  quan->a_from_m     = malloc_P( dims.nm * dims.na );
+  quan->m_from_a     = malloc_P( dims.nm * dims.na );
+  quan->ix_base_vals = malloc_i( env.nproc_x + 1 );
+  quan->iy_base_vals = malloc_i( env.nproc_y + 1 );
 
   /*-----------------------------*/
   /*---Set entries of a_from_m---*/
@@ -147,6 +149,62 @@ void Quantities_ctor( Quantities* quan, Dimensions dims )
                                          Quantities_scalefactor_angle__( ia );
   }
 
+  /*---------------------------------*/
+  /*---Set entries of ix_base_vals---*/
+  /*---------------------------------*/
+
+
+
+
+#if 0
+
+fan in
+broadcast
+
+#endif
+
+
+/*FIX*/
+  quan->ix_base_vals[ Env_proc_x_this( env ) ] = dims.nx;
+
+
+
+
+
+  /*---Scan sum---*/
+
+  quan->ix_base_vals[0] = 0;
+  for( i=0; i<Env_nproc_x( env ); ++i )
+  {
+    quan->ix_base_vals[i+1] += quan->ix_base_vals[i];
+  }
+
+  quan->ix_base   = quan->ix_base_vals[ Env_proc_x_this( env ) ];
+  quan->nx_global = quan->ix_base_vals[ Env_nproc_x(     env ) ];
+
+  /*---------------------------------*/
+  /*---Set entries of iy_base_vals---*/
+  /*---------------------------------*/
+
+
+
+
+/*FIX*/
+  quan->iy_base_vals[ Env_proc_y_this( env ) ] = dims.ny;
+
+
+
+  /*---Scan sum---*/
+
+  quan->iy_base_vals[0] = 0;
+  for( i=0; i<Env_nproc_y( env ); ++i )
+  {
+    quan->iy_base_vals[i+1] += quan->iy_base_vals[i];
+  }
+
+  quan->iy_base   = quan->iy_base_vals[ Env_proc_y_this( env ) ];
+  quan->ny_global = quan->iy_base_vals[ Env_nproc_y(     env ) ];
+
 } /*---Quantities_ctor---*/
 
 /*===========================================================================*/
@@ -156,11 +214,15 @@ void Quantities_dtor( Quantities* quan )
 {
   /*---Deallocate arrays---*/
 
-  pfree( quan->a_from_m );
-  pfree( quan->m_from_a );
+  free_P( quan->a_from_m );
+  free_P( quan->m_from_a );
+  free_i( quan->ix_base_vals );
+  free_i( quan->iy_base_vals );
 
-  quan->a_from_m = 0;
-  quan->m_from_a = 0;
+  quan->a_from_m = NULL;
+  quan->m_from_a = NULL;
+  quan->ix_base_vals = NULL;
+  quan->iy_base_vals = NULL;
 
 } /*---Quantities_dtor---*/
 
