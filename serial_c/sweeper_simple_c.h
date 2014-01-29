@@ -31,11 +31,11 @@ void Sweeper_ctor( Sweeper*    sweeper,
 
   sweeper->v_local = malloc_P( dims.na * NU );
   sweeper->facexy  = malloc_P( dims.nx * dims.ny * dims.ne * dims.na *
-                                             NU * Sweeper_num_face_octants() );
+                                  NU * Sweeper_num_face_octants_allocated() );
   sweeper->facexz  = malloc_P( dims.nx * dims.nz * dims.ne * dims.na *
-                                             NU * Sweeper_num_face_octants() );
+                                  NU * Sweeper_num_face_octants_allocated() );
   sweeper->faceyz  = malloc_P( dims.ny * dims.nz * dims.ne * dims.na *
-                                             NU * Sweeper_num_face_octants() );
+                                  NU * Sweeper_num_face_octants_allocated() );
 }
 
 /*===========================================================================*/
@@ -90,7 +90,8 @@ void Sweeper_sweep(
   for( octant=0; octant<NOCTANT; ++octant )
   {
     const int octant_ind = 0;
-    assert( octant_ind >= 0 && octant_ind < Sweeper_num_face_octants() );
+    assert( octant_ind >= 0 &&
+            octant_ind < Sweeper_num_face_octants_allocated() );
 
     /*---Decode octant directions from octant number---*/
 
@@ -205,7 +206,8 @@ void Sweeper_sweep(
 
       Quantities_solve( sweeper->v_local,
                         sweeper->facexy, sweeper->facexz, sweeper->faceyz,
-                        ix, iy, iz, ie, octant, octant_ind, quan, dims );
+                        ix, iy, iz, ie, ix, iy, iz,
+                        octant, octant_ind, quan, dims, dims );
 
       /*--------------------*/
       /*---Transform state vector from angles to moments---*/

@@ -25,7 +25,7 @@ int main( int argc, char** argv )
 {
   /*---Declarations---*/
 
-  Dimensions  dims_global;
+  Dimensions  dims_g;
   Dimensions  dims;         /*---dims for the part on this MPI proc---*/
   Quantities  quan;
   Sweeper     sweeper;
@@ -53,27 +53,27 @@ int main( int argc, char** argv )
 
   /*---Set problem size---*/
 
-  dims_global.nx = ( argc> 1 && argv[ 1]!="" ) ? atoi(argv[ 1]) : 5;
-  dims_global.ny = ( argc> 2 && argv[ 2]!="" ) ? atoi(argv[ 2]) : 5;
-  dims_global.nz = ( argc> 3 && argv[ 3]!="" ) ? atoi(argv[ 3]) : 5;
-  dims_global.ne = ( argc> 4 && argv[ 4]!="" ) ? atoi(argv[ 4]) : 30;
-  dims_global.nm = ( argc> 5 && argv[ 5]!="" ) ? atoi(argv[ 5]) : 16;
-  dims_global.na = ( argc> 6 && argv[ 6]!="" ) ? atoi(argv[ 6]) : 33;
+  dims_g.nx = ( argc> 1 && argv[ 1]!="" ) ? atoi(argv[ 1]) : 5;
+  dims_g.ny = ( argc> 2 && argv[ 2]!="" ) ? atoi(argv[ 2]) : 5;
+  dims_g.nz = ( argc> 3 && argv[ 3]!="" ) ? atoi(argv[ 3]) : 5;
+  dims_g.ne = ( argc> 4 && argv[ 4]!="" ) ? atoi(argv[ 4]) : 30;
+  dims_g.nm = ( argc> 5 && argv[ 5]!="" ) ? atoi(argv[ 5]) : 16;
+  dims_g.na = ( argc> 6 && argv[ 6]!="" ) ? atoi(argv[ 6]) : 33;
   numiterations  = ( argc> 7 && argv[ 7]!="" ) ? atoi(argv[ 7]) : 1;
   env.nproc_x    = ( argc> 8 && argv[ 8]!="" ) ? atoi(argv[ 8]) :
                                                               Env_nproc( env );
   env.nproc_y    = ( argc> 9 && argv[ 9]!="" ) ? atoi(argv[ 9]) : 1;
   nblock_z       = ( argc>10 && argv[10]!="" ) ? atoi(argv[10]) : 1;
 /*
-                                                                dims_global.nz;
+                                                                dims_g.nz;
 */
 
-  Insist( dims_global.nx > 0 && "Invalid nx supplied." );
-  Insist( dims_global.ny > 0 && "Invalid ny supplied." );
-  Insist( dims_global.nz > 0 && "Invalid nz supplied." );
-  Insist( dims_global.ne > 0 && "Invalid ne supplied." );
-  Insist( dims_global.nm > 0 && "Invalid nm supplied." );
-  Insist( dims_global.na > 0 && "Invalid na supplied." );
+  Insist( dims_g.nx > 0 && "Invalid nx supplied." );
+  Insist( dims_g.ny > 0 && "Invalid ny supplied." );
+  Insist( dims_g.nz > 0 && "Invalid nz supplied." );
+  Insist( dims_g.ne > 0 && "Invalid ne supplied." );
+  Insist( dims_g.nm > 0 && "Invalid nm supplied." );
+  Insist( dims_g.na > 0 && "Invalid na supplied." );
   Insist( numiterations >= 0 && "Invalid iteration count supplied." );
   Insist( Env_nproc_x( env ) > 0 && "Invalid nproc_x supplied." );
   Insist( Env_nproc_y( env ) > 0 && "Invalid nproc_y supplied." );
@@ -83,15 +83,15 @@ int main( int argc, char** argv )
 
   /*---Initialize (local) dimensions---*/
 
-  dims = dims_global;
+  dims = dims_g;
 
   dims.nx =
-      ( ( Env_proc_x_this( env ) + 1 ) * dims_global.nx ) / Env_nproc_x( env )
-    - ( ( Env_proc_x_this( env )     ) * dims_global.nx ) / Env_nproc_x( env );
+      ( ( Env_proc_x_this( env ) + 1 ) * dims_g.nx ) / Env_nproc_x( env )
+    - ( ( Env_proc_x_this( env )     ) * dims_g.nx ) / Env_nproc_x( env );
 
   dims.ny =
-      ( ( Env_proc_y_this( env ) + 1 ) * dims_global.ny ) / Env_nproc_y( env )
-    - ( ( Env_proc_y_this( env )     ) * dims_global.ny ) / Env_nproc_y( env );
+      ( ( Env_proc_y_this( env ) + 1 ) * dims_g.ny ) / Env_nproc_y( env )
+    - ( ( Env_proc_y_this( env )     ) * dims_g.ny ) / Env_nproc_y( env );
 
   /*---Initialize quantities---*/
 

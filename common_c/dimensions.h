@@ -46,6 +46,25 @@ size_t Dimensions_size_state( const Dimensions dims, int nu );
 size_t Dimensions_size_state_angles( const Dimensions dims, int nu );
 
 /*===========================================================================*/
+/*---Size of face vectors---*/
+
+size_t Dimensions_size_facexy( const Dimensions dims,
+                               int nu,
+                               int num_face_octants_allocated );
+
+/*---------------------------------------------------------------------------*/
+
+size_t Dimensions_size_facexz( const Dimensions dims,
+                               int nu,
+                               int num_face_octants_allocated );
+
+/*---------------------------------------------------------------------------*/
+
+size_t Dimensions_size_faceyz( const Dimensions dims,
+                               int nu,
+                               int num_face_octants_allocated );
+
+/*===========================================================================*/
 
 #endif /*---_common_c__dimensions_h_---*/
 

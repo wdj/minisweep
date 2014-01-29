@@ -58,6 +58,8 @@ static inline P P_one()  { return (P)1.; }
 
 typedef int Bool_t;
 
+enum{ Bool_true = 1, Bool_false = 0 };
+
 /*===========================================================================*/
 /*---Struct with environment information---*/
 

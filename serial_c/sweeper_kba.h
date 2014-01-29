@@ -25,9 +25,19 @@ typedef struct
   P* __restrict__  facexz;
   P* __restrict__  faceyz;
   P* __restrict__  v_local;
-  Dimensions       dims_block;
+  Dimensions       dims_b;
   int              nblock_z;
 } Sweeper;
+
+/*===========================================================================*/
+/*---Struct with info describing a sweep step---*/
+
+typedef struct
+{
+  int     block_z;
+  int     octant;
+  Bool_t  is_active;
+} Step_Info;
 
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
@@ -45,10 +55,16 @@ void Sweeper_dtor( Sweeper* sweeper );
 /*===========================================================================*/
 /*---Number of octants to store for each face---*/
 
-static int Sweeper_num_face_octants()
+static int Sweeper_num_face_octants_allocated()
 {
   return 1;
 }
+
+/*===========================================================================*/
+/*---Number of block steps executed for an octant in isolation---*/
+
+int Sweeper_nblock( Sweeper* sweeper,
+                    Env env );
 
 /*===========================================================================*/
 /*---Number of kba parallel steps---*/
@@ -57,31 +73,23 @@ int Sweeper_nstep( Sweeper* sweeper,
                    Env env );
 
 /*===========================================================================*/
-/*---Wehther this proc active for a given sweep step---*/
+/*---Get information describing a sweep step---*/
 
-Bool_t Sweeper_step_active( Sweeper* sweeper,
-                            int      step,
-                            int      proc_x,
-                            int      proc_y,
-                            Env      env );
-
-/*===========================================================================*/
-/*---Octant to compute for a given sweep step---*/
-
-int Sweeper_octant( Sweeper* sweeper,
-                     int     step,
-                     int     proc_x,
-                     int     proc_y,
-                     Env     env );
+Step_Info Sweeper_step_info( Sweeper* sweeper,  
+                             int      step,
+                             int      proc_x,
+                             int      proc_y,
+                             Env      env );
 
 /*===========================================================================*/
-/*---Z block number to compute for a given sweep step---*/
+/*---Communicate faces---*/
 
-int Sweeper_block_z( Sweeper* sweeper,
-                     int      step,
-                     int      proc_x,
-                     int      proc_y,
-                     Env      env );
+void Sweeper_communicate_faces(
+  Sweeper*         sweeper,
+  int              step,
+  Quantities       quan,
+  Dimensions       dims_b,
+  Env*             env );
 
 /*===========================================================================*/
 /*---Perform a sweep---*/

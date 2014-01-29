@@ -220,8 +220,8 @@ void Quantities_init_decomp__( Quantities* quan, Dimensions dims, Env* env )
     quan->ix_base_vals[1+i] += quan->ix_base_vals[i];
   }
 
-  quan->ix_base   = quan->ix_base_vals[ Env_proc_x_this( *env ) ];
-  quan->nx_global = quan->ix_base_vals[ Env_nproc_x(     *env ) ];
+  quan->ix_base = quan->ix_base_vals[ Env_proc_x_this( *env ) ];
+  quan->nx_g    = quan->ix_base_vals[ Env_nproc_x(     *env ) ];
 
   assert( quan->ix_base_vals[ Env_proc_x_this( *env )+1 ] -
           quan->ix_base_vals[ Env_proc_x_this( *env )   ] == dims.nx );
@@ -275,8 +275,8 @@ void Quantities_init_decomp__( Quantities* quan, Dimensions dims, Env* env )
     quan->iy_base_vals[1+i] += quan->iy_base_vals[i];
   }
 
-  quan->iy_base   = quan->iy_base_vals[ Env_proc_y_this( *env ) ];
-  quan->ny_global = quan->iy_base_vals[ Env_nproc_y(     *env ) ];
+  quan->iy_base = quan->iy_base_vals[ Env_proc_y_this( *env ) ];
+  quan->ny_g    = quan->iy_base_vals[ Env_nproc_y(     *env ) ];
 
   assert( quan->iy_base_vals[ Env_proc_y_this( *env )+1 ] -
           quan->iy_base_vals[ Env_proc_y_this( *env )   ] == dims.ny );

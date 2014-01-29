@@ -43,7 +43,7 @@ void Sweeper_dtor( Sweeper* sweeper );
 /*===========================================================================*/
 /*---Number of octants to store for each face---*/
 
-static int Sweeper_num_face_octants()
+static int Sweeper_num_face_octants_allocated()
 {
   return 1;
 }

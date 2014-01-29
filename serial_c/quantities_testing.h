@@ -30,8 +30,8 @@ typedef struct
   int*             iy_base_vals;
   int              ix_base;
   int              iy_base;
-  int              nx_global;
-  int              ny_global;
+  int              nx_g;
+  int              ny_g;
 } Quantities;
 
 /*===========================================================================*/
@@ -250,8 +250,8 @@ static inline P Quantities_init_state(
   const Dimensions dims,
   const Quantities quan )
 {
-  assert( ix >= 0 && ix < quan.nx_global);
-  assert( iy >= 0 && iy < quan.ny_global );
+  assert( ix >= 0 && ix < quan.nx_g);
+  assert( iy >= 0 && iy < quan.ny_g );
   assert( iz >= 0 && iz < dims.nz );
   assert( ie >= 0 && ie < dims.ne );
   assert( im >= 0 && im < dims.nm );
@@ -271,23 +271,30 @@ static inline void Quantities_solve(
   P* __restrict__  facexy,
   P* __restrict__  facexz,
   P* __restrict__  faceyz,
-  int              ix,
-  int              iy,
-  int              iz,
+  int              ix_b,
+  int              iy_b,
+  int              iz_b,
   int              ie,
+  int              ix_g,
+  int              iy_g,
+  int              iz_g,
   int              octant,
   int              octant_ind,
   const Quantities quan,
-  const Dimensions dims )
+  const Dimensions dims_b,
+  const Dimensions dims_g )
 {
   assert( v_local );
   assert( facexy );
   assert( facexz );
   assert( faceyz );
-  assert( ix >= 0 && ix < dims.nx );
-  assert( iy >= 0 && iy < dims.ny );
-  assert( iz >= 0 && iz < dims.nz );
-  assert( ie >= 0 && ie < dims.ne );
+  assert( ix_b >= 0 && ix_b < dims_b.nx );
+  assert( iy_b >= 0 && iy_b < dims_b.ny );
+  assert( iz_b >= 0 && iz_b < dims_b.nz );
+  assert( ie   >= 0 && ie   < dims_b.ne );
+  assert( ix_g >= 0 && ix_g < dims_g.nx );
+  assert( iy_g >= 0 && iy_g < dims_g.ny );
+  assert( iz_g >= 0 && iz_g < dims_g.nz );
   assert( octant >= 0 && octant < NOCTANT );
   /*---NOTE: the following may not be tight---*/
   assert( octant_ind >= 0 && octant_ind < NOCTANT );
@@ -310,26 +317,26 @@ static inline void Quantities_solve(
   ---*/
 
   for( iu=0; iu<NU; ++iu )
-  for( ia=0; ia<dims.na; ++ia )
+  for( ia=0; ia<dims_b.na; ++ia )
   {
     const P result = (
-          *ref_v_local( v_local, dims, NU, ia, iu )
-                  / Quantities_scalefactor_space__( ix, iy, iz )
-        + *ref_facexy( facexy, dims, NU, ix, iy, ie, ia, iu, octant_ind )
+          *ref_v_local( v_local, dims_b, NU, ia, iu )
+                  / Quantities_scalefactor_space__( ix_g, iy_g, iz_g )
+        + *ref_facexy( facexy, dims_b, NU, ix_b, iy_b, ie, ia, iu, octant_ind )
                   * Quantities_xfluxweight__( ia )
-                  / Quantities_scalefactor_space__( ix-Dir_inc(dir_x), iy, iz )
-        + *ref_facexz( facexz, dims, NU, ix, iz, ie, ia, iu, octant_ind )
+                  / Quantities_scalefactor_space__( ix_g-Dir_inc(dir_x), iy_g, iz_g )
+        + *ref_facexz( facexz, dims_b, NU, ix_b, iz_b, ie, ia, iu, octant_ind )
                   * Quantities_yfluxweight__( ia )
-                  / Quantities_scalefactor_space__( ix, iy-Dir_inc(dir_y), iz )
-        + *ref_faceyz( faceyz, dims, NU, iy, iz, ie, ia, iu, octant_ind )
+                  / Quantities_scalefactor_space__( ix_g, iy_g-Dir_inc(dir_y), iz_g )
+        + *ref_faceyz( faceyz, dims_b, NU, iy_b, iz_b, ie, ia, iu, octant_ind )
                   * Quantities_zfluxweight__( ia )
-                  / Quantities_scalefactor_space__( ix, iy, iz-Dir_inc(dir_z) )
-      )           * Quantities_scalefactor_space__( ix, iy, iz );
+                  / Quantities_scalefactor_space__( ix_g, iy_g, iz_g-Dir_inc(dir_z) )
+      )           * Quantities_scalefactor_space__( ix_g, iy_g, iz_g );
 
-    *ref_v_local( v_local, dims, NU, ia, iu ) = result;
-    *ref_facexy( facexy, dims, NU, ix, iy, ie, ia, iu, octant_ind ) = result;
-    *ref_facexz( facexz, dims, NU, ix, iz, ie, ia, iu, octant_ind ) = result;
-    *ref_faceyz( faceyz, dims, NU, iy, iz, ie, ia, iu, octant_ind ) = result;
+    *ref_v_local( v_local, dims_b, NU, ia, iu ) = result;
+    *ref_facexy( facexy, dims_b, NU, ix_b, iy_b, ie, ia, iu, octant_ind ) = result;
+    *ref_facexz( facexz, dims_b, NU, ix_b, iz_b, ie, ia, iu, octant_ind ) = result;
+    *ref_faceyz( faceyz, dims_b, NU, iy_b, iz_b, ie, ia, iu, octant_ind ) = result;
   }
 
 } /*---Quantities_solve---*/
