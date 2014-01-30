@@ -168,6 +168,7 @@ static inline P Quantities_init_facexy(
   int              ie,
   int              ia,
   int              iu,
+  int              octant,
   const Dimensions dims )
 {
   assert( ix >=  0 && ix < dims.nx );
@@ -176,6 +177,7 @@ static inline P Quantities_init_facexy(
   assert( ie >=  0 && ie < dims.ne );
   assert( ia >=  0 && ia < dims.na );
   assert( iu >=  0 && iu < NU );
+  assert( octant >= 0 && octant < NOCTANT );
 
   /*---NOTE: this is constructed to be affine in ia (except for scale factor)
        and independent of ix, iy, iz, to facilitate calculating the
@@ -197,6 +199,7 @@ static inline P Quantities_init_facexz(
   int              ie,
   int              ia,
   int              iu,
+  int              octant,
   const Dimensions dims )
 {
   assert( ix >=  0 && ix < dims.nx );
@@ -205,6 +208,7 @@ static inline P Quantities_init_facexz(
   assert( ie >=  0 && ie < dims.ne );
   assert( ia >=  0 && ia < dims.na );
   assert( iu >=  0 && iu < NU );
+  assert( octant >= 0 && octant < NOCTANT );
 
   return (P) Quantities_affinefunction__( ia )
            * Quantities_scalefactor_angle__( ia )
@@ -222,6 +226,7 @@ static inline P Quantities_init_faceyz(
   int              ie,
   int              ia,
   int              iu,
+  int              octant,
   const Dimensions dims )
 {
   assert( ix >= -1 && ix < dims.nx+1 );
@@ -230,6 +235,7 @@ static inline P Quantities_init_faceyz(
   assert( ie >=  0 && ie < dims.ne );
   assert( ia >=  0 && ia < dims.na );
   assert( iu >=  0 && iu < NU );
+  assert( octant >= 0 && octant < NOCTANT );
 
   return (P) Quantities_affinefunction__( ia )
            * Quantities_scalefactor_angle__( ia )

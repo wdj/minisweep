@@ -126,7 +126,7 @@ void Sweeper_sweep(
       for( ia=0; ia<dims.na; ++ia )
       {
         *ref_facexy( sweeper->facexy, dims, NU, ix, iy, ie, ia, iu, octant_ind )
-                    = Quantities_init_facexy( ix, iy, iz, ie, ia, iu, dims );
+             = Quantities_init_facexy( ix, iy, iz, ie, ia, iu, octant, dims );
       }
     }
 
@@ -139,7 +139,7 @@ void Sweeper_sweep(
       for( ia=0; ia<dims.na; ++ia )
       {
         *ref_facexz( sweeper->facexz, dims, NU, ix, iz, ie, ia, iu, octant_ind )
-                    = Quantities_init_facexz( ix, iy, iz, ie, ia, iu, dims );
+             = Quantities_init_facexz( ix, iy, iz, ie, ia, iu, octant, dims );
       }
     }
 
@@ -152,7 +152,7 @@ void Sweeper_sweep(
       for( ia=0; ia<dims.na; ++ia )
       {
         *ref_faceyz( sweeper->faceyz, dims, NU, iy, iz, ie, ia, iu, octant_ind )
-                    = Quantities_init_faceyz( ix, iy, iz, ie, ia, iu, dims );
+             = Quantities_init_faceyz( ix, iy, iz, ie, ia, iu, octant, dims );
       }
     }
 

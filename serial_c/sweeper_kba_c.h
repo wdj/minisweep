@@ -96,9 +96,11 @@ Step_Info Sweeper_step_info( Sweeper* sweeper,
                              int      proc_y,
                              Env      env )
 {
+/*
   assert( step >= 0 && step < Sweeper_nstep( sweeper, env ) );
   assert( proc_x >= 0 && proc_x < Env_nproc_x( env ) );
   assert( proc_y >= 0 && proc_y < Env_nproc_y( env ) );
+*/
 
   const int nproc_x = Env_nproc_x( env );
   const int nproc_y = Env_nproc_y( env );
@@ -200,7 +202,10 @@ Step_Info Sweeper_step_info( Sweeper* sweeper,
        the block in question falls within the physical domain.
   ---*/
 
-  step_info.is_active = block >= 0 && block < nblock;
+  step_info.is_active = block  >= 0 && block  < nblock &&
+                        step   >= 0 && step   < Sweeper_nstep( sweeper, env ) &&
+                        proc_x >= 0 && proc_x < Env_nproc_x( env ) &&
+                        proc_y >= 0 && proc_y < Env_nproc_y( env );
 
   /*---Set remaining values---*/
 
@@ -220,24 +225,138 @@ void Sweeper_communicate_faces(
   Dimensions       dims_b,
   Env*             env )
 {
-  P* __restrict__ facexz_buf  = malloc_P( Dimensions_size_facexz( dims_b, NU,
-                                      Sweeper_num_face_octants_allocated() ) );
-  P* __restrict__ faceyz_buf  = malloc_P( Dimensions_size_faceyz( dims_b, NU,
-                                      Sweeper_num_face_octants_allocated() ) );
+  const int proc_x = Env_proc_x_this( *env );
+  const int proc_y = Env_proc_y_this( *env );
 
+  const size_t size_facexz = Dimensions_size_facexz( dims_b, NU,
+                                        Sweeper_num_face_octants_allocated() );
+  const size_t size_faceyz = Dimensions_size_faceyz( dims_b, NU,
+                                        Sweeper_num_face_octants_allocated() );
 
+  /*---Allocate temporary face buffers---*/
 
+  P* __restrict__ buf_facexz  = malloc_P( size_facexz );
+  P* __restrict__ buf_faceyz  = malloc_P( size_faceyz );
 
+  /*---Communicate +/-X, +/-Y---*/
 
+  int axis = 0;
 
+  for( axis=0; axis<2; ++axis )
+  {
+    const Bool_t axis_x = axis==0;
+    const Bool_t axis_y = axis==1;
 
+    const int proc_axis = axis_x ? proc_x : proc_y;
 
+    const size_t    size_face    = axis_x ? size_faceyz     : size_facexz;
+    P* __restrict__ buf_face     = axis_x ? buf_faceyz      : buf_facexz;
+    P* __restrict__ sweeper_face = axis_x ? sweeper->faceyz : sweeper->facexz;
+    int dir_ind = 0;
 
+    for( dir_ind=0; dir_ind<2; ++dir_ind )
+    {
+      const int dir = dir_ind==0 ? Dir_up() : Dir_dn();
+      const int inc_x = axis_x ? Dir_inc( dir ) : 0;
+      const int inc_y = axis_y ? Dir_inc( dir ) : 0;
 
-  free_P( facexz_buf );
-  free_P( faceyz_buf );
+      /*---Get step info for processors involved in communication---*/
+
+      const Step_Info step_info_send_source =
+        Sweeper_step_info( sweeper, step,   proc_x,       proc_y,       *env );
+
+      const Step_Info step_info_send_target =
+        Sweeper_step_info( sweeper, step+1, proc_x+inc_x, proc_y+inc_y, *env );
+
+      const Step_Info step_info_recv_source =
+        Sweeper_step_info( sweeper, step,   proc_x-inc_x, proc_y-inc_y, *env );
+
+      const Step_Info step_info_recv_target =
+        Sweeper_step_info( sweeper, step+1, proc_x,       proc_y,       *env );
+
+      /*---Determine whether to communicate---*/
+
+      Bool_t const do_send = step_info_send_source.is_active
+                          && step_info_send_target.is_active
+                          && step_info_send_source.octant ==
+                             step_info_send_target.octant
+                          && step_info_send_source.block_z ==
+                             step_info_send_target.block_z
+                          && ( axis_x ?
+                               Dir_x( step_info_send_target.octant ) :
+                               Dir_y( step_info_send_target.octant ) ) == dir;
+
+      Bool_t const do_recv = step_info_recv_source.is_active
+                          && step_info_recv_target.is_active
+                          && step_info_recv_source.octant ==
+                             step_info_recv_target.octant
+                          && step_info_recv_source.block_z ==
+                             step_info_recv_target.block_z
+                          && ( axis_x ?
+                               Dir_x( step_info_recv_target.octant ) :
+                               Dir_y( step_info_recv_target.octant ) ) == dir;
+
+      /*---Communicate as needed - use red/black coloring to avoid deadlock---*/
+
+      int color = 0;
+
+      for( color=0; color<2; ++color )
+      {
+        if( color == 0 )
+        {
+           if( proc_axis % 2 == 0 )
+           {
+             if( do_send )
+             {
+               const int proc_other
+                                = Env_proc( *env, proc_x+inc_x, proc_y+inc_y );
+               Env_send_P( sweeper_face, size_face, proc_other, env->tag );
+             }
+           }
+           else
+           {
+             if( do_recv )
+             {
+               const int proc_other
+                                = Env_proc( *env, proc_x-inc_x, proc_y-inc_y );
+               /*---save copy else color 0 recv will destroy color 1 send---*/
+               copy_vector( buf_face, sweeper_face, size_face );
+               Env_recv_P( sweeper_face, size_face, proc_other, env->tag );
+             }
+           }
+        }
+        else /*---if color---*/
+        {
+           if( proc_axis % 2 == 0 )
+           {
+             if( do_recv )
+             {
+               const int proc_other
+                                = Env_proc( *env, proc_x-inc_x, proc_y-inc_y );
+               Env_recv_P( sweeper_face, size_face, proc_other, env->tag );
+             }
+           }
+           else
+           {
+             if( do_send )
+             {
+               const int proc_other
+                                = Env_proc( *env, proc_x+inc_x, proc_y+inc_y );
+               Env_send_P( buf_face, size_face, proc_other, env->tag );
+             }
+           }
+        } /*---if color---*/
+      } /*---color---*/
+    } /*---dir_ind---*/
+  } /*---axis---*/
+
+  /*---Deallocations---*/
+
+  free_P( buf_facexz );
+  free_P( buf_faceyz );
 
   /*---Increment message tag---*/
+
   env->tag++;
 }
 
@@ -331,7 +450,8 @@ void Sweeper_sweep(
         {
           *ref_facexy( sweeper->facexy, dims, NU,
                                            ix_b, iy_b, ie, ia, iu, octant_ind )
-              = Quantities_init_facexy( ix_g, iy_g, iz_g, ie, ia, iu, dims_g );
+              = Quantities_init_facexy(
+                                ix_g, iy_g, iz_g, ie, ia, iu, octant, dims_g );
         }
         }
         }
@@ -361,7 +481,8 @@ void Sweeper_sweep(
         {
           *ref_facexz( sweeper->facexz, dims, NU,
                                            ix_b, iz_b, ie, ia, iu, octant_ind )
-                = Quantities_init_facexz( ix_g, iy_g, iz_g, ie, ia, iu, dims );
+               = Quantities_init_facexz(
+                                ix_g, iy_g, iz_g, ie, ia, iu, octant, dims_g );
         }
         }
         }
@@ -391,7 +512,8 @@ void Sweeper_sweep(
         {
           *ref_faceyz( sweeper->faceyz, dims, NU,
                                            iy_b, iz_b, ie, ia, iu, octant_ind )
-                = Quantities_init_faceyz( ix_g, iy_g, iz_g, ie, ia, iu, dims );
+              = Quantities_init_faceyz(
+                                ix_g, iy_g, iz_g, ie, ia, iu, octant, dims_g );
         }
         }
         }

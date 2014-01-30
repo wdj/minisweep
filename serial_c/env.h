@@ -225,20 +225,52 @@ static P Env_sum_P( P value )
 /*===========================================================================*/
 /*---MPI functions: point to point---*/
 
-static void Env_send_i( const int* p, int n, int proc, int tag )
+static void Env_send_i( const int* data, size_t n, int proc, int tag )
 {
+  assert( data != NULL );
+
 #ifdef USE_MPI
-  MPI_Send( (void*)p, n, MPI_INT, proc, tag, Env_default_comm() );
+  MPI_Send( (void*)data, n, MPI_INT, proc, tag, Env_default_comm() );
 #endif
 }
 
 /*---------------------------------------------------------------------------*/
 
-static void Env_recv_i( int* p, int n, int proc, int tag )
+static void Env_recv_i( int* data, size_t n, int proc, int tag )
 {
+  assert( data != NULL );
+
 #ifdef USE_MPI
   MPI_Status status;
-  MPI_Recv( (void*)p, n, MPI_INT, proc, tag, Env_default_comm(), &status );
+  MPI_Recv( (void*)data, n, MPI_INT, proc, tag, Env_default_comm(), &status );
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void Env_send_P( const P* data, size_t n, int proc, int tag )
+{
+  Static_Assert( P_IS_DOUBLE );
+  assert( data != NULL );
+  assert( n >= 0 );
+
+#ifdef USE_MPI
+  MPI_Send( (void*)data, n, MPI_DOUBLE, proc, tag, Env_default_comm() );
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void Env_recv_P( P* data, size_t n, int proc, int tag )
+{
+  Static_Assert( P_IS_DOUBLE );
+  assert( data != NULL );
+  assert( n >= 0 );
+
+#ifdef USE_MPI
+  MPI_Status status;
+  MPI_Recv( (void*)data, n, MPI_DOUBLE, proc, tag,
+                                                 Env_default_comm(), &status );
 #endif
 }
 

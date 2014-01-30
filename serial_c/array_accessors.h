@@ -49,6 +49,37 @@ static inline P* ref_state(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
+static inline const P* const_ref_state(
+    const P* __restrict__  v,
+    Dimensions             dims,
+    int                    nu,
+    int                    ix,
+    int                    iy,
+    int                    iz,
+    int                    ie,
+    int                    im,
+    int                    iu )
+{
+  assert( v );
+  assert( ix >= 0 && ix < dims.nx );
+  assert( iy >= 0 && iy < dims.ny );
+  assert( iz >= 0 && iz < dims.nz );
+  assert( ie >= 0 && ie < dims.ne );
+  assert( im >= 0 && im < dims.nm );
+  assert( iu >= 0 && iu < nu );
+
+  return & v[ im + dims.nm * (
+              iu + nu      * (
+              ix + dims.nx * (
+              iy + dims.ny * (
+              iz + dims.nz * (
+              ie + dims.ne * (
+              0 )))))) ];
+}
+
+/*===========================================================================*/
+/*---Multidimensional array accessor function---*/
+
 static inline P* ref_v_local(
     P* __restrict__  v,
     Dimensions       dims,

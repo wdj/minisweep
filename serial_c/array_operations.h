@@ -63,12 +63,12 @@ static void initialize_state_zero( P* __restrict__   v,
 /*===========================================================================*/
 /*---Compute vector norm info for state vector---*/
 
-static void get_state_norms( P* __restrict__   vi,
-                             P* __restrict__   vo,
-                             const Dimensions  dims,
-                             int               nu,
-                             P*                normsqp,
-                             P*                normsqdiffp )
+static void get_state_norms( const P* __restrict__  vi,
+                             const P* __restrict__  vo,
+                             const Dimensions       dims,
+                             int                    nu,
+                             P*                     normsqp,
+                             P*                     normsqdiffp )
 {
   assert( normsqp     && "Null pointer encountered" );
   assert( normsqdiffp && "Null pointer encountered" );
@@ -90,8 +90,8 @@ static void get_state_norms( P* __restrict__   vi,
   for( im=0; im<dims.nm; ++im )
   for( iu=0; iu<nu; ++iu )
   {
-    const P val_vi = *ref_state( vi, dims, nu, ix, iy, iz, ie, im, iu );
-    const P val_vo = *ref_state( vi, dims, nu, ix, iy, iz, ie, im, iu );
+    const P val_vi = *const_ref_state( vi, dims, nu, ix, iy, iz, ie, im, iu );
+    const P val_vo = *const_ref_state( vo, dims, nu, ix, iy, iz, ie, im, iu );
     const P diff   = val_vi - val_vo;
     normsq        += val_vo * val_vo;
     normsqdiff    += diff   * diff;
@@ -103,6 +103,21 @@ static void get_state_norms( P* __restrict__   vi,
 
   *normsqp     = normsq;
   *normsqdiffp = normsqdiff;
+}
+
+/*===========================================================================*/
+/*---Copy vector---*/
+
+static void copy_vector(       P* __restrict__  vo,
+                         const P* __restrict__  vi,
+                         size_t                 n )
+{
+  size_t i = 0;
+
+  for( i=0; i<n; ++i )
+  {
+    vo[i] = vi[i];
+  }
 }
 
 /*===========================================================================*/
