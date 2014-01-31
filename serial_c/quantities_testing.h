@@ -329,21 +329,22 @@ static inline void Quantities_solve(
           *ref_v_local( v_local, dims_b, NU, ia, iu )
                   / Quantities_scalefactor_space__( ix_g, iy_g, iz_g )
         + *ref_facexy( facexy, dims_b, NU, ix_b, iy_b, ie, ia, iu, octant_ind )
-                  * Quantities_xfluxweight__( ia )
-                  / Quantities_scalefactor_space__( ix_g-Dir_inc(dir_x), iy_g, iz_g )
+             * Quantities_xfluxweight__( ia )
+             / Quantities_scalefactor_space__( ix_g-Dir_inc(dir_x), iy_g, iz_g )
         + *ref_facexz( facexz, dims_b, NU, ix_b, iz_b, ie, ia, iu, octant_ind )
-                  * Quantities_yfluxweight__( ia )
-                  / Quantities_scalefactor_space__( ix_g, iy_g-Dir_inc(dir_y), iz_g )
+             * Quantities_yfluxweight__( ia )
+             / Quantities_scalefactor_space__( ix_g, iy_g-Dir_inc(dir_y), iz_g )
         + *ref_faceyz( faceyz, dims_b, NU, iy_b, iz_b, ie, ia, iu, octant_ind )
-                  * Quantities_zfluxweight__( ia )
-                  / Quantities_scalefactor_space__( ix_g, iy_g, iz_g-Dir_inc(dir_z) )
-      )           * Quantities_scalefactor_space__( ix_g, iy_g, iz_g );
+             * Quantities_zfluxweight__( ia )
+             / Quantities_scalefactor_space__( ix_g, iy_g, iz_g-Dir_inc(dir_z) )
+      )      * Quantities_scalefactor_space__( ix_g, iy_g, iz_g );
 
-    *ref_v_local( v_local, dims_b, NU, ia, iu ) = result;
-    *ref_facexy( facexy, dims_b, NU, ix_b, iy_b, ie, ia, iu, octant_ind ) = result;
-    *ref_facexz( facexz, dims_b, NU, ix_b, iz_b, ie, ia, iu, octant_ind ) = result;
-    *ref_faceyz( faceyz, dims_b, NU, iy_b, iz_b, ie, ia, iu, octant_ind ) = result;
-  }
+    *ref_v_local( v_local, dims_b, NU, ia, iu ) =
+    *ref_facexy( facexy, dims_b, NU, ix_b, iy_b, ie, ia, iu, octant_ind ) =
+    *ref_facexz( facexz, dims_b, NU, ix_b, iz_b, ie, ia, iu, octant_ind ) =
+    *ref_faceyz( faceyz, dims_b, NU, iy_b, iz_b, ie, ia, iu, octant_ind ) =
+        result;
+  } /*---for---*/
 
 } /*---Quantities_solve---*/
 

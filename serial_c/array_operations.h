@@ -98,8 +98,8 @@ static void get_state_norms( const P* __restrict__  vi,
   }
   assert( normsq     >= P_zero() );
   assert( normsqdiff >= P_zero() );
-  Env_sum_P( normsq );
-  Env_sum_P( normsqdiff );
+  normsq     = Env_sum_P( normsq );
+  normsqdiff = Env_sum_P( normsqdiff );
 
   *normsqp     = normsq;
   *normsqdiffp = normsqdiff;
