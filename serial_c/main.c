@@ -53,12 +53,12 @@ int main( int argc, char** argv )
 
   /*---Set problem size---*/
 
-  dims_g.nx = ( argc> 1 && argv[ 1]!="" ) ? atoi(argv[ 1]) : 5;
-  dims_g.ny = ( argc> 2 && argv[ 2]!="" ) ? atoi(argv[ 2]) : 5;
-  dims_g.nz = ( argc> 3 && argv[ 3]!="" ) ? atoi(argv[ 3]) : 5;
-  dims_g.ne = ( argc> 4 && argv[ 4]!="" ) ? atoi(argv[ 4]) : 30;
-  dims_g.nm = ( argc> 5 && argv[ 5]!="" ) ? atoi(argv[ 5]) : 16;
-  dims_g.na = ( argc> 6 && argv[ 6]!="" ) ? atoi(argv[ 6]) : 33;
+  dims_g.nx      = ( argc> 1 && argv[ 1]!="" ) ? atoi(argv[ 1]) : 5;
+  dims_g.ny      = ( argc> 2 && argv[ 2]!="" ) ? atoi(argv[ 2]) : 5;
+  dims_g.nz      = ( argc> 3 && argv[ 3]!="" ) ? atoi(argv[ 3]) : 5;
+  dims_g.ne      = ( argc> 4 && argv[ 4]!="" ) ? atoi(argv[ 4]) : 30;
+  dims_g.nm      = ( argc> 5 && argv[ 5]!="" ) ? atoi(argv[ 5]) : 16;
+  dims_g.na      = ( argc> 6 && argv[ 6]!="" ) ? atoi(argv[ 6]) : 33;
   numiterations  = ( argc> 7 && argv[ 7]!="" ) ? atoi(argv[ 7]) : 1;
   env.nproc_x    = ( argc> 8 && argv[ 8]!="" ) ? atoi(argv[ 8]) :
                                                               Env_nproc( env );

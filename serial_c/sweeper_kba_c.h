@@ -300,6 +300,8 @@ void Sweeper_communicate_faces(
 
       int color = 0;
 
+      Bool_t use_buf = Bool_false;
+
       for( color=0; color<2; ++color )
       {
         if( color == 0 )
@@ -321,6 +323,7 @@ void Sweeper_communicate_faces(
                                 = Env_proc( *env, proc_x-inc_x, proc_y-inc_y );
                /*---save copy else color 0 recv will destroy color 1 send---*/
                copy_vector( buf_face, sweeper_face, size_face );
+               use_buf = Bool_true;
                Env_recv_P( sweeper_face, size_face, proc_other, env->tag );
              }
            }
@@ -342,7 +345,8 @@ void Sweeper_communicate_faces(
              {
                const int proc_other
                                 = Env_proc( *env, proc_x+inc_x, proc_y+inc_y );
-               Env_send_P( buf_face, size_face, proc_other, env->tag );
+               Env_send_P( use_buf ? buf_face : sweeper_face,
+                                             size_face, proc_other, env->tag );
              }
            }
         } /*---if color---*/
