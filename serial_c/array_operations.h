@@ -20,10 +20,10 @@
 /*===========================================================================*/
 /*---Initialize state vector to required input value---*/
 
-static void initialize_state( P* __restrict__   v,
-                              const Dimensions  dims,
-                              int               nu,
-                              const Quantities  quan )
+static void initialize_state( P* __restrict__    v,
+                              const Dimensions   dims,
+                              int                nu,
+                              const Quantities*  quan )
 {
   int ix = 0;
   int iy = 0;
@@ -40,7 +40,7 @@ static void initialize_state( P* __restrict__   v,
   for( iu=0; iu<nu; ++iu )
   {
     *ref_state( v, dims, nu, ix, iy, iz, ie, im, iu )
-                = Quantities_init_state( ix, iy, iz, ie, im, iu, dims, quan );
+                = Quantities_init_state( quan, ix, iy, iz, ie, im, iu, dims );
   }
 }
 
@@ -70,8 +70,8 @@ static void get_state_norms( const P* __restrict__  vi,
                              P*                     normsqp,
                              P*                     normsqdiffp )
 {
-  assert( normsqp     && "Null pointer encountered" );
-  assert( normsqdiffp && "Null pointer encountered" );
+  assert( normsqp     != NULL && "Null pointer encountered" );
+  assert( normsqdiffp != NULL && "Null pointer encountered" );
 
   int ix = 0;
   int iy = 0;

@@ -61,7 +61,7 @@ int main( int argc, char** argv )
   dims_g.na      = ( argc> 6 && argv[ 6]!="" ) ? atoi(argv[ 6]) : 33;
   numiterations  = ( argc> 7 && argv[ 7]!="" ) ? atoi(argv[ 7]) : 1;
   env.nproc_x    = ( argc> 8 && argv[ 8]!="" ) ? atoi(argv[ 8]) :
-                                                              Env_nproc( env );
+                                                              Env_nproc( &env );
   env.nproc_y    = ( argc> 9 && argv[ 9]!="" ) ? atoi(argv[ 9]) : 1;
   nblock_z       = ( argc>10 && argv[10]!="" ) ? atoi(argv[10]) : 1;
 /*
@@ -75,9 +75,9 @@ int main( int argc, char** argv )
   Insist( dims_g.nm > 0 && "Invalid nm supplied." );
   Insist( dims_g.na > 0 && "Invalid na supplied." );
   Insist( numiterations >= 0 && "Invalid iteration count supplied." );
-  Insist( Env_nproc_x( env ) > 0 && "Invalid nproc_x supplied." );
-  Insist( Env_nproc_y( env ) > 0 && "Invalid nproc_y supplied." );
-  Insist( Env_nproc_x( env ) * Env_nproc_y( env ) ==  Env_nproc( env ) &&
+  Insist( Env_nproc_x( &env ) > 0 && "Invalid nproc_x supplied." );
+  Insist( Env_nproc_y( &env ) > 0 && "Invalid nproc_y supplied." );
+  Insist( Env_nproc_x( &env ) * Env_nproc_y( &env ) ==  Env_nproc( &env ) &&
                            "Invalid process decomposition supplied." );
   Insist( nblock_z > 0 && "Invalid z blocking factor supplied." );
 
@@ -86,12 +86,12 @@ int main( int argc, char** argv )
   dims = dims_g;
 
   dims.nx =
-      ( ( Env_proc_x_this( env ) + 1 ) * dims_g.nx ) / Env_nproc_x( env )
-    - ( ( Env_proc_x_this( env )     ) * dims_g.nx ) / Env_nproc_x( env );
+      ( ( Env_proc_x_this( &env ) + 1 ) * dims_g.nx ) / Env_nproc_x( &env )
+    - ( ( Env_proc_x_this( &env )     ) * dims_g.nx ) / Env_nproc_x( &env );
 
   dims.ny =
-      ( ( Env_proc_y_this( env ) + 1 ) * dims_g.ny ) / Env_nproc_y( env )
-    - ( ( Env_proc_y_this( env )     ) * dims_g.ny ) / Env_nproc_y( env );
+      ( ( Env_proc_y_this( &env ) + 1 ) * dims_g.ny ) / Env_nproc_y( &env )
+    - ( ( Env_proc_y_this( &env )     ) * dims_g.ny ) / Env_nproc_y( &env );
 
   /*---Initialize quantities---*/
 
@@ -104,7 +104,7 @@ int main( int argc, char** argv )
 
   /*---Initialize input state array---*/
 
-  initialize_state( vi, dims, NU, quan );
+  initialize_state( vi, dims, NU, &quan );
 
   /*---Initialize output state array---*/
   /*---This is not strictly required for the output vector but might
@@ -126,7 +126,7 @@ int main( int argc, char** argv )
     Sweeper_sweep( &sweeper,
                    iteration%2==0 ? vo : vi,
                    iteration%2==0 ? vi : vo,
-                   quan,
+                   &quan,
                    dims,
                    &env );
   }
@@ -148,7 +148,7 @@ int main( int argc, char** argv )
 
   get_state_norms( vi, vo, dims, NU, &normsq, &normsqdiff );
 
-  if( Env_do_output( env ) )
+  if( Env_do_output( &env ) )
   {
     printf( "Normsq result: %e  diff: %e  %s  time: %.3f  GF/s %.4f\n",
             (double)normsq, (double)normsqdiff,
@@ -165,7 +165,7 @@ int main( int argc, char** argv )
 
   /*---Finalize execution---*/
 
-  Env_finalize( env );
+  Env_finalize( &env );
 
 } /*---main---*/
 

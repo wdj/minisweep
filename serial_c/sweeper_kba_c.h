@@ -70,8 +70,8 @@ void Sweeper_dtor( Sweeper* sweeper )
 /*===========================================================================*/
 /*---Number of block steps executed for an octant in isolation---*/
 
-int Sweeper_nblock( Sweeper* sweeper,
-                    Env env )
+int Sweeper_nblock( const Sweeper*  sweeper,
+                    const Env*      env )
 {
   return sweeper->nblock_z;
 }
@@ -79,8 +79,8 @@ int Sweeper_nblock( Sweeper* sweeper,
 /*===========================================================================*/
 /*---Number of kba parallel steps---*/
 
-int Sweeper_nstep( Sweeper* sweeper, 
-                   Env env )
+int Sweeper_nstep( const Sweeper*  sweeper,
+                   const Env*      env )
 {
   return NOCTANT * Sweeper_nblock( sweeper, env )
                                               + 3 * ( Env_nproc_x( env ) - 1 )
@@ -90,11 +90,11 @@ int Sweeper_nstep( Sweeper* sweeper,
 /*===========================================================================*/
 /*---Wehther this proc active for a given sweep step---*/
 
-Step_Info Sweeper_step_info( Sweeper* sweeper, 
-                             int      step,
-                             int      proc_x,
-                             int      proc_y,
-                             Env      env )
+Step_Info Sweeper_step_info__( const Sweeper*  sweeper,
+                               int             step,
+                               int             proc_x,
+                               int             proc_y,
+                               const Env*      env )
 {
 /*
   assert( step >= 0 && step < Sweeper_nstep( sweeper, env ) );
@@ -104,7 +104,7 @@ Step_Info Sweeper_step_info( Sweeper* sweeper,
 
   const int nproc_x = Env_nproc_x( env );
   const int nproc_y = Env_nproc_y( env );
-  const int nblock = Sweeper_nblock( sweeper, env );
+  const int nblock  = Sweeper_nblock( sweeper, env );
 
   const int octants_visited[NOCTANT] = { 0, 4, 1, 5, 3, 7, 2, 6 };
 
@@ -218,15 +218,14 @@ Step_Info Sweeper_step_info( Sweeper* sweeper,
 /*===========================================================================*/
 /*---Communicate faces---*/
 
-void Sweeper_communicate_faces(
-  Sweeper*         sweeper,
-  int              step,
-  Quantities       quan,
-  Dimensions       dims_b,
-  Env*             env )
+void Sweeper_communicate_faces__(
+  Sweeper*           sweeper,
+  int                step,
+  Dimensions         dims_b,
+  Env*               env )
 {
-  const int proc_x = Env_proc_x_this( *env );
-  const int proc_y = Env_proc_y_this( *env );
+  const int proc_x = Env_proc_x_this( env );
+  const int proc_y = Env_proc_y_this( env );
 
   const size_t size_facexz = Dimensions_size_facexz( dims_b, NU,
                                         Sweeper_num_face_octants_allocated() );
@@ -263,16 +262,16 @@ void Sweeper_communicate_faces(
       /*---Get step info for processors involved in communication---*/
 
       const Step_Info step_info_send_source =
-        Sweeper_step_info( sweeper, step,   proc_x,       proc_y,       *env );
+        Sweeper_step_info__( sweeper, step,   proc_x,       proc_y,       env );
 
       const Step_Info step_info_send_target =
-        Sweeper_step_info( sweeper, step+1, proc_x+inc_x, proc_y+inc_y, *env );
+        Sweeper_step_info__( sweeper, step+1, proc_x+inc_x, proc_y+inc_y, env );
 
       const Step_Info step_info_recv_source =
-        Sweeper_step_info( sweeper, step,   proc_x-inc_x, proc_y-inc_y, *env );
+        Sweeper_step_info__( sweeper, step,   proc_x-inc_x, proc_y-inc_y, env );
 
       const Step_Info step_info_recv_target =
-        Sweeper_step_info( sweeper, step+1, proc_x,       proc_y,       *env );
+        Sweeper_step_info__( sweeper, step+1, proc_x,       proc_y,       env );
 
       /*---Determine whether to communicate---*/
 
@@ -311,7 +310,7 @@ void Sweeper_communicate_faces(
              if( do_send )
              {
                const int proc_other
-                                = Env_proc( *env, proc_x+inc_x, proc_y+inc_y );
+                                = Env_proc( env, proc_x+inc_x, proc_y+inc_y );
                Env_send_P( sweeper_face, size_face, proc_other, env->tag );
              }
            }
@@ -320,7 +319,7 @@ void Sweeper_communicate_faces(
              if( do_recv )
              {
                const int proc_other
-                                = Env_proc( *env, proc_x-inc_x, proc_y-inc_y );
+                                = Env_proc( env, proc_x-inc_x, proc_y-inc_y );
                /*---save copy else color 0 recv will destroy color 1 send---*/
                copy_vector( buf_face, sweeper_face, size_face );
                use_buf = Bool_true;
@@ -335,7 +334,7 @@ void Sweeper_communicate_faces(
              if( do_recv )
              {
                const int proc_other
-                                = Env_proc( *env, proc_x-inc_x, proc_y-inc_y );
+                                = Env_proc( env, proc_x-inc_x, proc_y-inc_y );
                Env_recv_P( sweeper_face, size_face, proc_other, env->tag );
              }
            }
@@ -344,7 +343,7 @@ void Sweeper_communicate_faces(
              if( do_send )
              {
                const int proc_other
-                                = Env_proc( *env, proc_x+inc_x, proc_y+inc_y );
+                                = Env_proc( env, proc_x+inc_x, proc_y+inc_y );
                Env_send_P( use_buf ? buf_face : sweeper_face,
                                              size_face, proc_other, env->tag );
              }
@@ -368,12 +367,12 @@ void Sweeper_communicate_faces(
 /*---Perform a sweep---*/
 
 void Sweeper_sweep(
-  Sweeper*         sweeper,
-  P* __restrict__  vo,
-  P* __restrict__  vi,
-  Quantities       quan,
-  Dimensions       dims,
-  Env*             env )
+  Sweeper*               sweeper,
+  P* __restrict__        vo,
+  const P* __restrict__  vi,
+  const Quantities*      quan,
+  Dimensions             dims,
+  Env*                   env )
 {
   assert( sweeper );
   assert( vi );
@@ -395,14 +394,14 @@ void Sweeper_sweep(
 
   const int octant_ind = 0;
   const Dimensions dims_b = sweeper->dims_b;
-  const int proc_x = Env_proc_x_this( *env );
-  const int proc_y = Env_proc_y_this( *env );
-  const int ix_base = quan.ix_base;
-  const int iy_base = quan.iy_base;
+  const int proc_x = Env_proc_x_this( env );
+  const int proc_y = Env_proc_y_this( env );
+  const int ix_base = quan->ix_base;
+  const int iy_base = quan->iy_base;
 
   Dimensions dims_g = dims;
-  dims_g.nx = quan.nx_g;
-  dims_g.ny = quan.ny_g;
+  dims_g.nx = quan->nx_g;
+  dims_g.ny = quan->ny_g;
 
   /*---Initialize result array to zero---*/
 
@@ -412,12 +411,12 @@ void Sweeper_sweep(
   /*---Loop over kba parallel steps---*/
   /*--------------------*/
 
-  for( step=0; step<Sweeper_nstep( sweeper, *env ); ++step )
+  for( step=0; step<Sweeper_nstep( sweeper, env ); ++step )
   {
     /*---Get step info for this proc---*/
 
-    const Step_Info step_info = Sweeper_step_info( sweeper, step,
-                                                   proc_x, proc_y, *env );
+    const Step_Info step_info = Sweeper_step_info__( sweeper, step,
+                                                   proc_x, proc_y, env );
 
     if( step_info.is_active )
     {
@@ -453,9 +452,10 @@ void Sweeper_sweep(
         for( ia=0; ia<dims.na; ++ia )
         {
           *ref_facexy( sweeper->facexy, dims, NU,
-                                           ix_b, iy_b, ie, ia, iu, octant_ind )
+                       Sweeper_num_face_octants_allocated(),
+                       ix_b, iy_b, ie, ia, iu, octant_ind )
               = Quantities_init_facexy(
-                                ix_g, iy_g, iz_g, ie, ia, iu, octant, dims_g );
+                          quan, ix_g, iy_g, iz_g, ie, ia, iu, octant, dims_g );
         }
         }
         }
@@ -468,7 +468,7 @@ void Sweeper_sweep(
       /*--------------------*/
 
       if( ( dir_y == Dir_up() && proc_y == 0 ) ||
-          ( dir_y == Dir_dn() && proc_y == Env_nproc_y( *env )-1 ) )
+          ( dir_y == Dir_dn() && proc_y == Env_nproc_y( env )-1 ) )
       {
         const int iy_g = dir_y == Dir_up() ? -1 : dims_g.ny;
         for( iu=0; iu<NU; ++iu )
@@ -484,9 +484,10 @@ void Sweeper_sweep(
         for( ia=0; ia<dims.na; ++ia )
         {
           *ref_facexz( sweeper->facexz, dims, NU,
-                                           ix_b, iz_b, ie, ia, iu, octant_ind )
-               = Quantities_init_facexz(
-                                ix_g, iy_g, iz_g, ie, ia, iu, octant, dims_g );
+                       Sweeper_num_face_octants_allocated(),
+                       ix_b, iz_b, ie, ia, iu, octant_ind )
+              = Quantities_init_facexz(
+                           quan, ix_g, iy_g, iz_g, ie, ia, iu, octant, dims_g );
         }
         }
         }
@@ -499,7 +500,7 @@ void Sweeper_sweep(
       /*--------------------*/
 
       if( ( dir_x == Dir_up() && proc_x == 0 ) ||
-          ( dir_x == Dir_dn() && proc_x == Env_nproc_x( *env )-1 ) )
+          ( dir_x == Dir_dn() && proc_x == Env_nproc_x( env )-1 ) )
       {
         const int ix_g = dir_x == Dir_up() ? -1 : dims_g.nx;
         for( iu=0; iu<NU; ++iu )
@@ -515,9 +516,10 @@ void Sweeper_sweep(
         for( ia=0; ia<dims.na; ++ia )
         {
           *ref_faceyz( sweeper->faceyz, dims, NU,
-                                           iy_b, iz_b, ie, ia, iu, octant_ind )
+                       Sweeper_num_face_octants_allocated(),
+                       iy_b, iz_b, ie, ia, iu, octant_ind )
               = Quantities_init_faceyz(
-                                ix_g, iy_g, iz_g, ie, ia, iu, octant, dims_g );
+                          quan, ix_g, iy_g, iz_g, ie, ia, iu, octant, dims_g );
         }
         }
         }
@@ -561,8 +563,8 @@ void Sweeper_sweep(
             P result = P_zero();
             for( im=0; im<dims.nm; ++im )
             {
-              result += *ref_a_from_m( quan.a_from_m, dims, im, ia ) *
-                        *ref_state( vi, dims, NU, ix, iy, iz, ie, im, iu );
+              result += *const_ref_a_from_m( quan->a_from_m, dims, im, ia ) *
+                      *const_ref_state( vi, dims, NU, ix, iy, iz, ie, im, iu );
             }
             *ref_v_local( sweeper->v_local, dims, NU, ia, iu ) = result;
           }
@@ -571,10 +573,12 @@ void Sweeper_sweep(
           /*---Perform solve---*/
           /*--------------------*/
 
-          Quantities_solve( sweeper->v_local,
-                        sweeper->facexy, sweeper->facexz, sweeper->faceyz,
-                        ix, iy, iz-iz_base, ie, ix+ix_base, iy+iy_base, iz,
-                        octant, octant_ind, quan, dims_b, dims_g );
+          Quantities_solve( quan, sweeper->v_local,
+                            sweeper->facexy, sweeper->facexz, sweeper->faceyz,
+                            ix, iy, iz-iz_base, ie, ix+ix_base, iy+iy_base, iz,
+                            octant, octant_ind,
+                            Sweeper_num_face_octants_allocated(),
+                            dims_b, dims_g );
 
           /*--------------------*/
           /*---Transform state vector from angles to moments---*/
@@ -586,8 +590,8 @@ void Sweeper_sweep(
             P result = P_zero();
             for( ia=0; ia<dims.na; ++ia )
             {
-              result += *ref_m_from_a( quan.m_from_a, dims, im, ia ) *
-                        *ref_v_local( sweeper->v_local, dims, NU, ia, iu );
+              result += *const_ref_m_from_a( quan->m_from_a, dims, im, ia ) *
+                      *const_ref_v_local( sweeper->v_local, dims, NU, ia, iu );
             }
             *ref_state( vo, dims, NU, ix, iy, iz, ie, im, iu ) += result;
           }
@@ -602,7 +606,7 @@ void Sweeper_sweep(
     /*---Communicate faces---*/
     /*--------------------*/
 
-    Sweeper_communicate_faces( sweeper, step, quan, dims_b, env );
+    Sweeper_communicate_faces__( sweeper, step, dims_b, env );
 
   } /*---step---*/
 

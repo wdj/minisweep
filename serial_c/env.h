@@ -85,7 +85,7 @@ static void Env_initialize( Env *env, int argc, char** argv )
 /*===========================================================================*/
 /*---Finalize execution---*/
 
-static void Env_finalize( Env env )
+static void Env_finalize( Env* env )
 {
 #ifdef USE_MPI
   MPI_Finalize();
@@ -113,7 +113,7 @@ static Comm_t Env_default_comm()
 /*===========================================================================*/
 /*---Number of procs---*/
 
-static int Env_nproc( Env env )
+static int Env_nproc( const Env* env )
 {
   int result = 1;
 #ifdef USE_MPI
@@ -124,22 +124,22 @@ static int Env_nproc( Env env )
 
 /*---------------------------------------------------------------------------*/
 
-static int Env_nproc_x( Env env )
+static int Env_nproc_x( const Env* env )
 {
-  return env.nproc_x;
+  return env->nproc_x;
 }
 
 /*---------------------------------------------------------------------------*/
 
-static int Env_nproc_y( Env env )
+static int Env_nproc_y( const Env* env )
 {
-  return env.nproc_y;
+  return env->nproc_y;
 }
 
 /*===========================================================================*/
 /*---Proc number---*/
 
-static int Env_proc( Env env, int proc_x, int proc_y )
+static int Env_proc( const Env* env, int proc_x, int proc_y )
 {
   assert( proc_x >= 0 && proc_x < Env_nproc_x( env ) );
   assert( proc_y >= 0 && proc_y < Env_nproc_y( env ) );
@@ -149,7 +149,7 @@ static int Env_proc( Env env, int proc_x, int proc_y )
 
 /*---------------------------------------------------------------------------*/
 
-static int Env_proc_x( Env env, int proc )
+static int Env_proc_x( const Env* env, int proc )
 {
   assert( proc >= 0 && proc < Env_nproc( env ) );
   int result = proc % Env_nproc_x( env );
@@ -158,7 +158,7 @@ static int Env_proc_x( Env env, int proc )
 
 /*---------------------------------------------------------------------------*/
 
-static int Env_proc_y( Env env, int proc )
+static int Env_proc_y( const Env* env, int proc )
 {
   assert( proc >= 0 && proc < Env_nproc( env ) );
   int result = proc / Env_nproc_x( env );
@@ -168,7 +168,7 @@ static int Env_proc_y( Env env, int proc )
 /*===========================================================================*/
 /*---Proc number this proc---*/
 
-static int Env_proc_this( Env env )
+static int Env_proc_this( const Env* env )
 {
   int result = 0;
 #ifdef USE_MPI
@@ -179,14 +179,14 @@ static int Env_proc_this( Env env )
 
 /*---------------------------------------------------------------------------*/
 
-static int Env_proc_x_this( Env env )
+static int Env_proc_x_this( const Env* env )
 {
   return Env_proc_x( env, Env_proc_this( env ) );
 }
 
 /*---------------------------------------------------------------------------*/
 
-static int Env_proc_y_this( Env env )
+static int Env_proc_y_this( const Env* env )
 {
   return Env_proc_y( env, Env_proc_this( env ) );
 }
@@ -277,7 +277,7 @@ static void Env_recv_P( P* data, size_t n, int proc, int tag )
 /*===========================================================================*/
 /*---Indicate whether to do output---*/
 
-static Bool_t Env_do_output( Env env )
+static Bool_t Env_do_output( const Env* env )
 {
   return ( Env_proc_this( env ) == 0 );
 }

@@ -63,31 +63,30 @@ static int Sweeper_num_face_octants_allocated()
 /*===========================================================================*/
 /*---Number of block steps executed for an octant in isolation---*/
 
-int Sweeper_nblock( Sweeper* sweeper,
-                    Env env );
+int Sweeper_nblock( const Sweeper*  sweeper,
+                    const Env*      env );
 
 /*===========================================================================*/
 /*---Number of kba parallel steps---*/
 
-int Sweeper_nstep( Sweeper* sweeper,
-                   Env env );
+int Sweeper_nstep( const Sweeper*  sweeper,
+                   const Env*      env );
 
 /*===========================================================================*/
 /*---Get information describing a sweep step---*/
 
-Step_Info Sweeper_step_info( Sweeper* sweeper,  
-                             int      step,
-                             int      proc_x,
-                             int      proc_y,
-                             Env      env );
+Step_Info Sweeper_step_info__( const Sweeper*  sweeper,  
+                               int             step,
+                               int             proc_x,
+                               int             proc_y,
+                               const Env*      env );
 
 /*===========================================================================*/
 /*---Communicate faces---*/
 
-void Sweeper_communicate_faces(
+void Sweeper_communicate_faces__(
   Sweeper*         sweeper,
   int              step,
-  Quantities       quan,
   Dimensions       dims_b,
   Env*             env );
 
@@ -95,12 +94,12 @@ void Sweeper_communicate_faces(
 /*---Perform a sweep---*/
 
 void Sweeper_sweep(
-  Sweeper*         sweeper,
-  P* __restrict__  vo,
-  P* __restrict__  vi,
-  Quantities       quan,
-  Dimensions       dims,
-  Env*             env );
+  Sweeper*               sweeper,
+  P* __restrict__        vo,
+  const P* __restrict__  vi,
+  const Quantities*      quan,
+  Dimensions             dims,
+  Env*                   env );
 
 /*===========================================================================*/
 

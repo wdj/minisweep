@@ -29,7 +29,8 @@ static inline P* ref_state(
     int              im,
     int              iu )
 {
-  assert( v );
+  assert( v != NULL );
+  assert( nu > 0 );
   assert( ix >= 0 && ix < dims.nx );
   assert( iy >= 0 && iy < dims.ny );
   assert( iz >= 0 && iz < dims.nz );
@@ -60,7 +61,8 @@ static inline const P* const_ref_state(
     int                    im,
     int                    iu )
 {
-  assert( v );
+  assert( v != NULL );
+  assert( nu > 0 );
   assert( ix >= 0 && ix < dims.nx );
   assert( iy >= 0 && iy < dims.ny );
   assert( iz >= 0 && iz < dims.nz );
@@ -87,7 +89,28 @@ static inline P* ref_v_local(
     int              ia,
     int              iu )
 {
-  assert( v );
+  assert( v != NULL );
+  assert( nu > 0 );
+  assert( ia >= 0 && ia < dims.na );
+  assert( iu >= 0 && iu < nu );
+
+  return & v[ ia + dims.na * (
+              iu + nu      * (
+              0 )) ];
+}
+
+/*===========================================================================*/
+/*---Multidimensional array accessor function---*/
+
+static inline const P* const_ref_v_local(
+    const P* __restrict__  v,
+    Dimensions             dims,
+    int                    nu,
+    int                    ia,
+    int                    iu )
+{
+  assert( v != NULL );
+  assert( nu > 0 );
   assert( ia >= 0 && ia < dims.na );
   assert( iu >= 0 && iu < nu );
 
@@ -105,7 +128,25 @@ static inline P* ref_a_from_m(
     int              im,
     int              ia )
 {
-  assert( v );
+  assert( v != NULL );
+  assert( im >= 0 && im < dims.nm );
+  assert( ia >= 0 && ia < dims.na );
+
+  return & v[ im + dims.nm * (
+              ia + dims.na * (
+              0 )) ];
+}
+
+/*===========================================================================*/
+/*---Multidimensional array accessor function---*/
+
+static inline const P* const_ref_a_from_m(
+    const P* __restrict__  v,
+    Dimensions             dims,
+    int                    im,
+    int                    ia )
+{
+  assert( v != NULL );
   assert( im >= 0 && im < dims.nm );
   assert( ia >= 0 && ia < dims.na );
 
@@ -123,7 +164,25 @@ static inline P* ref_m_from_a(
     int              im,
     int              ia )
 {
-  assert( v );
+  assert( v != NULL );
+  assert( im >= 0 && im < dims.nm );
+  assert( ia >= 0 && ia < dims.na );
+
+  return & v[ ia + dims.na * (
+              im + dims.nm * (
+              0 )) ];
+}
+
+/*===========================================================================*/
+/*---Multidimensional array accessor function---*/
+
+static inline const P* const_ref_m_from_a(
+    const P* __restrict__  v,
+    Dimensions             dims,
+    int                    im,
+    int                    ia )
+{
+  assert( v != NULL );
   assert( im >= 0 && im < dims.nm );
   assert( ia >= 0 && ia < dims.na );
 
@@ -139,6 +198,7 @@ static inline P* ref_facexy(
     P* __restrict__  v,
     Dimensions       dims,
     int              nu,
+    int              num_face_octants_allocated,
     int              ix,
     int              iy,
     int              ie,
@@ -146,13 +206,46 @@ static inline P* ref_facexy(
     int              iu,
     int              octant_ind )
 {
+  assert( v != NULL );
+  assert( nu > 0 );
   assert( ix >= 0 && ix < dims.nx );
   assert( iy >= 0 && iy < dims.ny );
   assert( ie >= 0 && ie < dims.ne );
   assert( ia >= 0 && ia < dims.na );
   assert( iu >= 0 && iu < nu );
-  /*---NOTE: the following may not be tight---*/
-  assert( octant_ind >= 0 && octant_ind < NOCTANT );
+  assert( octant_ind >= 0 && octant_ind < num_face_octants_allocated );
+
+  return & v[ ia + dims.na * (
+              iu + nu      * (
+              ix + dims.nx * (
+              iy + dims.ny * (
+              ie + dims.ne * (
+              octant_ind ))))) ];
+}
+
+/*===========================================================================*/
+/*---Multidimensional array accessor function---*/
+
+static inline const P* const_ref_facexy(
+    const P* __restrict__  v,
+    Dimensions             dims,
+    int                    nu,
+    int                    num_face_octants_allocated,
+    int                    ix,
+    int                    iy,
+    int                    ie,
+    int                    ia,
+    int                    iu,
+    int                    octant_ind )
+{
+  assert( v != NULL );
+  assert( nu > 0 );
+  assert( ix >= 0 && ix < dims.nx );
+  assert( iy >= 0 && iy < dims.ny );
+  assert( ie >= 0 && ie < dims.ne );
+  assert( ia >= 0 && ia < dims.na );
+  assert( iu >= 0 && iu < nu );
+  assert( octant_ind >= 0 && octant_ind < num_face_octants_allocated );
 
   return & v[ ia + dims.na * (
               iu + nu      * (
@@ -169,6 +262,7 @@ static inline P* ref_facexz(
     P* __restrict__  v,
     Dimensions       dims,
     int              nu,
+    int              num_face_octants_allocated,
     int              ix,
     int              iz,
     int              ie,
@@ -176,13 +270,46 @@ static inline P* ref_facexz(
     int              iu,
     int              octant_ind )
 {
+  assert( v != NULL );
+  assert( nu > 0 );
   assert( ix >= 0 && ix < dims.nx );
   assert( iz >= 0 && iz < dims.nz );
   assert( ie >= 0 && ie < dims.ne );
   assert( ia >= 0 && ia < dims.na );
   assert( iu >= 0 && iu < nu );
-  /*---NOTE: the following may not be tight---*/
-  assert( octant_ind >= 0 && octant_ind < NOCTANT );
+  assert( octant_ind >= 0 && octant_ind < num_face_octants_allocated );
+
+  return & v[ ia + dims.na * (
+              iu + nu      * (
+              ix + dims.nx * (
+              iz + dims.nz * (
+              ie + dims.ne * (
+              octant_ind ))))) ];
+}
+
+/*===========================================================================*/
+/*---Multidimensional array accessor function---*/
+
+static inline const P* const_ref_facexz(
+    const P* __restrict__  v,
+    Dimensions             dims,
+    int                    nu,
+    int                    num_face_octants_allocated,
+    int                    ix,
+    int                    iz,
+    int                    ie,
+    int                    ia,
+    int                    iu,
+    int                    octant_ind )
+{
+  assert( v != NULL );
+  assert( nu > 0 );
+  assert( ix >= 0 && ix < dims.nx );
+  assert( iz >= 0 && iz < dims.nz );
+  assert( ie >= 0 && ie < dims.ne );
+  assert( ia >= 0 && ia < dims.na );
+  assert( iu >= 0 && iu < nu );
+  assert( octant_ind >= 0 && octant_ind < num_face_octants_allocated );
 
   return & v[ ia + dims.na * (
               iu + nu      * (
@@ -199,6 +326,7 @@ static inline P* ref_faceyz(
     P* __restrict__  v,
     Dimensions       dims,
     int              nu,
+    int              num_face_octants_allocated,
     int              iy,
     int              iz,
     int              ie,
@@ -206,14 +334,46 @@ static inline P* ref_faceyz(
     int              iu,
     int              octant_ind )
 {
-  assert( v );
+  assert( v != NULL );
+  assert( nu > 0 );
   assert( iy >= 0 && iy < dims.ny );
   assert( iz >= 0 && iz < dims.nz );
   assert( ie >= 0 && ie < dims.ne );
   assert( ia >= 0 && ia < dims.na );
   assert( iu >= 0 && iu < nu );
-  /*---NOTE: the following may not be tight---*/
-  assert( octant_ind >= 0 && octant_ind < NOCTANT );
+  assert( octant_ind >= 0 && octant_ind < num_face_octants_allocated );
+
+  return & v[ ia + dims.na * (
+              iu + nu      * (
+              iy + dims.ny * (
+              iz + dims.nz * (
+              ie + dims.ne * (
+              octant_ind ))))) ];
+}
+
+/*===========================================================================*/
+/*---Multidimensional array accessor function---*/
+
+static inline const P* const_ref_faceyz(
+    const P* __restrict__  v,
+    Dimensions             dims,
+    int                    nu,
+    int                    num_face_octants_allocated,
+    int                    iy,
+    int                    iz,
+    int                    ie,
+    int                    ia,
+    int                    iu,
+    int                    octant_ind )
+{
+  assert( v != NULL );
+  assert( nu > 0 );
+  assert( iy >= 0 && iy < dims.ny );
+  assert( iz >= 0 && iz < dims.nz );
+  assert( ie >= 0 && ie < dims.ne );
+  assert( ia >= 0 && ia < dims.na );
+  assert( iu >= 0 && iu < nu );
+  assert( octant_ind >= 0 && octant_ind < num_face_octants_allocated );
 
   return & v[ ia + dims.na * (
               iu + nu      * (

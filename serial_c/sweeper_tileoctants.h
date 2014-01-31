@@ -60,12 +60,12 @@ void Sweeper_dtor( Sweeper* sweeper );
 /*---Perform a sweep---*/
 
 void Sweeper_sweep(
-  Sweeper*         sweeper,
-  P* __restrict__  vo,
-  P* __restrict__  vi,
-  Quantities       quan,
-  Dimensions       dims,
-  Env*             env );
+  Sweeper*               sweeper,
+  P* __restrict__        vo,
+  const P* __restrict__  vi,
+  const Quantities*      quan,
+  Dimensions             dims,
+  Env*                   env );
 
 /*===========================================================================*/
 

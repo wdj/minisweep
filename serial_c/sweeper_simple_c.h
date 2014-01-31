@@ -60,12 +60,12 @@ void Sweeper_dtor( Sweeper* sweeper )
 /*---Perform a sweep---*/
 
 void Sweeper_sweep(
-  Sweeper*         sweeper,
-  P* __restrict__  vo,
-  P* __restrict__  vi,
-  Quantities       quan,
-  Dimensions       dims,
-  Env*             env )
+  Sweeper*               sweeper,
+  P* __restrict__        vo,
+  const P* __restrict__  vi,
+  const Quantities*      quan,
+  Dimensions             dims,
+  Env*                   env )
 {
   assert( sweeper );
   assert( vi );
@@ -125,8 +125,11 @@ void Sweeper_sweep(
       for( ie=0; ie<dims.ne; ++ie )
       for( ia=0; ia<dims.na; ++ia )
       {
-        *ref_facexy( sweeper->facexy, dims, NU, ix, iy, ie, ia, iu, octant_ind )
-             = Quantities_init_facexy( ix, iy, iz, ie, ia, iu, octant, dims );
+        *ref_facexy( sweeper->facexy, dims, NU,
+                     Sweeper_num_face_octants_allocated(),
+                     ix, iy, ie, ia, iu, octant_ind )
+             = Quantities_init_facexy(
+                                  quan, ix, iy, iz, ie, ia, iu, octant, dims );
       }
     }
 
@@ -138,8 +141,11 @@ void Sweeper_sweep(
       for( ie=0; ie<dims.ne; ++ie )
       for( ia=0; ia<dims.na; ++ia )
       {
-        *ref_facexz( sweeper->facexz, dims, NU, ix, iz, ie, ia, iu, octant_ind )
-             = Quantities_init_facexz( ix, iy, iz, ie, ia, iu, octant, dims );
+        *ref_facexz( sweeper->facexz, dims, NU,
+                     Sweeper_num_face_octants_allocated(),
+                     ix, iz, ie, ia, iu, octant_ind )
+             = Quantities_init_facexz(
+                                  quan, ix, iy, iz, ie, ia, iu, octant, dims );
       }
     }
 
@@ -151,8 +157,11 @@ void Sweeper_sweep(
       for( ie=0; ie<dims.ne; ++ie )
       for( ia=0; ia<dims.na; ++ia )
       {
-        *ref_faceyz( sweeper->faceyz, dims, NU, iy, iz, ie, ia, iu, octant_ind )
-             = Quantities_init_faceyz( ix, iy, iz, ie, ia, iu, octant, dims );
+        *ref_faceyz( sweeper->faceyz, dims, NU,
+                     Sweeper_num_face_octants_allocated(),
+                     iy, iz, ie, ia, iu, octant_ind )
+             = Quantities_init_faceyz(
+                                  quan, ix, iy, iz, ie, ia, iu, octant, dims );
       }
     }
 
@@ -194,8 +203,8 @@ void Sweeper_sweep(
         P result = P_zero();
         for( im=0; im<dims.nm; ++im )
         {
-          result += *ref_a_from_m( quan.a_from_m, dims, im, ia ) *
-                    *ref_state( vi, dims, NU, ix, iy, iz, ie, im, iu );
+          result += *const_ref_a_from_m( quan->a_from_m, dims, im, ia ) *
+                    *const_ref_state( vi, dims, NU, ix, iy, iz, ie, im, iu );
         }
         *ref_v_local( sweeper->v_local, dims, NU, ia, iu ) = result;
       }
@@ -204,10 +213,11 @@ void Sweeper_sweep(
       /*---Perform solve---*/
       /*--------------------*/
 
-      Quantities_solve( sweeper->v_local,
+      Quantities_solve( quan, sweeper->v_local,
                         sweeper->facexy, sweeper->facexz, sweeper->faceyz,
                         ix, iy, iz, ie, ix, iy, iz,
-                        octant, octant_ind, quan, dims, dims );
+                        octant, octant_ind,
+                        Sweeper_num_face_octants_allocated(), dims, dims );
 
       /*--------------------*/
       /*---Transform state vector from angles to moments---*/
@@ -223,8 +233,8 @@ void Sweeper_sweep(
         P result = P_zero();
         for( ia=0; ia<dims.na; ++ia )
         {
-          result += *ref_m_from_a( quan.m_from_a, dims, im, ia ) *
-                    *ref_v_local( sweeper->v_local, dims, NU, ia, iu );
+          result += *const_ref_m_from_a( quan->m_from_a, dims, im, ia ) *
+                    *const_ref_v_local( sweeper->v_local, dims, NU, ia, iu );
         }
         *ref_state( vo, dims, NU, ix, iy, iz, ie, im, iu ) += result;
       }
