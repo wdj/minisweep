@@ -17,7 +17,7 @@
 /*===========================================================================*/
 /*---Number of unknowns per gridcell---*/
 
-enum{ NU = 1 };
+enum{ NU = 4 };
 
 /*===========================================================================*/
 /*---Struct to hold pointers to arrays associated with physical quantities---*/
@@ -67,28 +67,68 @@ double Quantities_flops_per_solve( const Dimensions dims );
 
 static inline int Quantities_scalefactor_energy__( int ie )
 {
-  /*---Power-of-two multiplier for each energy group, to help catch errors
-       regarding indexing of energy groups.
+  /*---Random power-of-two multiplier for each energy group,
+       to help catch errors regarding indexing of energy groups.
   ---*/
   assert( ie >= 0 );
 
-  return 1 << ( ie & ( (1<<2) - 1 ) );
+  const int im = 714025;
+  const int ia = 1366;
+  const int ic = 150889;
+
+  int result = ( (ie)*ia + ic ) % im;
+  result = result & ( (1<<2) - 1 );
+  result = 1 << result;
+
+  return result;
+}
+
+/*===========================================================================*/
+/*---Scale factor for unknown---*/
+/*---pseudo-private member function---*/
+
+static inline int Quantities_scalefactor_unknown__( int iu )
+{
+  /*---Random power-of-two multiplier for each cell unknown,
+       to help catch errors regarding indexing of cell unknowns.
+  ---*/
+  assert( iu >= 0 );
+
+  const int im = 312500;
+  const int ia = 741;
+  const int ic = 66037;
+
+  int result = ( (iu)*ia + ic ) % im;
+  result = result & ( (1<<2) - 1 );
+  result = 1 << result;
+
+  return result;
 }
 
 /*===========================================================================*/
 /*---Scale factor for space---*/
 /*---pseudo-private member function---*/
 
-static inline int Quantities_scalefactor_space__( int ix, int iy, int iz )
+static inline int Quantities_scalefactor_space__( int ix_g, int iy_g, int iz_g )
 {
-  /*---Red/black checkerboard pattern in space, either "1" or "2",
-       to help catch spatial indexing errors.
-  --*/
-  assert( ix >= -1 );
-  assert( iy >= -1 );
-  assert( iz >= -1 );
+  /*---Create power of 2 based on hash of the spatial location.
+  ---*/
+  assert( ix_g >= -1 );
+  assert( iy_g >= -1 );
+  assert( iz_g >= -1 );
 
-  return 1. + 1. * ( ( (ix+2) + (iy+2) + (iz+2) ) % 2 );
+  const int im = 134456;
+  const int ia = 8121;
+  const int ic = 28411;
+
+  int result = 0;
+  result = ( (result+(ix_g+2))*ia + ic ) % im;
+  result = ( (result+(iy_g+2))*ia + ic ) % im;
+  result = ( (result+(iz_g+2))*ia + ic ) % im;
+  result = result & ( (1<<2) - 1 );
+  result = 1 << result;
+
+  return result;
 }
 
 /*===========================================================================*/
@@ -162,20 +202,21 @@ static inline P Quantities_zfluxweight__( int ia )
 /*---Initial values for boundary array---*/
 
 static inline P Quantities_init_facexy(
-  int              ix,
-  int              iy,
-  int              iz,
+  int              ix_g,
+  int              iy_g,
+  int              iz_g,
   int              ie,
   int              ia,
   int              iu,
   int              octant,
-  const Dimensions dims )
+  const Dimensions dims_g )
 {
-  assert( ix >=  0 && ix < dims.nx );
-  assert( iy >=  0 && iy < dims.ny );
-  assert( iz >= -1 && iz < dims.nz+1 );
-  assert( ie >=  0 && ie < dims.ne );
-  assert( ia >=  0 && ia < dims.na );
+  assert( ix_g >=  0 && ix_g <  dims_g.nx );
+  assert( iy_g >=  0 && iy_g <  dims_g.ny );
+  assert( ( iz_g == -1        && Dir_z(octant)==Dir_up() ) ||
+          ( iz_g == dims_g.nz && Dir_z(octant)==Dir_dn() ) );
+  assert( ie >=  0 && ie < dims_g.ne );
+  assert( ia >=  0 && ia < dims_g.na );
   assert( iu >=  0 && iu < NU );
   assert( octant >= 0 && octant < NOCTANT );
 
@@ -185,62 +226,67 @@ static inline P Quantities_init_facexy(
 
   return (P) Quantities_affinefunction__( ia )
            * Quantities_scalefactor_angle__( ia )
-           * Quantities_scalefactor_space__( ix, iy, iz )
-           * Quantities_scalefactor_energy__( ie );
+           * Quantities_scalefactor_space__( ix_g, iy_g, iz_g )
+           * Quantities_scalefactor_energy__( ie )
+           * Quantities_scalefactor_unknown__( iu );
 }
 
 /*===========================================================================*/
 /*---Initial values for boundary array---*/
 
 static inline P Quantities_init_facexz(
-  int              ix,
-  int              iy,
-  int              iz,
+  int              ix_g,
+  int              iy_g,
+  int              iz_g,
   int              ie,
   int              ia,
   int              iu,
   int              octant,
-  const Dimensions dims )
+  const Dimensions dims_g )
 {
-  assert( ix >=  0 && ix < dims.nx );
-  assert( iy >= -1 && iy < dims.ny+1 );
-  assert( iz >=  0 && iz < dims.nz );
-  assert( ie >=  0 && ie < dims.ne );
-  assert( ia >=  0 && ia < dims.na );
+  assert( ix_g >=  0 && ix_g < dims_g.nx );
+  assert( ( iy_g == -1        && Dir_y(octant)==Dir_up() ) ||
+          ( iy_g == dims_g.ny && Dir_y(octant)==Dir_dn() ) );
+  assert( iz_g >=  0 && iz_g < dims_g.nz );
+  assert( ie >=  0 && ie < dims_g.ne );
+  assert( ia >=  0 && ia < dims_g.na );
   assert( iu >=  0 && iu < NU );
   assert( octant >= 0 && octant < NOCTANT );
 
   return (P) Quantities_affinefunction__( ia )
            * Quantities_scalefactor_angle__( ia )
-           * Quantities_scalefactor_space__( ix, iy, iz )
-           * Quantities_scalefactor_energy__( ie );
+           * Quantities_scalefactor_space__( ix_g, iy_g, iz_g )
+           * Quantities_scalefactor_energy__( ie )
+           * Quantities_scalefactor_unknown__( iu );
 }
 
 /*===========================================================================*/
 /*---Initial values for boundary array---*/
 
 static inline P Quantities_init_faceyz(
-  int              ix,
-  int              iy,
-  int              iz,
+  int              ix_g,
+  int              iy_g,
+  int              iz_g,
   int              ie,
   int              ia,
   int              iu,
   int              octant,
-  const Dimensions dims )
+  const Dimensions dims_g )
 {
-  assert( ix >= -1 && ix < dims.nx+1 );
-  assert( iy >=  0 && iy < dims.ny );
-  assert( iz >=  0 && iz < dims.nz );
-  assert( ie >=  0 && ie < dims.ne );
-  assert( ia >=  0 && ia < dims.na );
+  assert( ( ix_g == -1        && Dir_x(octant)==Dir_up() ) ||
+          ( ix_g == dims_g.nx && Dir_x(octant)==Dir_dn() ) );
+  assert( iy_g >=  0 && iy_g < dims_g.ny );
+  assert( iz_g >=  0 && iz_g < dims_g.nz );
+  assert( ie >=  0 && ie < dims_g.ne );
+  assert( ia >=  0 && ia < dims_g.na );
   assert( iu >=  0 && iu < NU );
   assert( octant >= 0 && octant < NOCTANT );
 
   return (P) Quantities_affinefunction__( ia )
            * Quantities_scalefactor_angle__( ia )
-           * Quantities_scalefactor_space__( ix, iy, iz )
-           * Quantities_scalefactor_energy__( ie );
+           * Quantities_scalefactor_space__( ix_g, iy_g, iz_g )
+           * Quantities_scalefactor_energy__( ie )
+           * Quantities_scalefactor_unknown__( iu );
 }
 
 /*===========================================================================*/
@@ -256,8 +302,8 @@ static inline P Quantities_init_state(
   const Dimensions dims,
   const Quantities quan )
 {
-  assert( ix >= 0 && ix < quan.nx_g);
-  assert( iy >= 0 && iy < quan.ny_g );
+  assert( ix >= 0 && ix < dims.nx);
+  assert( iy >= 0 && iy < dims.ny );
   assert( iz >= 0 && iz < dims.nz );
   assert( ie >= 0 && ie < dims.ne );
   assert( im >= 0 && im < dims.nm );
@@ -266,7 +312,8 @@ static inline P Quantities_init_state(
   return (P) Quantities_affinefunction__( im )
            * Quantities_scalefactor_space__( ix+quan.ix_base,
                                              iy+quan.iy_base, iz )
-           * Quantities_scalefactor_energy__( ie );
+           * Quantities_scalefactor_energy__( ie )
+           * Quantities_scalefactor_unknown__( iu );
 }
 
 /*===========================================================================*/
@@ -327,16 +374,16 @@ static inline void Quantities_solve(
   {
     const P result = (
           *ref_v_local( v_local, dims_b, NU, ia, iu )
-                  / Quantities_scalefactor_space__( ix_g, iy_g, iz_g )
+             / Quantities_scalefactor_space__( ix_g, iy_g, iz_g )
         + *ref_facexy( facexy, dims_b, NU, ix_b, iy_b, ie, ia, iu, octant_ind )
              * Quantities_xfluxweight__( ia )
-             / Quantities_scalefactor_space__( ix_g-Dir_inc(dir_x), iy_g, iz_g )
+             / Quantities_scalefactor_space__( ix_g, iy_g, iz_g-Dir_inc(dir_z) )
         + *ref_facexz( facexz, dims_b, NU, ix_b, iz_b, ie, ia, iu, octant_ind )
              * Quantities_yfluxweight__( ia )
              / Quantities_scalefactor_space__( ix_g, iy_g-Dir_inc(dir_y), iz_g )
         + *ref_faceyz( faceyz, dims_b, NU, iy_b, iz_b, ie, ia, iu, octant_ind )
              * Quantities_zfluxweight__( ia )
-             / Quantities_scalefactor_space__( ix_g, iy_g, iz_g-Dir_inc(dir_z) )
+             / Quantities_scalefactor_space__( ix_g-Dir_inc(dir_x), iy_g, iz_g )
       )      * Quantities_scalefactor_space__( ix_g, iy_g, iz_g );
 
     *ref_v_local( v_local, dims_b, NU, ia, iu ) =
