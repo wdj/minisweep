@@ -72,22 +72,29 @@ function compare_runs
 #==============================================================================
 function main
 {
-  local pass
-
 # nx ny nz ne nm na numiterations nproc_x nproc_y nblock_z 
 
   compare_runs   "1"  "5 5 5 10 16 20  1  1 1  1" \
-                 "2"  "5 5 5 10 16 20  1  2 1  1"
+                 "1"  "5 5 5 10 16 20  2  1 1  1"
   compare_runs   "1"  "5 5 5 10 16 20  1  1 1  1" \
-                 "2"  "5 5 5 10 16 20  1  1 2  1"
+                 "1"  "5 5 5 10 16 20  1  1 1  5"
 
-  compare_runs   "1"  "5 5 6 10 16 20  1  1 1  1" \
-                "16"  "5 5 6 10 16 20  1  4 4  2"
+  if [ "${PBS_NP:-}" != "" ] ; then
 
-  compare_runs  "16"  "16 32 64 16 16 32  1  4 4  1" \
-                "16"  "16 32 64 16 16 32  1  4 4  2"
-  compare_runs  "16"  "16 32 64 16 16 32  1  4 4  2" \
-                "16"  "16 32 64 16 16 32  1  4 4  4"
+    compare_runs   "1"  "5 5 5 10 16 20  1  1 1  1" \
+                   "2"  "5 5 5 10 16 20  1  2 1  1"
+    compare_runs   "1"  "5 5 5 10 16 20  1  1 1  1" \
+                   "2"  "5 5 5 10 16 20  1  1 2  1"
+
+    compare_runs   "1"  "5 5 6 10 16 20  1  1 1  1" \
+                  "16"  "5 5 6 10 16 20  1  4 4  2"
+
+    compare_runs  "16"  "16 32 64 16 16 32  1  4 4  1" \
+                  "16"  "16 32 64 16 16 32  1  4 4  2"
+    compare_runs  "16"  "16 32 64 16 16 32  1  4 4  2" \
+                  "16"  "16 32 64 16 16 32  1  4 4  4"
+
+  fi
 
   echo -n "Total tests $g_num_tests PASSED $g_num_passed"
   echo " FAILED $(( $g_num_tests - $g_num_passed ))."
