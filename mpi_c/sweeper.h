@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   sweeper.c
+ * \file   sweeper.h
  * \author Wayne Joubert
  * \date   Wed Jan 15 16:06:28 EST 2014
  * \brief  Definitions for performing a sweep.
@@ -8,16 +8,21 @@
  */
 /*---------------------------------------------------------------------------*/
 
-#if 0
-#include "sweeper_simple_c.h"
+#ifndef _serial_c__sweep_h_
+#define _serial_c__sweep_h_
+
+#ifdef SWEEPER_SIMPLE
+#include "sweeper_simple.h"
 #endif
 
-#if 0
-#include "sweeper_tileoctants_c.h"
+#ifdef SWEEPER_TILEOCTANTS
+#include "sweeper_tileoctants.h"
 #endif
 
-#if 1
-#include "sweeper_kba_c.h"
+#ifdef SWEEPER_KBA
+#include "sweeper_kba.h"
 #endif
+
+#endif /*---_serial_c__sweep_h_---*/
 
 /*---------------------------------------------------------------------------*/

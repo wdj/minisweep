@@ -17,7 +17,7 @@
 /*===========================================================================*/
 /*---Number of unknowns per gridcell---*/
 
-enum{ NU = 4 };
+enum{ NU = 1 }; /*FIX*/
 
 /*===========================================================================*/
 /*---Struct to hold pointers to arrays associated with physical quantities---*/
@@ -414,6 +414,7 @@ static inline void Quantities_solve(
     *ref_faceyz( faceyz, dims_b, NU, num_face_octants_allocated,
                  iy_b, iz_b, ie, ia, iu, octant_ind ) =
         result;
+
   } /*---for---*/
 
 } /*---Quantities_solve---*/
