@@ -17,7 +17,7 @@
 /*===========================================================================*/
 /*---Number of unknowns per gridcell---*/
 
-enum{ NU = 1 }; /*FIX*/
+enum{ NU = 4 };
 
 /*===========================================================================*/
 /*---Struct to hold pointers to arrays associated with physical quantities---*/
