@@ -332,7 +332,7 @@ void Quantities_dtor( Quantities* quan )
 
 double Quantities_flops_per_solve( const Dimensions dims )
 {
-  return 2. + 3. * NDIM;
+  return 2. + 5. * NDIM;
 }
 
 /*===========================================================================*/

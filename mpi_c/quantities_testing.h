@@ -217,6 +217,16 @@ static inline P Quantities_zfluxweight__( Dimensions dims,  int ia )
 }
 
 /*===========================================================================*/
+/*---Scale factor for octants---*/
+/*---pseudo-private member function---*/
+
+static inline int Quantities_scalefactor_octant__( int octant )
+{
+  assert( octant>=0 && octant<NOCTANT );
+  return ( 1 + octant );
+}
+
+/*===========================================================================*/
 /*---Initial values for boundary array---*/
 
 static inline P Quantities_init_facexy(
@@ -253,7 +263,8 @@ static inline P Quantities_init_facexy(
            * ( (P) Quantities_scalefactor_angle__( dims_g, ia ) )
            * ( (P) Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g ) )
            * ( (P) Quantities_scalefactor_energy__( ie, dims_g ) )
-           * ( (P) Quantities_scalefactor_unknown__( iu ) );
+           * ( (P) Quantities_scalefactor_unknown__( iu ) )
+           * ( (P) Quantities_scalefactor_octant__( octant ) );
   }
 }
 
@@ -290,7 +301,8 @@ static inline P Quantities_init_facexz(
            * ( (P) Quantities_scalefactor_angle__( dims_g, ia ) )
            * ( (P) Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g ) )
            * ( (P) Quantities_scalefactor_energy__( ie, dims_g ) )
-           * ( (P) Quantities_scalefactor_unknown__( iu ) );
+           * ( (P) Quantities_scalefactor_unknown__( iu ) )
+           * ( (P) Quantities_scalefactor_octant__( octant ) );
   }
 }
 
@@ -327,7 +339,8 @@ static inline P Quantities_init_faceyz(
            * ( (P) Quantities_scalefactor_angle__( dims_g, ia ) )
            * ( (P) Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g ) )
            * ( (P) Quantities_scalefactor_energy__( ie, dims_g ) )
-           * ( (P) Quantities_scalefactor_unknown__( iu ) );
+           * ( (P) Quantities_scalefactor_unknown__( iu ) )
+           * ( (P) Quantities_scalefactor_octant__( octant ) );
   }
 }
 
@@ -427,29 +440,34 @@ static inline void Quantities_solve(
              / Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g )
         + *const_ref_facexy( facexy, dims_b, NU, num_face_octants_allocated,
                                             ix_b, iy_b, ie, ia, iu, octant_ind )
-             * Quantities_xfluxweight__( dims_g, ia )
+           * ( Quantities_xfluxweight__( dims_g, ia ) * P_one()
+             / Quantities_scalefactor_octant__( octant ) )
              / Quantities_scalefactor_space__( quan,
                                                ix_g, iy_g, iz_g-Dir_inc(dir_z) )
         + *const_ref_facexz( facexz, dims_b, NU, num_face_octants_allocated,
                                             ix_b, iz_b, ie, ia, iu, octant_ind )
-             * Quantities_yfluxweight__( dims_g, ia )
+           * ( Quantities_yfluxweight__( dims_g, ia ) * P_one()
+             / Quantities_scalefactor_octant__( octant ) )
              / Quantities_scalefactor_space__( quan,
                                                ix_g, iy_g-Dir_inc(dir_y), iz_g )
         + *const_ref_faceyz( faceyz, dims_b, NU, num_face_octants_allocated,
                                             iy_b, iz_b, ie, ia, iu, octant_ind )
-             * Quantities_zfluxweight__( dims_g, ia )
+           * ( Quantities_zfluxweight__( dims_g, ia ) * P_one()
+             / Quantities_scalefactor_octant__( octant ) )
              / Quantities_scalefactor_space__( quan,
                                                ix_g-Dir_inc(dir_x), iy_g, iz_g )
       )      * Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g );
 
-    *ref_v_local( v_local, dims_b, NU, ia, iu ) =
+    *ref_v_local( v_local, dims_b, NU, ia, iu ) = result;
     *ref_facexy( facexy, dims_b, NU, num_face_octants_allocated,
-                 ix_b, iy_b, ie, ia, iu, octant_ind ) =
+                 ix_b, iy_b, ie, ia, iu, octant_ind ) = result *
+                 Quantities_scalefactor_octant__( octant );
     *ref_facexz( facexz, dims_b, NU, num_face_octants_allocated,
-                 ix_b, iz_b, ie, ia, iu, octant_ind ) =
+                 ix_b, iz_b, ie, ia, iu, octant_ind ) = result *
+                 Quantities_scalefactor_octant__( octant );
     *ref_faceyz( faceyz, dims_b, NU, num_face_octants_allocated,
-                 iy_b, iz_b, ie, ia, iu, octant_ind ) =
-        result;
+                 iy_b, iz_b, ie, ia, iu, octant_ind ) = result *
+                 Quantities_scalefactor_octant__( octant );
 
   } /*---for---*/
 
