@@ -36,14 +36,15 @@ void Quantities_init_am_matrices__( Quantities*       quan,
 {
   /*---Declarations---*/
 
-  int im = 0;
-  int ia = 0;
-  int i  = 0;
+  int im     = 0;
+  int ia     = 0;
+  int i      = 0;
+  int octant = 0;
 
   /*---Allocate arrays---*/
 
-  quan->a_from_m = malloc_P( dims.nm * dims.na );
-  quan->m_from_a = malloc_P( dims.nm * dims.na );
+  quan->a_from_m = malloc_P( dims.nm * dims.na * NOCTANT );
+  quan->m_from_a = malloc_P( dims.nm * dims.na * NOCTANT );
 
   /*-----------------------------*/
   /*---Set entries of a_from_m---*/
@@ -57,10 +58,11 @@ void Quantities_init_am_matrices__( Quantities*       quan,
 
   /*---First set to zero---*/
 
-  for( im=0; im<dims.nm; ++im )
-  for( ia=0; ia<dims.na; ++ia )
+  for( octant=0; octant<NOCTANT; ++octant )
+  for( im=0;     im<dims.nm;     ++im )
+  for( ia=0;     ia<dims.na;     ++ia )
   {
-    *ref_a_from_m( quan->a_from_m, dims, im, ia ) = P_zero();
+    *ref_a_from_m( quan->a_from_m, dims, im, ia, octant ) = P_zero();
   }
 
   /*---Map a linear vector of values to a similar linear vector of values---*/
@@ -72,16 +74,17 @@ void Quantities_init_am_matrices__( Quantities*       quan,
        constant.
   ---*/
 
-  for( i=0; i<dims.na; ++i )
+  for( octant=0; octant<NOCTANT; ++octant )
+  for( i=0;      i<dims.na;      ++i )
   {
     const int quot = ( i + 1 ) / dims.nm;
     const int rem  = ( i + 1 ) % dims.nm;
 
-    *ref_a_from_m( quan->a_from_m, dims, dims.nm-1, i ) += quot;
+    *ref_a_from_m( quan->a_from_m, dims, dims.nm-1, i, octant ) += quot;
     if( rem != 0 )
     {
-      *ref_a_from_m( quan->a_from_m, dims, 0,   i ) += -P_one();
-      *ref_a_from_m( quan->a_from_m, dims, rem, i ) +=  P_one();
+      *ref_a_from_m( quan->a_from_m, dims, 0,   i, octant ) += -P_one();
+      *ref_a_from_m( quan->a_from_m, dims, rem, i, octant ) +=  P_one();
     }
   }
 
@@ -91,14 +94,18 @@ void Quantities_init_am_matrices__( Quantities*       quan,
        to the rows that are guaranteed to send affine functions to zero.
   ---*/
 
-  for( im=0; im<dims.nm-2; ++im )
-  for( ia=0; ia<dims.na;   ++ia )
+  for( octant=0; octant<NOCTANT; ++octant )
+  for( im=0;     im<dims.nm-2;   ++im )
+  for( ia=0;     ia<dims.na;     ++ia )
   {
     const int randvalue = 21 + ( im + dims.nm * ia ) % 17;
 
-    *ref_a_from_m( quan->a_from_m, dims, im+0, ia ) +=  -P_one() * randvalue;
-    *ref_a_from_m( quan->a_from_m, dims, im+1, ia ) += 2*P_one() * randvalue;
-    *ref_a_from_m( quan->a_from_m, dims, im+2, ia ) +=  -P_one() * randvalue;
+    *ref_a_from_m( quan->a_from_m, dims, im+0, ia, octant ) +=
+                                                          -P_one() * randvalue;
+    *ref_a_from_m( quan->a_from_m, dims, im+1, ia, octant ) +=
+                                                         2*P_one() * randvalue;
+    *ref_a_from_m( quan->a_from_m, dims, im+2, ia, octant ) +=
+                                                          -P_one() * randvalue;
   }
 
   /*-----------------------------*/
@@ -107,10 +114,11 @@ void Quantities_init_am_matrices__( Quantities*       quan,
 
   /*---First set to zero---*/
 
-  for( im=0; im<dims.nm; ++im )
-  for( ia=0; ia<dims.na; ++ia )
+  for( octant=0; octant<NOCTANT; ++octant )
+  for( im=0;     im<dims.nm;     ++im )
+  for( ia=0;     ia<dims.na;     ++ia )
   {
-    *ref_m_from_a( quan->m_from_a, dims, im, ia ) = P_zero();
+    *ref_m_from_a( quan->m_from_a, dims, im, ia, octant ) = P_zero();
   }
 
   /*---Map a linear vector of values to a similar linear vector of values---*/
@@ -121,16 +129,17 @@ void Quantities_init_am_matrices__( Quantities*       quan,
        designed to make the test more rigorous.
   ---*/
 
-  for( i=0; i<dims.nm; ++i )
+  for( octant=0; octant<NOCTANT; ++octant )
+  for( i=0;      i<dims.nm;      ++i )
   {
     const int quot = ( i + 1 ) / dims.na;
     const int rem  = ( i + 1 ) % dims.na;
 
-    *ref_m_from_a( quan->m_from_a, dims, i, dims.na-1 ) += quot;
+    *ref_m_from_a( quan->m_from_a, dims, i, dims.na-1, octant ) += quot;
     if( rem != 0 )
     {
-      *ref_m_from_a( quan->m_from_a, dims, i, 0   ) += -P_one();
-      *ref_m_from_a( quan->m_from_a, dims, i, rem ) +=  P_one();
+      *ref_m_from_a( quan->m_from_a, dims, i, 0  , octant ) += -P_one();
+      *ref_m_from_a( quan->m_from_a, dims, i, rem, octant ) +=  P_one();
     }
   }
 
@@ -140,23 +149,28 @@ void Quantities_init_am_matrices__( Quantities*       quan,
        entries that do not affect the scaled-affine input values expected.
   ---*/
 
-  for( im=0; im<dims.nm;   ++im )
-  for( ia=0; ia<dims.na-2; ++ia )
+  for( octant=0; octant<NOCTANT; ++octant )
+  for( im=0;     im<dims.nm;     ++im )
+  for( ia=0;     ia<dims.na-2;   ++ia )
   {
     const int randvalue = 37 + ( im + dims.nm * ia ) % 19;
 
-    *ref_m_from_a( quan->m_from_a, dims, im, ia+0 ) +=  -P_one() * randvalue;
-    *ref_m_from_a( quan->m_from_a, dims, im, ia+1 ) += 2*P_one() * randvalue;
-    *ref_m_from_a( quan->m_from_a, dims, im, ia+2 ) +=  -P_one() * randvalue;
+    *ref_m_from_a( quan->m_from_a, dims, im, ia+0, octant ) +=
+                                                          -P_one() * randvalue;
+    *ref_m_from_a( quan->m_from_a, dims, im, ia+1, octant ) +=
+                                                         2*P_one() * randvalue;
+    *ref_m_from_a( quan->m_from_a, dims, im, ia+2, octant ) +=
+                                                          -P_one() * randvalue;
   }
 
   /*---Scale matrix to compensate for 8 octants and also angle scale factor---*/
 
-  for( im=0; im<dims.nm; ++im )
-  for( ia=0; ia<dims.na; ++ia )
+  for( octant=0; octant<NOCTANT; ++octant )
+  for( im=0;     im<dims.nm;     ++im )
+  for( ia=0;     ia<dims.na;     ++ia )
   {
-    *ref_m_from_a( quan->m_from_a, dims, im, ia ) /= NOCTANT;
-    *ref_m_from_a( quan->m_from_a, dims, im, ia ) /=
+    *ref_m_from_a( quan->m_from_a, dims, im, ia, octant ) /= NOCTANT;
+    *ref_m_from_a( quan->m_from_a, dims, im, ia, octant ) /=
                                     Quantities_scalefactor_angle__( dims, ia );
   }
 

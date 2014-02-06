@@ -126,15 +126,18 @@ static inline P* ref_a_from_m(
     P* __restrict__  v,
     Dimensions       dims,
     int              im,
-    int              ia )
+    int              ia,
+    int              octant )
 {
   assert( v != NULL );
   assert( im >= 0 && im < dims.nm );
   assert( ia >= 0 && ia < dims.na );
+  assert( octant >= 0 && octant < NOCTANT );
 
-  return & v[ im + dims.nm * (
-              ia + dims.na * (
-              0 )) ];
+  return & v[ im     + dims.nm * (
+              ia     + dims.na * (
+              octant + NOCTANT * (
+              0 ))) ];
 }
 
 /*===========================================================================*/
@@ -144,15 +147,18 @@ static inline const P* const_ref_a_from_m(
     const P* __restrict__  v,
     Dimensions             dims,
     int                    im,
-    int                    ia )
+    int                    ia,
+    int                    octant )
 {
   assert( v != NULL );
   assert( im >= 0 && im < dims.nm );
   assert( ia >= 0 && ia < dims.na );
+  assert( octant >= 0 && octant < NOCTANT );
 
-  return & v[ im + dims.nm * (
-              ia + dims.na * (
-              0 )) ];
+  return & v[ im     + dims.nm * (
+              ia     + dims.na * (
+              octant + NOCTANT * (
+              0 ))) ];
 }
 
 /*===========================================================================*/
@@ -162,15 +168,18 @@ static inline P* ref_m_from_a(
     P* __restrict__  v,
     Dimensions       dims,
     int              im,
-    int              ia )
+    int              ia,
+    int              octant )
 {
   assert( v != NULL );
   assert( im >= 0 && im < dims.nm );
   assert( ia >= 0 && ia < dims.na );
+  assert( octant >= 0 && octant < NOCTANT );
 
-  return & v[ ia + dims.na * (
-              im + dims.nm * (
-              0 )) ];
+  return & v[ im     + dims.nm * (
+              ia     + dims.na * (
+              octant + NOCTANT * (
+              0 ))) ];
 }
 
 /*===========================================================================*/
@@ -180,15 +189,18 @@ static inline const P* const_ref_m_from_a(
     const P* __restrict__  v,
     Dimensions             dims,
     int                    im,
-    int                    ia )
+    int                    ia,
+    int                    octant )
 {
   assert( v != NULL );
   assert( im >= 0 && im < dims.nm );
   assert( ia >= 0 && ia < dims.na );
+  assert( octant >= 0 && octant < NOCTANT );
 
-  return & v[ ia + dims.na * (
-              im + dims.nm * (
-              0 )) ];
+  return & v[ im     + dims.nm * (
+              ia     + dims.na * (
+              octant + NOCTANT * (
+              0 ))) ];
 }
 
 /*===========================================================================*/
