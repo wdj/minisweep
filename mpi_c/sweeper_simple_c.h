@@ -27,6 +27,8 @@ void Sweeper_ctor( Sweeper*    sweeper,
                    Env*        env,
                    int         nblock_z )
 {
+  Insist( Env_nproc( env ) == 1 && "Simple sweeper runs only with one proc." )
+
   /*---Allocate arrays---*/
 
   sweeper->v_local = malloc_P( dims.na * NU );

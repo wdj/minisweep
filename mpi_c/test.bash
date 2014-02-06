@@ -74,12 +74,22 @@ function main
 {
 # nx ny nz ne nm na numiterations nproc_x nproc_y nblock_z 
 
-  compare_runs   "1"  "5 5 5 10 16 20  1  1 1  1" \
-                 "1"  "5 5 5 10 16 20  2  1 1  1"
-  compare_runs   "1"  "5 5 5 10 16 20  1  1 1  1" \
-                 "1"  "5 5 5 10 16 20  1  1 1  5"
+  local alg_options
+
+  for alg_options in -DSWEEPER_KBA -DSWEEPER_SIMPLE -DSWEEPER_TILEOCTANTS ; do
+
+    make MPI_OPTION= ALG_OPTIONS="$alg_options"
+
+    compare_runs   "1"  "5 5 5 10 16 20  1  1 1  1" \
+                   "1"  "5 5 5 10 16 20  2  1 1  1"
+    compare_runs   "1"  "5 5 5 10 16 20  1  1 1  1" \
+                   "1"  "5 5 5 10 16 20  1  1 1  5"
+
+  done
 
   if [ "${PBS_NP:-}" != "" ] ; then
+
+    make
 
     compare_runs   "1"  "5 5 5 10 16 20  1  1 1  1" \
                    "2"  "5 5 5 10 16 20  1  2 1  1"

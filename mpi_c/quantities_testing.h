@@ -20,6 +20,14 @@
 enum{ NU = 4 };
 
 /*===========================================================================*/
+/*---Type of boundary conditions---*/
+
+static inline Bool_t Quantities_bc_vacuum()
+{
+  return Bool_false;
+}
+
+/*===========================================================================*/
 /*---Struct to hold pointers to arrays associated with physical quantities---*/
 
 typedef struct
@@ -235,11 +243,18 @@ static inline P Quantities_init_facexy(
        and independent of ix, iy, iz, to facilitate calculating the
        result analytically---*/
 
-  return   ( (P) Quantities_affinefunction__( ia ) )
-         * ( (P) Quantities_scalefactor_angle__( dims_g, ia ) )
-         * ( (P) Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g ) )
-         * ( (P) Quantities_scalefactor_energy__( ie, dims_g ) )
-         * ( (P) Quantities_scalefactor_unknown__( iu ) );
+  if( Quantities_bc_vacuum() )
+  {
+    return P_zero();
+  }
+  else
+  {
+    return   ( (P) Quantities_affinefunction__( ia ) )
+           * ( (P) Quantities_scalefactor_angle__( dims_g, ia ) )
+           * ( (P) Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g ) )
+           * ( (P) Quantities_scalefactor_energy__( ie, dims_g ) )
+           * ( (P) Quantities_scalefactor_unknown__( iu ) );
+  }
 }
 
 /*===========================================================================*/
@@ -265,11 +280,18 @@ static inline P Quantities_init_facexz(
   assert( iu >=  0 && iu < NU );
   assert( octant >= 0 && octant < NOCTANT );
 
-  return   ( (P) Quantities_affinefunction__( ia ) )
-         * ( (P) Quantities_scalefactor_angle__( dims_g, ia ) )
-         * ( (P) Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g ) )
-         * ( (P) Quantities_scalefactor_energy__( ie, dims_g ) )
-         * ( (P) Quantities_scalefactor_unknown__( iu ) );
+  if( Quantities_bc_vacuum() )
+  {
+    return P_zero();
+  }
+  else
+  {
+    return   ( (P) Quantities_affinefunction__( ia ) )
+           * ( (P) Quantities_scalefactor_angle__( dims_g, ia ) )
+           * ( (P) Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g ) )
+           * ( (P) Quantities_scalefactor_energy__( ie, dims_g ) )
+           * ( (P) Quantities_scalefactor_unknown__( iu ) );
+  }
 }
 
 /*===========================================================================*/
@@ -295,11 +317,18 @@ static inline P Quantities_init_faceyz(
   assert( iu >=  0 && iu < NU );
   assert( octant >= 0 && octant < NOCTANT );
 
-  return   ( (P) Quantities_affinefunction__( ia ) )
-         * ( (P) Quantities_scalefactor_angle__( dims_g, ia ) )
-         * ( (P) Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g ) )
-         * ( (P) Quantities_scalefactor_energy__( ie, dims_g ) )
-         * ( (P) Quantities_scalefactor_unknown__( iu ) );
+  if( Quantities_bc_vacuum() )
+  {
+    return P_zero();
+  }
+  else
+  {
+    return   ( (P) Quantities_affinefunction__( ia ) )
+           * ( (P) Quantities_scalefactor_angle__( dims_g, ia ) )
+           * ( (P) Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g ) )
+           * ( (P) Quantities_scalefactor_energy__( ie, dims_g ) )
+           * ( (P) Quantities_scalefactor_unknown__( iu ) );
+  }
 }
 
 /*===========================================================================*/
@@ -322,12 +351,19 @@ static inline P Quantities_init_state(
   assert( im >= 0 && im < dims.nm );
   assert( iu >= 0 && iu < NU );
 
-  return   ( (P) Quantities_affinefunction__( im ) )
-         * ( (P) Quantities_scalefactor_space__( quan,
-                                                 ix+quan->ix_base,
-                                                 iy+quan->iy_base, iz ) )
-         * ( (P) Quantities_scalefactor_energy__( ie, dims ) )
-         * ( (P) Quantities_scalefactor_unknown__( iu ) );
+  if( Quantities_bc_vacuum() )
+  {
+    return P_zero();
+  }
+  else
+  {
+    return   ( (P) Quantities_affinefunction__( im ) )
+           * ( (P) Quantities_scalefactor_space__( quan,
+                                                   ix+quan->ix_base,
+                                                   iy+quan->iy_base, iz ) )
+           * ( (P) Quantities_scalefactor_energy__( ie, dims ) )
+           * ( (P) Quantities_scalefactor_unknown__( iu ) );
+  }
 }
 
 /*===========================================================================*/

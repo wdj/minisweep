@@ -150,7 +150,7 @@ int main( int argc, char** argv )
 
   if( Env_do_output( &env ) )
   {
-    printf( "Normsq result: %e  diff: %e  %s  time: %.3f  GF/s %.4f\n",
+    printf( "Normsq result: %.8e  diff: %.3e  %s  time: %.3f  GF/s: %.3f\n",
             (double)normsq, (double)normsqdiff,
             normsqdiff==P_zero() ? "PASS" : "FAIL",
             (double)time, floprate );
