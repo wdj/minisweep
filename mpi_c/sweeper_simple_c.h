@@ -27,7 +27,8 @@ void Sweeper_ctor( Sweeper*    sweeper,
                    Env*        env,
                    int         nblock_z )
 {
-  Insist( Env_nproc( env ) == 1 && "Simple sweeper runs only with one proc." )
+  Insist( Env_nproc( env ) == 1 && 
+                             "This sweeper version runs only with one proc." );
 
   /*---Allocate arrays---*/
 

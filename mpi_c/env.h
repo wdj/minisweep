@@ -225,6 +225,12 @@ static P Env_sum_P( P value )
 /*===========================================================================*/
 /*---MPI functions: point to point---*/
 
+#ifdef USE_MPI
+typedef MPI_Request Request_t;
+#else
+typedef int Request_t;
+#endif
+
 static void Env_send_i( const int* data, size_t n, int proc, int tag )
 {
   assert( data != NULL );
@@ -271,6 +277,48 @@ static void Env_recv_P( P* data, size_t n, int proc, int tag )
   MPI_Status status;
   MPI_Recv( (void*)data, n, MPI_DOUBLE, proc, tag,
                                                  Env_default_comm(), &status );
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void Env_asend_P( const P* data, size_t n, int proc, int tag,
+                                                          Request_t* request )
+{
+  Static_Assert( P_IS_DOUBLE );
+  assert( data != NULL );
+  assert( n >= 0 );
+  assert( request != NULL );
+
+#ifdef USE_MPI
+  MPI_Isend( (void*)data, n, MPI_DOUBLE, proc, tag, Env_default_comm(),
+                                                                     request );
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void Env_arecv_P( const P* data, size_t n, int proc, int tag,
+                                                          Request_t* request )
+{
+  Static_Assert( P_IS_DOUBLE );
+  assert( data != NULL );
+  assert( n >= 0 );
+  assert( request != NULL );
+
+#ifdef USE_MPI
+  MPI_Irecv( (void*)data, n, MPI_DOUBLE, proc, tag, Env_default_comm(),
+                                                                     request );
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void Env_wait( Request_t* request )
+{
+#ifdef USE_MPI
+  MPI_Status status;
+  MPI_Waitall( 1, request, &status );
 #endif
 }
 

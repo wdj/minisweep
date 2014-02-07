@@ -468,7 +468,6 @@ static inline void Quantities_solve(
     *ref_faceyz( faceyz, dims_b, NU, num_face_octants_allocated,
                  iy_b, iz_b, ie, ia, iu, octant_ind ) = result *
                  Quantities_scalefactor_octant__( octant );
-
   } /*---for---*/
 
 } /*---Quantities_solve---*/

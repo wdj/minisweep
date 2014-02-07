@@ -27,7 +27,8 @@ void Sweeper_ctor( Sweeper*    sweeper,
                    Env*        env,
                    int         nblock_z )
 {
-  const Bool_t tile_octants = Sweeper_tile_octants();
+  Insist( Env_nproc( env ) == 1 &&
+                             "This sweeper version runs only with one proc." );
 
   /*---Allocate arrays---*/
 
@@ -82,7 +83,8 @@ void Sweeper_sweep(
   int ia = 0;
   int iu = 0;
   int octant = 0;
-  const Bool_t tile_octants = Sweeper_tile_octants();
+  const Bool_t do_tile_octants = Sweeper_tile_octants();
+  const int num_tile_steps = do_tile_octants ? NOCTANT : 1;
 
   int tile_step = 0;
 
@@ -101,7 +103,7 @@ void Sweeper_sweep(
        tiles of the domain.
   ---*/
 
-  for( tile_step=0; tile_step<(tile_octants?NOCTANT:1); ++tile_step )
+  for( tile_step=0; tile_step<num_tile_steps; ++tile_step )
   {
 
   /*---Loop over octants---*/
@@ -113,7 +115,7 @@ void Sweeper_sweep(
          intermittently, thus a need to remember its state.
     ---*/
 
-    const int octant_ind = tile_octants ? octant : 0;
+    const int octant_ind = do_tile_octants ? octant : 0;
     assert( octant_ind >= 0 &&
             octant_ind < Sweeper_num_face_octants_allocated() );
 
@@ -135,13 +137,13 @@ void Sweeper_sweep(
          but not yet tested under OpenMP.
     ---*/
 
-    const int tile_x = (!tile_octants) ? 0 :
+    const int tile_x = (!do_tile_octants) ? 0 :
            ( ( tile_step & (1<<0) ) == 0 ) == ( dir_x == Dir_up() ) ? Dir_lo()
                                                                     : Dir_hi();
-    const int tile_y = (!tile_octants) ? 0 :
+    const int tile_y = (!do_tile_octants) ? 0 :
            ( ( tile_step & (1<<1) ) == 0 ) == ( dir_y == Dir_up() ) ? Dir_lo()
                                                                     : Dir_hi();
-    const int tile_z = (!tile_octants) ? 0 :
+    const int tile_z = (!do_tile_octants) ? 0 :
            ( ( tile_step & (1<<2) ) == 0 ) == ( dir_z == Dir_up() ) ? Dir_lo()
                                                                     : Dir_hi();
 
@@ -151,19 +153,19 @@ void Sweeper_sweep(
          domain in each direction
     ---*/
 
-    const int tile_xmin = (!tile_octants)  ? 0         :
-                          tile_x==Dir_lo() ? 0         : dims.nx/2;
-    const int tile_ymin = (!tile_octants)  ? 0         :
-                          tile_y==Dir_lo() ? 0         : dims.ny/2;
-    const int tile_zmin = (!tile_octants)  ? 0         :
-                          tile_z==Dir_lo() ? 0         : dims.nz/2;
+    const int tile_xmin = (!do_tile_octants)  ? 0         :
+                          tile_x==Dir_lo()    ? 0         : dims.nx/2;
+    const int tile_ymin = (!do_tile_octants)  ? 0         :
+                          tile_y==Dir_lo()    ? 0         : dims.ny/2;
+    const int tile_zmin = (!do_tile_octants)  ? 0         :
+                          tile_z==Dir_lo()    ? 0         : dims.nz/2;
 
-    const int tile_xmax = (!tile_octants)  ? dims.nx   :
-                          tile_x==Dir_lo() ? dims.nx/2 : dims.nx;
-    const int tile_ymax = (!tile_octants)  ? dims.ny   :
-                          tile_y==Dir_lo() ? dims.ny/2 : dims.ny;
-    const int tile_zmax = (!tile_octants)  ? dims.nz   :
-                          tile_z==Dir_lo() ? dims.nz/2 : dims.nz;
+    const int tile_xmax = (!do_tile_octants)  ? dims.nx   :
+                          tile_x==Dir_lo()    ? dims.nx/2 : dims.nx;
+    const int tile_ymax = (!do_tile_octants)  ? dims.ny   :
+                          tile_y==Dir_lo()    ? dims.ny/2 : dims.ny;
+    const int tile_zmax = (!do_tile_octants)  ? dims.nz   :
+                          tile_z==Dir_lo()    ? dims.nz/2 : dims.nz;
 
     /*---Initialize faces---*/
 
@@ -186,7 +188,7 @@ void Sweeper_sweep(
          tiling step.
     ---*/
 
-    if( tile_z != dir_z || !tile_octants )
+    if( tile_z != dir_z || !do_tile_octants )
     {
       iz = dir_z==Dir_up() ? -1 : dims.nz;
       for( iu=0; iu<NU; ++iu )
@@ -203,7 +205,7 @@ void Sweeper_sweep(
       }
     }
 
-    if( tile_y != dir_y || !tile_octants )
+    if( tile_y != dir_y || !do_tile_octants )
     {
       iy = dir_y==Dir_up() ? -1 : dims.ny;
       for( iu=0; iu<NU; ++iu )
@@ -220,7 +222,7 @@ void Sweeper_sweep(
       }
     }
 
-    if( tile_x != dir_x || !tile_octants )
+    if( tile_x != dir_x || !do_tile_octants )
     {
       ix = dir_x==Dir_up() ? -1 : dims.nx;
       for( iu=0; iu<NU; ++iu )
