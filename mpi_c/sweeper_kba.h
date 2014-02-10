@@ -86,7 +86,7 @@ static int Sweeper_is_face_comm_async()
 }
 
 /*===========================================================================*/
-/*---Number of block steps executed for an octant in isolation---*/
+/*---Number of block steps executed for a single octant in isolation---*/
 
 int Sweeper_nblock( const Sweeper*  sweeper,
                     const Env*      env );
@@ -105,6 +105,26 @@ Step_Info Sweeper_step_info__( const Sweeper*  sweeper,
                                int             proc_x,
                                int             proc_y,
                                const Env*      env );
+
+/*===========================================================================*/
+/*---Determine whether to send a face now---*/
+
+Bool_t Sweeper_do_send__(
+  Sweeper*           sweeper,
+  int                step,
+  int                axis,
+  int                dir_ind,
+  Env*               env );
+
+/*===========================================================================*/
+/*---Determine whether to receive a face now---*/
+
+Bool_t Sweeper_do_recv__(
+  Sweeper*           sweeper,
+  int                step,
+  int                axis,
+  int                dir_ind,
+  Env*               env );
 
 /*===========================================================================*/
 /*---Communicate faces---*/

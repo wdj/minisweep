@@ -252,7 +252,93 @@ Step_Info Sweeper_step_info__( const Sweeper*  sweeper,
 }
 
 /*===========================================================================*/
-/*---Communicate faces---*/
+/*---Determine whether to send a face computed at step, used at step+1---*/
+
+Bool_t Sweeper_do_send__(
+  Sweeper*           sweeper,
+  int                step,
+  int                axis,
+  int                dir_ind,
+  Env*               env )
+{
+  const int proc_x = Env_proc_x_this( env );
+  const int proc_y = Env_proc_y_this( env );
+
+  const Bool_t axis_x = axis==0;
+  const Bool_t axis_y = axis==1;
+
+  const int dir = dir_ind==0 ? Dir_up() : Dir_dn();
+  const int inc_x = axis_x ? Dir_inc( dir ) : 0;
+  const int inc_y = axis_y ? Dir_inc( dir ) : 0;
+
+  /*---Get step info for processors involved in communication---*/
+
+  const Step_Info step_info_send_source_step =
+    Sweeper_step_info__( sweeper, step,   proc_x,       proc_y,       env );
+
+  const Step_Info step_info_send_target_step =
+    Sweeper_step_info__( sweeper, step+1, proc_x+inc_x, proc_y+inc_y, env );
+
+  /*---Determine whether to communicate---*/
+
+  Bool_t const do_send = step_info_send_source_step.is_active
+                      && step_info_send_target_step.is_active
+                      && step_info_send_source_step.octant ==
+                         step_info_send_target_step.octant
+                      && step_info_send_source_step.block_z ==
+                         step_info_send_target_step.block_z
+                      && ( axis_x ?
+                           Dir_x( step_info_send_target_step.octant ) :
+                           Dir_y( step_info_send_target_step.octant ) ) == dir;
+
+  return do_send;
+}
+
+/*===========================================================================*/
+/*---Determine whether to recv a face computed at step, used at step+1---*/
+
+Bool_t Sweeper_do_recv__(
+  Sweeper*           sweeper,
+  int                step,
+  int                axis,
+  int                dir_ind,
+  Env*               env )
+{
+  const int proc_x = Env_proc_x_this( env );
+  const int proc_y = Env_proc_y_this( env );
+
+  const Bool_t axis_x = axis==0;
+  const Bool_t axis_y = axis==1;
+
+  const int dir = dir_ind==0 ? Dir_up() : Dir_dn();
+  const int inc_x = axis_x ? Dir_inc( dir ) : 0;
+  const int inc_y = axis_y ? Dir_inc( dir ) : 0;
+
+  /*---Get step info for processors involved in communication---*/
+
+  const Step_Info step_info_recv_source_step =
+    Sweeper_step_info__( sweeper, step,   proc_x-inc_x, proc_y-inc_y, env );
+
+  const Step_Info step_info_recv_target_step =
+    Sweeper_step_info__( sweeper, step+1, proc_x,       proc_y,       env );
+
+  /*---Determine whether to communicate---*/
+
+  Bool_t const do_recv = step_info_recv_source_step.is_active
+                      && step_info_recv_target_step.is_active
+                      && step_info_recv_source_step.octant ==
+                         step_info_recv_target_step.octant
+                      && step_info_recv_source_step.block_z ==
+                         step_info_recv_target_step.block_z
+                      && ( axis_x ?
+                           Dir_x( step_info_recv_target_step.octant ) :
+                           Dir_y( step_info_recv_target_step.octant ) ) == dir;
+
+  return do_recv;
+}
+
+/*===========================================================================*/
+/*---Communicate faces computed at step, used at step+1---*/
 
 void Sweeper_communicate_faces__(
   Sweeper*           sweeper,
@@ -279,7 +365,7 @@ void Sweeper_communicate_faces__(
 
   int axis = 0;
 
-  for( axis=0; axis<2; ++axis )
+  for( axis=0; axis<2; ++axis )  /*---Loop: X, Y---*/
   {
     const Bool_t axis_x = axis==0;
     const Bool_t axis_y = axis==1;
@@ -291,47 +377,19 @@ void Sweeper_communicate_faces__(
     P* __restrict__ sweeper_face = axis_x ? sweeper->faceyz : sweeper->facexz;
     int dir_ind = 0;
 
-    for( dir_ind=0; dir_ind<2; ++dir_ind )
+    for( dir_ind=0; dir_ind<2; ++dir_ind ) /*---Loop: up, down---*/
     {
       const int dir = dir_ind==0 ? Dir_up() : Dir_dn();
       const int inc_x = axis_x ? Dir_inc( dir ) : 0;
       const int inc_y = axis_y ? Dir_inc( dir ) : 0;
 
-      /*---Get step info for processors involved in communication---*/
-
-      const Step_Info step_info_send_source =
-        Sweeper_step_info__( sweeper, step,   proc_x,       proc_y,       env );
-
-      const Step_Info step_info_send_target =
-        Sweeper_step_info__( sweeper, step+1, proc_x+inc_x, proc_y+inc_y, env );
-
-      const Step_Info step_info_recv_source =
-        Sweeper_step_info__( sweeper, step,   proc_x-inc_x, proc_y-inc_y, env );
-
-      const Step_Info step_info_recv_target =
-        Sweeper_step_info__( sweeper, step+1, proc_x,       proc_y,       env );
-
       /*---Determine whether to communicate---*/
 
-      Bool_t const do_send = step_info_send_source.is_active
-                          && step_info_send_target.is_active
-                          && step_info_send_source.octant ==
-                             step_info_send_target.octant
-                          && step_info_send_source.block_z ==
-                             step_info_send_target.block_z
-                          && ( axis_x ?
-                               Dir_x( step_info_send_target.octant ) :
-                               Dir_y( step_info_send_target.octant ) ) == dir;
+      Bool_t const do_send = Sweeper_do_send__(
+                                           sweeper, step, axis, dir_ind, env );
 
-      Bool_t const do_recv = step_info_recv_source.is_active
-                          && step_info_recv_target.is_active
-                          && step_info_recv_source.octant ==
-                             step_info_recv_target.octant
-                          && step_info_recv_source.block_z ==
-                             step_info_recv_target.block_z
-                          && ( axis_x ?
-                               Dir_x( step_info_recv_target.octant ) :
-                               Dir_y( step_info_recv_target.octant ) ) == dir;
+      Bool_t const do_recv = Sweeper_do_recv__(
+                                           sweeper, step, axis, dir_ind, env );
 
       /*---Communicate as needed - use red/black coloring to avoid deadlock---*/
 
@@ -398,7 +456,7 @@ void Sweeper_communicate_faces__(
 }
 
 /*===========================================================================*/
-/*---Asynchronously communicate faces: send start---*/
+/*---Asynchronously send faces computed at step, used at step+1: start---*/
 
 void Sweeper_send_faces_start__(
   Sweeper*           sweeper,
@@ -429,9 +487,10 @@ void Sweeper_send_faces_start__(
 
     /*---Send values computed on this step---*/
 
-    const size_t    size_face    = axis_x ? size_faceyz : size_facexz;
-    P* __restrict__ sweeper_face = axis_x ? Sweeper_faceyz_c__( sweeper, step )
-                                          : Sweeper_facexz_c__( sweeper, step );
+    const size_t    size_face         = axis_x ? size_faceyz : size_facexz;
+    P* __restrict__ sweeper_face_send = axis_x ?
+                                           Sweeper_faceyz_c__( sweeper, step )
+                                         : Sweeper_facexz_c__( sweeper, step );
 
     int dir_ind = 0;
 
@@ -441,32 +500,18 @@ void Sweeper_send_faces_start__(
       const int inc_x = axis_x ? Dir_inc( dir ) : 0;
       const int inc_y = axis_y ? Dir_inc( dir ) : 0;
 
-      /*---Get step info for processors involved in communication---*/
-
-      const Step_Info step_info_send_source =
-        Sweeper_step_info__( sweeper, step,   proc_x,       proc_y,       env );
-
-      const Step_Info step_info_send_target =
-        Sweeper_step_info__( sweeper, step+1, proc_x+inc_x, proc_y+inc_y, env );
-
       /*---Determine whether to communicate---*/
 
-      Bool_t const do_send = step_info_send_source.is_active
-                          && step_info_send_target.is_active
-                          && step_info_send_source.octant ==
-                             step_info_send_target.octant
-                          && step_info_send_source.block_z ==
-                             step_info_send_target.block_z
-                          && ( axis_x ?
-                               Dir_x( step_info_send_target.octant ) :
-                               Dir_y( step_info_send_target.octant ) ) == dir;
+      Bool_t const do_send = Sweeper_do_send__(
+                                           sweeper, step, axis, dir_ind, env );
 
       if( do_send )
       {
         const int proc_other = Env_proc( env, proc_x+inc_x, proc_y+inc_y );
         Request_t* request = axis_x ? & sweeper->request_send_xz
                                     : & sweeper->request_send_yz;
-        Env_asend_P( sweeper_face, size_face, proc_other, env->tag, request );
+        Env_asend_P(
+                 sweeper_face_send, size_face, proc_other, env->tag, request );
       }
 
     } /*---dir_ind---*/
@@ -474,7 +519,7 @@ void Sweeper_send_faces_start__(
 }
 
 /*===========================================================================*/
-/*---Asynchronously communicate faces: send end---*/
+/*---Asynchronously send faces computed at step, used at step+1: end---*/
 
 void Sweeper_send_faces_end__(
   Sweeper*           sweeper,
@@ -496,35 +541,15 @@ void Sweeper_send_faces_end__(
     const Bool_t axis_x = axis==0;
     const Bool_t axis_y = axis==1;
 
-    const int proc_axis = axis_x ? proc_x : proc_y;
-
     int dir_ind = 0;
 
     for( dir_ind=0; dir_ind<2; ++dir_ind )
     {
-      const int dir = dir_ind==0 ? Dir_up() : Dir_dn();
-      const int inc_x = axis_x ? Dir_inc( dir ) : 0;
-      const int inc_y = axis_y ? Dir_inc( dir ) : 0;
-
-      /*---Get step info for processors involved in communication---*/
-
-      const Step_Info step_info_send_source =
-        Sweeper_step_info__( sweeper, step,   proc_x,       proc_y,       env );
-
-      const Step_Info step_info_send_target =
-        Sweeper_step_info__( sweeper, step+1, proc_x+inc_x, proc_y+inc_y, env );
 
       /*---Determine whether to communicate---*/
 
-      Bool_t const do_send = step_info_send_source.is_active
-                          && step_info_send_target.is_active
-                          && step_info_send_source.octant ==
-                             step_info_send_target.octant
-                          && step_info_send_source.block_z ==
-                             step_info_send_target.block_z
-                          && ( axis_x ?
-                               Dir_x( step_info_send_target.octant ) :
-                               Dir_y( step_info_send_target.octant ) ) == dir;
+      Bool_t const do_send = Sweeper_do_send__(
+                                           sweeper, step, axis, dir_ind, env );
 
       if( do_send )
       {
@@ -538,7 +563,7 @@ void Sweeper_send_faces_end__(
 }
 
 /*===========================================================================*/
-/*---Asynchronously communicate faces: recv start---*/
+/*---Asynchronously recv faces computed at step, used at step+1: start---*/
 
 void Sweeper_recv_faces_start__(
   Sweeper*           sweeper,
@@ -569,8 +594,8 @@ void Sweeper_recv_faces_start__(
 
     /*---Receive values computed on the next step---*/
 
-    const size_t    size_face    = axis_x ? size_faceyz     : size_facexz;
-    P* __restrict__ sweeper_face = axis_x ?
+    const size_t    size_face         = axis_x ? size_faceyz     : size_facexz;
+    P* __restrict__ sweeper_face_recv = axis_x ?
                                          Sweeper_faceyz_c__( sweeper, step+1 )
                                        : Sweeper_facexz_c__( sweeper, step+1 );
     int dir_ind = 0;
@@ -581,25 +606,10 @@ void Sweeper_recv_faces_start__(
       const int inc_x = axis_x ? Dir_inc( dir ) : 0;
       const int inc_y = axis_y ? Dir_inc( dir ) : 0;
 
-      /*---Get step info for processors involved in communication---*/
-
-      const Step_Info step_info_recv_source =
-        Sweeper_step_info__( sweeper, step,   proc_x-inc_x, proc_y-inc_y, env );
-
-      const Step_Info step_info_recv_target =
-        Sweeper_step_info__( sweeper, step+1, proc_x,       proc_y,       env );
-
       /*---Determine whether to communicate---*/
 
-      Bool_t const do_recv = step_info_recv_source.is_active
-                          && step_info_recv_target.is_active
-                          && step_info_recv_source.octant ==
-                             step_info_recv_target.octant
-                          && step_info_recv_source.block_z ==
-                             step_info_recv_target.block_z
-                          && ( axis_x ?
-                               Dir_x( step_info_recv_target.octant ) :
-                               Dir_y( step_info_recv_target.octant ) ) == dir;
+      Bool_t const do_recv = Sweeper_do_recv__(
+                                           sweeper, step, axis, dir_ind, env );
 
       if( do_recv )
       {
@@ -607,7 +617,8 @@ void Sweeper_recv_faces_start__(
                          = Env_proc( env, proc_x-inc_x, proc_y-inc_y );
         Request_t* request = axis_x ? & sweeper->request_recv_xz
                                     : & sweeper->request_recv_yz;
-        Env_arecv_P( sweeper_face, size_face, proc_other, env->tag, request );
+        Env_arecv_P(
+                sweeper_face_recv, size_face, proc_other, env->tag, request );
       }
 
     } /*---dir_ind---*/
@@ -615,7 +626,7 @@ void Sweeper_recv_faces_start__(
 }
 
 /*===========================================================================*/
-/*---Asynchronously communicate faces: recv end---*/
+/*---Asynchronously recv faces computed at step, used at step+1: end---*/
 
 void Sweeper_recv_faces_end__(
   Sweeper*           sweeper,
@@ -637,35 +648,14 @@ void Sweeper_recv_faces_end__(
     const Bool_t axis_x = axis==0;
     const Bool_t axis_y = axis==1;
 
-    const int proc_axis = axis_x ? proc_x : proc_y;
-
     int dir_ind = 0;
 
     for( dir_ind=0; dir_ind<2; ++dir_ind )
     {
-      const int dir = dir_ind==0 ? Dir_up() : Dir_dn();
-      const int inc_x = axis_x ? Dir_inc( dir ) : 0;
-      const int inc_y = axis_y ? Dir_inc( dir ) : 0;
-
-      /*---Get step info for processors involved in communication---*/
-
-      const Step_Info step_info_recv_source =
-        Sweeper_step_info__( sweeper, step,   proc_x-inc_x, proc_y-inc_y, env );
-
-      const Step_Info step_info_recv_target =
-        Sweeper_step_info__( sweeper, step+1, proc_x,       proc_y,       env );
-
       /*---Determine whether to communicate---*/
 
-      Bool_t const do_recv = step_info_recv_source.is_active
-                          && step_info_recv_target.is_active
-                          && step_info_recv_source.octant ==
-                             step_info_recv_target.octant
-                          && step_info_recv_source.block_z ==
-                             step_info_recv_target.block_z
-                          && ( axis_x ?
-                               Dir_x( step_info_recv_target.octant ) :
-                               Dir_y( step_info_recv_target.octant ) ) == dir;
+      Bool_t const do_recv = Sweeper_do_recv__(
+                                           sweeper, step, axis, dir_ind, env );
 
       if( do_recv )
       {
@@ -752,6 +742,18 @@ void Sweeper_sweep(
     /*--------------------*/
     /*---Communicate faces---*/
     /*--------------------*/
+
+    /*---Faces are triple buffered via a circular buffer of face arrays.
+         The following shows the pattern of face usage over a step:
+
+                              step:     ...    i    i+1   i+2   i+3   ...
+         ------------------------------------------------------------------
+         Recv face for this step wait   ...  face0 face1 face2 face0  ...
+         Recv face for next step start  ...  face1 face2 face0 face1  ...
+         Compute this step using face   ...  face0 face1 face2 face0  ...
+         Send face from last step wait  ...  face2 face0 face1 face2  ...
+         Send face from this step start ...  face0 face1 face2 face0  ...
+    ---*/
 
     if( Sweeper_is_face_comm_async() )
     {
@@ -953,12 +955,12 @@ void Sweeper_sweep(
     /*---Communicate faces---*/
     /*--------------------*/
 
-    if(   Sweeper_is_face_comm_async() )
+    if( Sweeper_is_face_comm_async() )
     {
       Sweeper_send_faces_end__  (  sweeper, step-1, dims_b, env );
       Sweeper_send_faces_start__(  sweeper, step, dims_b, env );
     }
-    if( ! Sweeper_is_face_comm_async() )
+    else
     {
       Sweeper_communicate_faces__( sweeper, step, dims_b, env );
     }
