@@ -39,8 +39,8 @@ int main( int argc, char** argv )
   P normsq     = P_zero();
   P normsqdiff = P_zero();
 
-  int iteration     = 0;
-  int numiterations = 0;
+  int iteration   = 0;
+  int niterations = 0;
 
   Timer_t t1      = 0.;
   Timer_t t2      = 0.;
@@ -56,17 +56,17 @@ int main( int argc, char** argv )
 
   /*---Set problem specifications---*/
 
-  dims_g.nx     = Arguments_consume_int_or_default( &args, "--nx",  5 );
-  dims_g.ny     = Arguments_consume_int_or_default( &args, "--ny",  5 );
-  dims_g.nz     = Arguments_consume_int_or_default( &args, "--nz",  5 );
-  dims_g.ne     = Arguments_consume_int_or_default( &args, "--ne", 30 );
-  dims_g.nm     = Arguments_consume_int_or_default( &args, "--ne", 16 );
-  dims_g.na     = Arguments_consume_int_or_default( &args, "--ne", 33 );
-  numiterations = Arguments_consume_int_or_default( &args, "--numiterations",
+  dims_g.nx   = Arguments_consume_int_or_default( &args, "--nx",  5 );
+  dims_g.ny   = Arguments_consume_int_or_default( &args, "--ny",  5 );
+  dims_g.nz   = Arguments_consume_int_or_default( &args, "--nz",  5 );
+  dims_g.ne   = Arguments_consume_int_or_default( &args, "--ne", 30 );
+  dims_g.nm   = Arguments_consume_int_or_default( &args, "--nm", 16 );
+  dims_g.na   = Arguments_consume_int_or_default( &args, "--na", 33 );
+  niterations = Arguments_consume_int_or_default( &args, "--niterations",
                                                                     1 );
-  env.nproc_x   = Arguments_consume_int_or_default( &args, "--nproc_x",
+  env.nproc_x = Arguments_consume_int_or_default( &args, "--nproc_x",
                                                            Env_nproc( &env ) );
-  env.nproc_y   = Arguments_consume_int_or_default( &args, "--nproc_y", 1);
+  env.nproc_y = Arguments_consume_int_or_default( &args, "--nproc_y", 1);
 
   Insist( dims_g.nx > 0 && "Invalid nx supplied." );
   Insist( dims_g.ny > 0 && "Invalid ny supplied." );
@@ -74,7 +74,7 @@ int main( int argc, char** argv )
   Insist( dims_g.ne > 0 && "Invalid ne supplied." );
   Insist( dims_g.nm > 0 && "Invalid nm supplied." );
   Insist( dims_g.na > 0 && "Invalid na supplied." );
-  Insist( numiterations >= 0 && "Invalid iteration count supplied." );
+  Insist( niterations >= 0 && "Invalid iteration count supplied." );
   Insist( Env_nproc_x( &env ) > 0 && "Invalid nproc_x supplied." );
   Insist( Env_nproc_y( &env ) > 0 && "Invalid nproc_y supplied." );
   Insist( Env_nproc_x( &env ) * Env_nproc_y( &env ) ==  Env_nproc( &env ) &&
@@ -124,7 +124,7 @@ int main( int argc, char** argv )
 
   t1 = Env_get_synced_time();
 
-  for( iteration=0; iteration<numiterations; ++iteration )
+  for( iteration=0; iteration<niterations; ++iteration )
   {
     Sweeper_sweep( &sweeper,
                    iteration%2==0 ? vo : vi,
@@ -139,7 +139,7 @@ int main( int argc, char** argv )
 
   /*---Compute flops used---*/
 
-  flops = Env_sum_d( numiterations *
+  flops = Env_sum_d( niterations *
             ( Dimensions_size_state( dims, NU ) * NOCTANT * 2. * dims.na
             + Dimensions_size_state_angles( dims, NU )
                                            * Quantities_flops_per_solve( dims )

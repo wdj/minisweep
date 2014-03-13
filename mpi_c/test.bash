@@ -80,10 +80,19 @@ function main
 
     make MPI_OPTION= ALG_OPTIONS="$alg_options"
 
-    compare_runs   "1"  "--nx 5 --ny 5 --nz 5 10 16 20  1  1 1  1" \
-                   "1"  "--nx 5 --ny 5 --nz 5 10 16 20  2  1 1  1"
-    compare_runs   "1"  "--nx 5 --ny 5 --nz 5 10 16 20  1  1 1  1" \
-                   "1"  "--nx 5 --ny 5 --nz 5 10 16 20  1  1 1  5"
+    if [ $alg_options = "-DSWEEPER_KBA" ] ; then
+      local ARG_NBLOCK_Z_1="--nblock_z 1"
+      local ARG_NBLOCK_Z_5="--nblock_z 5"
+    else
+      local ARG_NBLOCK_Z_1=""
+      local ARG_NBLOCK_Z_5=""
+    fi
+
+    local ARGS_SIZES="--nx  5 --ny  5 --nz  5 --ne 10 --nm 16 --na 20"
+    compare_runs  "1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_1" \
+                  "1" "$ARGS_SIZES --niterations 2 $ARG_NBLOCK_Z_1"
+    compare_runs  "1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_1" \
+                  "1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_5"
 
   done
 
@@ -91,18 +100,21 @@ function main
 
     make
 
-    compare_runs   "1"  "--nx  5 --ny  5 --nz  5 10 16 20  1  1 1  1" \
-                   "2"  "--nx  5 --ny  5 --nz  5 10 16 20  1  2 1  1"
-    compare_runs   "1"  "--nx  5 --ny  5 --nz  5 10 16 20  1  1 1  1" \
-                   "2"  "--nx  5 --ny  5 --nz  5 10 16 20  1  1 2  1"
+    local ARGS_SIZES="--nx  5 --ny  5 --nz  5 --ne 10 --nm 16 --na 20"
+    compare_runs   "1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
+                   "2"  "$ARGS_SIZES --nproc_x 2 --nproc_y 1 --nblock_z 1"
+    compare_runs   "1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
+                   "2"  "$ARGS_SIZES --nproc_x 1 --nproc_y 2 --nblock_z 1"
 
-    compare_runs   "1"  "--nx  5 --ny  5 --nz  6 10 16 20  1  1 1  1" \
-                  "16"  "--nx  5 --ny  5 --nz  6 10 16 20  1  4 4  2"
+    local ARGS_SIZES="--nx  5 --ny  5 --nz  6 --ne 10 --nm 16 --na 20"
+    compare_runs   "1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
+                  "16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2"
 
-    compare_runs  "16"  "--nx 16 --ny 32 --nz 64 16 16 32  1  4 4  1" \
-                  "16"  "--nx 16 --ny 32 --nz 64 16 16 32  1  4 4  2"
-    compare_runs  "16"  "--nx 16 --ny 32 --nz 64 16 16 32  1  4 4  2" \
-                  "16"  "--nx 16 --ny 32 --nz 64 16 16 32  1  4 4  4"
+    local ARGS_SIZES="--nx 16 --ny 32 --nz 64 --ne 16 --nm 16 --na 32"
+    compare_runs  "16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 1" \
+                  "16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2"
+    compare_runs  "16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2" \
+                  "16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 4"
 
   fi
 

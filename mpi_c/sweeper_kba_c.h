@@ -36,6 +36,7 @@ void Sweeper_ctor( Sweeper*    sweeper,
   Insist( sweeper->nblock_z > 0 && "Invalid z blocking factor supplied." );
   Insist( dims.nz % sweeper->nblock_z == 0 &&
           "KBA sweeper currently requires all blocks have same z dimension" );
+
   sweeper->dims_b = dims;
   sweeper->dims_b.nz = dims.nz / sweeper->nblock_z;
 
