@@ -14,6 +14,7 @@
 #include "definitions.h"
 #include "dimensions.h"
 #include "memory.h"
+#include "arguments.h"
 #include "quantities.h"
 #include "array_operations.h"
 #include "sweeper.h"
@@ -27,46 +28,45 @@ int main( int argc, char** argv )
 
   Dimensions  dims_g;
   Dimensions  dims;         /*---dims for the part on this MPI proc---*/
+  Arguments   args;
   Quantities  quan;
   Sweeper     sweeper;
   Env         env;
 
-  P* vi = 0;
-  P* vo = 0;
+  P* vi = NULL;
+  P* vo = NULL;
 
   P normsq     = P_zero();
   P normsqdiff = P_zero();
 
-  int iteration = 0;
+  int iteration     = 0;
   int numiterations = 0;
-  int nblock_z = 0;
 
-  Timer_t t1 = 0.;
-  Timer_t t2 = 0.;
-  Timer_t time = 0.;
-  double flops = 0.;
+  Timer_t t1      = 0.;
+  Timer_t t2      = 0.;
+  Timer_t time    = 0.;
+  double flops    = 0.;
   double floprate = 0.;
 
   /*---Initialize for execution---*/
 
   Env_initialize( &env, argc, argv );
 
-  /*---Set problem size---*/
+  Arguments_ctor( &args, argc, argv );
 
-  dims_g.nx      = ( argc> 1 && argv[ 1]!="" ) ? atoi(argv[ 1]) : 5;
-  dims_g.ny      = ( argc> 2 && argv[ 2]!="" ) ? atoi(argv[ 2]) : 5;
-  dims_g.nz      = ( argc> 3 && argv[ 3]!="" ) ? atoi(argv[ 3]) : 5;
-  dims_g.ne      = ( argc> 4 && argv[ 4]!="" ) ? atoi(argv[ 4]) : 30;
-  dims_g.nm      = ( argc> 5 && argv[ 5]!="" ) ? atoi(argv[ 5]) : 16;
-  dims_g.na      = ( argc> 6 && argv[ 6]!="" ) ? atoi(argv[ 6]) : 33;
-  numiterations  = ( argc> 7 && argv[ 7]!="" ) ? atoi(argv[ 7]) : 1;
-  env.nproc_x    = ( argc> 8 && argv[ 8]!="" ) ? atoi(argv[ 8]) :
-                                                              Env_nproc( &env );
-  env.nproc_y    = ( argc> 9 && argv[ 9]!="" ) ? atoi(argv[ 9]) : 1;
-  nblock_z       = ( argc>10 && argv[10]!="" ) ? atoi(argv[10]) : 1;
-/*
-                                                                dims_g.nz;
-*/
+  /*---Set problem specifications---*/
+
+  dims_g.nx     = Arguments_consume_int_or_default( &args, "--nx",  5 );
+  dims_g.ny     = Arguments_consume_int_or_default( &args, "--ny",  5 );
+  dims_g.nz     = Arguments_consume_int_or_default( &args, "--nz",  5 );
+  dims_g.ne     = Arguments_consume_int_or_default( &args, "--ne", 30 );
+  dims_g.nm     = Arguments_consume_int_or_default( &args, "--ne", 16 );
+  dims_g.na     = Arguments_consume_int_or_default( &args, "--ne", 33 );
+  numiterations = Arguments_consume_int_or_default( &args, "--numiterations",
+                                                                    1 );
+  env.nproc_x   = Arguments_consume_int_or_default( &args, "--nproc_x",
+                                                           Env_nproc( &env ) );
+  env.nproc_y   = Arguments_consume_int_or_default( &args, "--nproc_y", 1);
 
   Insist( dims_g.nx > 0 && "Invalid nx supplied." );
   Insist( dims_g.ny > 0 && "Invalid ny supplied." );
@@ -79,7 +79,6 @@ int main( int argc, char** argv )
   Insist( Env_nproc_y( &env ) > 0 && "Invalid nproc_y supplied." );
   Insist( Env_nproc_x( &env ) * Env_nproc_y( &env ) ==  Env_nproc( &env ) &&
                            "Invalid process decomposition supplied." );
-  Insist( nblock_z > 0 && "Invalid z blocking factor supplied." );
 
   /*---Initialize (local) dimensions---*/
 
@@ -115,7 +114,11 @@ int main( int argc, char** argv )
 
   /*---Initialize sweeper---*/
 
-  Sweeper_ctor( &sweeper, dims, &env, nblock_z );
+  Sweeper_ctor( &sweeper, dims, &env, &args );
+
+  /*---Check that all command line args used---*/
+
+  Insist( Arguments_are_all_consumed( &args ) && "Invalid argument detected." );
 
   /*---Call sweeper---*/
 
@@ -162,6 +165,7 @@ int main( int argc, char** argv )
   free_P( vo );
   Sweeper_dtor( &sweeper );
   Quantities_dtor( &quan );
+  Arguments_dtor( &args );
 
   /*---Finalize execution---*/
 

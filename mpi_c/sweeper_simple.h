@@ -14,6 +14,7 @@
 #include "env.h"
 #include "definitions.h"
 #include "dimensions.h"
+#include "arguments.h"
 #include "quantities.h"
 
 /*===========================================================================*/
@@ -33,7 +34,7 @@ typedef struct
 void Sweeper_ctor( Sweeper*    sweeper,
                    Dimensions  dims,
                    Env*        env,
-                   int         nblock_z );
+                   Arguments*  args );
 
 /*===========================================================================*/
 /*---Pseudo-destructor for Sweeper struct---*/

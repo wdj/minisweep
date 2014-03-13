@@ -25,7 +25,7 @@
 void Sweeper_ctor( Sweeper*    sweeper,
                    Dimensions  dims,
                    Env*        env,
-                   int         nblock_z )
+                   Arguments*  args )
 {
   Insist( Env_nproc( env ) == 1 && 
                              "This sweeper version runs only with one proc." );

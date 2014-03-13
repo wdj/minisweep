@@ -25,18 +25,19 @@
 void Sweeper_ctor( Sweeper*    sweeper,
                    Dimensions  dims,
                    Env*        env,
-                   int         nblock_z )
+                   Arguments*  args )
 {
-  Insist( dims.nz % nblock_z == 0 &&
-          "KBA sweeper currently requires all blocks have same z dimension" );
   Insist( dims.nx > 0 && "KBA sweeper currently requires all blocks nonempty" );
   Insist( dims.ny > 0 && "KBA sweeper currently requires all blocks nonempty" );
   Insist( dims.nz > 0 && "KBA sweeper currently requires all blocks nonempty" );
 
   /*---Set up dimensions of kba block---*/
-  sweeper->nblock_z = nblock_z;
+  sweeper->nblock_z = Arguments_consume_int_or_default( args, "--nblock_z", 1);
+  Insist( sweeper->nblock_z > 0 && "Invalid z blocking factor supplied." );
+  Insist( dims.nz % sweeper->nblock_z == 0 &&
+          "KBA sweeper currently requires all blocks have same z dimension" );
   sweeper->dims_b = dims;
-  sweeper->dims_b.nz = dims.nz / nblock_z;
+  sweeper->dims_b.nz = dims.nz / sweeper->nblock_z;
 
   /*---Allocate arrays---*/
 
