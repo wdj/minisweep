@@ -39,6 +39,7 @@ typedef struct
 
   Dimensions       dims_b;
   int              nblock_z;
+  int              nthread_e;
 
   Request_t        request_send_xz;
   Request_t        request_send_yz;
@@ -196,6 +197,15 @@ static P* __restrict__ Sweeper_faceyz_c__( Sweeper* sweeper, int step )
                                  sweeper->faceyz1,
                                  sweeper->faceyz2 };
   return facesyz[(step+3)%3];
+}
+
+/*===========================================================================*/
+/*---Select which part of v_local to use for current thread---*/
+
+static inline P* __restrict__ Sweeper_v_local_this__( Sweeper* sweeper,
+                                               Env*     env )
+{
+  return sweeper->v_local + sweeper->dims_b.na * NU * Env_thread_this( env );
 }
 
 /*===========================================================================*/

@@ -37,12 +37,16 @@ void Sweeper_ctor( Sweeper*    sweeper,
   Insist( dims.nz % sweeper->nblock_z == 0 &&
           "KBA sweeper currently requires all blocks have same z dimension" );
 
+  sweeper->nthread_e
+                   = Arguments_consume_int_or_default( args, "--nthread_e", 1);
+  Insist( sweeper->nthread_e > 0 && "Invalid e thread count supplied." );
+
   sweeper->dims_b = dims;
   sweeper->dims_b.nz = dims.nz / sweeper->nblock_z;
 
   /*---Allocate arrays---*/
 
-  sweeper->v_local = malloc_P( sweeper->dims_b.na * NU );
+  sweeper->v_local = malloc_P( sweeper->dims_b.na * NU * sweeper->nthread_e );
 
   sweeper->facexy  = malloc_P( Dimensions_size_facexy( sweeper->dims_b, NU,
                                       Sweeper_num_face_octants_allocated() ) );
@@ -787,6 +791,7 @@ void Sweeper_sweep(
       if( ( dir_z == Dir_up() && block_z == 0 ) ||
           ( dir_z == Dir_dn() && block_z == sweeper->nblock_z-1 ) )
       {
+/*---TODO: put into function---*/
         const int iz_g = dir_z == Dir_up() ? -1 : dims_g.nz;
         for( iu=0; iu<NU; ++iu )
         {
@@ -819,6 +824,7 @@ void Sweeper_sweep(
       if( ( dir_y == Dir_up() && proc_y == 0 ) ||
           ( dir_y == Dir_dn() && proc_y == Env_nproc_y( env )-1 ) )
       {
+/*---TODO: put into function---*/
         const int iy_g = dir_y == Dir_up() ? -1 : dims_g.ny;
         for( iu=0; iu<NU; ++iu )
         {
@@ -851,6 +857,7 @@ void Sweeper_sweep(
       if( ( dir_x == Dir_up() && proc_x == 0 ) ||
           ( dir_x == Dir_dn() && proc_x == Env_nproc_x( env )-1 ) )
       {
+/*---TODO: put into function---*/
         const int ix_g = dir_x == Dir_up() ? -1 : dims_g.nx;
         for( iu=0; iu<NU; ++iu )
         {
@@ -880,8 +887,22 @@ void Sweeper_sweep(
       /*---Loop over energy groups---*/
       /*--------------------*/
 
+#ifdef USE_OPENMP_E
+#pragma omp parallel for num_threads( sweeper->nthread_e )
+#endif
       for( ie=0; ie<dims.ne; ++ie )
       {
+        int ix = 0;
+        int iy = 0;
+        int iz = 0;
+        int im = 0;
+        int ia = 0;
+        int iu = 0;
+
+        P* __restrict__ v_local = Sweeper_v_local_this__( sweeper, env );
+/*
+sweeper->v_local + sweeper->dims_b.na * NU * Env_thread_this( env );
+*/
 
         /*---Calculate spatial loop extents---*/
 
@@ -915,14 +936,14 @@ void Sweeper_sweep(
                 *const_ref_a_from_m( quan->a_from_m, dims, im, ia, octant ) *
                 *const_ref_state( vi, dims, NU, ix, iy, iz, ie, im, iu );
             }
-            *ref_v_local( sweeper->v_local, dims, NU, ia, iu ) = result;
+            *ref_v_local( v_local, dims, NU, ia, iu ) = result;
           }
 
           /*--------------------*/
           /*---Perform solve---*/
           /*--------------------*/
 
-          Quantities_solve( quan, sweeper->v_local,
+          Quantities_solve( quan, v_local,
                             facexy_c, facexz_c, faceyz_c,
                             ix, iy, iz-iz_base, ie,
                             ix+ix_base, iy+iy_base, iz,
@@ -942,7 +963,7 @@ void Sweeper_sweep(
             {
               result +=
                 *const_ref_m_from_a( quan->m_from_a, dims, im, ia, octant ) *
-                *const_ref_v_local( sweeper->v_local, dims, NU, ia, iu );
+                *const_ref_v_local( v_local, dims, NU, ia, iu );
             }
             *ref_state( vo, dims, NU, ix, iy, iz, ie, im, iu ) += result;
           }

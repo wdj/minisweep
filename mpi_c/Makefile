@@ -1,4 +1,5 @@
 #==============================================================================
+# Default build options.
 
 ifndef COMPILER_OPTION
   COMPILER_OPTION = GNU
@@ -10,6 +11,10 @@ endif
 
 ifndef MPI_OPTION
   MPI_OPTION = MPI
+endif
+
+ifndef OPENMP_OPTION
+  OPENMP_OPTION =
 endif
 
 ifndef ALG_OPTIONS
@@ -44,6 +49,20 @@ endif
 ifeq ($(MPI_OPTION),MPI)
   CFLAGS := $(CFLAGS) -DUSE_MPI -I$(MPICH_DIR)/include -L$(MPICH_DIR)/lib \
                       -lmpich
+endif
+
+ifneq ($(OPENMP_OPTION),)
+  CFLAGS := $(CFLAGS) -DUSE_OPENMP
+  ifeq ($(COMPILER_OPTION),PGI)
+    CFLAGS := $(CFLAGS) -mp=bind
+  endif
+  ifeq ($(COMPILER_OPTION),GNU)
+    CFLAGS := $(CFLAGS) -fopenmp
+  endif
+  COMMA := ,
+  ifneq ($(findstring $(COMMA)E$(COMMA),$(COMMA)$(OPENMP_OPTION)$(COMMA)),)
+    CFLAGS := $(CFLAGS) -DUSE_OPENMP_E
+  endif
 endif
 
 #==============================================================================

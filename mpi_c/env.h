@@ -21,6 +21,10 @@
 #include "mpi.h"
 #endif
 
+#ifdef USE_OPENMP
+#include "omp.h"
+#endif
+
 /*===========================================================================*/
 /*---Assertions---*/
 
@@ -320,6 +324,18 @@ static void Env_wait( Request_t* request )
   MPI_Status status;
   MPI_Waitall( 1, request, &status );
 #endif
+}
+
+/*===========================================================================*/
+/*---Get openmp current thread number---*/
+
+static inline int Env_thread_this( const Env* env )
+{
+  int result = 0;
+#ifdef USE_OPENMP
+  result = omp_get_thread_num();  
+#endif
+  return result;
 }
 
 /*===========================================================================*/
