@@ -203,9 +203,9 @@ static P* __restrict__ Sweeper_faceyz_c__( Sweeper* sweeper, int step )
 /*---Select which part of v_local to use for current thread---*/
 
 static inline P* __restrict__ Sweeper_v_local_this__( Sweeper* sweeper,
-                                               Env*     env )
+                                                      int      thread_num )
 {
-  return sweeper->v_local + sweeper->dims_b.na * NU * Env_thread_this( env );
+  return sweeper->v_local + sweeper->dims_b.na * NU * thread_num;
 }
 
 /*===========================================================================*/

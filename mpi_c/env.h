@@ -327,6 +327,18 @@ static void Env_wait( Request_t* request )
 }
 
 /*===========================================================================*/
+/*---Get openmp current number of threads---*/
+
+static inline int Env_num_threads( const Env* env )
+{
+  int result = 1;
+#ifdef USE_OPENMP
+  result = omp_get_num_threads();
+#endif
+  return result;
+}
+
+/*===========================================================================*/
 /*---Get openmp current thread number---*/
 
 static inline int Env_thread_this( const Env* env )

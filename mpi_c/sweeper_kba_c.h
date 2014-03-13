@@ -745,6 +745,11 @@ void Sweeper_sweep(
                                      Sweeper_faceyz_c__( sweeper, step ) :
                                      sweeper->faceyz;
 
+    /*---Initialize OpenMP thread number and thread count---*/
+
+    int thread_num  = 0;
+    int num_threads = 1;
+
     /*--------------------*/
     /*---Communicate faces---*/
     /*--------------------*/
@@ -899,11 +904,6 @@ void Sweeper_sweep(
         int ia = 0;
         int iu = 0;
 
-        P* __restrict__ v_local = Sweeper_v_local_this__( sweeper, env );
-/*
-sweeper->v_local + sweeper->dims_b.na * NU * Env_thread_this( env );
-*/
-
         /*---Calculate spatial loop extents---*/
 
         const int ixbeg = dir_x==Dir_up() ? 0       : dims_b.nx-1;
@@ -913,6 +913,17 @@ sweeper->v_local + sweeper->dims_b.na * NU * Env_thread_this( env );
         const int ixend = dir_x==Dir_dn() ? 0       : dims_b.nx-1;
         const int iyend = dir_y==Dir_dn() ? 0       : dims_b.ny-1;
         const int izend = dir_z==Dir_dn() ? iz_base : iz_base+nz_b-1;
+
+        const int thread_num_outer  = thread_num;
+        const int num_threads_outer = num_threads;
+
+        const int thread_num  = thread_num_outer + num_threads_outer *
+                                                     Env_thread_this( env );
+        const int num_threads =  num_threads_outer * Env_num_threads( env );
+
+        /*---Get v_local part to be used by this thread---*/
+
+        P* __restrict__ v_local = Sweeper_v_local_this__( sweeper, thread_num );
 
         /*--------------------*/
         /*---Loop over gridcells, in proper direction---*/
