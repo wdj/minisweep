@@ -914,6 +914,8 @@ void Sweeper_sweep(
         const int iyend = dir_y==Dir_dn() ? 0       : dims_b.ny-1;
         const int izend = dir_z==Dir_dn() ? iz_base : iz_base+nz_b-1;
 
+        /*---Compute thread information---*/
+
         const int thread_num_outer  = thread_num;
         const int num_threads_outer = num_threads;
 
