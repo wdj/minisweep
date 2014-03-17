@@ -17,7 +17,9 @@
 #include "array_accessors.h"
 #include "array_operations.h"
 #include "memory.h"
+#include "step_scheduler_kba.h"
 #include "sweeper_kba.h"
+
 
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
@@ -43,6 +45,8 @@ void Sweeper_ctor( Sweeper*    sweeper,
 
   sweeper->dims_b = dims;
   sweeper->dims_b.nz = dims.nz / sweeper->nblock_z;
+
+  Step_Scheduler_ctor( &( sweeper->step_scheduler ), sweeper->nblock_z, env );
 
   /*---Allocate arrays---*/
 
@@ -107,160 +111,14 @@ void Sweeper_dtor( Sweeper* sweeper )
   sweeper->facexy  = sweeper->facexz  = sweeper->faceyz  = NULL;
   sweeper->facexz0 = sweeper->facexz1 = sweeper->facexz2 = NULL;
   sweeper->faceyz0 = sweeper->faceyz1 = sweeper->faceyz2 = NULL;
-}
 
-/*===========================================================================*/
-/*---Number of block steps executed for an octant in isolation---*/
-
-int Sweeper_nblock( const Sweeper*  sweeper,
-                    const Env*      env )
-{
-  return sweeper->nblock_z;
-}
-
-/*===========================================================================*/
-/*---Number of kba parallel steps---*/
-
-int Sweeper_nstep( const Sweeper*  sweeper,
-                   const Env*      env )
-{
-  return NOCTANT * Sweeper_nblock( sweeper, env )
-                                              + 3 * ( Env_nproc_x( env ) - 1 )
-                                              + 2 * ( Env_nproc_y( env ) - 1 );
-}
-
-/*===========================================================================*/
-/*---Wehther this proc active for a given sweep step---*/
-
-Step_Info Sweeper_step_info__( const Sweeper*  sweeper,
-                               int             step,
-                               int             proc_x,
-                               int             proc_y,
-                               const Env*      env )
-{
-/*
-  assert( step >= 0 && step < Sweeper_nstep( sweeper, env ) );
-  assert( proc_x >= 0 && proc_x < Env_nproc_x( env ) );
-  assert( proc_y >= 0 && proc_y < Env_nproc_y( env ) );
-*/
-
-  const int nproc_x = Env_nproc_x( env );
-  const int nproc_y = Env_nproc_y( env );
-  const int nblock  = Sweeper_nblock( sweeper, env );
-
-  const int octants_visited[NOCTANT] = { 0, 4, 1, 5, 3, 7, 2, 6 };
-
-  Step_Info step_info;
-  int octant_index = 0;
-  int wave = 0;
-  int step_base = 0;
-  int block = 0;
-  int octant = 0;
-  int dir_x = 0;
-  int dir_y = 0;
-  int dir_z = 0;
-  int start_x = 0;
-  int start_y = 0;
-  int start_z = 0;
-
-  /*---First compute the octant number, in the order they are visited,
-       and the wavefront number for that octant, starting from the
-       beginning corner.
-       Check every octant/wavefront in sequence to determine which
-       one might be active for the proc in question.
-  ---*/
-
-  if ( Bool_true )
-  {
-    wave = step - ( step_base );
-    octant_index = 0;
-  }
-  step_base += nblock;
-  if ( step >= ( step_base + proc_x + proc_y ) )
-  {
-    wave = step - ( step_base );
-    octant_index = 1;
-  }
-  step_base += nblock;
-  if ( step >= ( step_base + proc_x + proc_y ) )
-  {
-    wave = step - ( step_base + (nproc_x-1) );
-    octant_index = 2;
-  }
-  step_base += nblock + (nproc_x-1);
-  if ( step >= ( step_base + (nproc_x-1-proc_x) + proc_y ) )
-  {
-    wave = step - ( step_base );
-    octant_index = 3;
-  }
-  step_base += nblock;
-  if ( step >= ( step_base + (nproc_x-1-proc_x) + proc_y ) )
-  {
-    wave = step - ( step_base + (nproc_y-1) );
-    octant_index = 4;
-  }
-  step_base += nblock + (nproc_y-1);
-  if ( step >= ( step_base + (nproc_x-1-proc_x)
-                           + (nproc_y-1-proc_y) ) )
-  {
-    wave = step - ( step_base );
-    octant_index = 5;
-  }
-  step_base += nblock;
-  if ( step >= ( step_base + (nproc_x-1-proc_x)
-                           + (nproc_y-1-proc_y) ) )
-  {
-    wave = step - ( step_base + (nproc_x-1) );
-    octant_index = 6;
-  }
-  step_base += nblock + (nproc_x-1);
-  if ( step >= ( step_base + proc_x + (nproc_y-1-proc_y) ) )
-  {
-    wave = step - ( step_base );
-    octant_index = 7;
-  }
-
-  octant = octants_visited[octant_index];
-
-  /*---Next convert the wavefront number to a block number based on
-       location in the domain.  Use the equation that defines the plane.
-  ---*/
-
-  dir_x  = Dir_x( octant );
-  dir_y  = Dir_y( octant );
-  dir_z  = Dir_z( octant );
-
-  /*---Get coordinates of the starting corner block of the wavefront---*/
-  start_x = dir_x==Dir_up() ? 0 : ( nproc_x - 1 );
-  start_y = dir_y==Dir_up() ? 0 : ( nproc_y - 1 );
-  start_z = dir_z==Dir_up() ? 0 : ( nblock  - 1 );
-
-  /*---Get coordinate of block on this processor to be processed---*/
-  block = ( wave - ( start_x + proc_x * dir_x)
-                 - ( start_y + proc_y * dir_y)
-                 - ( start_z ) ) / dir_z;
-
-  /*---Now determine whether the block calculation is active based on whether
-       the block in question falls within the physical domain.
-  ---*/
-
-  step_info.is_active = block  >= 0 && block  < nblock &&
-                        step   >= 0 && step   < Sweeper_nstep( sweeper, env ) &&
-                        proc_x >= 0 && proc_x < Env_nproc_x( env ) &&
-                        proc_y >= 0 && proc_y < Env_nproc_y( env );
-
-  /*---Set remaining values---*/
-
-  step_info.block_z = step_info.is_active ? block  : -1;
-  step_info.octant  = step_info.is_active ? octant : -1;
-
-  return step_info;
+  Step_Scheduler_dtor( &( sweeper->step_scheduler ) );
 }
 
 /*===========================================================================*/
 /*---Determine whether to send a face computed at step, used at step+1---*/
 
-Bool_t Sweeper_do_send__(
+Bool_t Sweeper_must_do_send__(
   Sweeper*           sweeper,
   int                step,
   int                axis,
@@ -279,11 +137,11 @@ Bool_t Sweeper_do_send__(
 
   /*---Get step info for processors involved in communication---*/
 
-  const Step_Info step_info_send_source_step =
-    Sweeper_step_info__( sweeper, step,   proc_x,       proc_y,       env );
+  const Step_Info step_info_send_source_step = Step_Scheduler_step_info(
+              &(sweeper->step_scheduler), step,   proc_x,       proc_y);
 
-  const Step_Info step_info_send_target_step =
-    Sweeper_step_info__( sweeper, step+1, proc_x+inc_x, proc_y+inc_y, env );
+  const Step_Info step_info_send_target_step = Step_Scheduler_step_info(
+              &(sweeper->step_scheduler), step+1, proc_x+inc_x, proc_y+inc_y );
 
   /*---Determine whether to communicate---*/
 
@@ -303,7 +161,7 @@ Bool_t Sweeper_do_send__(
 /*===========================================================================*/
 /*---Determine whether to recv a face computed at step, used at step+1---*/
 
-Bool_t Sweeper_do_recv__(
+Bool_t Sweeper_must_do_recv__(
   Sweeper*           sweeper,
   int                step,
   int                axis,
@@ -322,11 +180,11 @@ Bool_t Sweeper_do_recv__(
 
   /*---Get step info for processors involved in communication---*/
 
-  const Step_Info step_info_recv_source_step =
-    Sweeper_step_info__( sweeper, step,   proc_x-inc_x, proc_y-inc_y, env );
+  const Step_Info step_info_recv_source_step = Step_Scheduler_step_info(
+              &(sweeper->step_scheduler), step,   proc_x-inc_x, proc_y-inc_y );
 
-  const Step_Info step_info_recv_target_step =
-    Sweeper_step_info__( sweeper, step+1, proc_x,       proc_y,       env );
+  const Step_Info step_info_recv_target_step = Step_Scheduler_step_info(
+              &(sweeper->step_scheduler), step+1, proc_x,       proc_y );
 
   /*---Determine whether to communicate---*/
 
@@ -391,10 +249,10 @@ void Sweeper_communicate_faces__(
 
       /*---Determine whether to communicate---*/
 
-      Bool_t const do_send = Sweeper_do_send__(
+      Bool_t const do_send = Sweeper_must_do_send__(
                                            sweeper, step, axis, dir_ind, env );
 
-      Bool_t const do_recv = Sweeper_do_recv__(
+      Bool_t const do_recv = Sweeper_must_do_recv__(
                                            sweeper, step, axis, dir_ind, env );
 
       /*---Communicate as needed - use red/black coloring to avoid deadlock---*/
@@ -508,7 +366,7 @@ void Sweeper_send_faces_start__(
 
       /*---Determine whether to communicate---*/
 
-      Bool_t const do_send = Sweeper_do_send__(
+      Bool_t const do_send = Sweeper_must_do_send__(
                                            sweeper, step, axis, dir_ind, env );
 
       if( do_send )
@@ -554,7 +412,7 @@ void Sweeper_send_faces_end__(
 
       /*---Determine whether to communicate---*/
 
-      Bool_t const do_send = Sweeper_do_send__(
+      Bool_t const do_send = Sweeper_must_do_send__(
                                            sweeper, step, axis, dir_ind, env );
 
       if( do_send )
@@ -614,7 +472,7 @@ void Sweeper_recv_faces_start__(
 
       /*---Determine whether to communicate---*/
 
-      Bool_t const do_recv = Sweeper_do_recv__(
+      Bool_t const do_recv = Sweeper_must_do_recv__(
                                            sweeper, step, axis, dir_ind, env );
 
       if( do_recv )
@@ -660,7 +518,7 @@ void Sweeper_recv_faces_end__(
     {
       /*---Determine whether to communicate---*/
 
-      Bool_t const do_recv = Sweeper_do_recv__(
+      Bool_t const do_recv = Sweeper_must_do_recv__(
                                            sweeper, step, axis, dir_ind, env );
 
       if( do_recv )
@@ -722,12 +580,12 @@ void Sweeper_sweep(
   /*---Loop over kba parallel steps---*/
   /*--------------------*/
 
-  for( step=0; step<Sweeper_nstep( sweeper, env ); ++step )
+  for( step=0; step<Step_Scheduler_nstep( &(sweeper->step_scheduler) ); ++step )
   {
     /*---Get step info for this proc---*/
 
-    const Step_Info step_info = Sweeper_step_info__( sweeper, step,
-                                                   proc_x, proc_y, env );
+    const Step_Info step_info = Step_Scheduler_step_info(
+                            &(sweeper->step_scheduler), step, proc_x, proc_y );
 
     /*---Pick up needed face pointers---*/
 

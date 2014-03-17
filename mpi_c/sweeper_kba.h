@@ -16,6 +16,7 @@
 #include "dimensions.h"
 #include "arguments.h"
 #include "quantities.h"
+#include "step_scheduler_kba.h"
 
 /*===========================================================================*/
 /*---Struct with pointers etc. used to perform sweep---*/
@@ -46,17 +47,8 @@ typedef struct
   Request_t        request_recv_xz;
   Request_t        request_recv_yz;
 
+  Step_Scheduler   step_scheduler;
 } Sweeper;
-
-/*===========================================================================*/
-/*---Struct with info describing a sweep step---*/
-
-typedef struct
-{
-  int     block_z;
-  int     octant;
-  Bool_t  is_active;
-} Step_Info;
 
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
@@ -88,30 +80,9 @@ static int Sweeper_is_face_comm_async()
 }
 
 /*===========================================================================*/
-/*---Number of block steps executed for a single octant in isolation---*/
-
-int Sweeper_nblock( const Sweeper*  sweeper,
-                    const Env*      env );
-
-/*===========================================================================*/
-/*---Number of kba parallel steps---*/
-
-int Sweeper_nstep( const Sweeper*  sweeper,
-                   const Env*      env );
-
-/*===========================================================================*/
-/*---Get information describing a sweep step---*/
-
-Step_Info Sweeper_step_info__( const Sweeper*  sweeper,  
-                               int             step,
-                               int             proc_x,
-                               int             proc_y,
-                               const Env*      env );
-
-/*===========================================================================*/
 /*---Determine whether to send a face now---*/
 
-Bool_t Sweeper_do_send__(
+Bool_t Sweeper_must_do_send__(
   Sweeper*           sweeper,
   int                step,
   int                axis,
@@ -121,7 +92,7 @@ Bool_t Sweeper_do_send__(
 /*===========================================================================*/
 /*---Determine whether to receive a face now---*/
 
-Bool_t Sweeper_do_recv__(
+Bool_t Sweeper_must_do_recv__(
   Sweeper*           sweeper,
   int                step,
   int                axis,
