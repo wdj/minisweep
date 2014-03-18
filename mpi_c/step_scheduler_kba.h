@@ -31,6 +31,7 @@ typedef struct
   int nblock_z__;
   int nproc_x__;
   int nproc_y__;
+  int nblock_octant__;
 } Step_Scheduler;
 
 /*===========================================================================*/
@@ -38,12 +39,18 @@ typedef struct
 
 void Step_Scheduler_ctor( Step_Scheduler* step_scheduler,
                           int             nblock_z,
+                          int             nblock_octant,
                           Env*            env );
 
 /*===========================================================================*/
 /*---Pseudo-destructor for Step_Scheduler struct---*/
 
 void Step_Scheduler_dtor( Step_Scheduler* step_scheduler );
+
+/*===========================================================================*/
+/*---Accessor---*/
+
+int Step_Scheduler_nblock_z( const Step_Scheduler* step_scheduler );
 
 /*===========================================================================*/
 /*---Number of block steps executed for a single octant in isolation---*/
@@ -60,6 +67,7 @@ int Step_Scheduler_nstep( const Step_Scheduler* step_scheduler );
 
 Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,  
                                     const int             step,
+                                    const int             octant_per_block,
                                     const int             proc_x,
                                     const int             proc_y );
 

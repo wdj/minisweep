@@ -101,6 +101,9 @@ void Sweeper_sweep(
        octant direction is adhered to, and 2) for each tile step, the
        8 octant directions are working on independent disjoint
        tiles of the domain.
+       NOTE: if the octants are OpenMP-threaded, then the loop order
+       must be this way (tile then octant), and there should be a sync
+       between consecutive tile steps.
   ---*/
 
   for( tile_step=0; tile_step<num_tile_steps; ++tile_step )

@@ -33,20 +33,27 @@ void Sweeper_ctor( Sweeper*    sweeper,
   Insist( dims.ny > 0 && "KBA sweeper currently requires all blocks nonempty" );
   Insist( dims.nz > 0 && "KBA sweeper currently requires all blocks nonempty" );
 
+  const int nblock_octant = 8;
+  /*---Require a power of 2 between 1 and 8 inclusive---*/
+  Insist( nblock_octant>0 && nblock_octant<=8
+          && ((nblock_octant&(nblock_octant-1))==0)
+          && "Invalid octant blocking factor supplied." );
+
   /*---Set up dimensions of kba block---*/
-  sweeper->nblock_z = Arguments_consume_int_or_default( args, "--nblock_z", 1);
-  Insist( sweeper->nblock_z > 0 && "Invalid z blocking factor supplied." );
-  Insist( dims.nz % sweeper->nblock_z == 0 &&
+  const int nblock_z = Arguments_consume_int_or_default( args, "--nblock_z", 1);
+  Insist( nblock_z > 0 && "Invalid z blocking factor supplied." );
+  Insist( dims.nz % nblock_z == 0 &&
           "KBA sweeper currently requires all blocks have same z dimension" );
 
   sweeper->nthread_e
                    = Arguments_consume_int_or_default( args, "--nthread_e", 1);
   Insist( sweeper->nthread_e > 0 && "Invalid e thread count supplied." );
 
-  sweeper->dims_b = dims;
-  sweeper->dims_b.nz = dims.nz / sweeper->nblock_z;
+  Step_Scheduler_ctor(
+                     &(sweeper->step_scheduler), nblock_z, nblock_octant, env );
 
-  Step_Scheduler_ctor( &( sweeper->step_scheduler ), sweeper->nblock_z, env );
+  sweeper->dims_b = dims;
+  sweeper->dims_b.nz = dims.nz / nblock_z;
 
   /*---Allocate arrays---*/
 
@@ -138,10 +145,10 @@ Bool_t Sweeper_must_do_send__(
   /*---Get step info for processors involved in communication---*/
 
   const Step_Info step_info_send_source_step = Step_Scheduler_step_info(
-              &(sweeper->step_scheduler), step,   proc_x,       proc_y);
+           &(sweeper->step_scheduler), step,   0, proc_x,       proc_y);
 
   const Step_Info step_info_send_target_step = Step_Scheduler_step_info(
-              &(sweeper->step_scheduler), step+1, proc_x+inc_x, proc_y+inc_y );
+           &(sweeper->step_scheduler), step+1, 0, proc_x+inc_x, proc_y+inc_y );
 
   /*---Determine whether to communicate---*/
 
@@ -181,10 +188,10 @@ Bool_t Sweeper_must_do_recv__(
   /*---Get step info for processors involved in communication---*/
 
   const Step_Info step_info_recv_source_step = Step_Scheduler_step_info(
-              &(sweeper->step_scheduler), step,   proc_x-inc_x, proc_y-inc_y );
+           &(sweeper->step_scheduler), step,   0, proc_x-inc_x, proc_y-inc_y );
 
   const Step_Info step_info_recv_target_step = Step_Scheduler_step_info(
-              &(sweeper->step_scheduler), step+1, proc_x,       proc_y );
+           &(sweeper->step_scheduler), step+1, 0, proc_x,       proc_y );
 
   /*---Determine whether to communicate---*/
 
@@ -748,7 +755,7 @@ void Sweeper_sweep(
     /*---Get step info for this proc---*/
 
     const Step_Info step_info = Step_Scheduler_step_info(
-                            &(sweeper->step_scheduler), step, proc_x, proc_y );
+                         &(sweeper->step_scheduler), step, 0, proc_x, proc_y );
 
     /*---Pick up needed face pointers---*/
 
@@ -816,7 +823,8 @@ void Sweeper_sweep(
       /*--------------------*/
 
       if( ( dir_z == Dir_up() && block_z == 0 ) ||
-          ( dir_z == Dir_dn() && block_z == sweeper->nblock_z-1 ) )
+          ( dir_z == Dir_dn() && block_z == Step_Scheduler_nblock_z(
+                                           &(sweeper->step_scheduler) ) - 1 ) )
       {
         Sweeper_set_boundary_xy(
                              sweeper, quan, dims_g, dims_b, facexy_c, octant );
