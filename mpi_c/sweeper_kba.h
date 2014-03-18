@@ -141,6 +141,41 @@ void Sweeper_recv_faces_end__(
   Env*               env );
 
 /*===========================================================================*/
+/*---Apply boundary condition: xy face---*/
+
+static void Sweeper_set_boundary_xy(
+  const Sweeper*        sweeper,
+  const Quantities*     quan,
+  Dimensions            dims_g,
+  Dimensions            dims_b,
+  P* const __restrict__ facexy_c,
+  int                   octant );
+
+/*===========================================================================*/
+/*---Apply boundary condition: xz face---*/
+
+static void Sweeper_set_boundary_xz(
+  const Sweeper*        sweeper,
+  const Quantities*     quan,
+  Dimensions            dims_g,
+  Dimensions            dims_b,
+  P* const __restrict__ facexz_c,
+  int                   octant,
+  int                   block_z );
+
+/*===========================================================================*/
+/*---Apply boundary condition: yz face---*/
+
+static void Sweeper_set_boundary_yz(
+  const Sweeper*        sweeper,
+  const Quantities*     quan,
+  Dimensions            dims_g,
+  Dimensions            dims_b,
+  P* const __restrict__ faceyz_c,
+  int                   octant,
+  int                   block_z );
+
+/*===========================================================================*/
 /*---Selectors for faces---*/
 
 /*---The face arrays form a circular buffer of length three.  Three are
