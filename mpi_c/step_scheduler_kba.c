@@ -107,12 +107,12 @@ int Step_Scheduler_nstep( const Step_Scheduler* step_scheduler )
 
 Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,  
                                     const int             step,
-                                    const int             octant_per_block,
+                                    const int             octant_in_block,
                                     const int             proc_x,
                                     const int             proc_y )
 {
-  assert( octant_per_block>=0 &&
-          octant_per_block * step_scheduler->nblock_octant__ < NOCTANT );
+  assert( octant_in_block>=0 &&
+          octant_in_block * step_scheduler->nblock_octant__ < NOCTANT );
 
   const int nblock_octant = step_scheduler->nblock_octant__;
   const int nproc_x       = step_scheduler->nproc_x__;
@@ -137,7 +137,7 @@ Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,
   const int octant_selector[NOCTANT] = { 0, 4, 1, 5, 3, 7, 2, 6 };
 
   /*===========================================================================
-    For a given step and octant_per_block, the following computes the
+    For a given step and octant_in_block, the following computes the
     octant block (i.e., octant step), from which the octant can be
     computed, and the wavefront number, starting from the relevant begin
     corner of the selected octant.
@@ -147,7 +147,7 @@ Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,
     the KBA wavefront startup latency.
     For nblock_octant=k for some smaller k, this sequence is divided into
     subsequences of length k, and each subsequence defines the schedule
-    for a given octant_per_block.
+    for a given octant_in_block.
     The code below is essentially a search into the first subsequence
     to determine where the requested step is located.  Locations in
     the other subsequences can be derived from this.
@@ -208,7 +208,7 @@ Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,
     octant_block = 7;
   }
 
-  octant = octant_selector[ octant_block + nblock_octant * octant_per_block ];
+  octant = octant_selector[ octant_block + nblock_octant * octant_in_block ];
 
   /*---Next convert the wavefront number to a block number based on
        location in the domain.  Use the equation that defines the plane.

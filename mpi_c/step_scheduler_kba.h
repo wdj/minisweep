@@ -72,7 +72,7 @@ int Step_Scheduler_nstep( const Step_Scheduler* step_scheduler );
 
 Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,  
                                     const int             step,
-                                    const int             octant_per_block,
+                                    const int             octant_in_block,
                                     const int             proc_x,
                                     const int             proc_y );
 

@@ -38,7 +38,9 @@ typedef struct
   Dimensions       dims;
   Dimensions       dims_b;
   Dimensions       dims_g;
+
   int              nblock_z;
+  int              nblock_octant;
   int              nthread_e;
   int              nthread_octant;
 

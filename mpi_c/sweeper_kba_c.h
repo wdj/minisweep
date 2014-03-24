@@ -53,8 +53,9 @@ void Sweeper_ctor( Sweeper*          sweeper,
                    = Arguments_consume_int_or_default( args, "--nthread_e", 1);
   Insist( sweeper->nthread_e > 0 && "Invalid e thread count supplied." );
 
+  sweeper->nblock_octant = NOCTANT / sweeper->nthread_octant;
   Step_Scheduler_ctor( &(sweeper->step_scheduler),
-                     sweeper->nblock_z, NOCTANT/sweeper->nthread_octant, env );
+                              sweeper->nblock_z, sweeper->nblock_octant, env );
 
   sweeper->dims = dims;
 
@@ -139,6 +140,7 @@ Bool_t Sweeper_must_do_send__(
   int                dir_ind,
   Env*               env )
 {
+  const int octant_in_block = 0;
   const int proc_x = Env_proc_x_this( env );
   const int proc_y = Env_proc_y_this( env );
 
@@ -152,10 +154,12 @@ Bool_t Sweeper_must_do_send__(
   /*---Get step info for processors involved in communication---*/
 
   const Step_Info step_info_send_source_step = Step_Scheduler_step_info(
-           &(sweeper->step_scheduler), step,   0, proc_x,       proc_y);
+    &(sweeper->step_scheduler), step,   octant_in_block,
+                                                  proc_x,       proc_y);
 
   const Step_Info step_info_send_target_step = Step_Scheduler_step_info(
-           &(sweeper->step_scheduler), step+1, 0, proc_x+inc_x, proc_y+inc_y );
+    &(sweeper->step_scheduler), step+1, octant_in_block,
+                                                  proc_x+inc_x, proc_y+inc_y );
 
   /*---Determine whether to communicate---*/
 
@@ -182,6 +186,7 @@ Bool_t Sweeper_must_do_recv__(
   int                dir_ind,
   Env*               env )
 {
+  const int octant_in_block = 0;
   const int proc_x = Env_proc_x_this( env );
   const int proc_y = Env_proc_y_this( env );
 
@@ -195,10 +200,12 @@ Bool_t Sweeper_must_do_recv__(
   /*---Get step info for processors involved in communication---*/
 
   const Step_Info step_info_recv_source_step = Step_Scheduler_step_info(
-           &(sweeper->step_scheduler), step,   0, proc_x-inc_x, proc_y-inc_y );
+    &(sweeper->step_scheduler), step,   octant_in_block,
+                                                  proc_x-inc_x, proc_y-inc_y );
 
   const Step_Info step_info_recv_target_step = Step_Scheduler_step_info(
-           &(sweeper->step_scheduler), step+1, 0, proc_x,       proc_y );
+    &(sweeper->step_scheduler), step+1, octant_in_block,
+                                                  proc_x,       proc_y );
 
   /*---Determine whether to communicate---*/
 
@@ -858,7 +865,7 @@ void Sweeper_sweep(
     /*---Get step info for this proc---*/
 
     const Step_Info step_info = Step_Scheduler_step_info(
-                         &(sweeper->step_scheduler), step, 0, proc_x, proc_y );
+           &(sweeper->step_scheduler), step, octant_in_block, proc_x, proc_y );
 
     /*---Pick up needed face pointers---*/
 
