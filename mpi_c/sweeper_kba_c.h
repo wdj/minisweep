@@ -66,33 +66,28 @@ void Sweeper_ctor( Sweeper*          sweeper,
 
   sweeper->v_local = malloc_P( sweeper->dims_b.na * NU * sweeper->nthread_e );
 
-  sweeper->facexy  = malloc_P( Dimensions_size_facexy( sweeper->dims_b, NU,
+  sweeper->facexy0  = malloc_P( Dimensions_size_facexy( sweeper->dims_b, NU,
                                       Sweeper_num_face_octants_allocated() ) );
+  sweeper->facexz0 = malloc_P( Dimensions_size_facexz( sweeper->dims_b, NU,
+                                      Sweeper_num_face_octants_allocated() ) );
+  sweeper->faceyz0 = malloc_P( Dimensions_size_faceyz( sweeper->dims_b, NU,
+                                      Sweeper_num_face_octants_allocated() ) );
+
+  sweeper->facexz1 = NULL;
+  sweeper->facexz2 = NULL;
+  sweeper->faceyz1 = NULL;
+  sweeper->faceyz2 = NULL;
 
   if( Sweeper_is_face_comm_async() )
   {
-    sweeper->facexz0 = malloc_P( Dimensions_size_facexz( sweeper->dims_b, NU,
-                                      Sweeper_num_face_octants_allocated() ) );
     sweeper->facexz1 = malloc_P( Dimensions_size_facexz( sweeper->dims_b, NU,
                                       Sweeper_num_face_octants_allocated() ) );
     sweeper->facexz2 = malloc_P( Dimensions_size_facexz( sweeper->dims_b, NU,
-                                      Sweeper_num_face_octants_allocated() ) );
-    sweeper->faceyz0 = malloc_P( Dimensions_size_faceyz( sweeper->dims_b, NU,
                                       Sweeper_num_face_octants_allocated() ) );
     sweeper->faceyz1 = malloc_P( Dimensions_size_faceyz( sweeper->dims_b, NU,
                                       Sweeper_num_face_octants_allocated() ) );
     sweeper->faceyz2 = malloc_P( Dimensions_size_faceyz( sweeper->dims_b, NU,
                                       Sweeper_num_face_octants_allocated() ) );
-    sweeper->facexz = sweeper->faceyz = NULL;
-  }
-  else
-  {
-    sweeper->facexz  = malloc_P( Dimensions_size_facexz( sweeper->dims_b, NU,
-                                      Sweeper_num_face_octants_allocated() ) );
-    sweeper->faceyz  = malloc_P( Dimensions_size_faceyz( sweeper->dims_b, NU,
-                                      Sweeper_num_face_octants_allocated() ) );
-    sweeper->facexz0 = sweeper->facexz1 = sweeper->facexz2 = NULL;
-    sweeper->faceyz0 = sweeper->faceyz1 = sweeper->faceyz2 = NULL;
   }
 }
 
@@ -104,27 +99,29 @@ void Sweeper_dtor( Sweeper* sweeper )
   /*---Deallocate arrays---*/
 
   free_P( sweeper->v_local );
-  free_P( sweeper->facexy );
+
+  free_P( sweeper->facexy0 );
+  free_P( sweeper->facexz0 );
+  free_P( sweeper->faceyz0 );
 
   if( Sweeper_is_face_comm_async() )
   {
-    free_P( sweeper->facexz0 );
     free_P( sweeper->facexz1 );
     free_P( sweeper->facexz2 );
-    free_P( sweeper->faceyz0 );
     free_P( sweeper->faceyz1 );
     free_P( sweeper->faceyz2 );
   }
-  else
-  {
-    free_P( sweeper->facexz );
-    free_P( sweeper->faceyz );
-  }
 
   sweeper->v_local = NULL;
-  sweeper->facexy  = sweeper->facexz  = sweeper->faceyz  = NULL;
-  sweeper->facexz0 = sweeper->facexz1 = sweeper->facexz2 = NULL;
-  sweeper->faceyz0 = sweeper->faceyz1 = sweeper->faceyz2 = NULL;
+
+  sweeper->facexy0 = NULL;
+  sweeper->facexz0 = NULL;
+  sweeper->faceyz0 = NULL;
+
+  sweeper->facexz1 = NULL;
+  sweeper->facexz2 = NULL;
+  sweeper->faceyz1 = NULL;
+  sweeper->faceyz2 = NULL;
 
   Step_Scheduler_dtor( &( sweeper->step_scheduler ) );
 }
@@ -249,9 +246,9 @@ void Sweeper_communicate_faces__(
 
     const int proc_axis = axis_x ? proc_x : proc_y;
 
-    const size_t    size_face    = axis_x ? size_faceyz     : size_facexz;
-    P* __restrict__ buf_face     = axis_x ? buf_faceyz      : buf_facexz;
-    P* __restrict__ sweeper_face = axis_x ? sweeper->faceyz : sweeper->facexz;
+    const size_t    size_face    = axis_x ? size_faceyz      : size_facexz;
+    P* __restrict__ buf_face     = axis_x ? buf_faceyz       : buf_facexz;
+    P* __restrict__ sweeper_face = axis_x ? sweeper->faceyz0 : sweeper->facexz0;
     int dir_ind = 0;
 
     for( dir_ind=0; dir_ind<2; ++dir_ind ) /*---Loop: up, down---*/
@@ -365,8 +362,8 @@ void Sweeper_send_faces_start__(
 
     const size_t    size_face         = axis_x ? size_faceyz : size_facexz;
     P* __restrict__ sweeper_face_send = axis_x ?
-                                           Sweeper_faceyz_c__( sweeper, step )
-                                         : Sweeper_facexz_c__( sweeper, step );
+                                             Sweeper_faceyz__( sweeper, step )
+                                           : Sweeper_facexz__( sweeper, step );
 
     int dir_ind = 0;
 
@@ -470,8 +467,8 @@ void Sweeper_recv_faces_start__(
 
     const size_t    size_face         = axis_x ? size_faceyz     : size_facexz;
     P* __restrict__ sweeper_face_recv = axis_x ?
-                                         Sweeper_faceyz_c__( sweeper, step+1 )
-                                       : Sweeper_facexz_c__( sweeper, step+1 );
+                                           Sweeper_faceyz__( sweeper, step+1 )
+                                         : Sweeper_facexz__( sweeper, step+1 );
     int dir_ind = 0;
 
     for( dir_ind=0; dir_ind<2; ++dir_ind )
@@ -547,7 +544,7 @@ void Sweeper_recv_faces_end__(
 static void Sweeper_set_boundary_xy(
   const Sweeper*        sweeper,
   const Quantities*     quan,
-  P* const __restrict__ facexy_c,
+  P* const __restrict__ facexy,
   int                   octant )
 {
   const int ix_base = quan->ix_base;
@@ -580,7 +577,7 @@ static void Sweeper_set_boundary_xy(
     const int ix_g = ix_b + ix_base;
   for( ia=0; ia<sweeper->dims_b.na; ++ia )
   {
-    *ref_facexy( facexy_c, sweeper->dims_b, NU,
+    *ref_facexy( facexy, sweeper->dims_b, NU,
                  Sweeper_num_face_octants_allocated(),
                  ix_b, iy_b, ie, ia, iu, octant_ind )
         = Quantities_init_facexy(
@@ -598,7 +595,7 @@ static void Sweeper_set_boundary_xy(
 static void Sweeper_set_boundary_xz(
   const Sweeper*        sweeper,
   const Quantities*     quan,
-  P* const __restrict__ facexz_c,
+  P* const __restrict__ facexz,
   int                   octant,
   int                   block_z )
 {
@@ -633,7 +630,7 @@ static void Sweeper_set_boundary_xz(
     const int ix_g = ix_b + ix_base;
   for( ia=0; ia<sweeper->dims_b.na; ++ia )
   {
-    *ref_facexz( facexz_c, sweeper->dims_b, NU,
+    *ref_facexz( facexz, sweeper->dims_b, NU,
                  Sweeper_num_face_octants_allocated(),
                  ix_b, iz_b, ie, ia, iu, octant_ind )
         = Quantities_init_facexz(
@@ -651,7 +648,7 @@ static void Sweeper_set_boundary_xz(
 static void Sweeper_set_boundary_yz(
   const Sweeper*        sweeper,
   const Quantities*     quan,
-  P* const __restrict__ faceyz_c,
+  P* const __restrict__ faceyz,
   int                   octant,
   int                   block_z )
 {
@@ -686,7 +683,7 @@ static void Sweeper_set_boundary_yz(
     const int iy_g = iy_b + iy_base;
   for( ia=0; ia<sweeper->dims_b.na; ++ia )
   {
-    *ref_faceyz( faceyz_c, sweeper->dims_b, NU,
+    *ref_faceyz( faceyz, sweeper->dims_b, NU,
                  Sweeper_num_face_octants_allocated(),
                  iy_b, iz_b, ie, ia, iu, octant_ind )
         = Quantities_init_faceyz(
@@ -711,9 +708,9 @@ void Sweeper_sweep_block(
   const int              thread_num,
   const int              num_threads,
   const int              octant_ind,
-  P* __restrict__        facexy_c,
-  P* __restrict__        facexz_c,
-  P* __restrict__        faceyz_c )
+  P* __restrict__        facexy,
+  P* __restrict__        facexz,
+  P* __restrict__        faceyz )
 {
   const int octant  = step_info.octant;
   const int block_z = step_info.block_z;
@@ -792,7 +789,7 @@ void Sweeper_sweep_block(
       /*--------------------*/
 
       Quantities_solve( quan, v_local,
-                        facexy_c, facexz_c, faceyz_c,
+                        facexy, facexz, faceyz,
                         ix, iy, iz-iz_base, ie,
                         ix+quan->ix_base, iy+quan->iy_base, iz,
                         octant, octant_ind,
@@ -868,14 +865,9 @@ void Sweeper_sweep(
     =    The _s face for a step must match the _c face for the prev step.
     =========================================================================*/
 
-    P* const __restrict__ facexy_c = sweeper->facexy;
-
-    P* const __restrict__ facexz_c = Sweeper_is_face_comm_async() ?
-                                     Sweeper_facexz_c__( sweeper, step ) :
-                                     sweeper->facexz;
-    P* const __restrict__ faceyz_c = Sweeper_is_face_comm_async() ?
-                                     Sweeper_faceyz_c__( sweeper, step ) :
-                                     sweeper->faceyz;
+    P* const __restrict__ facexy = Sweeper_facexy__( sweeper, step );
+    P* const __restrict__ facexz = Sweeper_facexz__( sweeper, step );
+    P* const __restrict__ faceyz = Sweeper_faceyz__( sweeper, step );
 
     /*---Initialize OpenMP thread number and thread count---*/
 
@@ -925,7 +917,7 @@ void Sweeper_sweep(
           ( dir_z == Dir_dn() && step_info.block_z == Step_Scheduler_nblock_z(
                                            &(sweeper->step_scheduler) ) - 1 ) )
       {
-        Sweeper_set_boundary_xy( sweeper, quan, facexy_c, step_info.octant );
+        Sweeper_set_boundary_xy( sweeper, quan, facexy, step_info.octant );
       }
 
       /*--------------------*/
@@ -933,7 +925,7 @@ void Sweeper_sweep(
       if( ( dir_y == Dir_up() && proc_y == 0 ) ||
           ( dir_y == Dir_dn() && proc_y == Env_nproc_y( env )-1 ) )
       {
-        Sweeper_set_boundary_xz( sweeper, quan, facexz_c,
+        Sweeper_set_boundary_xz( sweeper, quan, facexz,
                                          step_info.octant, step_info.block_z );
       }
 
@@ -942,7 +934,7 @@ void Sweeper_sweep(
       if( ( dir_x == Dir_up() && proc_x == 0 ) ||
           ( dir_x == Dir_dn() && proc_x == Env_nproc_x( env )-1 ) )
       {
-        Sweeper_set_boundary_yz( sweeper, quan, faceyz_c,
+        Sweeper_set_boundary_yz( sweeper, quan, faceyz,
                                          step_info.octant, step_info.block_z );
       }
 
@@ -952,7 +944,7 @@ void Sweeper_sweep(
 
       Sweeper_sweep_block( sweeper, vo, vi, quan, env, step_info,
                            thread_num, num_threads, octant_ind,
-                           facexy_c, facexz_c, faceyz_c );
+                           facexy, facexz, faceyz );
 
     }  /*---is_active---*/
 

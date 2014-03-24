@@ -23,17 +23,14 @@
 
 typedef struct
 {
-  P* __restrict__  facexy;
-  P* __restrict__  facexz;
-  P* __restrict__  faceyz;
+  P* __restrict__  facexy0;
 
   P* __restrict__  facexz0;
-  P* __restrict__  faceyz0;
-
   P* __restrict__  facexz1;
-  P* __restrict__  faceyz1;
-
   P* __restrict__  facexz2;
+
+  P* __restrict__  faceyz0;
+  P* __restrict__  faceyz1;
   P* __restrict__  faceyz2;
 
   P* __restrict__  v_local;
@@ -144,7 +141,7 @@ void Sweeper_recv_faces_end__(
 static void Sweeper_set_boundary_xy(
   const Sweeper*        sweeper,
   const Quantities*     quan,
-  P* const __restrict__ facexy_c,
+  P* const __restrict__ facexy,
   int                   octant );
 
 /*===========================================================================*/
@@ -153,7 +150,7 @@ static void Sweeper_set_boundary_xy(
 static void Sweeper_set_boundary_xz(
   const Sweeper*        sweeper,
   const Quantities*     quan,
-  P* const __restrict__ facexz_c,
+  P* const __restrict__ facexz,
   int                   octant,
   int                   block_z );
 
@@ -163,38 +160,47 @@ static void Sweeper_set_boundary_xz(
 static void Sweeper_set_boundary_yz(
   const Sweeper*        sweeper,
   const Quantities*     quan,
-  P* const __restrict__ faceyz_c,
+  P* const __restrict__ faceyz,
   int                   octant,
   int                   block_z );
 
 /*===========================================================================*/
 /*---Selectors for faces---*/
 
-/*---The face arrays form a circular buffer of length three.  Three are
-     needed because at any step there may be a send, a receive, and a
+/*---The xz and yz face arrays form a circular buffer of length three.
+     Three are needed because at any step there may be a send, a receive, and a
      block-sweep-compute in-flight.
 ---*/
 
-static P* __restrict__ Sweeper_facexz_c__( Sweeper* sweeper, int step )
+static P* __restrict__ Sweeper_facexy__( Sweeper* sweeper, int step )
+{
+  assert( sweeper != NULL );
+  assert( step >= 0 );
+  return sweeper->facexy0;
+}
+
+/*---------------------------------------------------------------------------*/
+
+static P* __restrict__ Sweeper_facexz__( Sweeper* sweeper, int step )
 {
   assert( sweeper != NULL );
   assert( step >= 0 );
   P* __restrict__ facesxz[3] = { sweeper->facexz0,
                                  sweeper->facexz1,
                                  sweeper->facexz2 };
-  return facesxz[(step+3)%3];
+  return Sweeper_is_face_comm_async() ? facesxz[(step+3)%3] : sweeper->facexz0;
 }
 
 /*---------------------------------------------------------------------------*/
 
-static P* __restrict__ Sweeper_faceyz_c__( Sweeper* sweeper, int step )
+static P* __restrict__ Sweeper_faceyz__( Sweeper* sweeper, int step )
 {
   assert( sweeper != NULL );
   assert( step >= 0 );
   P* __restrict__ facesyz[3] = { sweeper->faceyz0,
                                  sweeper->faceyz1,
                                  sweeper->faceyz2 };
-  return facesyz[(step+3)%3];
+  return Sweeper_is_face_comm_async() ? facesyz[(step+3)%3] : sweeper->faceyz0;
 }
 
 /*===========================================================================*/
@@ -219,9 +225,9 @@ void Sweeper_sweep_block(
   const int              thread_num,  
   const int              num_threads, 
   const int              octant_ind,
-  P* __restrict__        facexy_c,
-  P* __restrict__        facexz_c,
-  P* __restrict__        faceyz_c );
+  P* __restrict__        facexy,
+  P* __restrict__        facexz,
+  P* __restrict__        faceyz );
 
 /*===========================================================================*/
 /*---Perform a sweep---*/
