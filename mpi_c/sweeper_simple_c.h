@@ -22,10 +22,11 @@
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
 
-void Sweeper_ctor( Sweeper*    sweeper,
-                   Dimensions  dims,
-                   Env*        env,
-                   Arguments*  args )
+void Sweeper_ctor( Sweeper*          sweeper,
+                   Dimensions        dims,
+                   const Quantities* quan,
+                   Env*              env,
+                   Arguments*        args )
 {
   Insist( Env_nproc( env ) == 1 && 
                              "This sweeper version runs only with one proc." );
@@ -39,6 +40,8 @@ void Sweeper_ctor( Sweeper*    sweeper,
                                   NU * Sweeper_num_face_octants_allocated() );
   sweeper->faceyz  = malloc_P( dims.ny * dims.nz * dims.ne * dims.na *
                                   NU * Sweeper_num_face_octants_allocated() );
+
+  sweeper->dims = dims;
 }
 
 /*===========================================================================*/
@@ -67,7 +70,6 @@ void Sweeper_sweep(
   P* __restrict__        vo,
   const P* __restrict__  vi,
   const Quantities*      quan,
-  Dimensions             dims,
   Env*                   env )
 {
   assert( sweeper );
@@ -86,7 +88,7 @@ void Sweeper_sweep(
 
   /*---Initialize result array to zero---*/
 
-  initialize_state_zero( vo, dims, NU );
+  initialize_state_zero( vo, sweeper->dims, NU );
 
   /*---Loop over octants---*/
 
@@ -121,66 +123,66 @@ void Sweeper_sweep(
     ---*/
 
     {
-      iz = dir_z == Dir_up() ? -1 : dims.nz;
+      iz = dir_z == Dir_up() ? -1 : sweeper->dims.nz;
       for( iu=0; iu<NU; ++iu )
-      for( iy=0; iy<dims.ny; ++iy )
-      for( ix=0; ix<dims.nx; ++ix )
-      for( ie=0; ie<dims.ne; ++ie )
-      for( ia=0; ia<dims.na; ++ia )
+      for( iy=0; iy<sweeper->dims.ny; ++iy )
+      for( ix=0; ix<sweeper->dims.nx; ++ix )
+      for( ie=0; ie<sweeper->dims.ne; ++ie )
+      for( ia=0; ia<sweeper->dims.na; ++ia )
       {
-        *ref_facexy( sweeper->facexy, dims, NU,
+        *ref_facexy( sweeper->facexy, sweeper->dims, NU,
                      Sweeper_num_face_octants_allocated(),
                      ix, iy, ie, ia, iu, octant_ind )
              = Quantities_init_facexy(
-                                  quan, ix, iy, iz, ie, ia, iu, octant, dims );
+                         quan, ix, iy, iz, ie, ia, iu, octant, sweeper->dims );
       }
     }
 
     {
-      iy = dir_y == Dir_up() ? -1 : dims.ny;
+      iy = dir_y == Dir_up() ? -1 : sweeper->dims.ny;
       for( iu=0; iu<NU; ++iu )
-      for( iz=0; iz<dims.nz; ++iz )
-      for( ix=0; ix<dims.nx; ++ix )
-      for( ie=0; ie<dims.ne; ++ie )
-      for( ia=0; ia<dims.na; ++ia )
+      for( iz=0; iz<sweeper->dims.nz; ++iz )
+      for( ix=0; ix<sweeper->dims.nx; ++ix )
+      for( ie=0; ie<sweeper->dims.ne; ++ie )
+      for( ia=0; ia<sweeper->dims.na; ++ia )
       {
-        *ref_facexz( sweeper->facexz, dims, NU,
+        *ref_facexz( sweeper->facexz, sweeper->dims, NU,
                      Sweeper_num_face_octants_allocated(),
                      ix, iz, ie, ia, iu, octant_ind )
              = Quantities_init_facexz(
-                                  quan, ix, iy, iz, ie, ia, iu, octant, dims );
+                         quan, ix, iy, iz, ie, ia, iu, octant, sweeper->dims );
       }
     }
 
     {
-      ix = dir_x == Dir_up() ? -1 : dims.nx;
+      ix = dir_x == Dir_up() ? -1 : sweeper->dims.nx;
       for( iu=0; iu<NU; ++iu )
-      for( iz=0; iz<dims.nz; ++iz )
-      for( iy=0; iy<dims.ny; ++iy )
-      for( ie=0; ie<dims.ne; ++ie )
-      for( ia=0; ia<dims.na; ++ia )
+      for( iz=0; iz<sweeper->dims.nz; ++iz )
+      for( iy=0; iy<sweeper->dims.ny; ++iy )
+      for( ie=0; ie<sweeper->dims.ne; ++ie )
+      for( ia=0; ia<sweeper->dims.na; ++ia )
       {
-        *ref_faceyz( sweeper->faceyz, dims, NU,
+        *ref_faceyz( sweeper->faceyz, sweeper->dims, NU,
                      Sweeper_num_face_octants_allocated(),
                      iy, iz, ie, ia, iu, octant_ind )
              = Quantities_init_faceyz(
-                                  quan, ix, iy, iz, ie, ia, iu, octant, dims );
+                         quan, ix, iy, iz, ie, ia, iu, octant, sweeper->dims );
       }
     }
 
     /*---Loop over energy groups---*/
 
-    for( ie=0; ie<dims.ne; ++ie )
+    for( ie=0; ie<sweeper->dims.ne; ++ie )
     {
       /*---Calculate spatial loop extents---*/
 
-      int ixbeg = dir_x==Dir_up() ? 0 : dims.nx-1;
-      int iybeg = dir_y==Dir_up() ? 0 : dims.ny-1;
-      int izbeg = dir_z==Dir_up() ? 0 : dims.nz-1;
+      int ixbeg = dir_x==Dir_up() ? 0 : sweeper->dims.nx-1;
+      int iybeg = dir_y==Dir_up() ? 0 : sweeper->dims.ny-1;
+      int izbeg = dir_z==Dir_up() ? 0 : sweeper->dims.nz-1;
 
-      int ixend = dir_x==Dir_dn() ? 0 : dims.nx-1;
-      int iyend = dir_y==Dir_dn() ? 0 : dims.ny-1;
-      int izend = dir_z==Dir_dn() ? 0 : dims.nz-1;
+      int ixend = dir_x==Dir_dn() ? 0 : sweeper->dims.nx-1;
+      int iyend = dir_y==Dir_dn() ? 0 : sweeper->dims.ny-1;
+      int izend = dir_z==Dir_dn() ? 0 : sweeper->dims.nz-1;
 
       /*---Loop over gridcells, in proper direction---*/
 
@@ -201,15 +203,15 @@ void Sweeper_sweep(
       ---*/
 
       for( iu=0; iu<NU; ++iu )
-      for( ia=0; ia<dims.na; ++ia )
+      for( ia=0; ia<sweeper->dims.na; ++ia )
       {
         P result = P_zero();
-        for( im=0; im<dims.nm; ++im )
+        for( im=0; im<sweeper->dims.nm; ++im )
         {
-          result += *const_ref_a_from_m( quan->a_from_m, dims, im, ia, octant )*
-                    *const_ref_state( vi, dims, NU, ix, iy, iz, ie, im, iu );
+          result += *const_ref_a_from_m( quan->a_from_m, sweeper->dims, im, ia, octant )*
+                    *const_ref_state( vi, sweeper->dims, NU, ix, iy, iz, ie, im, iu );
         }
-        *ref_v_local( sweeper->v_local, dims, NU, ia, iu ) = result;
+        *ref_v_local( sweeper->v_local, sweeper->dims, NU, ia, iu ) = result;
       }
 
       /*--------------------*/
@@ -220,7 +222,8 @@ void Sweeper_sweep(
                         sweeper->facexy, sweeper->facexz, sweeper->faceyz,
                         ix, iy, iz, ie, ix, iy, iz,
                         octant, octant_ind,
-                        Sweeper_num_face_octants_allocated(), dims, dims );
+                        Sweeper_num_face_octants_allocated(),
+                        sweeper->dims, sweeper->dims );
 
       /*--------------------*/
       /*---Transform state vector from angles to moments---*/
@@ -231,15 +234,15 @@ void Sweeper_sweep(
       ---*/
 
       for( iu=0; iu<NU; ++iu )
-      for( im=0; im<dims.nm; ++im )
+      for( im=0; im<sweeper->dims.nm; ++im )
       {
         P result = P_zero();
-        for( ia=0; ia<dims.na; ++ia )
+        for( ia=0; ia<sweeper->dims.na; ++ia )
         {
-          result += *const_ref_m_from_a( quan->m_from_a, dims, im, ia, octant )*
-                    *const_ref_v_local( sweeper->v_local, dims, NU, ia, iu );
+          result += *const_ref_m_from_a( quan->m_from_a, sweeper->dims, im, ia, octant )*
+                    *const_ref_v_local( sweeper->v_local, sweeper->dims, NU, ia, iu );
         }
-        *ref_state( vo, dims, NU, ix, iy, iz, ie, im, iu ) += result;
+        *ref_state( vo, sweeper->dims, NU, ix, iy, iz, ie, im, iu ) += result;
       }
 
     } /*---ix/iy/iz---*/

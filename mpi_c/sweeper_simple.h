@@ -26,15 +26,18 @@ typedef struct
   P* __restrict__  facexz;
   P* __restrict__  faceyz;
   P* __restrict__  v_local;
+
+  Dimensions       dims;
 } Sweeper;
 
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
 
-void Sweeper_ctor( Sweeper*    sweeper,
-                   Dimensions  dims,
-                   Env*        env,
-                   Arguments*  args );
+void Sweeper_ctor( Sweeper*          sweeper,
+                   Dimensions        dims,
+                   const Quantities* quan,
+                   Env*              env,
+                   Arguments*        args );
 
 /*===========================================================================*/
 /*---Pseudo-destructor for Sweeper struct---*/
@@ -57,7 +60,6 @@ void Sweeper_sweep(
   P* __restrict__        vo,
   const P* __restrict__  vi,
   const Quantities*      quan,
-  Dimensions             dims,
   Env*                   env );
 
 /*===========================================================================*/

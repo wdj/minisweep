@@ -22,10 +22,11 @@
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
 
-void Sweeper_ctor( Sweeper*    sweeper,
-                   Dimensions  dims,
-                   Env*        env,
-                   Arguments*  args )
+void Sweeper_ctor( Sweeper*          sweeper,
+                   Dimensions        dims,
+                   const Quantities* quan,
+                   Env*              env,
+                   Arguments*        args )
 {
   Insist( Env_nproc( env ) == 1 &&
                              "This sweeper version runs only with one proc." );
@@ -39,6 +40,8 @@ void Sweeper_ctor( Sweeper*    sweeper,
                                   NU * Sweeper_num_face_octants_allocated() );
   sweeper->faceyz  = malloc_P( dims.ny * dims.nz * dims.ne * dims.na * 
                                   NU * Sweeper_num_face_octants_allocated() );
+
+  sweeper->dims = dims;
 }
 
 /*===========================================================================*/
@@ -67,7 +70,6 @@ void Sweeper_sweep(
   P* __restrict__        vo,
   const P* __restrict__  vi,
   const Quantities*      quan,
-  Dimensions             dims,
   Env*                   env )
 {
   assert( sweeper );
@@ -85,6 +87,7 @@ void Sweeper_sweep(
   int octant = 0;
   const Bool_t do_tile_octants = Sweeper_tile_octants();
   const int num_tile_steps = do_tile_octants ? NOCTANT : 1;
+  const Dimensions dims = sweeper->dims;
 
   int tile_step = 0;
 

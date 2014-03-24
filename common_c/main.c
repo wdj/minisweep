@@ -114,7 +114,7 @@ int main( int argc, char** argv )
 
   /*---Initialize sweeper---*/
 
-  Sweeper_ctor( &sweeper, dims, &env, &args );
+  Sweeper_ctor( &sweeper, dims, &quan, &env, &args );
 
   /*---Check that all command line args used---*/
 
@@ -130,7 +130,6 @@ int main( int argc, char** argv )
                    iteration%2==0 ? vo : vi,
                    iteration%2==0 ? vi : vo,
                    &quan,
-                   dims,
                    &env );
   }
 

@@ -38,7 +38,9 @@ typedef struct
 
   P* __restrict__  v_local;
 
+  Dimensions       dims;
   Dimensions       dims_b;
+  Dimensions       dims_g;
   int              nblock_z;
   int              nthread_e;
 
@@ -53,10 +55,11 @@ typedef struct
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
 
-void Sweeper_ctor( Sweeper*    sweeper,
-                   Dimensions  dims,
-                   Env*        env,
-                   Arguments*  args );
+void Sweeper_ctor( Sweeper*          sweeper,
+                   Dimensions        dims,
+                   const Quantities* quan,
+                   Env*              env,
+                   Arguments*        args );
 
 /*===========================================================================*/
 /*---Pseudo-destructor for Sweeper struct---*/
@@ -105,7 +108,6 @@ Bool_t Sweeper_must_do_recv__(
 void Sweeper_communicate_faces__(
   Sweeper*         sweeper,
   int              step,
-  Dimensions       dims_b,
   Env*             env );
 
 /*---------------------------------------------------------------------------*/
@@ -113,7 +115,6 @@ void Sweeper_communicate_faces__(
 void Sweeper_send_faces_start__(
   Sweeper*           sweeper,
   int                step,
-  Dimensions         dims_b,
   Env*               env );
 
 /*---------------------------------------------------------------------------*/
@@ -121,7 +122,6 @@ void Sweeper_send_faces_start__(
 void Sweeper_send_faces_end__(
   Sweeper*           sweeper,
   int                step,
-  Dimensions         dims_b,
   Env*               env );
 
 /*---------------------------------------------------------------------------*/
@@ -129,7 +129,6 @@ void Sweeper_send_faces_end__(
 void Sweeper_recv_faces_start__(
   Sweeper*           sweeper,
   int                step,
-  Dimensions         dims_b,
   Env*               env );
 
 /*---------------------------------------------------------------------------*/
@@ -137,7 +136,6 @@ void Sweeper_recv_faces_start__(
 void Sweeper_recv_faces_end__(
   Sweeper*           sweeper,
   int                step,
-  Dimensions         dims_b,
   Env*               env );
 
 /*===========================================================================*/
@@ -146,8 +144,6 @@ void Sweeper_recv_faces_end__(
 static void Sweeper_set_boundary_xy(
   const Sweeper*        sweeper,
   const Quantities*     quan,
-  Dimensions            dims_g,
-  Dimensions            dims_b,
   P* const __restrict__ facexy_c,
   int                   octant );
 
@@ -157,8 +153,6 @@ static void Sweeper_set_boundary_xy(
 static void Sweeper_set_boundary_xz(
   const Sweeper*        sweeper,
   const Quantities*     quan,
-  Dimensions            dims_g,
-  Dimensions            dims_b,
   P* const __restrict__ facexz_c,
   int                   octant,
   int                   block_z );
@@ -169,8 +163,6 @@ static void Sweeper_set_boundary_xz(
 static void Sweeper_set_boundary_yz(
   const Sweeper*        sweeper,
   const Quantities*     quan,
-  Dimensions            dims_g,
-  Dimensions            dims_b,
   P* const __restrict__ faceyz_c,
   int                   octant,
   int                   block_z );
@@ -215,6 +207,23 @@ static inline P* __restrict__ Sweeper_v_local_this__( Sweeper* sweeper,
 }
 
 /*===========================================================================*/
+/*---Perform a sweep for a block---*/
+
+void Sweeper_sweep_block(
+  Sweeper*               sweeper,
+  P* __restrict__        vo,
+  const P* __restrict__  vi,
+  const Quantities*      quan,
+  Env*                   env,
+  const Step_Info        step_info,
+  const int              thread_num,  
+  const int              num_threads, 
+  const int              octant_ind,
+  P* __restrict__        facexy_c,
+  P* __restrict__        facexz_c,
+  P* __restrict__        faceyz_c );
+
+/*===========================================================================*/
 /*---Perform a sweep---*/
 
 void Sweeper_sweep(
@@ -222,7 +231,6 @@ void Sweeper_sweep(
   P* __restrict__        vo,
   const P* __restrict__  vi,
   const Quantities*      quan,
-  Dimensions             dims,
   Env*                   env );
 
 /*===========================================================================*/

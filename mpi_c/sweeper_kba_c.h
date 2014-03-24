@@ -24,10 +24,11 @@
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
 
-void Sweeper_ctor( Sweeper*    sweeper,
-                   Dimensions  dims,
-                   Env*        env,
-                   Arguments*  args )
+void Sweeper_ctor( Sweeper*          sweeper,
+                   Dimensions        dims,
+                   const Quantities* quan,
+                   Env*              env,
+                   Arguments*        args )
 {
   Insist( dims.nx > 0 && "KBA sweeper currently requires all blocks nonempty" );
   Insist( dims.ny > 0 && "KBA sweeper currently requires all blocks nonempty" );
@@ -52,8 +53,14 @@ void Sweeper_ctor( Sweeper*    sweeper,
   Step_Scheduler_ctor(
                      &(sweeper->step_scheduler), nblock_z, nblock_octant, env );
 
-  sweeper->dims_b = dims;
-  sweeper->dims_b.nz = dims.nz / nblock_z;
+  sweeper->dims = dims;
+
+  sweeper->dims_b = sweeper->dims;
+  sweeper->dims_b.nz = sweeper->dims.nz / nblock_z;
+
+  sweeper->dims_g = sweeper->dims;
+  sweeper->dims_g.nx = quan->nx_g;
+  sweeper->dims_g.ny = quan->ny_g;
 
   /*---Allocate arrays---*/
 
@@ -214,7 +221,6 @@ Bool_t Sweeper_must_do_recv__(
 void Sweeper_communicate_faces__(
   Sweeper*           sweeper,
   int                step,
-  Dimensions         dims_b,
   Env*               env )
 {
   assert( ! Sweeper_is_face_comm_async() );
@@ -222,9 +228,9 @@ void Sweeper_communicate_faces__(
   const int proc_x = Env_proc_x_this( env );
   const int proc_y = Env_proc_y_this( env );
 
-  const size_t size_facexz = Dimensions_size_facexz( dims_b, NU,
+  const size_t size_facexz = Dimensions_size_facexz( sweeper->dims_b, NU,
                                         Sweeper_num_face_octants_allocated() );
-  const size_t size_faceyz = Dimensions_size_faceyz( dims_b, NU,
+  const size_t size_faceyz = Dimensions_size_faceyz( sweeper->dims_b, NU,
                                         Sweeper_num_face_octants_allocated() );
 
   /*---Allocate temporary face buffers---*/
@@ -332,7 +338,6 @@ void Sweeper_communicate_faces__(
 void Sweeper_send_faces_start__(
   Sweeper*           sweeper,
   int                step,
-  Dimensions         dims_b,
   Env*               env )
 {
   assert( Sweeper_is_face_comm_async() );
@@ -340,9 +345,9 @@ void Sweeper_send_faces_start__(
   const int proc_x = Env_proc_x_this( env );
   const int proc_y = Env_proc_y_this( env );
 
-  const size_t size_facexz = Dimensions_size_facexz( dims_b, NU,
+  const size_t size_facexz = Dimensions_size_facexz( sweeper->dims_b, NU,
                                         Sweeper_num_face_octants_allocated() );
-  const size_t size_faceyz = Dimensions_size_faceyz( dims_b, NU,
+  const size_t size_faceyz = Dimensions_size_faceyz( sweeper->dims_b, NU,
                                         Sweeper_num_face_octants_allocated() );
 
   /*---Communicate +/-X, +/-Y---*/
@@ -395,7 +400,6 @@ void Sweeper_send_faces_start__(
 void Sweeper_send_faces_end__(
   Sweeper*           sweeper,
   int                step,
-  Dimensions         dims_b,
   Env*               env )
 {
   assert( Sweeper_is_face_comm_async() );
@@ -439,7 +443,6 @@ void Sweeper_send_faces_end__(
 void Sweeper_recv_faces_start__(
   Sweeper*           sweeper,
   int                step,
-  Dimensions         dims_b,
   Env*               env )
 {
   assert( Sweeper_is_face_comm_async() );
@@ -447,9 +450,9 @@ void Sweeper_recv_faces_start__(
   const int proc_x = Env_proc_x_this( env );
   const int proc_y = Env_proc_y_this( env );
 
-  const size_t size_facexz = Dimensions_size_facexz( dims_b, NU,
+  const size_t size_facexz = Dimensions_size_facexz( sweeper->dims_b, NU,
                                         Sweeper_num_face_octants_allocated() );
-  const size_t size_faceyz = Dimensions_size_faceyz( dims_b, NU,
+  const size_t size_faceyz = Dimensions_size_faceyz( sweeper->dims_b, NU,
                                         Sweeper_num_face_octants_allocated() );
 
   /*---Communicate +/-X, +/-Y---*/
@@ -502,7 +505,6 @@ void Sweeper_recv_faces_start__(
 void Sweeper_recv_faces_end__(
   Sweeper*           sweeper,
   int                step,
-  Dimensions         dims_b,
   Env*               env )
 {
   assert( Sweeper_is_face_comm_async() );
@@ -545,8 +547,6 @@ void Sweeper_recv_faces_end__(
 static void Sweeper_set_boundary_xy(
   const Sweeper*        sweeper,
   const Quantities*     quan,
-  Dimensions            dims_g,
-  Dimensions            dims_b,
   P* const __restrict__ facexy_c,
   int                   octant )
 {
@@ -563,28 +563,28 @@ static void Sweeper_set_boundary_xy(
   int ie   = 0;
   int iu   = 0;
 
-  const int iz_g = dir_z == Dir_up() ? -1 : dims_g.nz;
+  const int iz_g = dir_z == Dir_up() ? -1 : sweeper->dims_g.nz;
 
 #ifdef USE_OPENMP_E
 #pragma omp parallel for num_threads( sweeper->nthread_e )
 #endif
-  for( ie=0; ie<dims_b.ne; ++ie )
+  for( ie=0; ie<sweeper->dims_b.ne; ++ie )
   {
   for( iu=0; iu<NU; ++iu )
   {
-  for( iy_b=0; iy_b<dims_b.ny; ++iy_b )
+  for( iy_b=0; iy_b<sweeper->dims_b.ny; ++iy_b )
   {
     const int iy_g = iy_b + iy_base;
-  for( ix_b=0; ix_b<dims_b.nx; ++ix_b )
+  for( ix_b=0; ix_b<sweeper->dims_b.nx; ++ix_b )
   {
     const int ix_g = ix_b + ix_base;
-  for( ia=0; ia<dims_b.na; ++ia )
+  for( ia=0; ia<sweeper->dims_b.na; ++ia )
   {
-    *ref_facexy( facexy_c, dims_b, NU,
+    *ref_facexy( facexy_c, sweeper->dims_b, NU,
                  Sweeper_num_face_octants_allocated(),
                  ix_b, iy_b, ie, ia, iu, octant_ind )
         = Quantities_init_facexy(
-                    quan, ix_g, iy_g, iz_g, ie, ia, iu, octant, dims_g );
+                 quan, ix_g, iy_g, iz_g, ie, ia, iu, octant, sweeper->dims_g );
   }
   }
   }
@@ -598,17 +598,15 @@ static void Sweeper_set_boundary_xy(
 static void Sweeper_set_boundary_xz(
   const Sweeper*        sweeper,
   const Quantities*     quan,
-  Dimensions            dims_g,
-  Dimensions            dims_b,
   P* const __restrict__ facexz_c,
   int                   octant,
   int                   block_z )
 {
   const int ix_base = quan->ix_base;
-  const int iz_base = block_z * dims_b.nz;
+  const int iz_base = block_z * sweeper->dims_b.nz;
   const int dir_y = Dir_y( octant );
   const int octant_ind = 0;
-  const int nz_b = dims_b.nz;
+  const int nz_b = sweeper->dims_b.nz;
 
   int ix_b = 0;
   int ix_g = 0;
@@ -618,28 +616,28 @@ static void Sweeper_set_boundary_xz(
   int ie   = 0;
   int iu   = 0;
 
-  const int iy_g = dir_y == Dir_up() ? -1 : dims_g.ny;
+  const int iy_g = dir_y == Dir_up() ? -1 : sweeper->dims_g.ny;
 
 #ifdef USE_OPENMP_E
 #pragma omp parallel for num_threads( sweeper->nthread_e )
 #endif
-  for( ie=0; ie<dims_b.ne; ++ie )
+  for( ie=0; ie<sweeper->dims_b.ne; ++ie )
   {
   for( iu=0; iu<NU; ++iu )
   {
   for( iz_b=0; iz_b<nz_b; ++iz_b )
   {
     const int iz_g = iz_b + iz_base;
-  for( ix_b=0; ix_b<dims_b.nx; ++ix_b )
+  for( ix_b=0; ix_b<sweeper->dims_b.nx; ++ix_b )
   {
     const int ix_g = ix_b + ix_base;
-  for( ia=0; ia<dims_b.na; ++ia )
+  for( ia=0; ia<sweeper->dims_b.na; ++ia )
   {
-    *ref_facexz( facexz_c, dims_b, NU,
+    *ref_facexz( facexz_c, sweeper->dims_b, NU,
                  Sweeper_num_face_octants_allocated(),
                  ix_b, iz_b, ie, ia, iu, octant_ind )
         = Quantities_init_facexz(
-                     quan, ix_g, iy_g, iz_g, ie, ia, iu, octant, dims_g );
+                 quan, ix_g, iy_g, iz_g, ie, ia, iu, octant, sweeper->dims_g );
   }
   }
   }
@@ -653,17 +651,15 @@ static void Sweeper_set_boundary_xz(
 static void Sweeper_set_boundary_yz(
   const Sweeper*        sweeper,
   const Quantities*     quan,
-  Dimensions            dims_g,
-  Dimensions            dims_b,
   P* const __restrict__ faceyz_c,
   int                   octant,
   int                   block_z )
 {
   const int iy_base = quan->iy_base;
-  const int iz_base = block_z * dims_b.nz;
+  const int iz_base = block_z * sweeper->dims_b.nz;
   const int dir_x = Dir_x( octant );
   const int octant_ind = 0;
-  const int nz_b = dims_b.nz;
+  const int nz_b = sweeper->dims_b.nz;
 
   int iy_b = 0;
   int iy_g = 0;
@@ -673,33 +669,158 @@ static void Sweeper_set_boundary_yz(
   int ie   = 0;
   int iu   = 0;
 
-  const int ix_g = dir_x == Dir_up() ? -1 : dims_g.nx;
+  const int ix_g = dir_x == Dir_up() ? -1 : sweeper->dims_g.nx;
 
 #ifdef USE_OPENMP_E
 #pragma omp parallel for num_threads( sweeper->nthread_e )
 #endif
-  for( ie=0; ie<dims_b.ne; ++ie )
+  for( ie=0; ie<sweeper->dims_b.ne; ++ie )
   {
   for( iu=0; iu<NU; ++iu )
   {
   for( iz_b=0; iz_b<nz_b; ++iz_b )
   {
     const int iz_g = iz_b + iz_base;
-  for( iy_b=0; iy_b<dims_b.ny; ++iy_b )
+  for( iy_b=0; iy_b<sweeper->dims_b.ny; ++iy_b )
   {
     const int iy_g = iy_b + iy_base;
-  for( ia=0; ia<dims_b.na; ++ia )
+  for( ia=0; ia<sweeper->dims_b.na; ++ia )
   {
-    *ref_faceyz( faceyz_c, dims_b, NU,
+    *ref_faceyz( faceyz_c, sweeper->dims_b, NU,
                  Sweeper_num_face_octants_allocated(),
                  iy_b, iz_b, ie, ia, iu, octant_ind )
         = Quantities_init_faceyz(
-                     quan, ix_g, iy_g, iz_g, ie, ia, iu, octant, dims_g );
+                 quan, ix_g, iy_g, iz_g, ie, ia, iu, octant, sweeper->dims_g );
   }
   }
   }
   }
   }
+}
+
+/*===========================================================================*/
+/*---Perform a sweep for a block---*/
+
+void Sweeper_sweep_block(
+  Sweeper*               sweeper,
+  P* __restrict__        vo,
+  const P* __restrict__  vi,
+  const Quantities*      quan,
+  Env*                   env, 
+  const Step_Info        step_info,
+  const int              thread_num,
+  const int              num_threads,
+  const int              octant_ind,
+  P* __restrict__        facexy_c,
+  P* __restrict__        facexz_c,
+  P* __restrict__        faceyz_c )
+{
+  const int octant  = step_info.octant;
+  const int block_z = step_info.block_z;
+  const int iz_base = block_z * sweeper->dims_b.nz;
+  const int nz_b    = sweeper->dims_b.nz;
+  const int dir_x = Dir_x( octant );
+  const int dir_y = Dir_y( octant );
+  const int dir_z = Dir_z( octant );
+
+  int ie = 0;
+
+#ifdef USE_OPENMP_E
+#pragma omp parallel for num_threads( sweeper->nthread_e )
+#endif
+  for( ie=0; ie<sweeper->dims.ne; ++ie )
+  {
+    int ix = 0;
+    int iy = 0;
+    int iz = 0;
+    int im = 0;
+    int ia = 0;
+    int iu = 0;
+
+    /*---Calculate spatial loop extents---*/
+
+    const int ixbeg = dir_x==Dir_up() ? 0       : sweeper->dims_b.nx-1;
+    const int iybeg = dir_y==Dir_up() ? 0       : sweeper->dims_b.ny-1;
+    const int izbeg = dir_z==Dir_up() ? iz_base : iz_base+nz_b-1;
+
+    const int ixend = dir_x==Dir_dn() ? 0       : sweeper->dims_b.nx-1;
+    const int iyend = dir_y==Dir_dn() ? 0       : sweeper->dims_b.ny-1;
+    const int izend = dir_z==Dir_dn() ? iz_base : iz_base+nz_b-1;
+
+    /*---Compute thread information---*/
+
+    const int thread_num_outer  = thread_num;
+    const int num_threads_outer = num_threads;
+
+    const int thread_num  = thread_num_outer + num_threads_outer *
+                                                 Env_thread_this( env );
+    const int num_threads =  num_threads_outer * Env_num_threads( env );
+
+    /*---Get v_local part to be used by this thread---*/
+
+    P* __restrict__ v_local = Sweeper_v_local_this__( sweeper, thread_num );
+
+    /*--------------------*/
+    /*---Loop over gridcells, in proper direction---*/
+    /*--------------------*/
+
+    for( iz=izbeg; iz!=izend+Dir_inc(dir_z); iz+=Dir_inc(dir_z) )
+    for( iy=iybeg; iy!=iyend+Dir_inc(dir_y); iy+=Dir_inc(dir_y) )
+    for( ix=ixbeg; ix!=ixend+Dir_inc(dir_x); ix+=Dir_inc(dir_x) )
+    {
+      /*--------------------*/
+      /*---Transform state vector from moments to angles---*/
+      /*--------------------*/
+
+      for( iu=0; iu<NU; ++iu )
+      {
+      for( ia=0; ia<sweeper->dims.na; ++ia )
+      {
+        P result = P_zero();
+        for( im=0; im<sweeper->dims.nm; ++im )
+        {
+          result +=
+            *const_ref_a_from_m( quan->a_from_m, sweeper->dims, im, ia, octant )
+            * *const_ref_state( vi, sweeper->dims, NU, ix, iy, iz, ie, im, iu );
+        }
+        *ref_v_local( v_local, sweeper->dims, NU, ia, iu ) = result;
+      }
+      }
+
+      /*--------------------*/
+      /*---Perform solve---*/
+      /*--------------------*/
+
+      Quantities_solve( quan, v_local,
+                        facexy_c, facexz_c, faceyz_c,
+                        ix, iy, iz-iz_base, ie,
+                        ix+quan->ix_base, iy+quan->iy_base, iz,
+                        octant, octant_ind,
+                        Sweeper_num_face_octants_allocated(),
+                        sweeper->dims_b, sweeper->dims_g );
+
+      /*--------------------*/
+      /*---Transform state vector from angles to moments---*/
+      /*--------------------*/
+
+      for( iu=0; iu<NU; ++iu )
+      {
+      for( im=0; im<sweeper->dims.nm; ++im )
+      {
+        P result = P_zero();
+        for( ia=0; ia<sweeper->dims.na; ++ia )
+        {
+          result +=
+            *const_ref_m_from_a( quan->m_from_a, sweeper->dims, im, ia, octant )
+            * *const_ref_v_local( v_local, sweeper->dims, NU, ia, iu );
+        }
+        *ref_state( vo, sweeper->dims, NU, ix, iy, iz, ie, im, iu ) += result;
+      }
+      }
+
+    } /*---ix/iy/iz---*/
+
+  } /*---ie---*/
 }
 
 /*===========================================================================*/
@@ -710,7 +831,6 @@ void Sweeper_sweep(
   P* __restrict__        vo,
   const P* __restrict__  vi,
   const Quantities*      quan,
-  Dimensions             dims,
   Env*                   env )
 {
   assert( sweeper );
@@ -719,32 +839,15 @@ void Sweeper_sweep(
 
   /*---Declarations---*/
 
-  int ix_b = 0;
-  int iy_b = 0;
-  int iz_b = 0;
-  int ix = 0;
-  int iy = 0;
-  int iz = 0;
-  int ie = 0;
-  int im = 0;
-  int ia = 0;
-  int iu = 0;
+  const int proc_x     = Env_proc_x_this( env );
+  const int proc_y     = Env_proc_y_this( env );
+  const int octant_ind = 0;
+
   int step = -1;
-
-  const Dimensions dims_b     = sweeper->dims_b;
-  const int        proc_x     = Env_proc_x_this( env );
-  const int        proc_y     = Env_proc_y_this( env );
-  const int        ix_base    = quan->ix_base;
-  const int        iy_base    = quan->iy_base;
-  const int        octant_ind = 0;
-
-  Dimensions dims_g = dims;
-  dims_g.nx = quan->nx_g;
-  dims_g.ny = quan->ny_g;
 
   /*---Initialize result array to zero---*/
 
-  initialize_state_zero( vo, dims, NU );
+  initialize_state_zero( vo, sweeper->dims, NU );
 
   /*--------------------*/
   /*---Loop over kba parallel steps---*/
@@ -798,8 +901,8 @@ void Sweeper_sweep(
 
     if( Sweeper_is_face_comm_async() )
     {
-      Sweeper_recv_faces_end__  (  sweeper, step-1, dims_b, env );
-      Sweeper_recv_faces_start__(  sweeper, step,   dims_b, env );
+      Sweeper_recv_faces_end__  (  sweeper, step-1, env );
+      Sweeper_recv_faces_start__(  sweeper, step,   env );
     }
 
     /*--------------------*/
@@ -808,26 +911,21 @@ void Sweeper_sweep(
 
     if( step_info.is_active )
     {
-      const int octant  = step_info.octant;
-      const int block_z = step_info.block_z;
+      const int iz_base = step_info.block_z * sweeper->dims_b.nz;
 
-      const int iz_base = block_z * dims_b.nz;
-      const int nz_b    = dims_b.nz;
-
-      const int dir_x = Dir_x( octant );
-      const int dir_y = Dir_y( octant );
-      const int dir_z = Dir_z( octant );
+      const int dir_x = Dir_x( step_info.octant );
+      const int dir_y = Dir_y( step_info.octant );
+      const int dir_z = Dir_z( step_info.octant );
 
       /*--------------------*/
       /*---Set face boundary conditions as needed---*/
       /*--------------------*/
 
-      if( ( dir_z == Dir_up() && block_z == 0 ) ||
-          ( dir_z == Dir_dn() && block_z == Step_Scheduler_nblock_z(
+      if( ( dir_z == Dir_up() && step_info.block_z == 0 ) ||
+          ( dir_z == Dir_dn() && step_info.block_z == Step_Scheduler_nblock_z(
                                            &(sweeper->step_scheduler) ) - 1 ) )
       {
-        Sweeper_set_boundary_xy(
-                             sweeper, quan, dims_g, dims_b, facexy_c, octant );
+        Sweeper_set_boundary_xy( sweeper, quan, facexy_c, step_info.octant );
       }
 
       /*--------------------*/
@@ -835,8 +933,8 @@ void Sweeper_sweep(
       if( ( dir_y == Dir_up() && proc_y == 0 ) ||
           ( dir_y == Dir_dn() && proc_y == Env_nproc_y( env )-1 ) )
       {
-        Sweeper_set_boundary_xz(
-                    sweeper, quan, dims_g, dims_b, facexz_c, octant, block_z );
+        Sweeper_set_boundary_xz( sweeper, quan, facexz_c,
+                                         step_info.octant, step_info.block_z );
       }
 
       /*--------------------*/
@@ -844,110 +942,17 @@ void Sweeper_sweep(
       if( ( dir_x == Dir_up() && proc_x == 0 ) ||
           ( dir_x == Dir_dn() && proc_x == Env_nproc_x( env )-1 ) )
       {
-        Sweeper_set_boundary_yz(
-                    sweeper, quan, dims_g, dims_b, faceyz_c, octant, block_z );
+        Sweeper_set_boundary_yz( sweeper, quan, faceyz_c,
+                                         step_info.octant, step_info.block_z );
       }
 
       /*--------------------*/
-      /*---Loop over energy groups---*/
+      /*---Perform sweep on relevant block---*/
       /*--------------------*/
 
-#ifdef USE_OPENMP_E
-#pragma omp parallel for num_threads( sweeper->nthread_e )
-#endif
-      for( ie=0; ie<dims.ne; ++ie )
-      {
-        int ix = 0;
-        int iy = 0;
-        int iz = 0;
-        int im = 0;
-        int ia = 0;
-        int iu = 0;
-
-        /*---Calculate spatial loop extents---*/
-
-        const int ixbeg = dir_x==Dir_up() ? 0       : dims_b.nx-1;
-        const int iybeg = dir_y==Dir_up() ? 0       : dims_b.ny-1;
-        const int izbeg = dir_z==Dir_up() ? iz_base : iz_base+nz_b-1;
-
-        const int ixend = dir_x==Dir_dn() ? 0       : dims_b.nx-1;
-        const int iyend = dir_y==Dir_dn() ? 0       : dims_b.ny-1;
-        const int izend = dir_z==Dir_dn() ? iz_base : iz_base+nz_b-1;
-
-        /*---Compute thread information---*/
-
-        const int thread_num_outer  = thread_num;
-        const int num_threads_outer = num_threads;
-
-        const int thread_num  = thread_num_outer + num_threads_outer *
-                                                     Env_thread_this( env );
-        const int num_threads =  num_threads_outer * Env_num_threads( env );
-
-        /*---Get v_local part to be used by this thread---*/
-
-        P* __restrict__ v_local = Sweeper_v_local_this__( sweeper, thread_num );
-
-        /*--------------------*/
-        /*---Loop over gridcells, in proper direction---*/
-        /*--------------------*/
-
-        for( iz=izbeg; iz!=izend+Dir_inc(dir_z); iz+=Dir_inc(dir_z) )
-        for( iy=iybeg; iy!=iyend+Dir_inc(dir_y); iy+=Dir_inc(dir_y) )
-        for( ix=ixbeg; ix!=ixend+Dir_inc(dir_x); ix+=Dir_inc(dir_x) )
-        {
-          /*--------------------*/
-          /*---Transform state vector from moments to angles---*/
-          /*--------------------*/
-
-          for( iu=0; iu<NU; ++iu )
-          {
-          for( ia=0; ia<dims.na; ++ia )
-          {
-            P result = P_zero();
-            for( im=0; im<dims.nm; ++im )
-            {
-              result +=
-                *const_ref_a_from_m( quan->a_from_m, dims, im, ia, octant ) *
-                *const_ref_state( vi, dims, NU, ix, iy, iz, ie, im, iu );
-            }
-            *ref_v_local( v_local, dims, NU, ia, iu ) = result;
-          }
-          }
-
-          /*--------------------*/
-          /*---Perform solve---*/
-          /*--------------------*/
-
-          Quantities_solve( quan, v_local,
-                            facexy_c, facexz_c, faceyz_c,
-                            ix, iy, iz-iz_base, ie,
-                            ix+ix_base, iy+iy_base, iz,
-                            octant, octant_ind,
-                            Sweeper_num_face_octants_allocated(),
-                            dims_b, dims_g );
-
-          /*--------------------*/
-          /*---Transform state vector from angles to moments---*/
-          /*--------------------*/
-
-          for( iu=0; iu<NU; ++iu )
-          {
-          for( im=0; im<dims.nm; ++im )
-          {
-            P result = P_zero();
-            for( ia=0; ia<dims.na; ++ia )
-            {
-              result +=
-                *const_ref_m_from_a( quan->m_from_a, dims, im, ia, octant ) *
-                *const_ref_v_local( v_local, dims, NU, ia, iu );
-            }
-            *ref_state( vo, dims, NU, ix, iy, iz, ie, im, iu ) += result;
-          }
-          }
-
-        } /*---ix/iy/iz---*/
-
-      } /*---ie---*/
+      Sweeper_sweep_block( sweeper, vo, vi, quan, env, step_info,
+                           thread_num, num_threads, octant_ind,
+                           facexy_c, facexz_c, faceyz_c );
 
     }  /*---is_active---*/
 
@@ -957,12 +962,12 @@ void Sweeper_sweep(
 
     if( Sweeper_is_face_comm_async() )
     {
-      Sweeper_send_faces_end__  (  sweeper, step-1, dims_b, env );
-      Sweeper_send_faces_start__(  sweeper, step, dims_b, env );
+      Sweeper_send_faces_end__  (  sweeper, step-1, env );
+      Sweeper_send_faces_start__(  sweeper, step, env );
     }
     else
     {
-      Sweeper_communicate_faces__( sweeper, step, dims_b, env );
+      Sweeper_communicate_faces__( sweeper, step, env );
     }
 
   } /*---step---*/
