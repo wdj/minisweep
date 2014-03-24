@@ -396,8 +396,8 @@ static inline void Quantities_solve(
   int                iy_g,
   int                iz_g,
   int                octant,
-  int                octant_ind,
-  int                num_face_octants_allocated,
+  int                octant_in_block,
+  int                noctant_per_block,
   const Dimensions   dims_b,
   const Dimensions   dims_g )
 {
@@ -413,7 +413,7 @@ static inline void Quantities_solve(
   assert( iy_g >= 0 && iy_g < dims_g.ny );
   assert( iz_g >= 0 && iz_g < dims_g.nz );
   assert( octant >= 0 && octant < NOCTANT );
-  assert( octant_ind >= 0 && octant_ind < num_face_octants_allocated );
+  assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   int iu = 0;
   int ia = 0;
@@ -438,20 +438,20 @@ static inline void Quantities_solve(
     const P result = (
           *const_ref_v_local( v_local, dims_b, NU, ia, iu )
              / Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g )
-        + *const_ref_facexy( facexy, dims_b, NU, num_face_octants_allocated,
-                                            ix_b, iy_b, ie, ia, iu, octant_ind )
+        + *const_ref_facexy( facexy, dims_b, NU, noctant_per_block,
+                                            ix_b, iy_b, ie, ia, iu, octant_in_block )
            * ( Quantities_xfluxweight__( dims_g, ia ) * P_one()
              / Quantities_scalefactor_octant__( octant ) )
              / Quantities_scalefactor_space__( quan,
                                                ix_g, iy_g, iz_g-Dir_inc(dir_z) )
-        + *const_ref_facexz( facexz, dims_b, NU, num_face_octants_allocated,
-                                            ix_b, iz_b, ie, ia, iu, octant_ind )
+        + *const_ref_facexz( facexz, dims_b, NU, noctant_per_block,
+                                            ix_b, iz_b, ie, ia, iu, octant_in_block )
            * ( Quantities_yfluxweight__( dims_g, ia ) * P_one()
              / Quantities_scalefactor_octant__( octant ) )
              / Quantities_scalefactor_space__( quan,
                                                ix_g, iy_g-Dir_inc(dir_y), iz_g )
-        + *const_ref_faceyz( faceyz, dims_b, NU, num_face_octants_allocated,
-                                            iy_b, iz_b, ie, ia, iu, octant_ind )
+        + *const_ref_faceyz( faceyz, dims_b, NU, noctant_per_block,
+                                            iy_b, iz_b, ie, ia, iu, octant_in_block )
            * ( Quantities_zfluxweight__( dims_g, ia ) * P_one()
              / Quantities_scalefactor_octant__( octant ) )
              / Quantities_scalefactor_space__( quan,
@@ -459,14 +459,14 @@ static inline void Quantities_solve(
       )      * Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g );
 
     *ref_v_local( v_local, dims_b, NU, ia, iu ) = result;
-    *ref_facexy( facexy, dims_b, NU, num_face_octants_allocated,
-                 ix_b, iy_b, ie, ia, iu, octant_ind ) = result *
+    *ref_facexy( facexy, dims_b, NU, noctant_per_block,
+                 ix_b, iy_b, ie, ia, iu, octant_in_block ) = result *
                  Quantities_scalefactor_octant__( octant );
-    *ref_facexz( facexz, dims_b, NU, num_face_octants_allocated,
-                 ix_b, iz_b, ie, ia, iu, octant_ind ) = result *
+    *ref_facexz( facexz, dims_b, NU, noctant_per_block,
+                 ix_b, iz_b, ie, ia, iu, octant_in_block ) = result *
                  Quantities_scalefactor_octant__( octant );
-    *ref_faceyz( faceyz, dims_b, NU, num_face_octants_allocated,
-                 iy_b, iz_b, ie, ia, iu, octant_ind ) = result *
+    *ref_faceyz( faceyz, dims_b, NU, noctant_per_block,
+                 iy_b, iz_b, ie, ia, iu, octant_in_block ) = result *
                  Quantities_scalefactor_octant__( octant );
   } /*---for---*/
 

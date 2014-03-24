@@ -38,7 +38,7 @@ void Step_Scheduler_dtor( Step_Scheduler* step_scheduler )
 }
 
 /*===========================================================================*/
-/*---Accessor---*/
+/*---Accessor: blocks along z axis---*/
 
 int Step_Scheduler_nblock_z( const Step_Scheduler* step_scheduler )
 {
@@ -51,6 +51,14 @@ int Step_Scheduler_nblock_z( const Step_Scheduler* step_scheduler )
 int Step_Scheduler_nblock( const Step_Scheduler* step_scheduler )
 {
   return step_scheduler->nblock_z__;
+}
+
+/*===========================================================================*/
+/*---Number of octants per octant block---*/
+
+int Step_Scheduler_noctant_per_block( const Step_Scheduler* step_scheduler )
+{
+  return NOCTANT / step_scheduler->nblock_octant__;
 }
 
 /*===========================================================================*/

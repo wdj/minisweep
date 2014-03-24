@@ -210,13 +210,13 @@ static inline P* ref_facexy(
     P* __restrict__  v,
     Dimensions       dims,
     int              nu,
-    int              num_face_octants_allocated,
+    int              noctant_per_block,
     int              ix,
     int              iy,
     int              ie,
     int              ia,
     int              iu,
-    int              octant_ind )
+    int              octant_in_block )
 {
   assert( v != NULL );
   assert( nu > 0 );
@@ -225,14 +225,14 @@ static inline P* ref_facexy(
   assert( ie >= 0 && ie < dims.ne );
   assert( ia >= 0 && ia < dims.na );
   assert( iu >= 0 && iu < nu );
-  assert( octant_ind >= 0 && octant_ind < num_face_octants_allocated );
+  assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na * (
               iu + nu      * (
               ix + dims.nx * (
               iy + dims.ny * (
               ie + dims.ne * (
-              octant_ind ))))) ];
+              octant_in_block ))))) ];
 }
 
 /*===========================================================================*/
@@ -242,13 +242,13 @@ static inline const P* const_ref_facexy(
     const P* __restrict__  v,
     Dimensions             dims,
     int                    nu,
-    int                    num_face_octants_allocated,
+    int                    noctant_per_block,
     int                    ix,
     int                    iy,
     int                    ie,
     int                    ia,
     int                    iu,
-    int                    octant_ind )
+    int                    octant_in_block )
 {
   assert( v != NULL );
   assert( nu > 0 );
@@ -257,14 +257,14 @@ static inline const P* const_ref_facexy(
   assert( ie >= 0 && ie < dims.ne );
   assert( ia >= 0 && ia < dims.na );
   assert( iu >= 0 && iu < nu );
-  assert( octant_ind >= 0 && octant_ind < num_face_octants_allocated );
+  assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na * (
               iu + nu      * (
               ix + dims.nx * (
               iy + dims.ny * (
               ie + dims.ne * (
-              octant_ind ))))) ];
+              octant_in_block ))))) ];
 }
 
 /*===========================================================================*/
@@ -274,13 +274,13 @@ static inline P* ref_facexz(
     P* __restrict__  v,
     Dimensions       dims,
     int              nu,
-    int              num_face_octants_allocated,
+    int              noctant_per_block,
     int              ix,
     int              iz,
     int              ie,
     int              ia,
     int              iu,
-    int              octant_ind )
+    int              octant_in_block )
 {
   assert( v != NULL );
   assert( nu > 0 );
@@ -289,14 +289,14 @@ static inline P* ref_facexz(
   assert( ie >= 0 && ie < dims.ne );
   assert( ia >= 0 && ia < dims.na );
   assert( iu >= 0 && iu < nu );
-  assert( octant_ind >= 0 && octant_ind < num_face_octants_allocated );
+  assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na * (
               iu + nu      * (
               ix + dims.nx * (
               iz + dims.nz * (
               ie + dims.ne * (
-              octant_ind ))))) ];
+              octant_in_block ))))) ];
 }
 
 /*===========================================================================*/
@@ -306,13 +306,13 @@ static inline const P* const_ref_facexz(
     const P* __restrict__  v,
     Dimensions             dims,
     int                    nu,
-    int                    num_face_octants_allocated,
+    int                    noctant_per_block,
     int                    ix,
     int                    iz,
     int                    ie,
     int                    ia,
     int                    iu,
-    int                    octant_ind )
+    int                    octant_in_block )
 {
   assert( v != NULL );
   assert( nu > 0 );
@@ -321,14 +321,14 @@ static inline const P* const_ref_facexz(
   assert( ie >= 0 && ie < dims.ne );
   assert( ia >= 0 && ia < dims.na );
   assert( iu >= 0 && iu < nu );
-  assert( octant_ind >= 0 && octant_ind < num_face_octants_allocated );
+  assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na * (
               iu + nu      * (
               ix + dims.nx * (
               iz + dims.nz * (
               ie + dims.ne * (
-              octant_ind ))))) ];
+              octant_in_block ))))) ];
 }
 
 /*===========================================================================*/
@@ -338,13 +338,13 @@ static inline P* ref_faceyz(
     P* __restrict__  v,
     Dimensions       dims,
     int              nu,
-    int              num_face_octants_allocated,
+    int              noctant_per_block,
     int              iy,
     int              iz,
     int              ie,
     int              ia,
     int              iu,
-    int              octant_ind )
+    int              octant_in_block )
 {
   assert( v != NULL );
   assert( nu > 0 );
@@ -353,14 +353,14 @@ static inline P* ref_faceyz(
   assert( ie >= 0 && ie < dims.ne );
   assert( ia >= 0 && ia < dims.na );
   assert( iu >= 0 && iu < nu );
-  assert( octant_ind >= 0 && octant_ind < num_face_octants_allocated );
+  assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na * (
               iu + nu      * (
               iy + dims.ny * (
               iz + dims.nz * (
               ie + dims.ne * (
-              octant_ind ))))) ];
+              octant_in_block ))))) ];
 }
 
 /*===========================================================================*/
@@ -370,13 +370,13 @@ static inline const P* const_ref_faceyz(
     const P* __restrict__  v,
     Dimensions             dims,
     int                    nu,
-    int                    num_face_octants_allocated,
+    int                    noctant_per_block,
     int                    iy,
     int                    iz,
     int                    ie,
     int                    ia,
     int                    iu,
-    int                    octant_ind )
+    int                    octant_in_block )
 {
   assert( v != NULL );
   assert( nu > 0 );
@@ -385,14 +385,14 @@ static inline const P* const_ref_faceyz(
   assert( ie >= 0 && ie < dims.ne );
   assert( ia >= 0 && ia < dims.na );
   assert( iu >= 0 && iu < nu );
-  assert( octant_ind >= 0 && octant_ind < num_face_octants_allocated );
+  assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na * (
               iu + nu      * (
               iy + dims.ny * (
               iz + dims.nz * (
               ie + dims.ne * (
-              octant_ind ))))) ];
+              octant_in_block ))))) ];
 }
 
 /*===========================================================================*/

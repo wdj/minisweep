@@ -48,9 +48,9 @@ static Bool_t Sweeper_tile_octants()
 }
 
 /*===========================================================================*/
-/*---Number of octants to store for each face---*/
+/*---Number of octants in an octant block---*/
 
-static int Sweeper_num_face_octants_allocated()
+static int Sweeper_noctant_per_block( const Sweeper* sweeper )
 {
   return Sweeper_tile_octants() ? NOCTANT : 1;
 }

@@ -40,6 +40,7 @@ typedef struct
   Dimensions       dims_g;
   int              nblock_z;
   int              nthread_e;
+  int              nthread_octant;
 
   Request_t        request_send_xz;
   Request_t        request_send_yz;
@@ -64,11 +65,11 @@ void Sweeper_ctor( Sweeper*          sweeper,
 void Sweeper_dtor( Sweeper* sweeper );
 
 /*===========================================================================*/
-/*---Number of octants to store for each face---*/
+/*---Number of octants in an octant block---*/
 
-static int Sweeper_num_face_octants_allocated()
+static int Sweeper_noctant_per_block( const Sweeper* sweeper )
 {
-  return 1;
+  return sweeper->nthread_octant;
 }
 
 /*===========================================================================*/
@@ -142,7 +143,8 @@ static void Sweeper_set_boundary_xy(
   const Sweeper*        sweeper,
   const Quantities*     quan,
   P* const __restrict__ facexy,
-  int                   octant );
+  int                   octant,
+  int                   octant_in_block );
 
 /*===========================================================================*/
 /*---Apply boundary condition: xz face---*/
@@ -152,7 +154,8 @@ static void Sweeper_set_boundary_xz(
   const Quantities*     quan,
   P* const __restrict__ facexz,
   int                   octant,
-  int                   block_z );
+  int                   block_z,
+  int                   octant_in_block );
 
 /*===========================================================================*/
 /*---Apply boundary condition: yz face---*/
@@ -162,7 +165,8 @@ static void Sweeper_set_boundary_yz(
   const Quantities*     quan,
   P* const __restrict__ faceyz,
   int                   octant,
-  int                   block_z );
+  int                   block_z,
+  int                   octant_in_block );
 
 /*===========================================================================*/
 /*---Selectors for faces---*/
@@ -224,7 +228,7 @@ void Sweeper_sweep_block(
   const Step_Info        step_info,
   const int              thread_num,  
   const int              num_threads, 
-  const int              octant_ind,
+  const int              octant_in_block,
   P* __restrict__        facexy,
   P* __restrict__        facexz,
   P* __restrict__        faceyz );

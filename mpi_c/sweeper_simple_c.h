@@ -35,11 +35,11 @@ void Sweeper_ctor( Sweeper*          sweeper,
 
   sweeper->v_local = malloc_P( dims.na * NU );
   sweeper->facexy  = malloc_P( dims.nx * dims.ny * dims.ne * dims.na *
-                                  NU * Sweeper_num_face_octants_allocated() );
+                                  NU * Sweeper_noctant_per_block( sweeper ) );
   sweeper->facexz  = malloc_P( dims.nx * dims.nz * dims.ne * dims.na *
-                                  NU * Sweeper_num_face_octants_allocated() );
+                                  NU * Sweeper_noctant_per_block( sweeper ) );
   sweeper->faceyz  = malloc_P( dims.ny * dims.nz * dims.ne * dims.na *
-                                  NU * Sweeper_num_face_octants_allocated() );
+                                  NU * Sweeper_noctant_per_block( sweeper ) );
 
   sweeper->dims = dims;
 }
@@ -94,9 +94,9 @@ void Sweeper_sweep(
 
   for( octant=0; octant<NOCTANT; ++octant )
   {
-    const int octant_ind = 0;
-    assert( octant_ind >= 0 &&
-            octant_ind < Sweeper_num_face_octants_allocated() );
+    const int octant_in_block = 0;
+    assert( octant_in_block >= 0 &&
+            octant_in_block < Sweeper_noctant_per_block( sweeper ) );
 
     /*---Decode octant directions from octant number---*/
 
@@ -131,8 +131,8 @@ void Sweeper_sweep(
       for( ia=0; ia<sweeper->dims.na; ++ia )
       {
         *ref_facexy( sweeper->facexy, sweeper->dims, NU,
-                     Sweeper_num_face_octants_allocated(),
-                     ix, iy, ie, ia, iu, octant_ind )
+                     Sweeper_noctant_per_block( sweeper ),
+                     ix, iy, ie, ia, iu, octant_in_block )
              = Quantities_init_facexy(
                          quan, ix, iy, iz, ie, ia, iu, octant, sweeper->dims );
       }
@@ -147,8 +147,8 @@ void Sweeper_sweep(
       for( ia=0; ia<sweeper->dims.na; ++ia )
       {
         *ref_facexz( sweeper->facexz, sweeper->dims, NU,
-                     Sweeper_num_face_octants_allocated(),
-                     ix, iz, ie, ia, iu, octant_ind )
+                     Sweeper_noctant_per_block( sweeper ),
+                     ix, iz, ie, ia, iu, octant_in_block )
              = Quantities_init_facexz(
                          quan, ix, iy, iz, ie, ia, iu, octant, sweeper->dims );
       }
@@ -163,8 +163,8 @@ void Sweeper_sweep(
       for( ia=0; ia<sweeper->dims.na; ++ia )
       {
         *ref_faceyz( sweeper->faceyz, sweeper->dims, NU,
-                     Sweeper_num_face_octants_allocated(),
-                     iy, iz, ie, ia, iu, octant_ind )
+                     Sweeper_noctant_per_block( sweeper ),
+                     iy, iz, ie, ia, iu, octant_in_block )
              = Quantities_init_faceyz(
                          quan, ix, iy, iz, ie, ia, iu, octant, sweeper->dims );
       }
@@ -221,8 +221,8 @@ void Sweeper_sweep(
       Quantities_solve( quan, sweeper->v_local,
                         sweeper->facexy, sweeper->facexz, sweeper->faceyz,
                         ix, iy, iz, ie, ix, iy, iz,
-                        octant, octant_ind,
-                        Sweeper_num_face_octants_allocated(),
+                        octant, octant_in_block,
+                        Sweeper_noctant_per_block( sweeper ),
                         sweeper->dims, sweeper->dims );
 
       /*--------------------*/
