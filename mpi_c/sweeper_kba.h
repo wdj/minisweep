@@ -146,32 +146,44 @@ void Sweeper_recv_faces_end__(
 
 static void Sweeper_set_boundary_xy(
   const Sweeper*        sweeper,
-  const Quantities*     quan,
   P* const __restrict__ facexy,
+  const Quantities*     quan,
   int                   octant,
-  int                   octant_in_block );
+  int                   octant_in_block, 
+  const int             ixmin_b,
+  const int             ixmax_b,
+  const int             iymin_b,
+  const int             iymax_b );
 
 /*===========================================================================*/
 /*---Apply boundary condition: xz face---*/
 
 static void Sweeper_set_boundary_xz(
   const Sweeper*        sweeper,
-  const Quantities*     quan,
   P* const __restrict__ facexz,
-  int                   octant,
+  const Quantities*     quan,
   int                   block_z,
-  int                   octant_in_block );
+  int                   octant,
+  int                   octant_in_block, 
+  const int             ixmin_b,
+  const int             ixmax_b,
+  const int             izmin_b,
+  const int             izmax_b );
 
 /*===========================================================================*/
 /*---Apply boundary condition: yz face---*/
 
 static void Sweeper_set_boundary_yz(
   const Sweeper*        sweeper,
-  const Quantities*     quan,
   P* const __restrict__ faceyz,
-  int                   octant,
+  const Quantities*     quan,
   int                   block_z,
-  int                   octant_in_block );
+  int                   octant,
+  int                   octant_in_block,
+  const int             iymin_b,
+  const int             iymax_b,
+  const int             izmin_b,
+  const int             izmax_b );
 
 /*===========================================================================*/
 /*---Selectors for faces---*/
@@ -228,15 +240,21 @@ void Sweeper_sweep_block(
   Sweeper*               sweeper,
   P* __restrict__        vo,
   const P* __restrict__  vi,
+  P* __restrict__        facexy,
+  P* __restrict__        facexz,
+  P* __restrict__        faceyz,
   const Quantities*      quan,
   Env*                   env,
   const Step_Info        step_info,
   const int              thread_num,  
   const int              num_threads, 
   const int              octant_in_block,
-  P* __restrict__        facexy,
-  P* __restrict__        facexz,
-  P* __restrict__        faceyz );
+  const int              ixmin,
+  const int              ixmax,
+  const int              iymin,
+  const int              iymax,
+  const int              izmin,
+  const int              izmax );
 
 /*===========================================================================*/
 /*---Perform a sweep---*/

@@ -18,6 +18,42 @@
 #endif
 
 /*===========================================================================*/
+/*---Set up enums---*/
+
+#ifdef USE_OPENMP_OCTANT
+enum{ IS_USING_OPENMP_OCTANT = 1 };
+#else
+enum{ IS_USING_OPENMP_OCTANT = 0 };
+#endif
+
+#ifdef USE_OPENMP_E
+enum{ IS_USING_OPENMP_E = 1 };
+#else
+enum{ IS_USING_OPENMP_E = 0 };
+#endif
+
+/*===========================================================================*/
+/*---Initialize OpenMP---*/
+
+static void Env_initialize_openmp__( Env *env, int argc, char** argv )
+{
+#ifdef USE_OPENMP
+  omp_set_nested( 1 );
+#endif
+}
+
+/*===========================================================================*/
+/*---Finalize OpenMP---*/
+
+static void Env_finalize_openmp__( Env* env )
+{
+#ifdef USE_OPENMP
+  omp_set_nested( 0 );
+#endif
+}
+
+
+/*===========================================================================*/
 /*---Get openmp current number of threads---*/
 
 static inline int Env_num_threads( const Env* env )

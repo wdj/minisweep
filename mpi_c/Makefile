@@ -70,6 +70,9 @@ ifneq ($(OPENMP_OPTION),)
   ifneq ($(findstring $(COMMA)E$(COMMA),$(COMMA)$(OPENMP_OPTION)$(COMMA)),)
     CFLAGS := $(CFLAGS) -DUSE_OPENMP_E
   endif
+  ifneq ($(findstring $(COMMA)OCTANT$(COMMA),$(COMMA)$(OPENMP_OPTION)$(COMMA)),)
+    CFLAGS := $(CFLAGS) -DUSE_OPENMP_OCTANT
+  endif
 endif
 
 #==============================================================================

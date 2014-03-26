@@ -62,6 +62,7 @@ static void Env_initialize( Env *env, int argc, char** argv )
 {
   Env_initialize_mpi__( env, argc, argv );
   env->tag = 0;
+  Env_initialize_openmp__( env, argc, argv );
 }
 
 /*===========================================================================*/
@@ -69,6 +70,7 @@ static void Env_initialize( Env *env, int argc, char** argv )
 
 static void Env_finalize( Env* env )
 {
+  Env_finalize_openmp__( env );
   Env_finalize_mpi__( env );
 }
 
