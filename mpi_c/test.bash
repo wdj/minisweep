@@ -74,28 +74,6 @@ function main
 {
 # nx ny nz ne nm na numiterations nproc_x nproc_y nblock_z 
 
-  local alg_options
-
-  for alg_options in -DSWEEPER_KBA -DSWEEPER_SIMPLE -DSWEEPER_TILEOCTANTS ; do
-
-    make MPI_OPTION= ALG_OPTIONS="$alg_options"
-
-    if [ $alg_options = "-DSWEEPER_KBA" ] ; then
-      local ARG_NBLOCK_Z_1="--nblock_z 1"
-      local ARG_NBLOCK_Z_5="--nblock_z 5"
-    else
-      local ARG_NBLOCK_Z_1=""
-      local ARG_NBLOCK_Z_5=""
-    fi
-
-    local ARGS_SIZES="--nx  5 --ny  5 --nz  5 --ne 10 --nm 16 --na 20"
-    compare_runs  "1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_1" \
-                  "1" "$ARGS_SIZES --niterations 2 $ARG_NBLOCK_Z_1"
-    compare_runs  "1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_1" \
-                  "1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_5"
-
-  done
-
   if [ "${PBS_NP:-}" != "" ] ; then
 
     make
@@ -117,6 +95,28 @@ function main
                   "16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 4"
 
   fi
+
+  local alg_options
+
+  for alg_options in -DSWEEPER_KBA -DSWEEPER_SIMPLE -DSWEEPER_TILEOCTANTS ; do
+
+    make MPI_OPTION= ALG_OPTIONS="$alg_options"
+
+    if [ $alg_options = "-DSWEEPER_KBA" ] ; then
+      local ARG_NBLOCK_Z_1="--nblock_z 1"
+      local ARG_NBLOCK_Z_5="--nblock_z 5"
+    else
+      local ARG_NBLOCK_Z_1=""
+      local ARG_NBLOCK_Z_5=""
+    fi
+
+    local ARGS_SIZES="--nx  5 --ny  5 --nz  5 --ne 10 --nm 16 --na 20"
+    compare_runs  "1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_1" \
+                  "1" "$ARGS_SIZES --niterations 2 $ARG_NBLOCK_Z_1"
+    compare_runs  "1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_1" \
+                  "1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_5"
+
+  done
 
   echo -n "Total tests $g_num_tests PASSED $g_num_passed"
   echo " FAILED $(( $g_num_tests - $g_num_passed ))."

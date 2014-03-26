@@ -43,11 +43,12 @@ typedef struct
   int              nblock_octant;
   int              nthread_e;
   int              nthread_octant;
+  int              noctant_per_block;
 
-  Request_t        request_send_xz;
-  Request_t        request_send_yz;
-  Request_t        request_recv_xz;
-  Request_t        request_recv_yz;
+  Request_t        request_send_xz[NOCTANT];
+  Request_t        request_send_yz[NOCTANT];
+  Request_t        request_recv_xz[NOCTANT];
+  Request_t        request_recv_yz[NOCTANT];
 
   Step_Scheduler   step_scheduler;
 } Sweeper;
@@ -71,7 +72,7 @@ void Sweeper_dtor( Sweeper* sweeper );
 
 static int Sweeper_noctant_per_block( const Sweeper* sweeper )
 {
-  return sweeper->nthread_octant;
+  return sweeper->noctant_per_block;
 }
 
 /*===========================================================================*/
@@ -90,6 +91,7 @@ Bool_t Sweeper_must_do_send__(
   int                step,
   int                axis,
   int                dir_ind,
+  int                octant_in_block,
   Env*               env );
 
 /*===========================================================================*/
@@ -100,6 +102,7 @@ Bool_t Sweeper_must_do_recv__(
   int                step,
   int                axis,
   int                dir_ind,
+  int                octant_in_block,
   Env*               env );
 
 /*===========================================================================*/

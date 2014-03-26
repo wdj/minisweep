@@ -72,14 +72,14 @@ int Step_Scheduler_nstep( const Step_Scheduler* step_scheduler )
   {
     case 8:
       result = 8 * Step_Scheduler_nblock( step_scheduler )
-                                       + 3 * ( step_scheduler->nproc_x__ - 1 )
-                                       + 2 * ( step_scheduler->nproc_y__ - 1 );
+                                       + 2 * ( step_scheduler->nproc_x__ - 1 )
+                                       + 3 * ( step_scheduler->nproc_y__ - 1 );
       break;
 
     case 4:
       result = 4 * Step_Scheduler_nblock( step_scheduler )
-                                       + 2 * ( step_scheduler->nproc_x__ - 1 )
-                                       + 1 * ( step_scheduler->nproc_y__ - 1 );
+                                       + 1 * ( step_scheduler->nproc_x__ - 1 )
+                                       + 2 * ( step_scheduler->nproc_y__ - 1 );
       break;
 
     case 2:
@@ -134,7 +134,7 @@ Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,
 
   Step_Info step_info;
 
-  const int octant_selector[NOCTANT] = { 0, 4, 1, 5, 3, 7, 2, 6 };
+  const int octant_selector[NOCTANT] = { 0, 4, 2, 6, 3, 7, 1, 5 };
 
   /*===========================================================================
     For a given step and octant_in_block, the following computes the
@@ -169,40 +169,40 @@ Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,
   step_base += nblock;
   if ( step >= ( step_base + proc_x + proc_y ) && nblock_octant >= 4 )
   {
-    wave = step - ( step_base + (nproc_x-1) );
+    wave = step - ( step_base + (nproc_y-1) );
     octant_block = 2;
   }
-  step_base += nblock + (nproc_x-1);
-  if ( step >= ( step_base + (nproc_x-1-proc_x)
-                           +            proc_y ) && nblock_octant >=4 )
+  step_base += nblock + (nproc_y-1);
+  if ( step >= ( step_base + (nproc_y-1-proc_y)
+                           +            proc_x ) && nblock_octant >=4 )
   {
     wave = step - ( step_base );
     octant_block = 3;
   }
   step_base += nblock;
-  if ( step >= ( step_base + (nproc_x-1-proc_x)
-                           +            proc_y ) && nblock_octant >= 8 )
+  if ( step >= ( step_base + (nproc_y-1-proc_y)
+                           +            proc_x ) && nblock_octant >= 8 )
   {
-    wave = step - ( step_base + (nproc_y-1) );
+    wave = step - ( step_base + (nproc_x-1) );
     octant_block = 4;
   }
-  step_base += nblock + (nproc_y-1);
-  if ( step >= ( step_base + (nproc_x-1-proc_x)
-                           + (nproc_y-1-proc_y) ) && nblock_octant >= 8 )
+  step_base += nblock + (nproc_x-1);
+  if ( step >= ( step_base + (nproc_y-1-proc_y)
+                           + (nproc_x-1-proc_x) ) && nblock_octant >= 8 )
   {
     wave = step - ( step_base );
     octant_block = 5;
   }
   step_base += nblock;
-  if ( step >= ( step_base + (nproc_x-1-proc_x)
-                           + (nproc_y-1-proc_y) ) && nblock_octant >= 8 )
+  if ( step >= ( step_base + (nproc_y-1-proc_y)
+                           + (nproc_x-1-proc_x) ) && nblock_octant >= 8 )
   {
-    wave = step - ( step_base + (nproc_x-1) );
+    wave = step - ( step_base + (nproc_y-1) );
     octant_block = 6;
   }
-  step_base += nblock + (nproc_x-1);
-  if ( step >= ( step_base +            proc_x
-                           + (nproc_y-1-proc_y) ) && nblock_octant >= 8 )
+  step_base += nblock + (nproc_y-1);
+  if ( step >= ( step_base +            proc_y
+                           + (nproc_x-1-proc_x) ) && nblock_octant >= 8 )
   {
     wave = step - ( step_base );
     octant_block = 7;
