@@ -19,6 +19,27 @@
 #include "step_scheduler_kba.h"
 
 /*===========================================================================*/
+/*---Set up enums---*/
+
+#ifdef USE_OPENMP_OCTANT
+enum{ IS_USING_OPENMP_OCTANT = 1 };
+#else
+enum{ IS_USING_OPENMP_OCTANT = 0 };
+#endif
+
+#ifdef USE_OPENMP_E
+enum{ IS_USING_OPENMP_E = 1 };
+#else
+enum{ IS_USING_OPENMP_E = 0 };
+#endif
+
+#ifdef USE_OPENMP_VO_ATOMIC
+enum{ IS_USING_OPENMP_VO_ATOMIC = 1 };
+#else
+enum{ IS_USING_OPENMP_VO_ATOMIC = 0 };
+#endif
+
+/*===========================================================================*/
 /*---Struct with pointers etc. used to perform sweep---*/
 
 typedef struct
@@ -44,6 +65,7 @@ typedef struct
   int              nthread_e;
   int              nthread_octant;
   int              noctant_per_block;
+  int              nsemiblock;
 
   Request_t        request_send_xz[NOCTANT];
   Request_t        request_send_yz[NOCTANT];

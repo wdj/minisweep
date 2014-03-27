@@ -36,7 +36,7 @@ void Sweeper_ctor( Sweeper*          sweeper,
 
   /*---Set up number of kba blocks---*/
   sweeper->nblock_z = Arguments_consume_int_or_default( args, "--nblock_z", 1);
-  Insist( sweeper->nblock_z > 0 && "Invalid z blocking factor supplied." );
+  Insist( sweeper->nblock_z > 0 && "Invalid z blocking factor supplied" );
   Insist( dims.nz % sweeper->nblock_z == 0 &&
           "KBA sweeper currently requires all blocks have same z dimension" );
 
@@ -46,9 +46,19 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Require a power of 2 between 1 and 8 inclusive---*/
   Insist( sweeper->nthread_octant>0 && sweeper->nthread_octant<=NOCTANT
           && ((sweeper->nthread_octant&(sweeper->nthread_octant-1))==0)
-          && "Invalid octant thread count supplied." );
+          && "Invalid octant thread count supplied" );
   sweeper->noctant_per_block = sweeper->nthread_octant;
   sweeper->nblock_octant = NOCTANT / sweeper->noctant_per_block;
+
+  /*---Set up number of semiblock steps---*/
+  sweeper->nsemiblock = Arguments_consume_int_or_default(
+                               args, "--nsemiblock", sweeper->nthread_octant );
+  Insist( sweeper->nsemiblock>0 && sweeper->nsemiblock<=NOCTANT
+          && ((sweeper->nsemiblock&(sweeper->nsemiblock-1))==0)
+          && "Invalid semiblock count supplied" );
+  Insist( ( sweeper->nsemiblock >= sweeper->nthread_octant ||
+            IS_USING_OPENMP_VO_ATOMIC ) &&
+          "Incomplete set of semiblock steps requires atomic vo update" );
 
   /*---Set up number of energy threads---*/
   sweeper->nthread_e
@@ -75,11 +85,11 @@ void Sweeper_ctor( Sweeper*          sweeper,
                                sweeper->nthread_e * sweeper->nthread_octant );
 
   sweeper->facexy0 = malloc_P( Dimensions_size_facexy( sweeper->dims_b, NU,
-                                      Sweeper_noctant_per_block( sweeper ) ) );
+                                                sweeper->noctant_per_block ) );
   sweeper->facexz0 = malloc_P( Dimensions_size_facexz( sweeper->dims_b, NU,
-                                      Sweeper_noctant_per_block( sweeper ) ) );
+                                                sweeper->noctant_per_block ) );
   sweeper->faceyz0 = malloc_P( Dimensions_size_faceyz( sweeper->dims_b, NU,
-                                      Sweeper_noctant_per_block( sweeper ) ) );
+                                                sweeper->noctant_per_block ) );
 
   sweeper->facexz1 = NULL;
   sweeper->facexz2 = NULL;
@@ -89,13 +99,13 @@ void Sweeper_ctor( Sweeper*          sweeper,
   if( Sweeper_is_face_comm_async() )
   {
     sweeper->facexz1 = malloc_P( Dimensions_size_facexz( sweeper->dims_b, NU,
-                                      Sweeper_noctant_per_block( sweeper ) ) );
+                                                sweeper->noctant_per_block ) );
     sweeper->facexz2 = malloc_P( Dimensions_size_facexz( sweeper->dims_b, NU,
-                                      Sweeper_noctant_per_block( sweeper ) ) );
+                                                sweeper->noctant_per_block ) );
     sweeper->faceyz1 = malloc_P( Dimensions_size_faceyz( sweeper->dims_b, NU,
-                                      Sweeper_noctant_per_block( sweeper ) ) );
+                                                sweeper->noctant_per_block ) );
     sweeper->faceyz2 = malloc_P( Dimensions_size_faceyz( sweeper->dims_b, NU,
-                                      Sweeper_noctant_per_block( sweeper ) ) );
+                                                sweeper->noctant_per_block ) );
   }
 }
 
@@ -651,7 +661,7 @@ static void Sweeper_set_boundary_xy(
   for( ia=0; ia<sweeper->dims_b.na; ++ia )
   {
     *ref_facexy( facexy, sweeper->dims_b, NU,
-                 Sweeper_noctant_per_block( sweeper ),
+                 sweeper->noctant_per_block,
                  ix_b, iy_b, ie, ia, iu, octant_in_block )
         = Quantities_init_facexy(
                  quan, ix_g, iy_g, iz_g, ie, ia, iu, octant, sweeper->dims_g );
@@ -704,7 +714,7 @@ static void Sweeper_set_boundary_xz(
   for( ia=0; ia<sweeper->dims_b.na; ++ia )
   {
     *ref_facexz( facexz, sweeper->dims_b, NU,
-                 Sweeper_noctant_per_block( sweeper ),
+                 sweeper->noctant_per_block,
                  ix_b, iz_b, ie, ia, iu, octant_in_block )
         = Quantities_init_facexz(
                  quan, ix_g, iy_g, iz_g, ie, ia, iu, octant, sweeper->dims_g );
@@ -757,7 +767,7 @@ static void Sweeper_set_boundary_yz(
   for( ia=0; ia<sweeper->dims_b.na; ++ia )
   {
     *ref_faceyz( faceyz, sweeper->dims_b, NU,
-                 Sweeper_noctant_per_block( sweeper ),
+                 sweeper->noctant_per_block,
                  iy_b, iz_b, ie, ia, iu, octant_in_block )
         = Quantities_init_faceyz(
                  quan, ix_g, iy_g, iz_g, ie, ia, iu, octant, sweeper->dims_g );
@@ -875,7 +885,7 @@ void Sweeper_sweep_block(
                         ix, iy, iz-iz_base, ie,
                         ix+quan->ix_base, iy+quan->iy_base, iz,
                         octant, octant_in_block,
-                        Sweeper_noctant_per_block( sweeper ),
+                        sweeper->noctant_per_block,
                         sweeper->dims_b, sweeper->dims_g );
 
       /*--------------------*/
@@ -893,6 +903,9 @@ void Sweeper_sweep_block(
             *const_ref_m_from_a( quan->m_from_a, sweeper->dims, im, ia, octant )
             * *const_ref_v_local( v_local, sweeper->dims, NU, ia, iu );
         }
+#ifdef USE_OPENMP_VO_ATOMIC
+#pragma omp atomic
+#endif
         *ref_state( vo, sweeper->dims, NU, ix, iy, iz, ie, im, iu ) += result;
       }
       }
@@ -996,13 +1009,28 @@ void Sweeper_sweep(
     =    This is set up so that (1) the disjointness condition described
     =    above holds, and (2) the cells are visited in an order that
     =    satisfies the sweep recursion.
+    =
+    =    NOTES:
+    =    - For the unthreaded case, nsemiblock and noctant_per_block
+    =      can be set to any of the allowed values and the algorithm will
+    =      work properly.
+    =    - If nsemiblock==noctant_per_block, then any value of nthread_octant
+    =      applied to the OpenMP loop will work ok.
+    =    - If nsemiblock<noctant_per_block==nthread_octant, then
+    =      a potential race condition will occur.  This can be fixed by
+    =      making the update of vo at the end of Sweeper_sweep_block atomic.
+    =      What is in question here is the overhead of the semiblock loop.
+    =      One might want to reduce the number of semiblocks while keeping
+    =      noctant_per_block==nthread_octant high to get more thread
+    =      parallelism but possibly not too high so as to control the
+    =      wavefront latency.
     =========================================================================*/
 
     /*--------------------*/
     /*---Loop over semiblocks---*/
     /*--------------------*/
 
-    for( semiblock=0; semiblock<sweeper->noctant_per_block; ++semiblock )
+    for( semiblock=0; semiblock<sweeper->nsemiblock; ++semiblock )
     {
       /*---Initialize OpenMP thread number and thread count---*/
 
@@ -1066,7 +1094,7 @@ void Sweeper_sweep(
           ===================================================================*/
 
 
-          const Bool_t is_x_semiblocked = sweeper->noctant_per_block > (1<<0);
+          const Bool_t is_x_semiblocked = sweeper->nsemiblock > (1<<0);
           const Bool_t is_semiblock_x_lo = ( ( semiblock & (1<<0) ) == 0 ) ==
                                            ( dir_x == Dir_up() );
 
@@ -1080,7 +1108,7 @@ void Sweeper_sweep(
 
           /*--------------------*/
 
-          const Bool_t is_y_semiblocked = sweeper->noctant_per_block > (1<<1);
+          const Bool_t is_y_semiblocked = sweeper->nsemiblock > (1<<1);
           const Bool_t is_semiblock_y_lo = ( ( semiblock & (1<<1) ) == 0 ) ==
                                            ( dir_y == Dir_up() );
 
@@ -1094,7 +1122,7 @@ void Sweeper_sweep(
 
           /*--------------------*/
 
-          const Bool_t is_z_semiblocked = sweeper->noctant_per_block > (1<<2);
+          const Bool_t is_z_semiblocked = sweeper->nsemiblock > (1<<2);
           const Bool_t is_semiblock_z_lo = ( ( semiblock & (1<<2) ) == 0 ) ==
                                            ( dir_z == Dir_up() );
 

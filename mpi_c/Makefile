@@ -73,6 +73,9 @@ ifneq ($(OPENMP_OPTION),)
   ifneq ($(findstring $(COMMA)OCTANT$(COMMA),$(COMMA)$(OPENMP_OPTION)$(COMMA)),)
     CFLAGS := $(CFLAGS) -DUSE_OPENMP_OCTANT
   endif
+  ifneq ($(findstring $(COMMA)VO_ATOMIC$(COMMA),$(COMMA)$(OPENMP_OPTION)$(COMMA)),)
+    CFLAGS := $(CFLAGS) -DUSE_OPENMP_VO_ATOMIC
+  endif
 endif
 
 #==============================================================================
