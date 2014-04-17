@@ -632,19 +632,23 @@ static void Sweeper_set_boundary_xy(
   const int             ixmin_b,
   const int             ixmax_b,
   const int             iymin_b,
-  const int             iymax_b )
+  const int             iymax_b,
+  Env*                  env  )
 {
   const int ix_base = quan->ix_base;
   const int iy_base = quan->iy_base;
   const int dir_z = Dir_z( octant );
   const int iz_g = dir_z == Dir_up() ? -1 : sweeper->dims_g.nz;
 
+  const int nthread_e = sweeper->nthread_e;
+  const int thread_e  = Sweeper_thread_e( sweeper, env );
+
+  const int ie_min = ( sweeper->dims.ne * ( thread_e     ) ) / nthread_e;
+  const int ie_max = ( sweeper->dims.ne * ( thread_e + 1 ) ) / nthread_e;
+
   int ie = 0;
 
-#ifdef USE_OPENMP_E
-#pragma omp parallel for num_threads( sweeper->nthread_e )
-#endif
-  for( ie=0; ie<sweeper->dims_b.ne; ++ie )
+  for( ie=ie_min; ie<ie_max; ++ie )
   {
     int ix_b = 0;
     int iy_b = 0;
@@ -685,19 +689,23 @@ static void Sweeper_set_boundary_xz(
   const int             ixmin_b,
   const int             ixmax_b,
   const int             izmin_b,
-  const int             izmax_b )
+  const int             izmax_b,
+  Env*                  env  )
 {
   const int ix_base = quan->ix_base;
   const int iz_base = block_z * sweeper->dims_b.nz;
   const int dir_y = Dir_y( octant );
   const int iy_g = dir_y == Dir_up() ? -1 : sweeper->dims_g.ny;
 
+  const int nthread_e = sweeper->nthread_e;
+  const int thread_e  = Sweeper_thread_e( sweeper, env );
+
+  const int ie_min = ( sweeper->dims.ne * ( thread_e     ) ) / nthread_e;
+  const int ie_max = ( sweeper->dims.ne * ( thread_e + 1 ) ) / nthread_e;
+
   int ie = 0;
 
-#ifdef USE_OPENMP_E
-#pragma omp parallel for num_threads( sweeper->nthread_e )
-#endif
-  for( ie=0; ie<sweeper->dims_b.ne; ++ie )
+  for( ie=ie_min; ie<ie_max; ++ie )
   {
     int ix_b = 0;
     int iz_b = 0;
@@ -738,19 +746,23 @@ static void Sweeper_set_boundary_yz(
   const int             iymin_b,
   const int             iymax_b,
   const int             izmin_b,
-  const int             izmax_b )
+  const int             izmax_b,
+  Env*                  env  )
 {
   const int iy_base = quan->iy_base;
   const int iz_base = block_z * sweeper->dims_b.nz;
   const int dir_x = Dir_x( octant );
   const int ix_g = dir_x == Dir_up() ? -1 : sweeper->dims_g.nx;
 
+  const int nthread_e = sweeper->nthread_e;
+  const int thread_e  = Sweeper_thread_e( sweeper, env );
+
+  const int ie_min = ( sweeper->dims.ne * ( thread_e     ) ) / nthread_e;
+  const int ie_max = ( sweeper->dims.ne * ( thread_e + 1 ) ) / nthread_e;
+
   int ie = 0;
 
-#ifdef USE_OPENMP_E
-#pragma omp parallel for num_threads( sweeper->nthread_e )
-#endif
-  for( ie=0; ie<sweeper->dims_b.ne; ++ie )
+  for( ie=ie_min; ie<ie_max; ++ie )
   {
     int iy_b = 0;
     int iz_b = 0;
@@ -791,8 +803,6 @@ void Sweeper_sweep_block(
   const Quantities*      quan,
   Env*                   env, 
   const Step_Info        step_info,
-  const int              thread_num,
-  const int              num_threads,
   const int              octant_in_block,
   const int              ixmin,
   const int              ixmax,
@@ -821,25 +831,20 @@ void Sweeper_sweep_block(
   const int iyend = dir_y==Dir_dn() ? iymin : iymax;
   const int izend = dir_z==Dir_dn() ? izmin : izmax;
 
+  const int nthread_e = sweeper->nthread_e;
+  const int thread    = Env_thread_this( env );
+  const int thread_e  = Sweeper_thread_e( sweeper, env );
+
+  const int ie_min = ( sweeper->dims.ne * ( thread_e     ) ) / nthread_e;
+  const int ie_max = ( sweeper->dims.ne * ( thread_e + 1 ) ) / nthread_e;
+
   int ie = 0;
 
-#ifdef USE_OPENMP_E
-#pragma omp parallel for num_threads( sweeper->nthread_e )
-#endif
-  for( ie=0; ie<sweeper->dims.ne; ++ie )
+  for( ie=ie_min; ie<ie_max; ++ie )
   {
-    /*---Compute thread information---*/
-
-    const int thread_num_outer  = thread_num;
-    const int num_threads_outer = num_threads;
-    const int thread_num  = thread_num_outer + num_threads_outer *
-                  ( IS_USING_OPENMP_E ? Env_thread_this( env ) : 0 );
-    const int num_threads =  num_threads_outer *
-                  ( IS_USING_OPENMP_E ? Env_num_threads( env ) : 1 );
-
     /*---Get v_local part to be used by this thread---*/
 
-    P* __restrict__ v_local = Sweeper_v_local_this__( sweeper, thread_num );
+    P* __restrict__ v_local = Sweeper_v_local_this__( sweeper, thread );
 
     int ix = 0;
     int iy = 0;
@@ -1032,32 +1037,33 @@ void Sweeper_sweep(
 
     for( semiblock=0; semiblock<sweeper->nsemiblock; ++semiblock )
     {
-      /*---Initialize OpenMP thread number and thread count---*/
-
-      const int thread_num  = 0;
-      const int num_threads = 1;
-
-      int octant_in_block = 0;
+      const int nthread_octant = sweeper->nthread_octant; 
 
       /*--------------------*/
       /*---Loop over octants in octant block---*/
       /*--------------------*/
 
 #ifdef USE_OPENMP_OCTANT
-#pragma omp parallel for num_threads( sweeper->nthread_octant )
+#pragma omp parallel num_threads( sweeper->nthread_e * sweeper->nthread_octant )
+#else
+#ifdef USE_OPENMP_E
+#pragma omp parallel num_threads( sweeper->nthread_e * sweeper->nthread_octant )
 #endif
-      for( octant_in_block=0; octant_in_block<sweeper->noctant_per_block;
-                                                            ++octant_in_block )
+#endif
       {
-        /*---Compute thread information---*/
+        const int thread         = Env_thread_this( env );
+        const int thread_octant  = Sweeper_thread_octant( sweeper, env );
 
-        const int thread_num_outer  = thread_num;
-        const int num_threads_outer = num_threads;
-        const int thread_num  = thread_num_outer + num_threads_outer *
-                      ( IS_USING_OPENMP_OCTANT ? Env_thread_this( env ) : 0 );
-        const int num_threads =  num_threads_outer *
-                      ( IS_USING_OPENMP_OCTANT ? Env_num_threads( env ) : 1 );
+        const int octant_in_block_min = ( sweeper->noctant_per_block *
+                                      ( thread_octant     ) ) / nthread_octant;
+        const int octant_in_block_max = ( sweeper->noctant_per_block *
+                                      ( thread_octant + 1 ) ) / nthread_octant;
 
+        int octant_in_block = 0;
+
+      for( octant_in_block=octant_in_block_min;
+           octant_in_block<octant_in_block_max; ++octant_in_block )
+      {
         /*---Get step info---*/
 
         const Step_Info step_info = Step_Scheduler_step_info(
@@ -1144,7 +1150,7 @@ void Sweeper_sweep(
           {
             Sweeper_set_boundary_xy( sweeper, facexy, quan,
                                      step_info.octant, octant_in_block,
-                                     ixmin_b, ixmax_b, iymin_b, iymax_b );
+                                     ixmin_b, ixmax_b, iymin_b, iymax_b, env );
           }
 
           /*--------------------*/
@@ -1155,7 +1161,7 @@ void Sweeper_sweep(
           {
             Sweeper_set_boundary_xz( sweeper, facexz, quan, step_info.block_z,
                                      step_info.octant, octant_in_block,
-                                     ixmin_b, ixmax_b, izmin_b, izmax_b );
+                                     ixmin_b, ixmax_b, izmin_b, izmax_b, env );
           }
 
           /*--------------------*/
@@ -1166,7 +1172,7 @@ void Sweeper_sweep(
           {
             Sweeper_set_boundary_yz( sweeper, faceyz, quan, step_info.block_z,
                                      step_info.octant, octant_in_block,
-                                     iymin_b, iymax_b, izmin_b, izmax_b );
+                                     iymin_b, iymax_b, izmin_b, izmax_b, env );
           }
 
           /*--------------------*/
@@ -1174,14 +1180,18 @@ void Sweeper_sweep(
           /*--------------------*/
 
           Sweeper_sweep_block( sweeper, vo, vi, facexy, facexz, faceyz,
-                               quan, env, step_info,
-                               thread_num, num_threads, octant_in_block,
+                               quan, env, step_info, octant_in_block,
                                ixmin_b,         ixmax_b,
                                iymin_b,         iymax_b,
                                izmin_b+iz_base, izmax_b+iz_base );
 
         }  /*---is_active---*/
       } /*---octant_in_block---*/
+
+
+      } /*---OPENMP---*/
+
+
     } /*---semiblock---*/
 
     /*--------------------*/

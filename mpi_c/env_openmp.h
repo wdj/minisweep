@@ -11,6 +11,7 @@
 #ifndef _mpi_c__env_openmp_h_
 #define _mpi_c__env_openmp_h_
 
+#include "types.h"
 #include "env_assert.h"
 #include "arguments.h"
 
@@ -24,7 +25,6 @@
 static void Env_initialize_openmp__( Env *env, int argc, char** argv )
 {
 #ifdef USE_OPENMP
-  omp_set_nested( 1 );
 #endif
 }
 
@@ -34,7 +34,6 @@ static void Env_initialize_openmp__( Env *env, int argc, char** argv )
 static void Env_finalize_openmp__( Env* env )
 {
 #ifdef USE_OPENMP
-  omp_set_nested( 0 );
 #endif
 }
 
@@ -67,6 +66,18 @@ static inline int Env_thread_this( const Env* env )
   int result = 0;
 #ifdef USE_OPENMP
   result = omp_get_thread_num();  
+#endif
+  return result;
+}
+
+/*===========================================================================*/
+/*---Are we in an openmp threaded region---*/
+
+static inline Bool_t Env_in_threaded( const Env* env )
+{
+  Bool_t result = Bool_false;
+#ifdef USE_OPENMP
+  result = omp_in_parallel();
 #endif
   return result;
 }

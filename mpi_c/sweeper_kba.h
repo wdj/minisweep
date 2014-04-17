@@ -21,6 +21,7 @@
 /*===========================================================================*/
 /*---Set up enums---*/
 
+#if 0
 #ifdef USE_OPENMP_OCTANT
 enum{ IS_USING_OPENMP_OCTANT = 1 };
 #else
@@ -31,6 +32,7 @@ enum{ IS_USING_OPENMP_OCTANT = 0 };
 enum{ IS_USING_OPENMP_E = 1 };
 #else
 enum{ IS_USING_OPENMP_E = 0 };
+#endif
 #endif
 
 #ifdef USE_OPENMP_VO_ATOMIC
@@ -175,7 +177,8 @@ static void Sweeper_set_boundary_xy(
   const int             ixmin_b,
   const int             ixmax_b,
   const int             iymin_b,
-  const int             iymax_b );
+  const int             iymax_b,
+  Env*                  env );
 
 /*===========================================================================*/
 /*---Apply boundary condition: xz face---*/
@@ -190,7 +193,8 @@ static void Sweeper_set_boundary_xz(
   const int             ixmin_b,
   const int             ixmax_b,
   const int             izmin_b,
-  const int             izmax_b );
+  const int             izmax_b,
+  Env*                  env );
 
 /*===========================================================================*/
 /*---Apply boundary condition: yz face---*/
@@ -205,7 +209,8 @@ static void Sweeper_set_boundary_yz(
   const int             iymin_b,
   const int             iymax_b,
   const int             izmin_b,
-  const int             izmax_b );
+  const int             izmax_b,
+  Env*                  env );
 
 /*===========================================================================*/
 /*---Selectors for faces---*/
@@ -256,6 +261,25 @@ static inline P* __restrict__ Sweeper_v_local_this__( Sweeper* sweeper,
 }
 
 /*===========================================================================*/
+/*---Thread indexers---*/
+
+static inline int Sweeper_thread_e( const Sweeper* sweeper,
+                                    Env*           env )
+{
+  assert( sweeper->nthread_e * sweeper->nthread_octant ==1 ||
+          Env_in_threaded( env ) );
+  return Env_thread_this( env ) % sweeper->nthread_e;
+}
+
+/*---------------------------------------------------------------------------*/
+
+static inline int Sweeper_thread_octant( const Sweeper* sweeper,
+                                         Env*           env )
+{
+  return Env_thread_this( env ) / sweeper->nthread_e;
+}
+
+/*===========================================================================*/
 /*---Perform a sweep for a block---*/
 
 void Sweeper_sweep_block(
@@ -268,8 +292,6 @@ void Sweeper_sweep_block(
   const Quantities*      quan,
   Env*                   env,
   const Step_Info        step_info,
-  const int              thread_num,  
-  const int              num_threads, 
   const int              octant_in_block,
   const int              ixmin,
   const int              ixmax,
