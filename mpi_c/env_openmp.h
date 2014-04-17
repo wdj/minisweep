@@ -12,6 +12,7 @@
 #define _mpi_c__env_openmp_h_
 
 #include "env_assert.h"
+#include "arguments.h"
 
 #ifdef USE_OPENMP
 #include "omp.h"
@@ -37,7 +38,6 @@ static void Env_finalize_openmp__( Env* env )
 #endif
 }
 
-
 /*===========================================================================*/
 /*---Get openmp current number of threads---*/
 
@@ -48,6 +48,15 @@ static inline int Env_num_threads( const Env* env )
   result = omp_get_num_threads();
 #endif
   return result;
+}
+
+/*===========================================================================*/
+/*---Set values from args---*/
+
+static void Env_set_values_openmp__( Env *env, Arguments* args )
+{
+#ifdef USE_OPENMP
+#endif
 }
 
 /*===========================================================================*/

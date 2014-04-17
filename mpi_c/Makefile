@@ -55,7 +55,7 @@ endif
 
 ifeq ($(MPI_OPTION),MPI)
   CFLAGS := $(CFLAGS) -DUSE_MPI -I$(MPICH_DIR)/include -L$(MPICH_DIR)/lib \
-                      -lmpich
+                      -Wl,-rpath=$(MPICH_DIR)/lib -lmpich
 endif
 
 ifneq ($(OPENMP_OPTION),)

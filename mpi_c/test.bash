@@ -10,18 +10,18 @@ declare g_verbose=1
 #==============================================================================
 function perform_run
 {
-  local procs="$1"
-  local args="$2"
+  local exec_args="$1"
+  local app_args="$2"
 
   if [ "${PBS_NP:-}" != "" -a "${CRAY_MPICH2_ROOTDIR:-}" != "" ] ; then
     local wd="$PWD"
     pushd "$MEMBERWORK" >/dev/null
-    aprun -n$procs "$wd/sweep.x" $args
+    aprun $exec_args "$wd/sweep.x" $app_args
     #assert $? = 0
     popd >/dev/null
   else
-    #assert $procs = 1
-    ./sweep.x $args
+    #assert $exec_args = "-n1"
+    ./sweep.x $app_args
     #assert $? = 0
   fi
 
@@ -31,41 +31,54 @@ function perform_run
 #==============================================================================
 function compare_runs
 {
-  local procs1="$1"
-  local args1="$2"
-  local procs2="$3"
-  local args2="$4"
+  local app_args1="$2"
+  local app_args2="$4"
 
-  local pass pass1 pass2
+  local exec_args1="$1"
+  local exec_args2="$3"
 
-  local result1="$( perform_run "$procs1" "$args1" )"
-  [[ g_verbose -ge 2 ]] && echo "$result1"
-  local result2="$( perform_run "$procs2" "$args2" )"
-  [[ g_verbose -ge 2 ]] && echo "$result2"
+  local is_pass is_pass1 is_pass2
+  local normsq1 normsq2
+  local time1 time2
 
   g_num_tests=$(( $g_num_tests + 1 ))
 
-  pass1=$([ "$result1" != "${result1/ PASS }" ] && echo 1 || echo 0 )
-  pass2=$([ "$result2" != "${result2/ PASS }" ] && echo 1 || echo 0 )
+  #---Run 1.
 
-  local normsq1 normsq2
+  echo -n "$g_num_tests // $exec_args1 / $app_args1 / "
+  local result1="$( perform_run "$exec_args1" "$app_args1" )"
   normsq1=$( echo "$result1" | grep '^Normsq result: ' \
                              | sed -e 's/^Normsq result: *//' -e 's/ .*//' )
+  time1=$(   echo "$result1" | grep '^Normsq result: ' \
+                             | sed -e 's/.* time: *//' -e 's/ .*//' )
+  echo -n "$time1 // "
+  is_pass1=$([ "$result1" != "${result1/ PASS }" ] && echo 1 || echo 0 )
+  [[ g_verbose -ge 2 ]] && echo "$result1"
+
+  #---Run 2.
+
+  echo -n "$exec_args2 / $app_args2 / "
+  local result2="$( perform_run "$exec_args2" "$app_args2" )"
   normsq2=$( echo "$result2" | grep '^Normsq result: ' \
                              | sed -e 's/^Normsq result: *//' -e 's/ .*//' )
+  time2=$(   echo "$result2" | grep '^Normsq result: ' \
+                             | sed -e 's/.* time: *//' -e 's/ .*//' )
+  echo -n "$time2 // "
+  is_pass2=$([ "$result2" != "${result2/ PASS }" ] && echo 1 || echo 0 )
+  [[ g_verbose -ge 2 ]] && echo "$result2"
 
-  pass=$([ "$normsq1" = "$normsq2" ] && echo 1 || echo 0 )
+  #---
 
-  if [ $pass1 = 1 -a $pass2 = 1 -a $pass = 1 ] ; then
-    echo "$g_num_tests / $procs1 / $args1 / $procs2 / $args2 / PASS"
+  is_pass=$([ "$normsq1" = "$normsq2" ] && echo 1 || echo 0 )
+
+  if [ $is_pass1 = 1 -a $is_pass2 = 1 -a $is_pass = 1 ] ; then
+    echo "PASS"
     g_num_passed=$(( $g_num_passed + 1 ))
   else
-    echo "$g_num_tests / $procs1 / $args1 / $procs2 / $args2 / FAIL"
+    echo "FAIL"
     echo "$result1"
     echo "$result2"
   fi
-
-
 }
 #==============================================================================
 
@@ -76,25 +89,57 @@ function main
 
   if [ "${PBS_NP:-}" != "" ] ; then
 
+    echo "---OpenMP tests---"
+
+    make OPENMP_OPTION=E
+
+    local ARGS_SIZES="--nx  5 --ny  4 --nz  5 --ne 200 --nm 4 --na 10"
+    compare_runs   "-n1 -d1"  "$ARGS_SIZES --nthread_e 1" \
+                   "-n1 -d2"  "$ARGS_SIZES --nthread_e 2"
+    compare_runs   "-n1 -d2"  "$ARGS_SIZES --nthread_e 2" \
+                   "-n1 -d3"  "$ARGS_SIZES --nthread_e 3"
+    compare_runs   "-n1 -d3"  "$ARGS_SIZES --nthread_e 3" \
+                   "-n1 -d4"  "$ARGS_SIZES --nthread_e 4"
+
+    make OPENMP_OPTION=OCTANT
+
+    compare_runs   "-n1 -d1"  "$ARGS_SIZES --nthread_octant 1" \
+                   "-n1 -d2"  "$ARGS_SIZES --nthread_octant 2"
+    compare_runs   "-n1 -d2"  "$ARGS_SIZES --nthread_octant 2" \
+                   "-n1 -d4"  "$ARGS_SIZES --nthread_octant 4"
+    compare_runs   "-n1 -d4"  "$ARGS_SIZES --nthread_octant 4" \
+                   "-n1 -d8"  "$ARGS_SIZES --nthread_octant 8"
+
+    make OPENMP_OPTION=OCTANT,E
+
+    compare_runs   "-n1 -d1"  "$ARGS_SIZES --nthread_e 1 --nthread_octant 1" \
+                   "-n1 -d2"  "$ARGS_SIZES --nthread_e 2 --nthread_octant 1"
+    compare_runs   "-n1 -d2"  "$ARGS_SIZES --nthread_e 2 --nthread_octant 1" \
+                   "-n1 -d4"  "$ARGS_SIZES --nthread_e 2 --nthread_octant 2"
+
+    echo "---MPI tests---"
+
     make
 
-    local ARGS_SIZES="--nx  5 --ny  5 --nz  5 --ne 10 --nm 16 --na 20"
-    compare_runs   "1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
-                   "2"  "$ARGS_SIZES --nproc_x 2 --nproc_y 1 --nblock_z 1"
-    compare_runs   "1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
-                   "2"  "$ARGS_SIZES --nproc_x 1 --nproc_y 2 --nblock_z 1"
+    local ARGS_SIZES="--nx  5 --ny  4 --nz  5 --ne 7 --nm 4 --na 10"
+    compare_runs   "-n1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
+                   "-n2"  "$ARGS_SIZES --nproc_x 2 --nproc_y 1 --nblock_z 1"
+    compare_runs   "-n1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
+                   "-n2"  "$ARGS_SIZES --nproc_x 1 --nproc_y 2 --nblock_z 1"
 
-    local ARGS_SIZES="--nx  5 --ny  5 --nz  6 --ne 10 --nm 16 --na 20"
-    compare_runs   "1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
-                  "16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2"
+    local ARGS_SIZES="--nx  5 --ny  4 --nz  6 --ne 7 --nm 4 --na 10"
+    compare_runs   "-n1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
+                  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2"
 
-    local ARGS_SIZES="--nx 16 --ny 32 --nz 64 --ne 16 --nm 16 --na 32"
-    compare_runs  "16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 1" \
-                  "16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2"
-    compare_runs  "16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2" \
-                  "16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 4"
+    local ARGS_SIZES="--nx 5 --ny 8 --nz 16 --ne 9 --nm 1 --na 12"
+    compare_runs  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 1" \
+                  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2"
+    compare_runs  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2" \
+                  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 4"
 
   fi
+
+  echo "---Tests of sweeper variants---"
 
   local alg_options
 
@@ -111,10 +156,10 @@ function main
     fi
 
     local ARGS_SIZES="--nx  5 --ny  5 --nz  5 --ne 10 --nm 16 --na 20"
-    compare_runs  "1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_1" \
-                  "1" "$ARGS_SIZES --niterations 2 $ARG_NBLOCK_Z_1"
-    compare_runs  "1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_1" \
-                  "1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_5"
+    compare_runs  "-n1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_1" \
+                  "-n1" "$ARGS_SIZES --niterations 2 $ARG_NBLOCK_Z_1"
+    compare_runs  "-n1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_1" \
+                  "-n1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_5"
 
   done
 

@@ -16,42 +16,25 @@
 
 #include <sys/time.h>
 
+#include "arguments.h"
+
+/*===========================================================================*/
+/*---Header file for assertions---*/
+
 #include "env_assert.h"
 
 /*===========================================================================*/
-/*---Basic types---*/
+/*---Declarations relevant to environment---*/
 
-/*---Floating point type for sweep---*/
-
-typedef double P;
-enum{ P_IS_DOUBLE = 1 };
-
-static inline P P_zero() { return (P)0.; }
-static inline P P_one()  { return (P)1.; }
-
-/*---Boolean type---*/
-
-typedef int Bool_t;
-
-enum{ Bool_true = 1, Bool_false = 0 };
+#include "env_declarations.h"
 
 /*===========================================================================*/
-/*---Struct with environment information---*/
-
-typedef struct
-{
-  int nproc_x;    /*---Number of procs along x axis---*/
-  int nproc_y;    /*---Number of procs along y axis---*/
-  int tag;        /*---Next free message tag---*/
-} Env;
-
-/*===========================================================================*/
-/*---Include MPI wrapper function definitions---*/
+/*---MPI wrapper function definitions---*/
 
 #include "env_mpi.h"
 
 /*===========================================================================*/
-/*---Include OpenMP wrapper function definitions---*/
+/*---OpenMP wrapper function definitions---*/
 
 #include "env_openmp.h"
 
@@ -61,8 +44,16 @@ typedef struct
 static void Env_initialize( Env *env, int argc, char** argv )
 {
   Env_initialize_mpi__( env, argc, argv );
-  env->tag = 0;
   Env_initialize_openmp__( env, argc, argv );
+}
+
+/*===========================================================================*/
+/*---Set values from args---*/
+
+static void Env_set_values( Env *env, Arguments* args )
+{
+  Env_set_values_mpi__( env, args );
+  Env_set_values_openmp__( env, args );
 }
 
 /*===========================================================================*/
@@ -103,7 +94,7 @@ static Timer_t Env_get_time()
 
 static Timer_t Env_get_synced_time()
 {
-  Env_barrier();
+  Env_barrier_mpi();
   return Env_get_time();
 }
 

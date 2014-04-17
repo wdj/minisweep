@@ -12,6 +12,8 @@
 #include <string.h>
 
 #include "arguments.h"
+#include "types.h"
+#include "env_assert.h"
 
 /*===========================================================================*/
 /* Pseudo-constructor for Arguments struct---*/

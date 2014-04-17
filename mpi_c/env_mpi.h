@@ -11,6 +11,8 @@
 #ifndef _mpi_c__env_mpi_h_
 #define _mpi_c__env_mpi_h_
 
+#include "types.h"
+#include "arguments.h"
 #include "env_assert.h"
 
 #ifdef USE_MPI
@@ -24,6 +26,7 @@ static void Env_initialize_mpi__( Env *env, int argc, char** argv )
 {
 #ifdef USE_MPI
   MPI_Init( &argc, &argv );
+  env->tag__ = 0;
 #endif
 }
 
@@ -71,14 +74,59 @@ static int Env_nproc( const Env* env )
 
 static int Env_nproc_x( const Env* env )
 {
-  return env->nproc_x;
+  int result = 1;
+#ifdef USE_MPI
+  result = env->nproc_x__;
+#endif
+  return result;
 }
 
 /*---------------------------------------------------------------------------*/
 
 static int Env_nproc_y( const Env* env )
 {
-  return env->nproc_y;
+  int result = 1;
+#ifdef USE_MPI
+  result = env->nproc_y__;
+#endif
+  return result;
+}
+
+/*===========================================================================*/
+/*---Set values from args---*/
+
+static void Env_set_values_mpi__( Env *env, Arguments* args )
+{
+#ifdef USE_MPI
+  env->nproc_x__ = Arguments_consume_int_or_default( args, "--nproc_x",
+                                                           Env_nproc( env ) );
+  env->nproc_y__ = Arguments_consume_int_or_default( args, "--nproc_y", 1);
+  Insist( Env_nproc_x( env ) > 0 && "Invalid nproc_x supplied." );
+  Insist( Env_nproc_y( env ) > 0 && "Invalid nproc_y supplied." );
+  Insist( Env_nproc_x( env ) * Env_nproc_y( env ) ==  Env_nproc( env ) &&
+                           "Invalid process decomposition supplied." );
+#endif
+}
+
+/*===========================================================================*/
+/*---Tag manipulation---*/
+
+static int Env_tag( const Env* env )
+{
+  int result = 0;
+#ifdef USE_MPI
+  result = env->tag__;
+#endif
+  return result;
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void Env_increment_tag( Env* env, int value )
+{
+#ifdef USE_MPI
+  env->tag__ += value;
+#endif
 }
 
 /*===========================================================================*/
@@ -139,7 +187,7 @@ static int Env_proc_y_this( const Env* env )
 /*===========================================================================*/
 /*---MPI functions: global---*/
 
-static void Env_barrier()
+static void Env_barrier_mpi()
 {
 #ifdef USE_MPI
   MPI_Barrier( Env_default_comm() );

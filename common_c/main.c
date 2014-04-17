@@ -10,11 +10,11 @@
 
 #include <stdio.h>
 
+#include "arguments.h"
 #include "env.h"
 #include "definitions.h"
 #include "dimensions.h"
 #include "memory.h"
-#include "arguments.h"
 #include "quantities.h"
 #include "array_operations.h"
 #include "sweeper.h"
@@ -54,6 +54,8 @@ int main( int argc, char** argv )
 
   Arguments_ctor( &args, argc, argv );
 
+  Env_set_values( &env, &args );
+
   /*---Set problem specifications---*/
 
   dims_g.nx   = Arguments_consume_int_or_default( &args, "--nx",  5 );
@@ -64,9 +66,6 @@ int main( int argc, char** argv )
   dims_g.na   = Arguments_consume_int_or_default( &args, "--na", 33 );
   niterations = Arguments_consume_int_or_default( &args, "--niterations",
                                                                     1 );
-  env.nproc_x = Arguments_consume_int_or_default( &args, "--nproc_x",
-                                                           Env_nproc( &env ) );
-  env.nproc_y = Arguments_consume_int_or_default( &args, "--nproc_y", 1);
 
   Insist( dims_g.nx > 0 && "Invalid nx supplied." );
   Insist( dims_g.ny > 0 && "Invalid ny supplied." );
@@ -75,10 +74,6 @@ int main( int argc, char** argv )
   Insist( dims_g.nm > 0 && "Invalid nm supplied." );
   Insist( dims_g.na > 0 && "Invalid na supplied." );
   Insist( niterations >= 0 && "Invalid iteration count supplied." );
-  Insist( Env_nproc_x( &env ) > 0 && "Invalid nproc_x supplied." );
-  Insist( Env_nproc_y( &env ) > 0 && "Invalid nproc_y supplied." );
-  Insist( Env_nproc_x( &env ) * Env_nproc_y( &env ) ==  Env_nproc( &env ) &&
-                           "Invalid process decomposition supplied." );
 
   /*---Initialize (local) dimensions---*/
 

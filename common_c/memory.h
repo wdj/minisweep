@@ -12,7 +12,8 @@
 #define _common_c__memory_h_
 
 #include <stdlib.h>
-#include "env.h"
+
+#include "types.h"
 
 /*===========================================================================*/
 /*---Allocate array of type int---*/

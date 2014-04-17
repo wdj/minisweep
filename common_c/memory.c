@@ -9,8 +9,10 @@
 /*---------------------------------------------------------------------------*/
 
 #include <stdlib.h>
-#include "env.h"
+
 #include "memory.h"
+#include "types.h"
+#include "env_assert.h"
 
 /*===========================================================================*/
 /*---Allocate array of type int---*/

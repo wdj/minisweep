@@ -25,8 +25,8 @@ void Step_Scheduler_ctor( Step_Scheduler* step_scheduler,
 {
   Insist( nblock_z > 0 && "Invalid z blocking factor supplied." );
   step_scheduler->nblock_z__      = nblock_z;
-  step_scheduler->nproc_x__       = env->nproc_x;
-  step_scheduler->nproc_y__       = env->nproc_y;
+  step_scheduler->nproc_x__       = Env_nproc_x( env );
+  step_scheduler->nproc_y__       = Env_nproc_y( env );
   step_scheduler->nblock_octant__ = nblock_octant;
 }
 

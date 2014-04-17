@@ -317,7 +317,7 @@ void Sweeper_communicate_faces__(
                 const int proc_other
                                  = Env_proc( env, proc_x+inc_x, proc_y+inc_y );
                 Env_send_P( face_per_octant, size_face_per_octant,
-                            proc_other, env->tag+octant_in_block );
+                            proc_other, Env_tag( env )+octant_in_block );
               }
             }
             else
@@ -330,7 +330,7 @@ void Sweeper_communicate_faces__(
                 copy_vector( buf, face_per_octant, size_face_per_octant );
                 use_buf = Bool_true;
                 Env_recv_P( face_per_octant, size_face_per_octant,
-                            proc_other, env->tag+octant_in_block );
+                            proc_other, Env_tag( env )+octant_in_block );
               }
             }
           }
@@ -343,7 +343,7 @@ void Sweeper_communicate_faces__(
                 const int proc_other
                                  = Env_proc( env, proc_x-inc_x, proc_y-inc_y );
                 Env_recv_P( face_per_octant, size_face_per_octant,
-                            proc_other, env->tag+octant_in_block );
+                            proc_other, Env_tag( env )+octant_in_block );
               }
             }
             else
@@ -353,7 +353,7 @@ void Sweeper_communicate_faces__(
                 const int proc_other
                                  = Env_proc( env, proc_x+inc_x, proc_y+inc_y );
                 Env_send_P( use_buf ? buf : face_per_octant,
-                  size_face_per_octant, proc_other, env->tag+octant_in_block );
+                  size_face_per_octant, proc_other, Env_tag( env )+octant_in_block );
               }
             }
           } /*---if color---*/
@@ -434,7 +434,7 @@ void Sweeper_send_faces_start__(
                                    & sweeper->request_send_xz[octant_in_block]
                                  : & sweeper->request_send_yz[octant_in_block];
           Env_asend_P( face_per_octant, size_face_per_octant,
-                       proc_other, env->tag+octant_in_block, request );
+                       proc_other, Env_tag( env )+octant_in_block, request );
         }
       } /*---dir_ind---*/
     } /*---axis---*/
@@ -558,7 +558,7 @@ void Sweeper_recv_faces_start__(
                                    & sweeper->request_recv_xz[octant_in_block]
                                  : & sweeper->request_recv_yz[octant_in_block];
           Env_arecv_P( face_per_octant, size_face_per_octant,
-                       proc_other, env->tag+octant_in_block, request );
+                       proc_other, Env_tag( env )+octant_in_block, request );
         }
       } /*---dir_ind---*/
     } /*---axis---*/
@@ -1202,7 +1202,7 @@ void Sweeper_sweep(
 
   /*---Increment message tag---*/
 
-  env->tag += sweeper->noctant_per_block;
+  Env_increment_tag( env, sweeper->noctant_per_block );
 
 } /*---sweep---*/
 

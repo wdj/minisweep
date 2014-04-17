@@ -8,11 +8,12 @@
  */
 /*---------------------------------------------------------------------------*/
 
-#include <stdlib.h>
-#include "env.h"
-
 #ifndef _common_c__arguments_h_
 #define _common_c__arguments_h_
+
+#include <stdlib.h>
+
+#include "types.h"
 
 /*===========================================================================*/
 /* Struct to hold command line arguments being processed---*/
