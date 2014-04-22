@@ -640,11 +640,12 @@ static void Sweeper_set_boundary_xy(
   const int dir_z = Dir_z( octant );
   const int iz_g = dir_z == Dir_up() ? -1 : sweeper->dims_g.nz;
 
-  const int nthread_e = sweeper->nthread_e;
-  const int thread_e  = Sweeper_thread_e( sweeper, env );
-
-  const int ie_min = ( sweeper->dims.ne * ( thread_e     ) ) / nthread_e;
-  const int ie_max = ( sweeper->dims.ne * ( thread_e + 1 ) ) / nthread_e;
+  const int ie_min = ( sweeper->dims.ne *
+                       ( Sweeper_thread_e( sweeper, env )     ) )
+                   / sweeper->nthread_e;
+  const int ie_max = ( sweeper->dims.ne *
+                       ( Sweeper_thread_e( sweeper, env ) + 1 ) )
+                   / sweeper->nthread_e;
 
   int ie = 0;
 
@@ -697,11 +698,12 @@ static void Sweeper_set_boundary_xz(
   const int dir_y = Dir_y( octant );
   const int iy_g = dir_y == Dir_up() ? -1 : sweeper->dims_g.ny;
 
-  const int nthread_e = sweeper->nthread_e;
-  const int thread_e  = Sweeper_thread_e( sweeper, env );
-
-  const int ie_min = ( sweeper->dims.ne * ( thread_e     ) ) / nthread_e;
-  const int ie_max = ( sweeper->dims.ne * ( thread_e + 1 ) ) / nthread_e;
+  const int ie_min = ( sweeper->dims.ne *
+                       ( Sweeper_thread_e( sweeper, env )     ) )
+                   / sweeper->nthread_e;
+  const int ie_max = ( sweeper->dims.ne *
+                       ( Sweeper_thread_e( sweeper, env ) + 1 ) )
+                   / sweeper->nthread_e;
 
   int ie = 0;
 
@@ -754,11 +756,12 @@ static void Sweeper_set_boundary_yz(
   const int dir_x = Dir_x( octant );
   const int ix_g = dir_x == Dir_up() ? -1 : sweeper->dims_g.nx;
 
-  const int nthread_e = sweeper->nthread_e;
-  const int thread_e  = Sweeper_thread_e( sweeper, env );
-
-  const int ie_min = ( sweeper->dims.ne * ( thread_e     ) ) / nthread_e;
-  const int ie_max = ( sweeper->dims.ne * ( thread_e + 1 ) ) / nthread_e;
+  const int ie_min = ( sweeper->dims.ne *
+                       ( Sweeper_thread_e( sweeper, env )     ) )
+                   / sweeper->nthread_e;
+  const int ie_max = ( sweeper->dims.ne *
+                       ( Sweeper_thread_e( sweeper, env ) + 1 ) )
+                   / sweeper->nthread_e;
 
   int ie = 0;
 
@@ -791,9 +794,9 @@ static void Sweeper_set_boundary_yz(
 }
 
 /*===========================================================================*/
-/*---Perform a sweep for a block---*/
+/*---Perform a sweep for a semiblock---*/
 
-void Sweeper_sweep_block(
+void Sweeper_sweep_semiblock(
   Sweeper*               sweeper,
   P* __restrict__        vo,
   const P* __restrict__  vi,
@@ -831,12 +834,14 @@ void Sweeper_sweep_block(
   const int iyend = dir_y==Dir_dn() ? iymin : iymax;
   const int izend = dir_z==Dir_dn() ? izmin : izmax;
 
-  const int nthread_e = sweeper->nthread_e;
   const int thread    = Env_thread_this( env );
-  const int thread_e  = Sweeper_thread_e( sweeper, env );
 
-  const int ie_min = ( sweeper->dims.ne * ( thread_e     ) ) / nthread_e;
-  const int ie_max = ( sweeper->dims.ne * ( thread_e + 1 ) ) / nthread_e;
+  const int ie_min = ( sweeper->dims.ne *
+                       ( Sweeper_thread_e( sweeper, env )     ) )
+                   / sweeper->nthread_e;
+  const int ie_max = ( sweeper->dims.ne *
+                       ( Sweeper_thread_e( sweeper, env ) + 1 ) )
+                   / sweeper->nthread_e;
 
   int ie = 0;
 
@@ -909,7 +914,7 @@ void Sweeper_sweep_block(
             * *const_ref_v_local( v_local, sweeper->dims, NU, ia, iu );
         }
 #ifdef USE_OPENMP_VO_ATOMIC
-#pragma omp atomic
+#pragma omp atomic update
 #endif
         *ref_state( vo, sweeper->dims, NU, ix, iy, iz, ie, im, iu ) += result;
       }
@@ -921,73 +926,27 @@ void Sweeper_sweep_block(
 }
 
 /*===========================================================================*/
-/*---Perform a sweep---*/
+/*---Perform a sweep for a block---*/
 
-void Sweeper_sweep(
+void Sweeper_sweep_block(
   Sweeper*               sweeper,
   P* __restrict__        vo,
   const P* __restrict__  vi,
+  P* __restrict__        facexy,
+  P* __restrict__        facexz,
+  P* __restrict__        faceyz,
+  int                    step,
   const Quantities*      quan,
   Env*                   env )
 {
-  assert( sweeper );
-  assert( vi );
-  assert( vo );
-
   /*---Declarations---*/
 
-  const int proc_x = Env_proc_x_this( env );
-  const int proc_y = Env_proc_y_this( env );
+  int semiblock = 0;
 
-  int step = -1;
-
-  /*---Initialize result array to zero---*/
-
-  initialize_state_zero( vo, sweeper->dims, NU );
-
-  /*--------------------*/
-  /*---Loop over kba parallel steps---*/
-  /*--------------------*/
-
-  for( step=0; step<Step_Scheduler_nstep( &(sweeper->step_scheduler) ); ++step )
+#ifdef USE_OPENMP_THREADS
+#pragma omp parallel num_threads( sweeper->nthread_e * sweeper->nthread_octant )
+#endif
   {
-    int semiblock = 0;
-
-    /*---Pick up needed face pointers---*/
-
-    /*=========================================================================
-    =    Order is important here.
-    =    The _r face for a step must match the _c face for the next step.
-    =    The _s face for a step must match the _c face for the prev step.
-    =========================================================================*/
-
-    P* const __restrict__ facexy = Sweeper_facexy__( sweeper, step );
-    P* const __restrict__ facexz = Sweeper_facexz__( sweeper, step );
-    P* const __restrict__ faceyz = Sweeper_faceyz__( sweeper, step );
-
-    /*--------------------*/
-    /*---Communicate faces---*/
-    /*--------------------*/
-
-    /*=========================================================================
-    =    Faces are triple buffered via a circular buffer of face arrays.
-    =    The following shows the pattern of face usage over a step:
-    =
-    =                         step:     ...    i    i+1   i+2   i+3   ...
-    =    ------------------------------------------------------------------
-    =    Recv face for this step wait   ...  face0 face1 face2 face0  ...
-    =    Recv face for next step start  ...  face1 face2 face0 face1  ...
-    =    Compute this step using face   ...  face0 face1 face2 face0  ...
-    =    Send face from last step wait  ...  face2 face0 face1 face2  ...
-    =    Send face from this step start ...  face0 face1 face2 face0  ...
-    =========================================================================*/
-
-    if( Sweeper_is_face_comm_async() )
-    {
-      Sweeper_recv_faces_end__  (  sweeper, step-1, env );
-      Sweeper_recv_faces_start__(  sweeper, step,   env );
-    }
-
     /*=========================================================================
     =    OpenMP-parallelizing octants leads to the problem that for the same
     =    step, two octants may be updating the same location in a state vector.
@@ -1023,7 +982,7 @@ void Sweeper_sweep(
     =      applied to the OpenMP loop will work ok.
     =    - If nsemiblock<noctant_per_block==nthread_octant, then
     =      a potential race condition will occur.  This can be fixed by
-    =      making the update of vo at the end of Sweeper_sweep_block atomic.
+    =      making the update of vo at the end of Sweeper_sweep_semiblock atomic.
     =      What is in question here is the overhead of the semiblock loop.
     =      One might want to reduce the number of semiblocks while keeping
     =      noctant_per_block==nthread_octant high to get more thread
@@ -1037,27 +996,18 @@ void Sweeper_sweep(
 
     for( semiblock=0; semiblock<sweeper->nsemiblock; ++semiblock )
     {
-      const int nthread_octant = sweeper->nthread_octant; 
-
       /*--------------------*/
       /*---Loop over octants in octant block---*/
       /*--------------------*/
 
-#ifdef USE_OPENMP_OCTANT
-#pragma omp parallel num_threads( sweeper->nthread_e * sweeper->nthread_octant )
-#else
-#ifdef USE_OPENMP_E
-#pragma omp parallel num_threads( sweeper->nthread_e * sweeper->nthread_octant )
-#endif
-#endif
-      {
-        const int thread         = Env_thread_this( env );
-        const int thread_octant  = Sweeper_thread_octant( sweeper, env );
-
-        const int octant_in_block_min = ( sweeper->noctant_per_block *
-                                      ( thread_octant     ) ) / nthread_octant;
-        const int octant_in_block_max = ( sweeper->noctant_per_block *
-                                      ( thread_octant + 1 ) ) / nthread_octant;
+        const int octant_in_block_min =
+                             ( sweeper->noctant_per_block *
+                               ( Sweeper_thread_octant( sweeper, env )     ) )
+                           / sweeper->nthread_octant;
+        const int octant_in_block_max =
+                             ( sweeper->noctant_per_block *
+                               ( Sweeper_thread_octant( sweeper, env ) + 1 ) )
+                           / sweeper->nthread_octant;
 
         int octant_in_block = 0;
 
@@ -1065,6 +1015,9 @@ void Sweeper_sweep(
            octant_in_block<octant_in_block_max; ++octant_in_block )
       {
         /*---Get step info---*/
+
+        const int proc_x = Env_proc_x_this( env );
+        const int proc_y = Env_proc_y_this( env );
 
         const Step_Info step_info = Step_Scheduler_step_info(
            &(sweeper->step_scheduler), step, octant_in_block, proc_x, proc_y );
@@ -1179,20 +1132,96 @@ void Sweeper_sweep(
           /*---Perform sweep on relevant block---*/
           /*--------------------*/
 
-          Sweeper_sweep_block( sweeper, vo, vi, facexy, facexz, faceyz,
-                               quan, env, step_info, octant_in_block,
-                               ixmin_b,         ixmax_b,
-                               iymin_b,         iymax_b,
-                               izmin_b+iz_base, izmax_b+iz_base );
+          Sweeper_sweep_semiblock( sweeper, vo, vi, facexy, facexz, faceyz,
+                                   quan, env, step_info, octant_in_block,
+                                   ixmin_b,         ixmax_b,
+                                   iymin_b,         iymax_b,
+                                   izmin_b+iz_base, izmax_b+iz_base );
 
         }  /*---is_active---*/
+
       } /*---octant_in_block---*/
 
-
-      } /*---OPENMP---*/
-
+#ifdef USE_OPENMP_THREADS
+      /*---Sync between semiblock steps---*/
+#pragma omp barrier
+#endif
 
     } /*---semiblock---*/
+
+  } /*---OPENMP---*/
+
+}
+
+/*===========================================================================*/
+/*---Perform a sweep---*/
+
+void Sweeper_sweep(
+  Sweeper*               sweeper,
+  P* __restrict__        vo,
+  const P* __restrict__  vi,
+  const Quantities*      quan,
+  Env*                   env )
+{
+  assert( sweeper );
+  assert( vi );
+  assert( vo );
+
+  /*---Declarations---*/
+
+  int step = -1;
+
+  /*---Initialize result array to zero---*/
+
+  initialize_state_zero( vo, sweeper->dims, NU );
+
+  /*--------------------*/
+  /*---Loop over kba parallel steps---*/
+  /*--------------------*/
+
+  for( step=0; step<Step_Scheduler_nstep( &(sweeper->step_scheduler) ); ++step )
+  {
+    /*---Pick up needed face pointers---*/
+
+    /*=========================================================================
+    =    Order is important here.
+    =    The _r face for a step must match the _c face for the next step.
+    =    The _s face for a step must match the _c face for the prev step.
+    =========================================================================*/
+
+    P* const __restrict__ facexy = Sweeper_facexy__( sweeper, step );
+    P* const __restrict__ facexz = Sweeper_facexz__( sweeper, step );
+    P* const __restrict__ faceyz = Sweeper_faceyz__( sweeper, step );
+
+    /*--------------------*/
+    /*---Communicate faces---*/
+    /*--------------------*/
+
+    /*=========================================================================
+    =    Faces are triple buffered via a circular buffer of face arrays.
+    =    The following shows the pattern of face usage over a step:
+    =
+    =                         step:     ...    i    i+1   i+2   i+3   ...
+    =    ------------------------------------------------------------------
+    =    Recv face for this step wait   ...  face0 face1 face2 face0  ...
+    =    Recv face for next step start  ...  face1 face2 face0 face1  ...
+    =    Compute this step using face   ...  face0 face1 face2 face0  ...
+    =    Send face from last step wait  ...  face2 face0 face1 face2  ...
+    =    Send face from this step start ...  face0 face1 face2 face0  ...
+    =========================================================================*/
+
+    if( Sweeper_is_face_comm_async() )
+    {
+      Sweeper_recv_faces_end__  (  sweeper, step-1, env );
+      Sweeper_recv_faces_start__(  sweeper, step,   env );
+    }
+
+    /*--------------------*/
+    /*---Sweep this kba block---*/
+    /*--------------------*/
+
+    Sweeper_sweep_block( sweeper, vo, vi, facexy, facexz, faceyz,
+                         step, quan, env );
 
     /*--------------------*/
     /*---Communicate faces---*/

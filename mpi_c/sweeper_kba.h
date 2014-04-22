@@ -21,18 +21,10 @@
 /*===========================================================================*/
 /*---Set up enums---*/
 
-#if 0
-#ifdef USE_OPENMP_OCTANT
-enum{ IS_USING_OPENMP_OCTANT = 1 };
+#ifdef USE_OPENMP_THREADS
+enum{ IS_USING_OPENMP_THREADS = 1 };
 #else
-enum{ IS_USING_OPENMP_OCTANT = 0 };
-#endif
-
-#ifdef USE_OPENMP_E
-enum{ IS_USING_OPENMP_E = 1 };
-#else
-enum{ IS_USING_OPENMP_E = 0 };
-#endif
+enum{ IS_USING_OPENMP_THREADS = 0 };
 #endif
 
 #ifdef USE_OPENMP_VO_ATOMIC
@@ -255,9 +247,9 @@ static P* __restrict__ Sweeper_faceyz__( Sweeper* sweeper, int step )
 /*---Select which part of v_local to use for current thread---*/
 
 static inline P* __restrict__ Sweeper_v_local_this__( Sweeper* sweeper,
-                                                      int      thread_num )
+                                                      int      thread )
 {
-  return sweeper->v_local + sweeper->dims_b.na * NU * thread_num;
+  return sweeper->v_local + sweeper->dims_b.na * NU * thread;
 }
 
 /*===========================================================================*/
@@ -276,13 +268,15 @@ static inline int Sweeper_thread_e( const Sweeper* sweeper,
 static inline int Sweeper_thread_octant( const Sweeper* sweeper,
                                          Env*           env )
 {
+  assert( sweeper->nthread_e * sweeper->nthread_octant ==1 ||
+          Env_in_threaded( env ) );
   return Env_thread_this( env ) / sweeper->nthread_e;
 }
 
 /*===========================================================================*/
-/*---Perform a sweep for a block---*/
+/*---Perform a sweep for a semiblock---*/
 
-void Sweeper_sweep_block(
+void Sweeper_sweep_semiblock(
   Sweeper*               sweeper,
   P* __restrict__        vo,
   const P* __restrict__  vi,
@@ -299,6 +293,20 @@ void Sweeper_sweep_block(
   const int              iymax,
   const int              izmin,
   const int              izmax );
+
+/*===========================================================================*/
+/*---Perform a sweep for a block---*/
+
+void Sweeper_sweep_block(
+  Sweeper*               sweeper,
+  P* __restrict__        vo,
+  const P* __restrict__  vi,
+  P* __restrict__        facexy,
+  P* __restrict__        facexz,
+  P* __restrict__        faceyz,
+  int                    step,
+  const Quantities*      quan,
+  Env*                   env );
 
 /*===========================================================================*/
 /*---Perform a sweep---*/

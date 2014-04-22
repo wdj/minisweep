@@ -86,10 +86,10 @@ void Sweeper_sweep(
   int iu = 0;
   int octant = 0;
   const Bool_t do_tile_octants = Sweeper_tile_octants();
-  const int num_tile_steps = do_tile_octants ? NOCTANT : 1;
+  const int ntilestep = do_tile_octants ? NOCTANT : 1;
   const Dimensions dims = sweeper->dims;
 
-  int tile_step = 0;
+  int tilestep = 0;
 
   /*---Initialize result array to zero---*/
 
@@ -109,7 +109,7 @@ void Sweeper_sweep(
        between consecutive tile steps.
   ---*/
 
-  for( tile_step=0; tile_step<num_tile_steps; ++tile_step )
+  for( tilestep=0; tilestep<ntilestep; ++tilestep )
   {
 
   /*---Loop over octants---*/
@@ -144,14 +144,14 @@ void Sweeper_sweep(
     ---*/
 
     const int tile_x = (!do_tile_octants) ? 0 :
-           ( ( tile_step & (1<<0) ) == 0 ) == ( dir_x == Dir_up() ) ? Dir_lo()
-                                                                    : Dir_hi();
+           ( ( tilestep & (1<<0) ) == 0 ) == ( dir_x == Dir_up() ) ? Dir_lo()
+                                                                   : Dir_hi();
     const int tile_y = (!do_tile_octants) ? 0 :
-           ( ( tile_step & (1<<1) ) == 0 ) == ( dir_y == Dir_up() ) ? Dir_lo()
-                                                                    : Dir_hi();
+           ( ( tilestep & (1<<1) ) == 0 ) == ( dir_y == Dir_up() ) ? Dir_lo()
+                                                                   : Dir_hi();
     const int tile_z = (!do_tile_octants) ? 0 :
-           ( ( tile_step & (1<<2) ) == 0 ) == ( dir_z == Dir_up() ) ? Dir_lo()
-                                                                    : Dir_hi();
+           ( ( tilestep & (1<<2) ) == 0 ) == ( dir_z == Dir_up() ) ? Dir_lo()
+                                                                   : Dir_hi();
 
     /*---Compute tile boundaries---*/
 

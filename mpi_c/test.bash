@@ -3,8 +3,8 @@
 
 set -eu
 
-declare g_num_tests=0
-declare g_num_passed=0
+declare g_ntest=0
+declare g_ntest_passed=0
 declare g_verbose=1
 
 #==============================================================================
@@ -41,11 +41,11 @@ function compare_runs
   local normsq1 normsq2
   local time1 time2
 
-  g_num_tests=$(( $g_num_tests + 1 ))
+  g_ntest=$(( $g_ntest + 1 ))
 
   #---Run 1.
 
-  echo -n "$g_num_tests // $exec_args1 / $app_args1 / "
+  echo -n "$g_ntest // $exec_args1 / $app_args1 / "
   local result1="$( perform_run "$exec_args1" "$app_args1" )"
   normsq1=$( echo "$result1" | grep '^Normsq result: ' \
                              | sed -e 's/^Normsq result: *//' -e 's/ .*//' )
@@ -73,7 +73,7 @@ function compare_runs
 
   if [ $is_pass1 = 1 -a $is_pass2 = 1 -a $is_pass = 1 ] ; then
     echo "PASS"
-    g_num_passed=$(( $g_num_passed + 1 ))
+    g_ntest_passed=$(( $g_ntest_passed + 1 ))
   else
     echo "FAIL"
     echo "$result1"
@@ -163,8 +163,8 @@ function main
 
   done
 
-  echo -n "Total tests $g_num_tests PASSED $g_num_passed"
-  echo " FAILED $(( $g_num_tests - $g_num_passed ))."
+  echo -n "Total tests $g_ntest PASSED $g_ntest_passed"
+  echo " FAILED $(( $g_ntest - $g_ntest_passed ))."
 
 }
 #==============================================================================

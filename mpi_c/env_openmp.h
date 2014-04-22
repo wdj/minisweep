@@ -40,7 +40,7 @@ static void Env_finalize_openmp__( Env* env )
 /*===========================================================================*/
 /*---Get openmp current number of threads---*/
 
-static inline int Env_num_threads( const Env* env )
+static inline int Env_nthread( const Env* env )
 {
   int result = 1;
 #ifdef USE_OPENMP
