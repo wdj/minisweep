@@ -19,11 +19,6 @@
 #include "array_operations.h"
 #include "sweeper.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Main---*/
 
@@ -72,13 +67,13 @@ int main( int argc, char** argv )
   niterations = Arguments_consume_int_or_default( &args, "--niterations",
                                                                     1 );
 
-  Insist( dims_g.nx > 0 && "Invalid nx supplied." );
-  Insist( dims_g.ny > 0 && "Invalid ny supplied." );
-  Insist( dims_g.nz > 0 && "Invalid nz supplied." );
-  Insist( dims_g.ne > 0 && "Invalid ne supplied." );
-  Insist( dims_g.nm > 0 && "Invalid nm supplied." );
-  Insist( dims_g.na > 0 && "Invalid na supplied." );
-  Insist( niterations >= 0 && "Invalid iteration count supplied." );
+  Insist( dims_g.nx > 0 ? "Invalid nx supplied." : 0 );
+  Insist( dims_g.ny > 0 ? "Invalid ny supplied." : 0 );
+  Insist( dims_g.nz > 0 ? "Invalid nz supplied." : 0 );
+  Insist( dims_g.ne > 0 ? "Invalid ne supplied." : 0 );
+  Insist( dims_g.nm > 0 ? "Invalid nm supplied." : 0 );
+  Insist( dims_g.na > 0 ? "Invalid na supplied." : 0 );
+  Insist( niterations >= 0 ? "Invalid iteration count supplied." : 0 );
 
   /*---Initialize (local) dimensions---*/
 
@@ -118,7 +113,8 @@ int main( int argc, char** argv )
 
   /*---Check that all command line args used---*/
 
-  Insist( Arguments_are_all_consumed( &args ) && "Invalid argument detected." );
+  Insist( Arguments_are_all_consumed( &args )
+                                          ? "Invalid argument detected." : 0 );
 
   /*---Call sweeper---*/
 
@@ -171,9 +167,5 @@ int main( int argc, char** argv )
   Env_finalize( &env );
 
 } /*---main---*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 /*---------------------------------------------------------------------------*/
