@@ -86,10 +86,10 @@ ifneq ($(CUDA_OPTION),)
   ifeq ($(COMPILER_OPTION),PGI)
     $(error "CUDA requires GNU compiler to be used.")
   endif
-make_cu:
+make_cu: make_c
 	nvcc -c $(CUDA_SOURCES) $(INCLUDES) $(ALG_OPTIONS)
 else
-make_cuda:
+make_cu: make_c
 endif
 
 #==============================================================================
@@ -99,11 +99,12 @@ endif
 make_c:
 	$(CC) -c $(SOURCES) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
 
-make_executable:
-	$(MAKE) make_c
-	$(MAKE) make_cu
+make_executable: make_cu
 	$(CC) -o $(EXECUTABLE) *.o $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
 	rm *.o
+
+test:
+	./test.bash
 
 #==============================================================================
 
