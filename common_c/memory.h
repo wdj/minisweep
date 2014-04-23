@@ -15,6 +15,11 @@
 
 #include "types.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Allocate array of type int---*/
 
@@ -36,8 +41,10 @@ P* malloc_P( size_t n );
 void free_P( P* p );
 
 /*===========================================================================*/
-
-
+  
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_common_c__memory_h_---*/
 

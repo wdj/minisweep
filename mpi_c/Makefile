@@ -22,6 +22,10 @@ ifndef OPENMP_OPTION
   OPENMP_OPTION =
 endif
 
+ifndef CUDA_OPTION
+  CUDA_OPTION =
+endif
+
 ifndef ALG_OPTIONS
   ALG_OPTIONS = -DSWEEPER_KBA
 endif
@@ -31,15 +35,18 @@ endif
 #==============================================================================
 
 INCLUDES = -I. -I../common_c
-SOURCES = *.c ../common_c/*.c
+SOURCES      = $(wildcard *.c  ../common_c/*.c  )
+CUDA_SOURCES = $(wildcard *.cu ../common_c/*.cu )
 EXECUTABLE = sweep.x
+
+default: make_executable
 
 CC =
 CFLAGS :=
 
 ifeq ($(COMPILER_OPTION),GNU)
   #---"module swap PrgEnv-pgi PrgEnv-gnu"
-  CC = gcc
+  CC = cc
   ifeq ($(RELEASE_OPTION),DEBUG)
     CFLAGS := $(CFLAGS) -ansi -Dinline= -Wmissing-prototypes -g
   else
@@ -49,7 +56,7 @@ ifeq ($(COMPILER_OPTION),GNU)
 endif
 
 ifeq ($(COMPILER_OPTION),PGI)
-  CC = pgcc
+  CC = cc
   CFLAGS := $(CFLAGS) -DNDEBUG -fast -Mfprelaxed -alias=ansi -Msafeptr -tp=istanbul-64
 endif
 
@@ -75,12 +82,28 @@ ifneq ($(OPENMP_OPTION),)
   endif
 endif
 
+ifneq ($(CUDA_OPTION),)
+  ifeq ($(COMPILER_OPTION),PGI)
+    $(error "CUDA requires GNU compiler to be used.")
+  endif
+make_cu:
+	nvcc -c $(CUDA_SOURCES) $(INCLUDES) $(ALG_OPTIONS)
+else
+make_cuda:
+endif
+
 #==============================================================================
 # Targets.
 #==============================================================================
 
-default:
-	$(CC) -o $(EXECUTABLE) $(SOURCES) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
+make_c:
+	$(CC) -c $(SOURCES) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
+
+make_executable:
+	$(MAKE) make_c
+	$(MAKE) make_cu
+	$(CC) -o $(EXECUTABLE) *.o $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
+	rm *.o
 
 #==============================================================================
 

@@ -18,6 +18,11 @@
 
 #include "arguments.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Header file for assertions---*/
 
@@ -39,12 +44,17 @@
 #include "env_openmp.h"
 
 /*===========================================================================*/
+/*---CUDA wrapper function definitions---*/
+
+#include "env_cuda.h"
+
+/*===========================================================================*/
 /*---Initialize for execution---*/
 
 static void Env_initialize( Env *env, int argc, char** argv )
 {
-  Env_initialize_mpi__( env, argc, argv );
-  Env_initialize_openmp__( env, argc, argv );
+  Env_mpi_initialize__( env, argc, argv );
+  Env_omp_initialize__( env, argc, argv );
 }
 
 /*===========================================================================*/
@@ -52,8 +62,8 @@ static void Env_initialize( Env *env, int argc, char** argv )
 
 static void Env_set_values( Env *env, Arguments* args )
 {
-  Env_set_values_mpi__( env, args );
-  Env_set_values_openmp__( env, args );
+  Env_mpi_set_values__( env, args );
+  Env_omp_set_values__( env, args );
 }
 
 /*===========================================================================*/
@@ -61,8 +71,8 @@ static void Env_set_values( Env *env, Arguments* args )
 
 static void Env_finalize( Env* env )
 {
-  Env_finalize_openmp__( env );
-  Env_finalize_mpi__( env );
+  Env_omp_finalize__( env );
+  Env_mpi_finalize__( env );
 }
 
 /*===========================================================================*/
@@ -94,11 +104,15 @@ static Timer_t Env_get_time()
 
 static Timer_t Env_get_synced_time()
 {
-  Env_barrier_mpi();
+  Env_mpi_barrier();
   return Env_get_time();
 }
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_mpi_c__env_h_---*/
 

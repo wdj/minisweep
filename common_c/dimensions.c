@@ -13,6 +13,11 @@
 #include "definitions.h"
 #include "dimensions.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Size of state vector---*/
 
@@ -84,5 +89,9 @@ size_t Dimensions_size_faceyz( const Dimensions dims,
 }
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 /*---------------------------------------------------------------------------*/

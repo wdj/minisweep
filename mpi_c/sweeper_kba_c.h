@@ -20,6 +20,10 @@
 #include "step_scheduler_kba.h"
 #include "sweeper_kba.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
@@ -30,15 +34,15 @@ void Sweeper_ctor( Sweeper*          sweeper,
                    Env*              env,
                    Arguments*        args )
 {
-  Insist( dims.nx > 0 && "KBA sweeper currently requires all blocks nonempty" );
-  Insist( dims.ny > 0 && "KBA sweeper currently requires all blocks nonempty" );
-  Insist( dims.nz > 0 && "KBA sweeper currently requires all blocks nonempty" );
+  Insist( dims.nx > 0 ? "KBA sweeper currently requires all blocks nonempty":0);
+  Insist( dims.ny > 0 ? "KBA sweeper currently requires all blocks nonempty":0);
+  Insist( dims.nz > 0 ? "KBA sweeper currently requires all blocks nonempty":0);
 
   /*---Set up number of kba blocks---*/
   sweeper->nblock_z = Arguments_consume_int_or_default( args, "--nblock_z", 1);
-  Insist( sweeper->nblock_z > 0 && "Invalid z blocking factor supplied" );
-  Insist( dims.nz % sweeper->nblock_z == 0 &&
-          "KBA sweeper currently requires all blocks have same z dimension" );
+  Insist( sweeper->nblock_z > 0 ? "Invalid z blocking factor supplied" : 0 );
+  Insist( dims.nz % sweeper->nblock_z == 0
+     ? "KBA sweeper currently requires all blocks have same z dimension" : 0 );
 
   /*---Set up number of octant threads---*/
   sweeper->nthread_octant
@@ -46,7 +50,7 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Require a power of 2 between 1 and 8 inclusive---*/
   Insist( sweeper->nthread_octant>0 && sweeper->nthread_octant<=NOCTANT
           && ((sweeper->nthread_octant&(sweeper->nthread_octant-1))==0)
-          && "Invalid octant thread count supplied" );
+          ? "Invalid octant thread count supplied" : 0 );
   sweeper->noctant_per_block = sweeper->nthread_octant;
   sweeper->nblock_octant = NOCTANT / sweeper->noctant_per_block;
 
@@ -55,15 +59,15 @@ void Sweeper_ctor( Sweeper*          sweeper,
                                args, "--nsemiblock", sweeper->nthread_octant );
   Insist( sweeper->nsemiblock>0 && sweeper->nsemiblock<=NOCTANT
           && ((sweeper->nsemiblock&(sweeper->nsemiblock-1))==0)
-          && "Invalid semiblock count supplied" );
+          ? "Invalid semiblock count supplied" : 0 );
   Insist( ( sweeper->nsemiblock >= sweeper->nthread_octant ||
-            IS_USING_OPENMP_VO_ATOMIC ) &&
-          "Incomplete set of semiblock steps requires atomic vo update" );
+            IS_USING_OPENMP_VO_ATOMIC )
+         ? "Incomplete set of semiblock steps requires atomic vo update" : 0 );
 
   /*---Set up number of energy threads---*/
   sweeper->nthread_e
                    = Arguments_consume_int_or_default( args, "--nthread_e", 1);
-  Insist( sweeper->nthread_e > 0 && "Invalid e thread count supplied." );
+  Insist( sweeper->nthread_e > 0 ? "Invalid e thread count supplied." : 0 );
 
   /*---Set up step scheduler---*/
   Step_Scheduler_ctor( &(sweeper->step_scheduler),
@@ -402,8 +406,6 @@ void Sweeper_send_faces_start__(
       const Bool_t axis_x = axis==0;
       const Bool_t axis_y = axis==1;
 
-      const int proc_axis = axis_x ? proc_x : proc_y;
-
       /*---Send values computed on this step---*/
 
       const size_t    size_face_per_octant    = axis_x ? size_faceyz_per_octant
@@ -468,7 +470,6 @@ void Sweeper_send_faces_end__(
     for( axis=0; axis<2; ++axis )
     {
       const Bool_t axis_x = axis==0;
-      const Bool_t axis_y = axis==1;
 
       int dir_ind = 0;
 
@@ -525,8 +526,6 @@ void Sweeper_recv_faces_start__(
     {
       const Bool_t axis_x = axis==0;
       const Bool_t axis_y = axis==1;
-
-      const int proc_axis = axis_x ? proc_x : proc_y;
 
       /*---Receive values computed on the next step---*/
 
@@ -597,7 +596,6 @@ void Sweeper_recv_faces_end__(
     for( axis=0; axis<2; ++axis )
     {
       const Bool_t axis_x = axis==0;
-      const Bool_t axis_y = axis==1;
 
       int dir_ind = 0;
 
@@ -834,7 +832,7 @@ void Sweeper_sweep_semiblock(
   const int iyend = dir_y==Dir_dn() ? iymin : iymax;
   const int izend = dir_z==Dir_dn() ? izmin : izmax;
 
-  const int thread    = Env_thread_this( env );
+  const int thread = Env_omp_thread( env );
 
   const int ie_min = ( sweeper->dims.ne *
                        ( Sweeper_thread_e( sweeper, env )     ) )
@@ -1246,6 +1244,10 @@ void Sweeper_sweep(
 } /*---sweep---*/
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_serial_c__sweeper_kba_c_h_---*/
 

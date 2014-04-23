@@ -15,6 +15,11 @@
 #include "definitions.h"
 #include "step_scheduler_kba.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Pseudo-constructor for Step_Scheduler struct---*/
 
@@ -246,6 +251,10 @@ Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,
 }
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_serial_c__step_scheduler_kba_c_h_---*/
 

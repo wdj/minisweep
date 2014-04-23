@@ -16,6 +16,11 @@
 #include "types.h"
 #include "env_assert.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Enums---*/
 
@@ -91,6 +96,10 @@ P* __restrict__ Pointer_d( Pointer* p );
 P* __restrict__ Pointer_a( Pointer* p );
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_common_c__pointer_h_---*/
 

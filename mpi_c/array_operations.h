@@ -17,6 +17,11 @@
 #include "array_accessors.h"
 #include "quantities.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Initialize state vector to required input value---*/
 
@@ -70,8 +75,8 @@ static void get_state_norms( const P* __restrict__  vi,
                              P*                     normsqp,
                              P*                     normsqdiffp )
 {
-  assert( normsqp     != NULL && "Null pointer encountered" );
-  assert( normsqdiffp != NULL && "Null pointer encountered" );
+  assert( normsqp     != NULL ? "Null pointer encountered" : 0 );
+  assert( normsqdiffp != NULL ? "Null pointer encountered" : 0);
 
   int ix = 0;
   int iy = 0;
@@ -121,6 +126,10 @@ static void copy_vector(       P* __restrict__  vo,
 }
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_serial_c__array_operations_h_---*/
 

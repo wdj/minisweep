@@ -17,6 +17,11 @@
 #include "arguments.h"
 #include "quantities.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Struct with pointers etc. used to perform sweep---*/
 
@@ -71,6 +76,10 @@ void Sweeper_sweep(
   Env*                   env );
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_sweeper_tileoctants_h_---*/
 

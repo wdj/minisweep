@@ -15,6 +15,11 @@
 #include "types.h"
 #include "env_assert.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /* Pseudo-constructor for Arguments struct---*/
 
@@ -123,5 +128,11 @@ Bool_t Arguments_are_all_consumed( Arguments* args )
 
   return result;
 }
+
+/*===========================================================================*/
+  
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 /*===========================================================================*/

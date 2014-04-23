@@ -15,6 +15,11 @@
 
 #include "types.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Struct to hold problem dimensions---*/
 
@@ -65,6 +70,10 @@ size_t Dimensions_size_faceyz( const Dimensions dims,
                                int num_face_octants_allocated );
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_common_c__dimensions_h_---*/
 

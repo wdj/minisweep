@@ -91,7 +91,7 @@ function main
 
     echo "---OpenMP tests---"
 
-    make OPENMP_OPTION=E
+    make OPENMP_OPTION=THREADS
 
     local ARGS_SIZES="--nx  5 --ny  4 --nz  5 --ne 200 --nm 4 --na 10"
     compare_runs   "-n1 -d1"  "$ARGS_SIZES --nthread_e 1" \
@@ -101,7 +101,7 @@ function main
     compare_runs   "-n1 -d3"  "$ARGS_SIZES --nthread_e 3" \
                    "-n1 -d4"  "$ARGS_SIZES --nthread_e 4"
 
-    make OPENMP_OPTION=OCTANT
+    make OPENMP_OPTION=THREADS
 
     compare_runs   "-n1 -d1"  "$ARGS_SIZES --nthread_octant 1" \
                    "-n1 -d2"  "$ARGS_SIZES --nthread_octant 2"
@@ -110,7 +110,7 @@ function main
     compare_runs   "-n1 -d4"  "$ARGS_SIZES --nthread_octant 4" \
                    "-n1 -d8"  "$ARGS_SIZES --nthread_octant 8"
 
-    make OPENMP_OPTION=OCTANT,E
+    make OPENMP_OPTION=THREADS
 
     compare_runs   "-n1 -d1"  "$ARGS_SIZES --nthread_e 1 --nthread_octant 1" \
                    "-n1 -d2"  "$ARGS_SIZES --nthread_e 2 --nthread_octant 1"

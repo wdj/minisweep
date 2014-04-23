@@ -14,6 +14,11 @@
 #include "dimensions.h"
 #include "array_accessors.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Number of unknowns per gridcell---*/
 
@@ -473,6 +478,10 @@ static inline void Quantities_solve(
 } /*---Quantities_solve---*/
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_serial_c__quantities_testing_h_---*/
 

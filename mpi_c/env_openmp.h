@@ -19,10 +19,15 @@
 #include "omp.h"
 #endif
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Initialize OpenMP---*/
 
-static void Env_initialize_openmp__( Env *env, int argc, char** argv )
+static void Env_omp_initialize__( Env *env, int argc, char** argv )
 {
 #ifdef USE_OPENMP
 #endif
@@ -31,28 +36,16 @@ static void Env_initialize_openmp__( Env *env, int argc, char** argv )
 /*===========================================================================*/
 /*---Finalize OpenMP---*/
 
-static void Env_finalize_openmp__( Env* env )
+static void Env_omp_finalize__( Env* env )
 {
 #ifdef USE_OPENMP
 #endif
-}
-
-/*===========================================================================*/
-/*---Get openmp current number of threads---*/
-
-static inline int Env_nthread( const Env* env )
-{
-  int result = 1;
-#ifdef USE_OPENMP
-  result = omp_get_num_threads();
-#endif
-  return result;
 }
 
 /*===========================================================================*/
 /*---Set values from args---*/
 
-static void Env_set_values_openmp__( Env *env, Arguments* args )
+static void Env_omp_set_values__( Env *env, Arguments* args )
 {
 #ifdef USE_OPENMP
 #endif
@@ -61,7 +54,7 @@ static void Env_set_values_openmp__( Env *env, Arguments* args )
 /*===========================================================================*/
 /*---Get openmp current thread number---*/
 
-static inline int Env_thread_this( const Env* env )
+static inline int Env_omp_thread( const Env* env )
 {
   int result = 0;
 #ifdef USE_OPENMP
@@ -73,7 +66,7 @@ static inline int Env_thread_this( const Env* env )
 /*===========================================================================*/
 /*---Are we in an openmp threaded region---*/
 
-static inline Bool_t Env_in_threaded( const Env* env )
+static inline Bool_t Env_omp_in_parallel( const Env* env )
 {
   Bool_t result = Bool_false;
 #ifdef USE_OPENMP
@@ -83,6 +76,10 @@ static inline Bool_t Env_in_threaded( const Env* env )
 }
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_mpi_c__env_openmp_h_---*/
 

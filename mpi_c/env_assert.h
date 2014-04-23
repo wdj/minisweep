@@ -14,6 +14,11 @@
 #include <stdio.h>
 #include <assert.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Assertions---*/
 
@@ -30,12 +35,16 @@ static void insist__( const char *condition_string, const char *file, int line )
 }
 
 #ifndef NDEBUG
-#define Static_Assert( condition ) { int a[ ( condition ) ? 1 : -1 ]; }
+#define Static_Assert( condition ) { int a[ ( condition ) ? 1 : -1 ]; (void)a; }
 #else
 #define Static_Assert( condition )
 #endif
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_mpi_c__env_assert_h_---*/
 

@@ -19,6 +19,11 @@
 #include "memory.h"
 #include "sweeper_simple.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
 
@@ -254,6 +259,10 @@ void Sweeper_sweep(
 } /*---sweep---*/
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_serial_c__sweeper_simple_c_h_---*/
 

@@ -13,6 +13,11 @@
 
 #include "env.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Struct with info describing a sweep step---*/
 
@@ -77,6 +82,10 @@ Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,
                                     const int             proc_y );
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_step_scheduler_kba_h_---*/
 

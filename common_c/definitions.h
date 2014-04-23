@@ -11,6 +11,11 @@
 #ifndef _common_c__definitions_h_
 #define _common_c__definitions_h_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 
 /*---Initializations---*/
@@ -40,6 +45,10 @@ static inline int Dir_z( int octant ) { return octant & (1<<2) ? Dir_dn()
 static inline int Dir_inc( int dir ) { return dir; }
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_common_c__definitions_h_---*/
 

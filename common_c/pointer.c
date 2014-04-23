@@ -3,7 +3,7 @@
  * \file   pointer.c
  * \author Wayne Joubert
  * \date   Tue Apr 22 14:57:52 EDT 2014
- * \brief  Utilities for memory management.
+ * \brief  Tools for handling mirrored host/device arrays.
  * \note   Copyright (C) 2014 Oak Ridge National Laboratory, UT-Battelle, LLC.
  */
 /*---------------------------------------------------------------------------*/
@@ -14,6 +14,11 @@
 #include "types.h"
 #include "env_assert.h"
 #include "memory.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /*===========================================================================*/
 /*---Pseudo-constructor---*/
@@ -170,5 +175,11 @@ P* __restrict__ Pointer_a( Pointer* p )
   assert( result );
   return result;
 }
+
+/*===========================================================================*/
+  
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 /*---------------------------------------------------------------------------*/

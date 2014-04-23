@@ -18,6 +18,11 @@
 #include "quantities.h"
 #include "step_scheduler_kba.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Set up enums---*/
 
@@ -259,8 +264,8 @@ static inline int Sweeper_thread_e( const Sweeper* sweeper,
                                     Env*           env )
 {
   assert( sweeper->nthread_e * sweeper->nthread_octant ==1 ||
-          Env_in_threaded( env ) );
-  return Env_thread_this( env ) % sweeper->nthread_e;
+          Env_omp_in_parallel( env ) );
+  return Env_omp_thread( env ) % sweeper->nthread_e;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -269,8 +274,8 @@ static inline int Sweeper_thread_octant( const Sweeper* sweeper,
                                          Env*           env )
 {
   assert( sweeper->nthread_e * sweeper->nthread_octant ==1 ||
-          Env_in_threaded( env ) );
-  return Env_thread_this( env ) / sweeper->nthread_e;
+         Env_omp_in_parallel( env ) );
+  return Env_omp_thread( env ) / sweeper->nthread_e;
 }
 
 /*===========================================================================*/
@@ -319,6 +324,10 @@ void Sweeper_sweep(
   Env*                   env );
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_sweeper_kba_h_---*/
 

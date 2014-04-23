@@ -16,6 +16,11 @@
 #include "array_accessors.h"
 #include "quantities_testing.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Pseudo-constructor for Quantities struct---*/
 
@@ -336,6 +341,10 @@ double Quantities_flops_per_solve( const Dimensions dims )
 }
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_serial_c__quantities_testing_c_h_---*/
 

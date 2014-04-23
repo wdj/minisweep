@@ -11,6 +11,11 @@
 #ifndef _common_c__types_h_
 #define _common_c__types_h_
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Basic types---*/
 
@@ -29,6 +34,10 @@ static inline P P_zero() { return (P)0; }
 static inline P P_one()  { return (P)1; }
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_common_c__types_h_---*/
 

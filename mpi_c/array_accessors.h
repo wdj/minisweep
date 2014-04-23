@@ -15,6 +15,11 @@
 #include "definitions.h"
 #include "dimensions.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
@@ -396,6 +401,10 @@ static inline const P* const_ref_faceyz(
 }
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 #endif /*---_serial_c__array_accessors_h_---*/
 

@@ -19,6 +19,11 @@
 #include "array_operations.h"
 #include "sweeper.h"
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /*===========================================================================*/
 /*---Main---*/
 
@@ -166,5 +171,9 @@ int main( int argc, char** argv )
   Env_finalize( &env );
 
 } /*---main---*/
+
+#ifdef __cplusplus
+} /*---extern "C"---*/
+#endif
 
 /*---------------------------------------------------------------------------*/
