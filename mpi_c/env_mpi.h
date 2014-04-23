@@ -106,10 +106,10 @@ static void Env_mpi_set_values__( Env *env, Arguments* args )
   env->nproc_x__ = Arguments_consume_int_or_default( args, "--nproc_x",
                                                            Env_nproc( env ) );
   env->nproc_y__ = Arguments_consume_int_or_default( args, "--nproc_y", 1);
-  Insist( Env_nproc_x( env ) > 0 && "Invalid nproc_x supplied." );
-  Insist( Env_nproc_y( env ) > 0 && "Invalid nproc_y supplied." );
-  Insist( Env_nproc_x( env ) * Env_nproc_y( env ) ==  Env_nproc( env ) &&
-                           "Invalid process decomposition supplied." );
+  Insist( Env_nproc_x( env ) > 0 ? "Invalid nproc_x supplied." : 0 );
+  Insist( Env_nproc_y( env ) > 0 ? "Invalid nproc_y supplied." : 0 );
+  Insist( Env_nproc_x( env ) * Env_nproc_y( env ) ==  Env_nproc( env )
+                             ? "Invalid process decomposition supplied." : 0 );
 #endif
 }
 

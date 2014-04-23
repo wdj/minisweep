@@ -28,7 +28,7 @@ void Quantities_ctor( Quantities*       quan,
                       const Dimensions  dims,
                       Env*              env )
 {
-  Quantities_init_am_matrices__( quan, dims );
+  Quantities_init_am_matrices__( quan, dims, env );
   Quantities_init_decomp__( quan, dims, env );
 
 } /*---Quantities_ctor---*/
@@ -37,7 +37,8 @@ void Quantities_ctor( Quantities*       quan,
 /*---Initialize Quantities a_from_m, m_from_a matrices---*/
 
 void Quantities_init_am_matrices__( Quantities*       quan,
-                                    const Dimensions  dims )
+                                    const Dimensions  dims,
+                                    Env*              env )
 {
   /*---Declarations---*/
 
@@ -48,8 +49,16 @@ void Quantities_init_am_matrices__( Quantities*       quan,
 
   /*---Allocate arrays---*/
 
-  quan->a_from_m = malloc_P( dims.nm * dims.na * NOCTANT );
-  quan->m_from_a = malloc_P( dims.nm * dims.na * NOCTANT );
+  Pointer_ctor( & quan->a_from_m, dims.nm * dims.na * NOCTANT,
+                                             Env_cuda_is_using_device( env ) );
+  Pointer_ctor( & quan->m_from_a, dims.nm * dims.na * NOCTANT,
+                                             Env_cuda_is_using_device( env ) );
+
+  Pointer_create_h( & quan->a_from_m );
+  Pointer_create_h( & quan->m_from_a );
+
+  Pointer_create_d( & quan->a_from_m );
+  Pointer_create_d( & quan->m_from_a );
 
   /*-----------------------------*/
   /*---Set entries of a_from_m---*/
@@ -67,7 +76,8 @@ void Quantities_init_am_matrices__( Quantities*       quan,
   for( im=0;     im<dims.nm;     ++im )
   for( ia=0;     ia<dims.na;     ++ia )
   {
-    *ref_a_from_m( quan->a_from_m, dims, im, ia, octant ) = P_zero();
+    *ref_a_from_m( Pointer_h( & quan->a_from_m ), dims, im, ia, octant )
+                                                                   = P_zero();
   }
 
   /*---Map a linear vector of values to a similar linear vector of values---*/
@@ -85,11 +95,14 @@ void Quantities_init_am_matrices__( Quantities*       quan,
     const int quot = ( i + 1 ) / dims.nm;
     const int rem  = ( i + 1 ) % dims.nm;
 
-    *ref_a_from_m( quan->a_from_m, dims, dims.nm-1, i, octant ) += quot;
+    *ref_a_from_m( Pointer_h( & quan->a_from_m ), dims, dims.nm-1, i, octant )
+                                                                       += quot;
     if( rem != 0 )
     {
-      *ref_a_from_m( quan->a_from_m, dims, 0,   i, octant ) += -P_one();
-      *ref_a_from_m( quan->a_from_m, dims, rem, i, octant ) +=  P_one();
+      *ref_a_from_m( Pointer_h( & quan->a_from_m ), dims, 0,   i, octant )
+                                                                   += -P_one();
+      *ref_a_from_m( Pointer_h( & quan->a_from_m ), dims, rem, i, octant )
+                                                                   +=  P_one();
     }
   }
 
@@ -105,11 +118,11 @@ void Quantities_init_am_matrices__( Quantities*       quan,
   {
     const int randvalue = 21 + ( im + dims.nm * ia ) % 17;
 
-    *ref_a_from_m( quan->a_from_m, dims, im+0, ia, octant ) +=
+    *ref_a_from_m( Pointer_h( & quan->a_from_m ), dims, im+0, ia, octant ) +=
                                                           -P_one() * randvalue;
-    *ref_a_from_m( quan->a_from_m, dims, im+1, ia, octant ) +=
+    *ref_a_from_m( Pointer_h( & quan->a_from_m ), dims, im+1, ia, octant ) +=
                                                          2*P_one() * randvalue;
-    *ref_a_from_m( quan->a_from_m, dims, im+2, ia, octant ) +=
+    *ref_a_from_m( Pointer_h( & quan->a_from_m ), dims, im+2, ia, octant ) +=
                                                           -P_one() * randvalue;
   }
 
@@ -123,7 +136,8 @@ void Quantities_init_am_matrices__( Quantities*       quan,
   for( im=0;     im<dims.nm;     ++im )
   for( ia=0;     ia<dims.na;     ++ia )
   {
-    *ref_m_from_a( quan->m_from_a, dims, im, ia, octant ) = P_zero();
+    *ref_m_from_a( Pointer_h( & quan->m_from_a ), dims, im, ia, octant )
+                                                                    = P_zero();
   }
 
   /*---Map a linear vector of values to a similar linear vector of values---*/
@@ -140,11 +154,14 @@ void Quantities_init_am_matrices__( Quantities*       quan,
     const int quot = ( i + 1 ) / dims.na;
     const int rem  = ( i + 1 ) % dims.na;
 
-    *ref_m_from_a( quan->m_from_a, dims, i, dims.na-1, octant ) += quot;
+    *ref_m_from_a( Pointer_h( & quan->m_from_a ), dims, i, dims.na-1, octant )
+                                                                       += quot;
     if( rem != 0 )
     {
-      *ref_m_from_a( quan->m_from_a, dims, i, 0  , octant ) += -P_one();
-      *ref_m_from_a( quan->m_from_a, dims, i, rem, octant ) +=  P_one();
+      *ref_m_from_a( Pointer_h( & quan->m_from_a ), dims, i, 0  , octant )
+                                                                   += -P_one();
+      *ref_m_from_a( Pointer_h( & quan->m_from_a ), dims, i, rem, octant )
+                                                                   +=  P_one();
     }
   }
 
@@ -160,11 +177,11 @@ void Quantities_init_am_matrices__( Quantities*       quan,
   {
     const int randvalue = 37 + ( im + dims.nm * ia ) % 19;
 
-    *ref_m_from_a( quan->m_from_a, dims, im, ia+0, octant ) +=
+    *ref_m_from_a( Pointer_h( & quan->m_from_a ), dims, im, ia+0, octant ) +=
                                                           -P_one() * randvalue;
-    *ref_m_from_a( quan->m_from_a, dims, im, ia+1, octant ) +=
+    *ref_m_from_a( Pointer_h( & quan->m_from_a ), dims, im, ia+1, octant ) +=
                                                          2*P_one() * randvalue;
-    *ref_m_from_a( quan->m_from_a, dims, im, ia+2, octant ) +=
+    *ref_m_from_a( Pointer_h( & quan->m_from_a ), dims, im, ia+2, octant ) +=
                                                           -P_one() * randvalue;
   }
 
@@ -174,10 +191,14 @@ void Quantities_init_am_matrices__( Quantities*       quan,
   for( im=0;     im<dims.nm;     ++im )
   for( ia=0;     ia<dims.na;     ++ia )
   {
-    *ref_m_from_a( quan->m_from_a, dims, im, ia, octant ) /= NOCTANT;
-    *ref_m_from_a( quan->m_from_a, dims, im, ia, octant ) /=
-                                    Quantities_scalefactor_angle__( dims, ia );
+    *ref_m_from_a( Pointer_h( & quan->m_from_a ), dims, im, ia, octant )
+                                                                    /= NOCTANT;
+    *ref_m_from_a( Pointer_h( & quan->m_from_a ), dims, im, ia, octant )
+                                 /= Quantities_scalefactor_angle__( dims, ia );
   }
+
+  Pointer_update_d( & quan->a_from_m );
+  Pointer_update_d( & quan->m_from_a );
 
 } /*---Quantities_init_am_matrices__---*/
 
@@ -320,13 +341,12 @@ void Quantities_dtor( Quantities* quan )
 {
   /*---Deallocate arrays---*/
 
-  free_P( quan->a_from_m );
-  free_P( quan->m_from_a );
+  Pointer_dtor( & quan->a_from_m );
+  Pointer_dtor( & quan->m_from_a );
+
   free_i( quan->ix_base_vals );
   free_i( quan->iy_base_vals );
 
-  quan->a_from_m     = NULL;
-  quan->m_from_a     = NULL;
   quan->ix_base_vals = NULL;
   quan->iy_base_vals = NULL;
 

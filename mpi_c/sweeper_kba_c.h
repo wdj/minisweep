@@ -801,6 +801,8 @@ void Sweeper_sweep_semiblock(
   P* __restrict__        facexy,
   P* __restrict__        facexz,
   P* __restrict__        faceyz,
+  const P* __restrict__  a_from_m,
+  const P* __restrict__  m_from_a,
   const Quantities*      quan,
   Env*                   env, 
   const Step_Info        step_info,
@@ -877,7 +879,7 @@ void Sweeper_sweep_semiblock(
         for( im=0; im<sweeper->dims.nm; ++im )
         {
           result +=
-            *const_ref_a_from_m( quan->a_from_m, sweeper->dims, im, ia, octant )
+            *const_ref_a_from_m( a_from_m, sweeper->dims, im, ia, octant )
             * *const_ref_state( vi, sweeper->dims, NU, ix, iy, iz, ie, im, iu );
         }
         *ref_v_local( v_local, sweeper->dims, NU, ia, iu ) = result;
@@ -908,7 +910,7 @@ void Sweeper_sweep_semiblock(
         for( ia=0; ia<sweeper->dims.na; ++ia )
         {
           result +=
-            *const_ref_m_from_a( quan->m_from_a, sweeper->dims, im, ia, octant )
+            *const_ref_m_from_a( m_from_a, sweeper->dims, im, ia, octant )
             * *const_ref_v_local( v_local, sweeper->dims, NU, ia, iu );
         }
 #ifdef USE_OPENMP_VO_ATOMIC
@@ -933,6 +935,8 @@ void Sweeper_sweep_block(
   P* __restrict__        facexy,
   P* __restrict__        facexz,
   P* __restrict__        faceyz,
+  const P* __restrict__  a_from_m,
+  const P* __restrict__  m_from_a,
   int                    step,
   const Quantities*      quan,
   Env*                   env )
@@ -1131,6 +1135,7 @@ void Sweeper_sweep_block(
           /*--------------------*/
 
           Sweeper_sweep_semiblock( sweeper, vo, vi, facexy, facexz, faceyz,
+                                   a_from_m, m_from_a,
                                    quan, env, step_info, octant_in_block,
                                    ixmin_b,         ixmax_b,
                                    iymin_b,         iymax_b,
@@ -1219,6 +1224,8 @@ void Sweeper_sweep(
     /*--------------------*/
 
     Sweeper_sweep_block( sweeper, vo, vi, facexy, facexz, faceyz,
+                         Pointer_const_h( & quan->a_from_m ),
+                         Pointer_const_h( & quan->m_from_a ),
                          step, quan, env );
 
     /*--------------------*/

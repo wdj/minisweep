@@ -18,11 +18,6 @@
 
 #include "arguments.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Header file for assertions---*/
 
@@ -49,12 +44,20 @@ extern "C"
 #include "env_cuda.h"
 
 /*===========================================================================*/
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+/*===========================================================================*/
 /*---Initialize for execution---*/
 
 static void Env_initialize( Env *env, int argc, char** argv )
 {
-  Env_mpi_initialize__( env, argc, argv );
-  Env_omp_initialize__( env, argc, argv );
+  Env_mpi_initialize__(  env, argc, argv );
+  Env_omp_initialize__(  env, argc, argv );
+  Env_cuda_initialize__( env, argc, argv );
 }
 
 /*===========================================================================*/
@@ -62,8 +65,9 @@ static void Env_initialize( Env *env, int argc, char** argv )
 
 static void Env_set_values( Env *env, Arguments* args )
 {
-  Env_mpi_set_values__( env, args );
-  Env_omp_set_values__( env, args );
+  Env_mpi_set_values__(  env, args );
+  Env_omp_set_values__(  env, args );
+  Env_cuda_set_values__( env, args );
 }
 
 /*===========================================================================*/
@@ -71,8 +75,9 @@ static void Env_set_values( Env *env, Arguments* args )
 
 static void Env_finalize( Env* env )
 {
-  Env_omp_finalize__( env );
-  Env_mpi_finalize__( env );
+  Env_cuda_finalize__( env );
+  Env_omp_finalize__(  env );
+  Env_mpi_finalize__(  env );
 }
 
 /*===========================================================================*/

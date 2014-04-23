@@ -175,36 +175,6 @@ void Pointer_update_d( Pointer* p )
 }
 
 /*===========================================================================*/
-/*---Accessors---*/
-
-P* __restrict__ Pointer_h( Pointer* p )
-{
-  assert( p );
-  assert( p->h__ );
-  return p->h__;
-}
-
-/*---------------------------------------------------------------------------*/
-
-P* __restrict__ Pointer_d( Pointer* p )
-{
-  assert( p );
-  assert( p->d__ );
-  assert( p->is_using_device__ );
-  return p->d__;
-}
-
-/*---------------------------------------------------------------------------*/
-
-P* __restrict__ Pointer_a( Pointer* p )
-{
-  assert( p );
-  P* __restrict__ result = p->is_using_device__ ? p->d__ : p->h__;
-  assert( result );
-  return result;
-}
-
-/*===========================================================================*/
   
 #ifdef __cplusplus
 } /*---extern "C"---*/

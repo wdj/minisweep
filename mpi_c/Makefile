@@ -43,26 +43,30 @@ default: make_executable
 
 CC =
 CFLAGS :=
+COMMON_FLAGS := 
 
 ifeq ($(COMPILER_OPTION),GNU)
   #---"module swap PrgEnv-pgi PrgEnv-gnu"
   CC = cc
   ifeq ($(RELEASE_OPTION),DEBUG)
-    CFLAGS := $(CFLAGS) -ansi -Dinline= -Wmissing-prototypes -g
+    CFLAGS := $(CFLAGS) -ansi -Wmissing-prototypes -g -Dinline=
+    COMMON_FLAGS := $(COMMON_FLAGS)
   else
-    CFLAGS := $(CFLAGS) -DNDEBUG -O3 -fomit-frame-pointer -funroll-loops \
+    CFLAGS := $(CFLAGS) -O3 -fomit-frame-pointer -funroll-loops \
                        -finline-limit=100000000
+    COMMON_FLAGS := $(COMMON_FLAGS) -DNDEBUG
   endif
 endif
 
 ifeq ($(COMPILER_OPTION),PGI)
   CC = cc
-  CFLAGS := $(CFLAGS) -DNDEBUG -fast -Mfprelaxed -alias=ansi -Msafeptr -tp=istanbul-64
+  CFLAGS := $(CFLAGS) -fast -Mfprelaxed -alias=ansi -Msafeptr -tp=istanbul-64
+    COMMON_FLAGS := $(COMMON_FLAGS) -DNDEBUG
 endif
 
 ifeq ($(MPI_OPTION),MPI)
-  CFLAGS := $(CFLAGS) -DUSE_MPI -I$(MPICH_DIR)/include -L$(MPICH_DIR)/lib \
-                      -Wl,-rpath=$(MPICH_DIR)/lib -lmpich
+  CFLAGS := $(CFLAGS) -L$(MPICH_DIR)/lib -Wl,-rpath=$(MPICH_DIR)/lib -lmpich
+  COMMON_FLAGS := $(COMMON_FLAGS) -DUSE_MPI -I$(MPICH_DIR)/include
 endif
 
 ifneq ($(OPENMP_OPTION),)
@@ -87,7 +91,7 @@ ifneq ($(CUDA_OPTION),)
     $(error "CUDA requires GNU compiler to be used.")
   endif
 make_cu: make_c
-	nvcc -c $(CUDA_SOURCES) $(INCLUDES) $(ALG_OPTIONS)
+	nvcc -c $(CUDA_SOURCES) $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS)
 else
 make_cu: make_c
 endif
@@ -97,10 +101,10 @@ endif
 #==============================================================================
 
 make_c:
-	$(CC) -c $(SOURCES) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
+	$(CC) -c $(SOURCES) $(COMMON_FLAGS) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
 
 make_executable: make_cu
-	$(CC) -o $(EXECUTABLE) *.o $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
+	$(CC) -o $(EXECUTABLE) *.o $(COMMON_FLAGS) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
 	rm *.o
 
 test:

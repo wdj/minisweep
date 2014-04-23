@@ -25,6 +25,49 @@ extern "C"
 #endif
 
 /*===========================================================================*/
+/*---Initialize CUDA---*/
+
+static void Env_cuda_initialize__( Env *env, int argc, char** argv )
+{
+#ifdef __CUDACC__
+#endif
+}
+
+/*===========================================================================*/
+/*---Finalize CUDA---*/
+
+static void Env_cuda_finalize__( Env* env )
+{
+#ifdef __CUDACC__
+#endif
+}
+
+/*===========================================================================*/
+/*---Set values from args---*/
+
+static void Env_cuda_set_values__( Env *env, Arguments* args )
+{
+#ifdef __CUDACC__
+  env->is_using_device__ = Arguments_consume_int_or_default( args,
+                                             "--is_using_device", Bool_false );
+  Insist( env->is_using_device__ == 0 ||
+          env->is_using_device__ == 1 ? "Invalid is_using_device value." : 0 );
+#endif
+}
+
+/*===========================================================================*/
+/*---Determine whether using device---*/
+
+static Bool_t Env_cuda_is_using_device( Env *env )
+{
+#ifdef __CUDACC__
+  return env->is_using_device__;
+#else
+  return Bool_false;
+#endif
+}
+
+/*===========================================================================*/
 
 static P* Env_cuda_malloc_P( size_t n )
 {

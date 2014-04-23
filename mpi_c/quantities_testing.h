@@ -13,6 +13,7 @@
 
 #include "dimensions.h"
 #include "array_accessors.h"
+#include "pointer.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -37,15 +38,15 @@ static inline Bool_t Quantities_bc_vacuum()
 
 typedef struct
 {
-  P* __restrict__  a_from_m;
-  P* __restrict__  m_from_a;
-  int*             ix_base_vals;
-  int*             iy_base_vals;
-  int              ix_base;
-  int              iy_base;
-  int              nx_g;
-  int              ny_g;
-  int              nz_g;
+  Pointer  a_from_m;
+  Pointer  m_from_a;
+  int*     ix_base_vals;
+  int*     iy_base_vals;
+  int      ix_base;
+  int      iy_base;
+  int      nx_g;
+  int      ny_g;
+  int      nz_g;
 } Quantities;
 
 /*===========================================================================*/
@@ -65,7 +66,8 @@ void Quantities_dtor( Quantities* quan );
 /*---pseudo-private member function---*/
 
 void Quantities_init_am_matrices__( Quantities*       quan,
-                                    const Dimensions  dims );
+                                    const Dimensions  dims,
+                                    Env*              env );
 
 /*===========================================================================*/
 /*---Initialize Quantities subgrid decomp info---*/

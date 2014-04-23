@@ -26,6 +26,9 @@ typedef struct
   int nproc_y__;    /*---Number of procs along y axis---*/
   int tag__;        /*---Next free message tag---*/
 #endif
+#ifdef __CUDACC__
+  Bool_t is_using_device__;
+#endif
 } Env;
 
 /*===========================================================================*/

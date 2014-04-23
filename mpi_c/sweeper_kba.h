@@ -288,6 +288,8 @@ void Sweeper_sweep_semiblock(
   P* __restrict__        facexy,
   P* __restrict__        facexz,
   P* __restrict__        faceyz,
+  const P* __restrict__  a_from_m,
+  const P* __restrict__  m_from_a,
   const Quantities*      quan,
   Env*                   env,
   const Step_Info        step_info,
@@ -309,6 +311,8 @@ void Sweeper_sweep_block(
   P* __restrict__        facexy,
   P* __restrict__        facexz,
   P* __restrict__        faceyz,
+  const P* __restrict__  a_from_m,
+  const P* __restrict__  m_from_a,
   int                    step,
   const Quantities*      quan,
   Env*                   env );
