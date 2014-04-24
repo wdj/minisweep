@@ -34,6 +34,8 @@ void Sweeper_ctor( Sweeper*          sweeper,
                    Env*              env,
                    Arguments*        args )
 {
+  int i = 0;
+
   Insist( dims.nx > 0 ? "KBA sweeper currently requires all blocks nonempty":0);
   Insist( dims.ny > 0 ? "KBA sweeper currently requires all blocks nonempty":0);
   Insist( dims.nz > 0 ? "KBA sweeper currently requires all blocks nonempty":0);
@@ -88,28 +90,43 @@ void Sweeper_ctor( Sweeper*          sweeper,
   sweeper->v_local = malloc_P( sweeper->dims_b.na * NU *
                                sweeper->nthread_e * sweeper->nthread_octant );
 
-  sweeper->facexy0 = malloc_P( Dimensions_size_facexy( sweeper->dims_b, NU,
-                                                sweeper->noctant_per_block ) );
-  sweeper->facexz0 = malloc_P( Dimensions_size_facexz( sweeper->dims_b, NU,
-                                                sweeper->noctant_per_block ) );
-  sweeper->faceyz0 = malloc_P( Dimensions_size_faceyz( sweeper->dims_b, NU,
-                                                sweeper->noctant_per_block ) );
+  /*---Allocate faces---*/
 
-  sweeper->facexz1 = NULL;
-  sweeper->facexz2 = NULL;
-  sweeper->faceyz1 = NULL;
-  sweeper->faceyz2 = NULL;
+  sweeper->facesxy[0] = & sweeper->facexy0;
 
-  if( Sweeper_is_face_comm_async() )
+  sweeper->facesxz[0] = & sweeper->facexz0;
+  sweeper->facesxz[1] = & sweeper->facexz1;
+  sweeper->facesxz[2] = & sweeper->facexz2;
+
+  sweeper->facesyz[0] = & sweeper->faceyz0;
+  sweeper->facesyz[1] = & sweeper->faceyz1;
+  sweeper->facesyz[2] = & sweeper->faceyz2;
+
+  Pointer_ctor(       sweeper->facesxy[0],
+    Dimensions_size_facexy( sweeper->dims_b, NU, sweeper->noctant_per_block ),
+    Env_cuda_is_using_device( env ) );
+  Pointer_set_pinned( sweeper->facesxy[0], Bool_true );
+  Pointer_create_h(   sweeper->facesxy[0] );
+  Pointer_create_d(   sweeper->facesxy[0] );
+
+  for( i = 0; i < NDIM; ++i )
   {
-    sweeper->facexz1 = malloc_P( Dimensions_size_facexz( sweeper->dims_b, NU,
-                                                sweeper->noctant_per_block ) );
-    sweeper->facexz2 = malloc_P( Dimensions_size_facexz( sweeper->dims_b, NU,
-                                                sweeper->noctant_per_block ) );
-    sweeper->faceyz1 = malloc_P( Dimensions_size_faceyz( sweeper->dims_b, NU,
-                                                sweeper->noctant_per_block ) );
-    sweeper->faceyz2 = malloc_P( Dimensions_size_faceyz( sweeper->dims_b, NU,
-                                                sweeper->noctant_per_block ) );
+    Pointer_ctor(       sweeper->facesxz[i],
+      Dimensions_size_facexz( sweeper->dims_b, NU, sweeper->noctant_per_block ),
+      Env_cuda_is_using_device( env ) );
+    Pointer_set_pinned( sweeper->facesxz[i], Bool_true );
+    Pointer_ctor(       sweeper->facesyz[i],
+      Dimensions_size_faceyz( sweeper->dims_b, NU, sweeper->noctant_per_block ),
+      Env_cuda_is_using_device( env ) );
+    Pointer_set_pinned( sweeper->facesyz[i], Bool_true );
+  }
+
+  for( i = 0; i < ( Sweeper_is_face_comm_async() ? NDIM : 1 ); ++i )
+  {
+    Pointer_create_h( sweeper->facesxz[i] );
+    Pointer_create_d( sweeper->facesxz[i] );
+    Pointer_create_h( sweeper->facesyz[i] );
+    Pointer_create_d( sweeper->facesyz[i] );
   }
 }
 
@@ -118,28 +135,19 @@ void Sweeper_ctor( Sweeper*          sweeper,
 
 void Sweeper_dtor( Sweeper* sweeper )
 {
+  int i = 0;
+
   /*---Deallocate arrays---*/
 
   free_P( sweeper->v_local );
   sweeper->v_local = NULL;
 
-  free_P( sweeper->facexy0 );
-  free_P( sweeper->facexz0 );
-  free_P( sweeper->faceyz0 );
-  sweeper->facexy0 = NULL;
-  sweeper->facexz0 = NULL;
-  sweeper->faceyz0 = NULL;
+  Pointer_dtor( sweeper->facesxy[0] );
 
-  if( Sweeper_is_face_comm_async() )
+  for( i = 0; i < NDIM; ++i )
   {
-    free_P( sweeper->facexz1 );
-    free_P( sweeper->facexz2 );
-    free_P( sweeper->faceyz1 );
-    free_P( sweeper->faceyz2 );
-    sweeper->facexz1 = NULL;
-    sweeper->facexz2 = NULL;
-    sweeper->faceyz1 = NULL;
-    sweeper->faceyz2 = NULL;
+    Pointer_dtor( sweeper->facesxz[i] );
+    Pointer_dtor( sweeper->facesyz[i] );
   }
 
   Step_Scheduler_dtor( &( sweeper->step_scheduler ) );
@@ -283,10 +291,12 @@ void Sweeper_communicate_faces__(
       P* __restrict__ buf                     = axis_x ? buf_yz
                                                        : buf_xz;
       P* __restrict__ face_per_octant = axis_x ?
-        ref_faceyz( Sweeper_faceyz__( sweeper, step ), sweeper->dims_b, NU,
-                  sweeper->noctant_per_block, 0, 0, 0, 0, 0, octant_in_block ) :
-        ref_facexz( Sweeper_facexz__( sweeper, step ), sweeper->dims_b, NU,
-                  sweeper->noctant_per_block, 0, 0, 0, 0, 0, octant_in_block );
+        ref_faceyz( Pointer_h( Sweeper_faceyz__( sweeper, step ) ),
+                    sweeper->dims_b, NU, sweeper->noctant_per_block,
+                    0, 0, 0, 0, 0, octant_in_block ) :
+        ref_facexz( Pointer_h( Sweeper_facexz__( sweeper, step ) ),
+                    sweeper->dims_b, NU, sweeper->noctant_per_block,
+                     0, 0, 0, 0, 0, octant_in_block );
 
       int dir_ind = 0;
 
@@ -411,10 +421,12 @@ void Sweeper_send_faces_start__(
       const size_t    size_face_per_octant    = axis_x ? size_faceyz_per_octant
                                                        : size_facexz_per_octant;
       P* __restrict__ face_per_octant = axis_x ?
-        ref_faceyz( Sweeper_faceyz__( sweeper, step ), sweeper->dims_b, NU,
-                  sweeper->noctant_per_block, 0, 0, 0, 0, 0, octant_in_block ) :
-        ref_facexz( Sweeper_facexz__( sweeper, step ), sweeper->dims_b, NU,
-                  sweeper->noctant_per_block, 0, 0, 0, 0, 0, octant_in_block );
+        ref_faceyz( Pointer_h( Sweeper_faceyz__( sweeper, step ) ),
+                    sweeper->dims_b, NU, sweeper->noctant_per_block,
+                    0, 0, 0, 0, 0, octant_in_block ) :
+        ref_facexz( Pointer_h( Sweeper_facexz__( sweeper, step ) ),
+                    sweeper->dims_b, NU, sweeper->noctant_per_block,
+                    0, 0, 0, 0, 0, octant_in_block );
 
       int dir_ind = 0;
 
@@ -532,10 +544,12 @@ void Sweeper_recv_faces_start__(
       const size_t    size_face_per_octant    = axis_x ? size_faceyz_per_octant
                                                        : size_facexz_per_octant;
       P* __restrict__ face_per_octant = axis_x ?
-        ref_faceyz( Sweeper_faceyz__( sweeper, step+1 ), sweeper->dims_b, NU,
-                  sweeper->noctant_per_block, 0, 0, 0, 0, 0, octant_in_block ) :
-        ref_facexz( Sweeper_facexz__( sweeper, step+1 ), sweeper->dims_b, NU,
-                  sweeper->noctant_per_block, 0, 0, 0, 0, 0, octant_in_block );
+        ref_faceyz( Pointer_h( Sweeper_faceyz__( sweeper, step+1 ) ),
+                    sweeper->dims_b, NU, sweeper->noctant_per_block,
+                    0, 0, 0, 0, 0, octant_in_block ) :
+        ref_facexz( Pointer_h( Sweeper_facexz__( sweeper, step+1 ) ),
+                    sweeper->dims_b, NU, sweeper->noctant_per_block,
+                    0, 0, 0, 0, 0, octant_in_block );
 
       int dir_ind = 0;
 
@@ -1192,9 +1206,9 @@ void Sweeper_sweep(
     =    The _s face for a step must match the _c face for the prev step.
     =========================================================================*/
 
-    P* const __restrict__ facexy = Sweeper_facexy__( sweeper, step );
-    P* const __restrict__ facexz = Sweeper_facexz__( sweeper, step );
-    P* const __restrict__ faceyz = Sweeper_faceyz__( sweeper, step );
+    Pointer* facexy = Sweeper_facexy__( sweeper, step );
+    Pointer* facexz = Sweeper_facexz__( sweeper, step );
+    Pointer* faceyz = Sweeper_faceyz__( sweeper, step );
 
     /*--------------------*/
     /*---Communicate faces---*/
@@ -1223,7 +1237,10 @@ void Sweeper_sweep(
     /*---Sweep this kba block---*/
     /*--------------------*/
 
-    Sweeper_sweep_block( sweeper, vo, vi, facexy, facexz, faceyz,
+    Sweeper_sweep_block( sweeper, vo, vi,
+                         Pointer_h( facexy ),
+                         Pointer_h( facexz ),
+                         Pointer_h( faceyz ),
                          Pointer_const_h( & quan->a_from_m ),
                          Pointer_const_h( & quan->m_from_a ),
                          step, quan, env );

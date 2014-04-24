@@ -15,6 +15,7 @@
 #include "definitions.h"
 #include "dimensions.h"
 #include "arguments.h"
+#include "pointer.h"
 #include "quantities.h"
 #include "step_scheduler_kba.h"
 
@@ -43,15 +44,19 @@ enum{ IS_USING_OPENMP_VO_ATOMIC = 0 };
 
 typedef struct
 {
-  P* __restrict__  facexy0;
+  Pointer          facexy0;
 
-  P* __restrict__  facexz0;
-  P* __restrict__  facexz1;
-  P* __restrict__  facexz2;
+  Pointer          facexz0;
+  Pointer          facexz1;
+  Pointer          facexz2;
 
-  P* __restrict__  faceyz0;
-  P* __restrict__  faceyz1;
-  P* __restrict__  faceyz2;
+  Pointer          faceyz0;
+  Pointer          faceyz1;
+  Pointer          faceyz2;
+
+  Pointer*         facesxy[1];
+  Pointer*         facesxz[NDIM];
+  Pointer*         facesyz[NDIM];
 
   P* __restrict__  v_local;
 
@@ -217,35 +222,31 @@ static void Sweeper_set_boundary_yz(
      block-sweep-compute in-flight.
 ---*/
 
-static P* __restrict__ Sweeper_facexy__( Sweeper* sweeper, int step )
+static Pointer* Sweeper_facexy__( Sweeper* sweeper, int step )
 {
   assert( sweeper != NULL );
   assert( step >= 0 );
-  return sweeper->facexy0;
+  return sweeper->facesxy[0];
 }
 
 /*---------------------------------------------------------------------------*/
 
-static P* __restrict__ Sweeper_facexz__( Sweeper* sweeper, int step )
+static Pointer* Sweeper_facexz__( Sweeper* sweeper, int step )
 {
   assert( sweeper != NULL );
   assert( step >= 0 );
-  P* __restrict__ facesxz[3] = { sweeper->facexz0,
-                                 sweeper->facexz1,
-                                 sweeper->facexz2 };
-  return Sweeper_is_face_comm_async() ? facesxz[(step+3)%3] : sweeper->facexz0;
+  return Sweeper_is_face_comm_async() ? sweeper->facesxz[(step+3)%3]
+                                      : sweeper->facesxz[0];
 }
 
 /*---------------------------------------------------------------------------*/
 
-static P* __restrict__ Sweeper_faceyz__( Sweeper* sweeper, int step )
+static Pointer* Sweeper_faceyz__( Sweeper* sweeper, int step )
 {
   assert( sweeper != NULL );
   assert( step >= 0 );
-  P* __restrict__ facesyz[3] = { sweeper->faceyz0,
-                                 sweeper->faceyz1,
-                                 sweeper->faceyz2 };
-  return Sweeper_is_face_comm_async() ? facesyz[(step+3)%3] : sweeper->faceyz0;
+  return Sweeper_is_face_comm_async() ? sweeper->facesyz[(step+3)%3]
+                                      : sweeper->facesyz[0];
 }
 
 /*===========================================================================*/
