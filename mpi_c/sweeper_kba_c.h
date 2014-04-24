@@ -943,12 +943,12 @@ void Sweeper_sweep_block(
 {
   /*---Declarations---*/
 
-  int semiblock = 0;
-
 #ifdef USE_OPENMP_THREADS
 #pragma omp parallel num_threads( sweeper->nthread_e * sweeper->nthread_octant )
 #endif
   {
+    int semiblock = 0;
+
     /*=========================================================================
     =    OpenMP-parallelizing octants leads to the problem that for the same
     =    step, two octants may be updating the same location in a state vector.
