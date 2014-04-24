@@ -47,8 +47,8 @@ static inline P* ref_state(
               iu + nu      * (
               ix + dims.nx * (
               iy + dims.ny * (
-              iz + dims.nz * (
               ie + dims.ne * (
+              iz + dims.nz * ( /*---NOTE: This axis MUST be slowest-varying---*/
               0 )))))) ];
 }
 
@@ -79,8 +79,8 @@ static inline const P* const_ref_state(
               iu + nu      * (
               ix + dims.nx * (
               iy + dims.ny * (
-              iz + dims.nz * (
               ie + dims.ne * (
+              iz + dims.nz * ( /*---NOTE: This axis MUST be slowest-varying---*/
               0 )))))) ];
 }
 

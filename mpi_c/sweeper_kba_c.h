@@ -810,8 +810,8 @@ static void Sweeper_set_boundary_yz(
 
 void Sweeper_sweep_semiblock(
   Sweeper*               sweeper,
-  P* __restrict__        vo,
-  const P* __restrict__  vi,
+  P* __restrict__        vo_this,
+  const P* __restrict__  vi_this,
   P* __restrict__        facexy,
   P* __restrict__        facexz,
   P* __restrict__        faceyz,
@@ -894,7 +894,8 @@ void Sweeper_sweep_semiblock(
         {
           result +=
             *const_ref_a_from_m( a_from_m, sweeper->dims, im, ia, octant )
-            * *const_ref_state( vi, sweeper->dims, NU, ix, iy, iz, ie, im, iu );
+            * *const_ref_state( vi_this, sweeper->dims_b, NU,
+                                ix, iy, iz, ie, im, iu );
         }
         *ref_v_local( v_local, sweeper->dims, NU, ia, iu ) = result;
       }
@@ -906,8 +907,8 @@ void Sweeper_sweep_semiblock(
 
       Quantities_solve( quan, v_local,
                         facexy, facexz, faceyz,
-                        ix, iy, iz-iz_base, ie,
-                        ix+quan->ix_base, iy+quan->iy_base, iz,
+                        ix, iy, iz, ie,
+                        ix+quan->ix_base, iy+quan->iy_base, iz+iz_base,
                         octant, octant_in_block,
                         sweeper->noctant_per_block,
                         sweeper->dims_b, sweeper->dims_g );
@@ -930,7 +931,8 @@ void Sweeper_sweep_semiblock(
 #ifdef USE_OPENMP_VO_ATOMIC
 #pragma omp atomic update
 #endif
-        *ref_state( vo, sweeper->dims, NU, ix, iy, iz, ie, im, iu ) += result;
+        *ref_state( vo_this, sweeper->dims_b, NU,
+                    ix, iy, iz, ie, im, iu ) += result;
       }
       }
 
@@ -1046,6 +1048,11 @@ void Sweeper_sweep_block(
         {
           const int iz_base = step_info.block_z * sweeper->dims_b.nz;
 
+          const P* vi_this
+            = const_ref_state( vi, sweeper->dims, NU, 0, 0, iz_base, 0, 0, 0 );
+          P* vo_this
+                  = ref_state( vo, sweeper->dims, NU, 0, 0, iz_base, 0, 0, 0 );
+
           const int dir_x = Dir_x( step_info.octant );
           const int dir_y = Dir_y( step_info.octant );
           const int dir_z = Dir_z( step_info.octant );
@@ -1148,12 +1155,13 @@ void Sweeper_sweep_block(
           /*---Perform sweep on relevant block---*/
           /*--------------------*/
 
-          Sweeper_sweep_semiblock( sweeper, vo, vi, facexy, facexz, faceyz,
+          Sweeper_sweep_semiblock( sweeper, vo_this, vi_this,
+                                   facexy, facexz, faceyz,
                                    a_from_m, m_from_a,
                                    quan, env, step_info, octant_in_block,
-                                   ixmin_b,         ixmax_b,
-                                   iymin_b,         iymax_b,
-                                   izmin_b+iz_base, izmax_b+iz_base );
+                                   ixmin_b, ixmax_b,
+                                   iymin_b, iymax_b,
+                                   izmin_b, izmax_b );
 
         }  /*---is_active---*/
 

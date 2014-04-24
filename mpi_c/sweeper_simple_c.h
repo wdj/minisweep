@@ -213,7 +213,7 @@ void Sweeper_sweep(
         P result = P_zero();
         for( im=0; im<sweeper->dims.nm; ++im )
         {
-          result += *const_ref_a_from_m( Pointer_h( & quan->a_from_m ),
+          result += *const_ref_a_from_m( Pointer_const_h( & quan->a_from_m ),
                                          sweeper->dims, im, ia, octant )*
                     *const_ref_state( vi, sweeper->dims, NU, ix, iy, iz, ie, im, iu );
         }
@@ -245,7 +245,7 @@ void Sweeper_sweep(
         P result = P_zero();
         for( ia=0; ia<sweeper->dims.na; ++ia )
         {
-          result += *const_ref_m_from_a( Pointer_h( & quan->m_from_a ),
+          result += *const_ref_m_from_a( Pointer_const_h( & quan->m_from_a ),
                                          sweeper->dims, im, ia, octant )*
                     *const_ref_v_local( sweeper->v_local, sweeper->dims, NU, ia, iu );
         }
