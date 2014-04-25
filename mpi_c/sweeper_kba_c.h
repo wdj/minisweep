@@ -41,12 +41,14 @@ void Sweeper_ctor( Sweeper*          sweeper,
   Insist( dims.nz > 0 ? "KBA sweeper currently requires all blocks nonempty":0);
 
   /*---Set up number of kba blocks---*/
+
   sweeper->nblock_z = Arguments_consume_int_or_default( args, "--nblock_z", 1);
   Insist( sweeper->nblock_z > 0 ? "Invalid z blocking factor supplied" : 0 );
   Insist( dims.nz % sweeper->nblock_z == 0
      ? "KBA sweeper currently requires all blocks have same z dimension" : 0 );
 
   /*---Set up number of octant threads---*/
+
   sweeper->nthread_octant
               = Arguments_consume_int_or_default( args, "--nthread_octant", 1);
   /*---Require a power of 2 between 1 and 8 inclusive---*/
@@ -57,6 +59,7 @@ void Sweeper_ctor( Sweeper*          sweeper,
   sweeper->nblock_octant = NOCTANT / sweeper->noctant_per_block;
 
   /*---Set up number of semiblock steps---*/
+
   sweeper->nsemiblock = Arguments_consume_int_or_default(
                                args, "--nsemiblock", sweeper->nthread_octant );
   Insist( sweeper->nsemiblock>0 && sweeper->nsemiblock<=NOCTANT
@@ -67,15 +70,18 @@ void Sweeper_ctor( Sweeper*          sweeper,
          ? "Incomplete set of semiblock steps requires atomic vo update" : 0 );
 
   /*---Set up number of energy threads---*/
+
   sweeper->nthread_e
                    = Arguments_consume_int_or_default( args, "--nthread_e", 1);
   Insist( sweeper->nthread_e > 0 ? "Invalid e thread count supplied." : 0 );
 
   /*---Set up step scheduler---*/
+
   Step_Scheduler_ctor( &(sweeper->step_scheduler),
                               sweeper->nblock_z, sweeper->nblock_octant, env );
 
   /*---Set up dims structs---*/
+
   sweeper->dims = dims;
 
   sweeper->dims_b = sweeper->dims;
@@ -92,41 +98,28 @@ void Sweeper_ctor( Sweeper*          sweeper,
 
   /*---Allocate faces---*/
 
-  sweeper->facesxy[0] = & sweeper->facexy0;
-
-  sweeper->facesxz[0] = & sweeper->facexz0;
-  sweeper->facesxz[1] = & sweeper->facexz1;
-  sweeper->facesxz[2] = & sweeper->facexz2;
-
-  sweeper->facesyz[0] = & sweeper->faceyz0;
-  sweeper->facesyz[1] = & sweeper->faceyz1;
-  sweeper->facesyz[2] = & sweeper->faceyz2;
-
-  Pointer_ctor(       sweeper->facesxy[0],
+  Pointer_ctor(       Sweeper_facexy__( sweeper, 0 ),
     Dimensions_size_facexy( sweeper->dims_b, NU, sweeper->noctant_per_block ),
     Env_cuda_is_using_device( env ) );
-  Pointer_set_pinned( sweeper->facesxy[0], Bool_true );
-  Pointer_create_h(   sweeper->facesxy[0] );
-  Pointer_create_d(   sweeper->facesxy[0] );
+  Pointer_set_pinned( Sweeper_facexy__( sweeper, 0 ), Bool_true );
+  Pointer_create(     Sweeper_facexy__( sweeper, 0 ) );
 
   for( i = 0; i < NDIM; ++i )
   {
-    Pointer_ctor(       sweeper->facesxz[i],
+    Pointer_ctor(       Sweeper_facexz__( sweeper, i ),
       Dimensions_size_facexz( sweeper->dims_b, NU, sweeper->noctant_per_block ),
       Env_cuda_is_using_device( env ) );
-    Pointer_set_pinned( sweeper->facesxz[i], Bool_true );
-    Pointer_ctor(       sweeper->facesyz[i],
+    Pointer_set_pinned( Sweeper_facexz__( sweeper, i ), Bool_true );
+    Pointer_ctor(       Sweeper_faceyz__( sweeper, i ),
       Dimensions_size_faceyz( sweeper->dims_b, NU, sweeper->noctant_per_block ),
       Env_cuda_is_using_device( env ) );
-    Pointer_set_pinned( sweeper->facesyz[i], Bool_true );
+    Pointer_set_pinned( Sweeper_faceyz__( sweeper, i ), Bool_true );
   }
 
   for( i = 0; i < ( Sweeper_is_face_comm_async() ? NDIM : 1 ); ++i )
   {
-    Pointer_create_h( sweeper->facesxz[i] );
-    Pointer_create_d( sweeper->facesxz[i] );
-    Pointer_create_h( sweeper->facesyz[i] );
-    Pointer_create_d( sweeper->facesyz[i] );
+    Pointer_create( Sweeper_facexz__( sweeper, i ) );
+    Pointer_create( Sweeper_faceyz__( sweeper, i ) );
   }
 }
 
@@ -142,12 +135,12 @@ void Sweeper_dtor( Sweeper* sweeper )
   free_P( sweeper->v_local );
   sweeper->v_local = NULL;
 
-  Pointer_dtor( sweeper->facesxy[0] );
+  Pointer_dtor( Sweeper_facexy__( sweeper, 0 ) );
 
   for( i = 0; i < NDIM; ++i )
   {
-    Pointer_dtor( sweeper->facesxz[i] );
-    Pointer_dtor( sweeper->facesyz[i] );
+    Pointer_dtor( Sweeper_facexz__( sweeper, i ) );
+    Pointer_dtor( Sweeper_faceyz__( sweeper, i ) );
   }
 
   Step_Scheduler_dtor( &( sweeper->step_scheduler ) );
@@ -291,10 +284,10 @@ void Sweeper_communicate_faces__(
       P* __restrict__ buf                     = axis_x ? buf_yz
                                                        : buf_xz;
       P* __restrict__ face_per_octant = axis_x ?
-        ref_faceyz( Pointer_h( Sweeper_faceyz__( sweeper, step ) ),
+        ref_faceyz( Pointer_h( Sweeper_faceyz_step__( sweeper, step ) ),
                     sweeper->dims_b, NU, sweeper->noctant_per_block,
                     0, 0, 0, 0, 0, octant_in_block ) :
-        ref_facexz( Pointer_h( Sweeper_facexz__( sweeper, step ) ),
+        ref_facexz( Pointer_h( Sweeper_facexz_step__( sweeper, step ) ),
                     sweeper->dims_b, NU, sweeper->noctant_per_block,
                      0, 0, 0, 0, 0, octant_in_block );
 
@@ -421,10 +414,10 @@ void Sweeper_send_faces_start__(
       const size_t    size_face_per_octant    = axis_x ? size_faceyz_per_octant
                                                        : size_facexz_per_octant;
       P* __restrict__ face_per_octant = axis_x ?
-        ref_faceyz( Pointer_h( Sweeper_faceyz__( sweeper, step ) ),
+        ref_faceyz( Pointer_h( Sweeper_faceyz_step__( sweeper, step ) ),
                     sweeper->dims_b, NU, sweeper->noctant_per_block,
                     0, 0, 0, 0, 0, octant_in_block ) :
-        ref_facexz( Pointer_h( Sweeper_facexz__( sweeper, step ) ),
+        ref_facexz( Pointer_h( Sweeper_facexz_step__( sweeper, step ) ),
                     sweeper->dims_b, NU, sweeper->noctant_per_block,
                     0, 0, 0, 0, 0, octant_in_block );
 
@@ -544,10 +537,10 @@ void Sweeper_recv_faces_start__(
       const size_t    size_face_per_octant    = axis_x ? size_faceyz_per_octant
                                                        : size_facexz_per_octant;
       P* __restrict__ face_per_octant = axis_x ?
-        ref_faceyz( Pointer_h( Sweeper_faceyz__( sweeper, step+1 ) ),
+        ref_faceyz( Pointer_h( Sweeper_faceyz_step__( sweeper, step+1 ) ),
                     sweeper->dims_b, NU, sweeper->noctant_per_block,
                     0, 0, 0, 0, 0, octant_in_block ) :
-        ref_facexz( Pointer_h( Sweeper_facexz__( sweeper, step+1 ) ),
+        ref_facexz( Pointer_h( Sweeper_facexz_step__( sweeper, step+1 ) ),
                     sweeper->dims_b, NU, sweeper->noctant_per_block,
                     0, 0, 0, 0, 0, octant_in_block );
 
@@ -946,11 +939,11 @@ void Sweeper_sweep_semiblock(
 
 void Sweeper_sweep_block(
   Sweeper*               sweeper,
-  P* __restrict__        vo,
+        P* __restrict__  vo,
   const P* __restrict__  vi,
-  P* __restrict__        facexy,
-  P* __restrict__        facexz,
-  P* __restrict__        faceyz,
+        P* __restrict__  facexy,
+        P* __restrict__  facexz,
+        P* __restrict__  faceyz,
   const P* __restrict__  a_from_m,
   const P* __restrict__  m_from_a,
   int                    step,
@@ -1183,8 +1176,8 @@ void Sweeper_sweep_block(
 
 void Sweeper_sweep(
   Sweeper*               sweeper,
-  P* __restrict__        vo,
-  const P* __restrict__  vi,
+  Pointer*               vo,
+  Pointer*               vi,
   const Quantities*      quan,
   Env*                   env )
 {
@@ -1198,7 +1191,7 @@ void Sweeper_sweep(
 
   /*---Initialize result array to zero---*/
 
-  initialize_state_zero( vo, sweeper->dims, NU );
+  initialize_state_zero( Pointer_h( vo ), sweeper->dims, NU );
 
   /*--------------------*/
   /*---Loop over kba parallel steps---*/
@@ -1214,9 +1207,9 @@ void Sweeper_sweep(
     =    The _s face for a step must match the _c face for the prev step.
     =========================================================================*/
 
-    Pointer* facexy = Sweeper_facexy__( sweeper, step );
-    Pointer* facexz = Sweeper_facexz__( sweeper, step );
-    Pointer* faceyz = Sweeper_faceyz__( sweeper, step );
+    Pointer* facexy = Sweeper_facexy_step__( sweeper, step );
+    Pointer* facexz = Sweeper_facexz_step__( sweeper, step );
+    Pointer* faceyz = Sweeper_faceyz_step__( sweeper, step );
 
     /*--------------------*/
     /*---Communicate faces---*/
@@ -1245,13 +1238,27 @@ void Sweeper_sweep(
     /*---Sweep this kba block---*/
     /*--------------------*/
 
-    Sweeper_sweep_block( sweeper, vo, vi,
+    Pointer_update_d( vo );
+    Pointer_update_d( vi );
+    Pointer_update_d( facexy );
+    Pointer_update_d( facexz );
+    Pointer_update_d( faceyz );
+
+    Sweeper_sweep_block( sweeper, Pointer_h( vo ), Pointer_h( vi ),
                          Pointer_h( facexy ),
                          Pointer_h( facexz ),
                          Pointer_h( faceyz ),
                          Pointer_const_h( & quan->a_from_m ),
                          Pointer_const_h( & quan->m_from_a ),
                          step, quan, env );
+
+#if 0
+    Pointer_update_h( vo );
+    Pointer_update_h( vi );
+    Pointer_update_h( facexy );
+    Pointer_update_h( facexz );
+    Pointer_update_h( faceyz );
+#endif
 
     /*--------------------*/
     /*---Communicate faces---*/

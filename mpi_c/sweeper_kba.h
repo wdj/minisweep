@@ -54,10 +54,6 @@ typedef struct
   Pointer          faceyz1;
   Pointer          faceyz2;
 
-  Pointer*         facesxy[1];
-  Pointer*         facesxz[NDIM];
-  Pointer*         facesyz[NDIM];
-
   P* __restrict__  v_local;
 
   Dimensions       dims;
@@ -222,31 +218,67 @@ static void Sweeper_set_boundary_yz(
      block-sweep-compute in-flight.
 ---*/
 
-static Pointer* Sweeper_facexy__( Sweeper* sweeper, int step )
+static Pointer* Sweeper_facexy__( Sweeper* sweeper, int i )
 {
   assert( sweeper != NULL );
-  assert( step >= 0 );
-  return sweeper->facesxy[0];
+  assert( i >= 0 && i < 1 );
+  return & sweeper->facexy0;
 }
 
 /*---------------------------------------------------------------------------*/
 
-static Pointer* Sweeper_facexz__( Sweeper* sweeper, int step )
+static Pointer* Sweeper_facexz__( Sweeper* sweeper, int i )
 {
   assert( sweeper != NULL );
-  assert( step >= 0 );
-  return Sweeper_is_face_comm_async() ? sweeper->facesxz[(step+3)%3]
-                                      : sweeper->facesxz[0];
+  assert( i >= 0 && i < ( Sweeper_is_face_comm_async() ? NDIM : 1 ) );
+  Pointer* facesxz[NDIM] = { & sweeper->facexz0,
+                             & sweeper->facexz1,
+                             & sweeper->facexz2 };
+  return facesxz[i];
 }
 
 /*---------------------------------------------------------------------------*/
 
-static Pointer* Sweeper_faceyz__( Sweeper* sweeper, int step )
+static Pointer* Sweeper_faceyz__( Sweeper* sweeper, int i )
+{
+  assert( sweeper != NULL );
+  assert( i >= 0 && i < ( Sweeper_is_face_comm_async() ? NDIM : 1 ) );
+  Pointer* facesyz[NDIM] = { & sweeper->faceyz0,
+                             & sweeper->faceyz1,
+                             & sweeper->faceyz2 };
+  return facesyz[i];
+}
+
+/*---------------------------------------------------------------------------*/
+
+
+static Pointer* Sweeper_facexy_step__( Sweeper* sweeper, int step )
 {
   assert( sweeper != NULL );
   assert( step >= 0 );
-  return Sweeper_is_face_comm_async() ? sweeper->facesyz[(step+3)%3]
-                                      : sweeper->facesyz[0];
+  return Sweeper_facexy__( sweeper, 0 );
+}
+
+/*---------------------------------------------------------------------------*/
+
+static Pointer* Sweeper_facexz_step__( Sweeper* sweeper, int step )
+{
+  assert( sweeper != NULL );
+  assert( step >= 0 );
+
+  return Sweeper_facexz__( sweeper,
+                           Sweeper_is_face_comm_async() ? (step+3)%3 : 0 );
+}
+
+/*---------------------------------------------------------------------------*/
+
+static Pointer* Sweeper_faceyz_step__( Sweeper* sweeper, int step )
+{
+  assert( sweeper != NULL );
+  assert( step >= 0 );
+
+  return Sweeper_faceyz__( sweeper,
+                           Sweeper_is_face_comm_async() ? (step+3)%3 : 0 );
 }
 
 /*===========================================================================*/
@@ -323,8 +355,8 @@ void Sweeper_sweep_block(
 
 void Sweeper_sweep(
   Sweeper*               sweeper,
-  P* __restrict__        vo,
-  const P* __restrict__  vi,
+  Pointer*               vo,
+  Pointer*               vi,
   const Quantities*      quan,
   Env*                   env );
 

@@ -33,8 +33,8 @@ int main( int argc, char** argv )
   Sweeper     sweeper;
   Env         env;
 
-  P* vi = NULL;
-  P* vo = NULL;
+  Pointer vi = Pointer_null();
+  Pointer vo = Pointer_null();
 
   P normsq     = P_zero();
   P normsqdiff = P_zero();
@@ -93,19 +93,26 @@ int main( int argc, char** argv )
 
   /*---Allocate arrays---*/
 
-  vi = malloc_P( Dimensions_size_state( dims, NU ) );
-  vo = malloc_P( Dimensions_size_state( dims, NU ) );
+  Pointer_ctor( &vi, Dimensions_size_state( dims, NU ),
+                                            Env_cuda_is_using_device( &env ) );
+  Pointer_set_pinned( &vi, Bool_true );
+  Pointer_create( &vi );
+
+  Pointer_ctor( &vo, Dimensions_size_state( dims, NU ),
+                                            Env_cuda_is_using_device( &env ) );
+  Pointer_set_pinned( &vo, Bool_true );
+  Pointer_create( &vo );
 
   /*---Initialize input state array---*/
 
-  initialize_state( vi, dims, NU, &quan );
+  initialize_state( Pointer_h( &vi ), dims, NU, &quan );
 
   /*---Initialize output state array---*/
   /*---This is not strictly required for the output vector but might
        have a performance effect from pre-touching pages.
   ---*/
 
-  initialize_state_zero( vo, dims, NU );
+  initialize_state_zero( Pointer_h( &vo ), dims, NU );
 
   /*---Initialize sweeper---*/
 
@@ -123,8 +130,8 @@ int main( int argc, char** argv )
   for( iteration=0; iteration<niterations; ++iteration )
   {
     Sweeper_sweep( &sweeper,
-                   iteration%2==0 ? vo : vi,
-                   iteration%2==0 ? vi : vo,
+                   iteration%2==0 ? &vo : &vi,
+                   iteration%2==0 ? &vi : &vo,
                    &quan,
                    &env );
   }
@@ -144,7 +151,8 @@ int main( int argc, char** argv )
 
   /*---Compute, print norm squared of result---*/
 
-  get_state_norms( vi, vo, dims, NU, &normsq, &normsqdiff );
+  get_state_norms( Pointer_h( &vi ), Pointer_h( &vo ),
+                                              dims, NU, &normsq, &normsqdiff );
 
   if( Env_do_output( &env ) )
   {
@@ -156,8 +164,9 @@ int main( int argc, char** argv )
 
   /*---Deallocations---*/
 
-  free_P( vi );
-  free_P( vo );
+  Pointer_dtor( &vi );
+  Pointer_dtor( &vo );
+
   Sweeper_dtor( &sweeper );
   Quantities_dtor( &quan );
   Arguments_dtor( &args );

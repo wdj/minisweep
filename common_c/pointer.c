@@ -117,6 +117,16 @@ void Pointer_create_d( Pointer* p )
 
 /*---------------------------------------------------------------------------*/
 
+void Pointer_create( Pointer* p )
+{
+  assert( p );
+
+  Pointer_create_h( p );
+  Pointer_create_d( p );
+}
+
+/*---------------------------------------------------------------------------*/
+
 void Pointer_delete_h( Pointer* p )
 {
   assert( p );
@@ -149,6 +159,16 @@ void Pointer_delete_d( Pointer* p )
   }
 }
 
+/*---------------------------------------------------------------------------*/
+
+void Pointer_delete( Pointer* p )
+{
+  assert( p );
+
+  Pointer_delete_h( p );
+  Pointer_delete_d( p );
+}
+
 /*===========================================================================*/
 /*---Copy memory---*/
 
@@ -158,7 +178,7 @@ void Pointer_update_h( Pointer* p )
 
   if( p->is_using_device__ )
   {
-    Env_cuda_copy_device_to_host_P( p->d__, p->h__, p->n__ );
+    Env_cuda_copy_device_to_host_P( p->h__, p->d__, p->n__ );
   }
 }
 

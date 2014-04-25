@@ -87,7 +87,27 @@ function main
 {
 # nx ny nz ne nm na numiterations nproc_x nproc_y nblock_z 
 
-  if [ "${PBS_NP:-}" != "" ] ; then
+  if [ 0 = 1 ] ; then # if [ "${PBS_NP:-}" != "" ] ; then
+
+    echo "---MPI tests---"
+
+    make
+
+    local ARGS_SIZES="--nx  5 --ny  4 --nz  5 --ne 7 --nm 4 --na 10"
+    compare_runs   "-n1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
+                   "-n2"  "$ARGS_SIZES --nproc_x 2 --nproc_y 1 --nblock_z 1"
+    compare_runs   "-n1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
+                   "-n2"  "$ARGS_SIZES --nproc_x 1 --nproc_y 2 --nblock_z 1"
+
+    local ARGS_SIZES="--nx  5 --ny  4 --nz  6 --ne 7 --nm 4 --na 10"
+    compare_runs   "-n1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
+                  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2"
+
+    local ARGS_SIZES="--nx 5 --ny 8 --nz 16 --ne 9 --nm 1 --na 12"
+    compare_runs  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 1" \
+                  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2"
+    compare_runs  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2" \
+                  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 4"
 
     echo "---OpenMP tests---"
 
@@ -116,26 +136,6 @@ function main
                    "-n1 -d2"  "$ARGS_SIZES --nthread_e 2 --nthread_octant 1"
     compare_runs   "-n1 -d2"  "$ARGS_SIZES --nthread_e 2 --nthread_octant 1" \
                    "-n1 -d4"  "$ARGS_SIZES --nthread_e 2 --nthread_octant 2"
-
-    echo "---MPI tests---"
-
-    make
-
-    local ARGS_SIZES="--nx  5 --ny  4 --nz  5 --ne 7 --nm 4 --na 10"
-    compare_runs   "-n1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
-                   "-n2"  "$ARGS_SIZES --nproc_x 2 --nproc_y 1 --nblock_z 1"
-    compare_runs   "-n1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
-                   "-n2"  "$ARGS_SIZES --nproc_x 1 --nproc_y 2 --nblock_z 1"
-
-    local ARGS_SIZES="--nx  5 --ny  4 --nz  6 --ne 7 --nm 4 --na 10"
-    compare_runs   "-n1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
-                  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2"
-
-    local ARGS_SIZES="--nx 5 --ny 8 --nz 16 --ne 9 --nm 1 --na 12"
-    compare_runs  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 1" \
-                  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2"
-    compare_runs  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2" \
-                  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 4"
 
   fi
 

@@ -72,8 +72,8 @@ void Sweeper_dtor( Sweeper* sweeper )
 
 void Sweeper_sweep(
   Sweeper*               sweeper,
-  P* __restrict__        vo,
-  const P* __restrict__  vi,
+  Pointer*               vo,
+  Pointer*               vi,
   const Quantities*      quan,
   Env*                   env )
 {
@@ -93,7 +93,7 @@ void Sweeper_sweep(
 
   /*---Initialize result array to zero---*/
 
-  initialize_state_zero( vo, sweeper->dims, NU );
+  initialize_state_zero( Pointer_h( vo ), sweeper->dims, NU );
 
   /*---Loop over octants---*/
 
@@ -215,7 +215,7 @@ void Sweeper_sweep(
         {
           result += *const_ref_a_from_m( Pointer_const_h( & quan->a_from_m ),
                                          sweeper->dims, im, ia, octant )*
-                    *const_ref_state( vi, sweeper->dims, NU, ix, iy, iz, ie, im, iu );
+                    *const_ref_state( Pointer_h( vi ), sweeper->dims, NU, ix, iy, iz, ie, im, iu );
         }
         *ref_v_local( sweeper->v_local, sweeper->dims, NU, ia, iu ) = result;
       }
@@ -249,7 +249,7 @@ void Sweeper_sweep(
                                          sweeper->dims, im, ia, octant )*
                     *const_ref_v_local( sweeper->v_local, sweeper->dims, NU, ia, iu );
         }
-        *ref_state( vo, sweeper->dims, NU, ix, iy, iz, ie, im, iu ) += result;
+        *ref_state( Pointer_h( vo ), sweeper->dims, NU, ix, iy, iz, ie, im, iu ) += result;
       }
 
     } /*---ix/iy/iz---*/

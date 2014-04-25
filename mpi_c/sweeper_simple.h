@@ -62,8 +62,8 @@ static int Sweeper_noctant_per_block( const Sweeper* sweeper )
 
 void Sweeper_sweep(
   Sweeper*               sweeper,
-  P* __restrict__        vo,
-  const P* __restrict__  vi,
+  Pointer*               vo,
+  Pointer*               vi,
   const Quantities*      quan,
   Env*                   env );
 

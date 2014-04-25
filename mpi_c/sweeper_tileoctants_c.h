@@ -72,8 +72,8 @@ void Sweeper_dtor( Sweeper* sweeper )
 
 void Sweeper_sweep(
   Sweeper*               sweeper,
-  P* __restrict__        vo,
-  const P* __restrict__  vi,
+  Pointer*               vo,
+  Pointer*               vi,
   const Quantities*      quan,
   Env*                   env )
 {
@@ -98,7 +98,7 @@ void Sweeper_sweep(
 
   /*---Initialize result array to zero---*/
 
-  initialize_state_zero( vo, dims, NU );
+  initialize_state_zero( Pointer_h( vo ), dims, NU );
 
   /*---Loop over octant tiles---*/
 
@@ -290,7 +290,7 @@ void Sweeper_sweep(
         {
           result += *const_ref_a_from_m( Pointer_const_h( & quan->a_from_m ),
                                          dims, im, ia, octant )*
-                    *const_ref_state( vi, dims, NU, ix, iy, iz, ie, im, iu );
+                    *const_ref_state( Pointer_h( vi ), dims, NU, ix, iy, iz, ie, im, iu );
         }
         *ref_v_local( sweeper->v_local, dims, NU, ia, iu ) = result;
       }
@@ -323,7 +323,7 @@ void Sweeper_sweep(
                                          dims, im, ia, octant )*
                     *const_ref_v_local( sweeper->v_local, dims, NU, ia, iu );
         }
-        *ref_state( vo, dims, NU, ix, iy, iz, ie, im, iu ) += result;
+        *ref_state( Pointer_h( vo ), dims, NU, ix, iy, iz, ie, im, iu ) += result;
       }
 
     } /*---ix/iy/iz---*/

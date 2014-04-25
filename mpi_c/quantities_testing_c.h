@@ -54,11 +54,8 @@ void Quantities_init_am_matrices__( Quantities*       quan,
   Pointer_ctor( & quan->m_from_a, dims.nm * dims.na * NOCTANT,
                                              Env_cuda_is_using_device( env ) );
 
-  Pointer_create_h( & quan->a_from_m );
-  Pointer_create_h( & quan->m_from_a );
-
-  Pointer_create_d( & quan->a_from_m );
-  Pointer_create_d( & quan->m_from_a );
+  Pointer_create( & quan->a_from_m );
+  Pointer_create( & quan->m_from_a );
 
   /*-----------------------------*/
   /*---Set entries of a_from_m---*/
