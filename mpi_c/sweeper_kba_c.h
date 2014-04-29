@@ -1299,7 +1299,14 @@ void Sweeper_sweep(
 
   /*---Declarations---*/
 
+  const int nstep = Step_Scheduler_nstep( &(sweeper->step_scheduler) );
   int step = -1;
+
+  Pointer vi_b = Pointer_null();
+  Pointer vo_b = Pointer_null();
+
+  const size_t size_state_block = Dimensions_size_state( sweeper->dims, NU )
+                                                           / sweeper->nblock_z;
 
   /*---Initialize result array to zero---*/
 
@@ -1309,8 +1316,16 @@ void Sweeper_sweep(
   /*---Loop over kba parallel steps---*/
   /*--------------------*/
 
-  for( step=0; step<Step_Scheduler_nstep( &(sweeper->step_scheduler) ); ++step )
+  for( step=0; step<nstep; ++step )
   {
+    /*---Determine blocks needing transfer---*/
+
+    const int block_to_send = step;
+    const int block_to_recv = nstep - 1 - step;
+
+    const Bool_t do_block_send = block_to_send < sweeper->nblock_z;
+    const Bool_t do_block_recv = block_to_recv >= 0;
+
     /*---Pick up needed face pointers---*/
 
     /*=========================================================================
@@ -1350,8 +1365,18 @@ void Sweeper_sweep(
     /*---Sweep this kba block---*/
     /*--------------------*/
 
-    Pointer_update_d( vo );
-    Pointer_update_d( vi );
+    if( do_block_send )
+    {
+      Pointer_ctor_alias( &vi_b, vi, block_to_send * size_state_block,
+                                                     size_state_block );
+      Pointer_update_d( &vi_b );
+      Pointer_dtor( &vi_b );
+      Pointer_ctor_alias( &vo_b, vo, block_to_send * size_state_block,
+                                                     size_state_block );
+      Pointer_update_d( &vo_b );
+      Pointer_dtor( &vo_b );
+    }
+
     Pointer_update_d( facexy );
     Pointer_update_d( facexz );
     Pointer_update_d( faceyz );
@@ -1359,8 +1384,14 @@ void Sweeper_sweep(
     Sweeper_sweep_block( sweeper, vo, vi, facexy, facexz, faceyz,
                          & quan->a_from_m, & quan->m_from_a, step, quan, env );
 
-    Pointer_update_h( vo );
-    Pointer_update_h( vi );
+    if( do_block_recv )
+    {
+      Pointer_ctor_alias( &vo_b, vo, block_to_recv * size_state_block,
+                                                     size_state_block );
+      Pointer_update_h( &vo_b );
+      Pointer_dtor( &vo_b );
+    }
+
     Pointer_update_h( facexy );
     Pointer_update_h( facexz );
     Pointer_update_h( faceyz );

@@ -37,6 +37,7 @@ typedef struct
   P* __restrict__ d__;
   Bool_t          is_using_device__;
   Bool_t          is_pinned__;
+  Bool_t           is_alias__;
 } Pointer;
 
 /*===========================================================================*/
@@ -51,16 +52,24 @@ static Pointer Pointer_null()
   p.d__ = NULL;
   p.is_using_device__ = Bool_false;
   p.is_pinned__       = Bool_false;
+  p.is_alias__        = Bool_false;
 
   return p;
 }
 
 /*===========================================================================*/
-/*---Pseudo-constructor---*/
+/*---Pseudo-constructors---*/
 
 void Pointer_ctor( Pointer* p,
                    size_t   n,
                    Bool_t   is_using_device );
+
+/*---------------------------------------------------------------------------*/
+
+void Pointer_ctor_alias( Pointer* p,
+                         Pointer* source,
+                         size_t   base,
+                         size_t   n );
 
 /*---------------------------------------------------------------------------*/
 

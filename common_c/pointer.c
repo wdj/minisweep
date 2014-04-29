@@ -21,7 +21,7 @@ extern "C"
 #endif
 
 /*===========================================================================*/
-/*---Pseudo-constructor---*/
+/*---Pseudo-constructors---*/
 
 void Pointer_ctor( Pointer* p,
                    size_t   n,
@@ -35,6 +35,38 @@ void Pointer_ctor( Pointer* p,
   p->n__ = n;
   p->is_using_device__ = is_using_device;
   p->is_pinned__ = Bool_false;
+  p->is_alias__  = Bool_false;
+}
+
+/*---------------------------------------------------------------------------*/
+
+void Pointer_ctor_alias( Pointer* p,
+                         Pointer* source,
+                         size_t   base,
+                         size_t   n )
+{
+  Assert( p );
+  Assert( source );
+  Assert( base+1 >= 1 );
+  Assert( n+1 >= 1 );
+  Assert( base+n <= source->n__ );
+
+  p->h__ = NULL;
+  if( source->h__ )
+  {
+    p->h__ = source->h__ + base;
+  }
+
+  p->d__ = NULL;
+  if( source->h__ )
+  {
+    p->d__ = source->d__ + base;
+  }
+
+  p->n__               = n;
+  p->is_using_device__ = source->is_using_device__;
+  p->is_pinned__       = source->is_pinned__;
+  p->is_alias__        = Bool_true;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -45,6 +77,7 @@ void Pointer_set_pinned( Pointer* p,
   Assert( p );
   Assert( ! p->h__
               ? "Currently cannot change pinnedness of allocated array" : 0 );
+  Assert( ! p->is_alias__ );
 
   p->is_pinned__ = is_pinned;
 }
@@ -56,7 +89,7 @@ void Pointer_dtor( Pointer* p )
 {
   Assert( p );
 
-  if( p->h__ )
+  if( p->h__ && ! p->is_alias__ )
   {
     if( p->is_pinned__ && p->is_using_device__ )
     {
@@ -66,14 +99,14 @@ void Pointer_dtor( Pointer* p )
     {
       free_P( p->h__ );
     }
-    p->h__ = NULL;
   }
+  p->h__ = NULL;
 
-  if( p->d__ )
+  if( p->d__ && ! p->is_alias__ )
   {
     Env_cuda_free_P( p->d__ );
-    p->d__ = NULL;
   }
+  p->d__ = NULL;
 
   p->n__ = 0;
   p->is_using_device__ = Bool_false;
@@ -86,6 +119,7 @@ void Pointer_dtor( Pointer* p )
 void Pointer_create_h( Pointer* p )
 {
   Assert( p );
+  Assert( ! p->is_alias__ );
   Assert( ! p->h__ );
 
   if( p->is_pinned__ && p->is_using_device__ )
@@ -104,6 +138,7 @@ void Pointer_create_h( Pointer* p )
 void Pointer_create_d( Pointer* p )
 {
   Assert( p );
+  Assert( ! p->is_alias__ );
   Assert( ! p->d__ );
 
   if( p->is_using_device__ )
@@ -119,6 +154,7 @@ void Pointer_create_d( Pointer* p )
 void Pointer_create( Pointer* p )
 {
   Assert( p );
+  Assert( ! p->is_alias__ );
 
   Pointer_create_h( p );
   Pointer_create_d( p );
@@ -129,6 +165,7 @@ void Pointer_create( Pointer* p )
 void Pointer_delete_h( Pointer* p )
 {
   Assert( p );
+  Assert( ! p->is_alias__ );
   Assert( p->h__ );
 
   if( p->is_pinned__ && p->is_using_device__ )
@@ -147,6 +184,7 @@ void Pointer_delete_h( Pointer* p )
 void Pointer_delete_d( Pointer* p )
 {
   Assert( p );
+  Assert( ! p->is_alias__ );
 
   if( p->is_using_device__ )
   {
@@ -163,6 +201,7 @@ void Pointer_delete_d( Pointer* p )
 void Pointer_delete( Pointer* p )
 {
   Assert( p );
+  Assert( ! p->is_alias__ );
 
   Pointer_delete_h( p );
   Pointer_delete_d( p );

@@ -22,6 +22,36 @@ extern "C"
 #endif
 
 /*===========================================================================*/
+/*---Multidimensional indexing function---*/
+
+TARGET_HD static inline size_t ind_state(
+    Dimensions       dims,
+    int              nu,
+    int              ix,
+    int              iy,
+    int              iz,
+    int              ie,
+    int              im,
+    int              iu )
+{
+  Assert( nu > 0 );
+  Assert( ix >= 0 && ix < dims.nx );
+  Assert( iy >= 0 && iy < dims.ny );
+  Assert( iz >= 0 && iz < dims.nz );
+  Assert( ie >= 0 && ie < dims.ne );
+  Assert( im >= 0 && im < dims.nm );
+  Assert( iu >= 0 && iu < nu );
+
+  return  im + dims.nm * (
+          iu + nu      * (
+          ix + dims.nx * (
+          iy + dims.ny * (
+          ie + dims.ne * (
+          iz + dims.nz * ( /*---NOTE: This axis MUST be slowest-varying---*/
+          0 ))))));
+}
+
+/*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
 TARGET_HD static inline P* ref_state(
@@ -44,13 +74,7 @@ TARGET_HD static inline P* ref_state(
   Assert( im >= 0 && im < dims.nm );
   Assert( iu >= 0 && iu < nu );
 
-  return & v[ im + dims.nm * (
-              iu + nu      * (
-              ix + dims.nx * (
-              iy + dims.ny * (
-              ie + dims.ne * (
-              iz + dims.nz * ( /*---NOTE: This axis MUST be slowest-varying---*/
-              0 )))))) ];
+  return & v[ ind_state( dims, nu, ix, iy, iz, ie, im, iu ) ];
 }
 
 /*===========================================================================*/
@@ -76,13 +100,7 @@ TARGET_HD static inline const P* const_ref_state(
   Assert( im >= 0 && im < dims.nm );
   Assert( iu >= 0 && iu < nu );
 
-  return & v[ im + dims.nm * (
-              iu + nu      * (
-              ix + dims.nx * (
-              iy + dims.ny * (
-              ie + dims.ne * (
-              iz + dims.nz * ( /*---NOTE: This axis MUST be slowest-varying---*/
-              0 )))))) ];
+  return & v[ ind_state( dims, nu, ix, iy, iz, ie, im, iu ) ];
 }
 
 /*===========================================================================*/
