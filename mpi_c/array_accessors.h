@@ -11,6 +11,7 @@
 #ifndef _serial_c__array_accessors_h_
 #define _serial_c__array_accessors_h_
 
+#include "function_attributes.h"
 #include "env.h"
 #include "definitions.h"
 #include "dimensions.h"
@@ -23,7 +24,7 @@ extern "C"
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-static inline P* ref_state(
+TARGET_HD static inline P* ref_state(
     P* __restrict__  v,
     Dimensions       dims,
     int              nu,
@@ -34,14 +35,14 @@ static inline P* ref_state(
     int              im,
     int              iu )
 {
-  assert( v != NULL );
-  assert( nu > 0 );
-  assert( ix >= 0 && ix < dims.nx );
-  assert( iy >= 0 && iy < dims.ny );
-  assert( iz >= 0 && iz < dims.nz );
-  assert( ie >= 0 && ie < dims.ne );
-  assert( im >= 0 && im < dims.nm );
-  assert( iu >= 0 && iu < nu );
+  Assert( v != NULL );
+  Assert( nu > 0 );
+  Assert( ix >= 0 && ix < dims.nx );
+  Assert( iy >= 0 && iy < dims.ny );
+  Assert( iz >= 0 && iz < dims.nz );
+  Assert( ie >= 0 && ie < dims.ne );
+  Assert( im >= 0 && im < dims.nm );
+  Assert( iu >= 0 && iu < nu );
 
   return & v[ im + dims.nm * (
               iu + nu      * (
@@ -55,7 +56,7 @@ static inline P* ref_state(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-static inline const P* const_ref_state(
+TARGET_HD static inline const P* const_ref_state(
     const P* __restrict__  v,
     Dimensions             dims,
     int                    nu,
@@ -66,14 +67,14 @@ static inline const P* const_ref_state(
     int                    im,
     int                    iu )
 {
-  assert( v != NULL );
-  assert( nu > 0 );
-  assert( ix >= 0 && ix < dims.nx );
-  assert( iy >= 0 && iy < dims.ny );
-  assert( iz >= 0 && iz < dims.nz );
-  assert( ie >= 0 && ie < dims.ne );
-  assert( im >= 0 && im < dims.nm );
-  assert( iu >= 0 && iu < nu );
+  Assert( v != NULL );
+  Assert( nu > 0 );
+  Assert( ix >= 0 && ix < dims.nx );
+  Assert( iy >= 0 && iy < dims.ny );
+  Assert( iz >= 0 && iz < dims.nz );
+  Assert( ie >= 0 && ie < dims.ne );
+  Assert( im >= 0 && im < dims.nm );
+  Assert( iu >= 0 && iu < nu );
 
   return & v[ im + dims.nm * (
               iu + nu      * (
@@ -87,17 +88,17 @@ static inline const P* const_ref_state(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-static inline P* ref_v_local(
+TARGET_HD static inline P* ref_v_local(
     P* __restrict__  v,
     Dimensions       dims,
     int              nu,
     int              ia,
     int              iu )
 {
-  assert( v != NULL );
-  assert( nu > 0 );
-  assert( ia >= 0 && ia < dims.na );
-  assert( iu >= 0 && iu < nu );
+  Assert( v != NULL );
+  Assert( nu > 0 );
+  Assert( ia >= 0 && ia < dims.na );
+  Assert( iu >= 0 && iu < nu );
 
   return & v[ ia + dims.na * (
               iu + nu      * (
@@ -107,17 +108,17 @@ static inline P* ref_v_local(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-static inline const P* const_ref_v_local(
+TARGET_HD static inline const P* const_ref_v_local(
     const P* __restrict__  v,
     Dimensions             dims,
     int                    nu,
     int                    ia,
     int                    iu )
 {
-  assert( v != NULL );
-  assert( nu > 0 );
-  assert( ia >= 0 && ia < dims.na );
-  assert( iu >= 0 && iu < nu );
+  Assert( v != NULL );
+  Assert( nu > 0 );
+  Assert( ia >= 0 && ia < dims.na );
+  Assert( iu >= 0 && iu < nu );
 
   return & v[ ia + dims.na * (
               iu + nu      * (
@@ -127,17 +128,17 @@ static inline const P* const_ref_v_local(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-static inline P* ref_a_from_m(
+TARGET_HD static inline P* ref_a_from_m(
     P* __restrict__  v,
     Dimensions       dims,
     int              im,
     int              ia,
     int              octant )
 {
-  assert( v != NULL );
-  assert( im >= 0 && im < dims.nm );
-  assert( ia >= 0 && ia < dims.na );
-  assert( octant >= 0 && octant < NOCTANT );
+  Assert( v != NULL );
+  Assert( im >= 0 && im < dims.nm );
+  Assert( ia >= 0 && ia < dims.na );
+  Assert( octant >= 0 && octant < NOCTANT );
 
   return & v[ im     + dims.nm * (
               ia     + dims.na * (
@@ -148,17 +149,17 @@ static inline P* ref_a_from_m(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-static inline const P* const_ref_a_from_m(
+TARGET_HD static inline const P* const_ref_a_from_m(
     const P* __restrict__  v,
     Dimensions             dims,
     int                    im,
     int                    ia,
     int                    octant )
 {
-  assert( v != NULL );
-  assert( im >= 0 && im < dims.nm );
-  assert( ia >= 0 && ia < dims.na );
-  assert( octant >= 0 && octant < NOCTANT );
+  Assert( v != NULL );
+  Assert( im >= 0 && im < dims.nm );
+  Assert( ia >= 0 && ia < dims.na );
+  Assert( octant >= 0 && octant < NOCTANT );
 
   return & v[ im     + dims.nm * (
               ia     + dims.na * (
@@ -169,17 +170,17 @@ static inline const P* const_ref_a_from_m(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-static inline P* ref_m_from_a(
+TARGET_HD static inline P* ref_m_from_a(
     P* __restrict__  v,
     Dimensions       dims,
     int              im,
     int              ia,
     int              octant )
 {
-  assert( v != NULL );
-  assert( im >= 0 && im < dims.nm );
-  assert( ia >= 0 && ia < dims.na );
-  assert( octant >= 0 && octant < NOCTANT );
+  Assert( v != NULL );
+  Assert( im >= 0 && im < dims.nm );
+  Assert( ia >= 0 && ia < dims.na );
+  Assert( octant >= 0 && octant < NOCTANT );
 
   return & v[ im     + dims.nm * (
               ia     + dims.na * (
@@ -190,17 +191,17 @@ static inline P* ref_m_from_a(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-static inline const P* const_ref_m_from_a(
+TARGET_HD static inline const P* const_ref_m_from_a(
     const P* __restrict__  v,
     Dimensions             dims,
     int                    im,
     int                    ia,
     int                    octant )
 {
-  assert( v != NULL );
-  assert( im >= 0 && im < dims.nm );
-  assert( ia >= 0 && ia < dims.na );
-  assert( octant >= 0 && octant < NOCTANT );
+  Assert( v != NULL );
+  Assert( im >= 0 && im < dims.nm );
+  Assert( ia >= 0 && ia < dims.na );
+  Assert( octant >= 0 && octant < NOCTANT );
 
   return & v[ im     + dims.nm * (
               ia     + dims.na * (
@@ -211,7 +212,7 @@ static inline const P* const_ref_m_from_a(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-static inline P* ref_facexy(
+TARGET_HD static inline P* ref_facexy(
     P* __restrict__  v,
     Dimensions       dims,
     int              nu,
@@ -223,14 +224,14 @@ static inline P* ref_facexy(
     int              iu,
     int              octant_in_block )
 {
-  assert( v != NULL );
-  assert( nu > 0 );
-  assert( ix >= 0 && ix < dims.nx );
-  assert( iy >= 0 && iy < dims.ny );
-  assert( ie >= 0 && ie < dims.ne );
-  assert( ia >= 0 && ia < dims.na );
-  assert( iu >= 0 && iu < nu );
-  assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
+  Assert( v != NULL );
+  Assert( nu > 0 );
+  Assert( ix >= 0 && ix < dims.nx );
+  Assert( iy >= 0 && iy < dims.ny );
+  Assert( ie >= 0 && ie < dims.ne );
+  Assert( ia >= 0 && ia < dims.na );
+  Assert( iu >= 0 && iu < nu );
+  Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na * (
               iu + nu      * (
@@ -243,7 +244,7 @@ static inline P* ref_facexy(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-static inline const P* const_ref_facexy(
+TARGET_HD static inline const P* const_ref_facexy(
     const P* __restrict__  v,
     Dimensions             dims,
     int                    nu,
@@ -255,14 +256,14 @@ static inline const P* const_ref_facexy(
     int                    iu,
     int                    octant_in_block )
 {
-  assert( v != NULL );
-  assert( nu > 0 );
-  assert( ix >= 0 && ix < dims.nx );
-  assert( iy >= 0 && iy < dims.ny );
-  assert( ie >= 0 && ie < dims.ne );
-  assert( ia >= 0 && ia < dims.na );
-  assert( iu >= 0 && iu < nu );
-  assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
+  Assert( v != NULL );
+  Assert( nu > 0 );
+  Assert( ix >= 0 && ix < dims.nx );
+  Assert( iy >= 0 && iy < dims.ny );
+  Assert( ie >= 0 && ie < dims.ne );
+  Assert( ia >= 0 && ia < dims.na );
+  Assert( iu >= 0 && iu < nu );
+  Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na * (
               iu + nu      * (
@@ -275,7 +276,7 @@ static inline const P* const_ref_facexy(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-static inline P* ref_facexz(
+TARGET_HD static inline P* ref_facexz(
     P* __restrict__  v,
     Dimensions       dims,
     int              nu,
@@ -287,14 +288,14 @@ static inline P* ref_facexz(
     int              iu,
     int              octant_in_block )
 {
-  assert( v != NULL );
-  assert( nu > 0 );
-  assert( ix >= 0 && ix < dims.nx );
-  assert( iz >= 0 && iz < dims.nz );
-  assert( ie >= 0 && ie < dims.ne );
-  assert( ia >= 0 && ia < dims.na );
-  assert( iu >= 0 && iu < nu );
-  assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
+  Assert( v != NULL );
+  Assert( nu > 0 );
+  Assert( ix >= 0 && ix < dims.nx );
+  Assert( iz >= 0 && iz < dims.nz );
+  Assert( ie >= 0 && ie < dims.ne );
+  Assert( ia >= 0 && ia < dims.na );
+  Assert( iu >= 0 && iu < nu );
+  Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na * (
               iu + nu      * (
@@ -307,7 +308,7 @@ static inline P* ref_facexz(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-static inline const P* const_ref_facexz(
+TARGET_HD static inline const P* const_ref_facexz(
     const P* __restrict__  v,
     Dimensions             dims,
     int                    nu,
@@ -319,14 +320,14 @@ static inline const P* const_ref_facexz(
     int                    iu,
     int                    octant_in_block )
 {
-  assert( v != NULL );
-  assert( nu > 0 );
-  assert( ix >= 0 && ix < dims.nx );
-  assert( iz >= 0 && iz < dims.nz );
-  assert( ie >= 0 && ie < dims.ne );
-  assert( ia >= 0 && ia < dims.na );
-  assert( iu >= 0 && iu < nu );
-  assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
+  Assert( v != NULL );
+  Assert( nu > 0 );
+  Assert( ix >= 0 && ix < dims.nx );
+  Assert( iz >= 0 && iz < dims.nz );
+  Assert( ie >= 0 && ie < dims.ne );
+  Assert( ia >= 0 && ia < dims.na );
+  Assert( iu >= 0 && iu < nu );
+  Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na * (
               iu + nu      * (
@@ -339,7 +340,7 @@ static inline const P* const_ref_facexz(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-static inline P* ref_faceyz(
+TARGET_HD static inline P* ref_faceyz(
     P* __restrict__  v,
     Dimensions       dims,
     int              nu,
@@ -351,14 +352,14 @@ static inline P* ref_faceyz(
     int              iu,
     int              octant_in_block )
 {
-  assert( v != NULL );
-  assert( nu > 0 );
-  assert( iy >= 0 && iy < dims.ny );
-  assert( iz >= 0 && iz < dims.nz );
-  assert( ie >= 0 && ie < dims.ne );
-  assert( ia >= 0 && ia < dims.na );
-  assert( iu >= 0 && iu < nu );
-  assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
+  Assert( v != NULL );
+  Assert( nu > 0 );
+  Assert( iy >= 0 && iy < dims.ny );
+  Assert( iz >= 0 && iz < dims.nz );
+  Assert( ie >= 0 && ie < dims.ne );
+  Assert( ia >= 0 && ia < dims.na );
+  Assert( iu >= 0 && iu < nu );
+  Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na * (
               iu + nu      * (
@@ -371,7 +372,7 @@ static inline P* ref_faceyz(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-static inline const P* const_ref_faceyz(
+TARGET_HD static inline const P* const_ref_faceyz(
     const P* __restrict__  v,
     Dimensions             dims,
     int                    nu,
@@ -383,14 +384,14 @@ static inline const P* const_ref_faceyz(
     int                    iu,
     int                    octant_in_block )
 {
-  assert( v != NULL );
-  assert( nu > 0 );
-  assert( iy >= 0 && iy < dims.ny );
-  assert( iz >= 0 && iz < dims.nz );
-  assert( ie >= 0 && ie < dims.ne );
-  assert( ia >= 0 && ia < dims.na );
-  assert( iu >= 0 && iu < nu );
-  assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
+  Assert( v != NULL );
+  Assert( nu > 0 );
+  Assert( iy >= 0 && iy < dims.ny );
+  Assert( iz >= 0 && iz < dims.nz );
+  Assert( ie >= 0 && ie < dims.ne );
+  Assert( ia >= 0 && ia < dims.na );
+  Assert( iu >= 0 && iu < nu );
+  Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na * (
               iu + nu      * (

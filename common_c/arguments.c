@@ -27,8 +27,8 @@ void Arguments_ctor( Arguments* args,
                      int        argc,
                      char**     argv )
 {
-  assert( argc > 0 );
-  assert( argv != NULL );
+  Assert( argc > 0 );
+  Assert( argv != NULL );
   int i = 0;
 
   args->argc = argc;
@@ -36,7 +36,7 @@ void Arguments_ctor( Arguments* args,
 
   for( i=0; i<argc; ++i )
   {
-    assert( argv[i] != NULL && "Null command line argument encountered" );
+    Assert( argv[i] != NULL && "Null command line argument encountered" );
     args->argv_unconsumed[i] = argv[i];
   }
 } /*---Arguments_ctor---*/

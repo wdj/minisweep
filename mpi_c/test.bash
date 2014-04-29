@@ -87,55 +87,89 @@ function main
 {
 # nx ny nz ne nm na numiterations nproc_x nproc_y nblock_z 
 
-  if [ 0 = 1 ] ; then # if [ "${PBS_NP:-}" != "" ] ; then
+  if [ "${PBS_NP:-}" != "" ] ; then
 
+    echo "----------------"
+    echo "---CUDA tests---"
+    echo "----------------"
+
+    make CUDA_OPTION=1
+
+    local SOME_ARGS="--nx  2 --ny  3 --nz  4 --ne 20 --nm 4 --na 5"
+
+    compare_runs \
+      "-n1"  "$SOME_ARGS " \
+      "-n1"  "$SOME_ARGS --is_using_device 1 --nthread_e 1 --nthread_octant 1"
+    compare_runs \
+      "-n1"  "$SOME_ARGS " \
+      "-n1"  "$SOME_ARGS --is_using_device 1 --nthread_e 1 --nthread_octant 2"
+    compare_runs \
+      "-n1"  "$SOME_ARGS " \
+      "-n1"  "$SOME_ARGS --is_using_device 1 --nthread_e 1 --nthread_octant 4"
+    compare_runs \
+      "-n1"  "$SOME_ARGS " \
+      "-n1"  "$SOME_ARGS --is_using_device 1 --nthread_e 1 --nthread_octant 8"
+    compare_runs \
+      "-n1"  "$SOME_ARGS " \
+      "-n1"  "$SOME_ARGS --is_using_device 1 --nthread_e 2 --nthread_octant 8"
+    compare_runs \
+      "-n1"  "$SOME_ARGS " \
+      "-n1"  "$SOME_ARGS --is_using_device 1 --nthread_e 10 --nthread_octant 8"
+    compare_runs \
+      "-n1"  "$SOME_ARGS " \
+      "-n1"  "$SOME_ARGS --is_using_device 1 --nthread_e 20 --nthread_octant 8"
+
+    echo "---------------"
     echo "---MPI tests---"
+    echo "---------------"
 
     make
 
-    local ARGS_SIZES="--nx  5 --ny  4 --nz  5 --ne 7 --nm 4 --na 10"
-    compare_runs   "-n1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
-                   "-n2"  "$ARGS_SIZES --nproc_x 2 --nproc_y 1 --nblock_z 1"
-    compare_runs   "-n1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
-                   "-n2"  "$ARGS_SIZES --nproc_x 1 --nproc_y 2 --nblock_z 1"
+    local SOME_ARGS="--nx  5 --ny  4 --nz  5 --ne 7 --nm 4 --na 10"
+    compare_runs   "-n1"  "$SOME_ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1" \
+                   "-n2"  "$SOME_ARGS --nproc_x 2 --nproc_y 1 --nblock_z 1"
+    compare_runs   "-n1"  "$SOME_ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1" \
+                   "-n2"  "$SOME_ARGS --nproc_x 1 --nproc_y 2 --nblock_z 1"
 
-    local ARGS_SIZES="--nx  5 --ny  4 --nz  6 --ne 7 --nm 4 --na 10"
-    compare_runs   "-n1"  "$ARGS_SIZES --nproc_x 1 --nproc_y 1 --nblock_z 1" \
-                  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2"
+    local SOME_ARGS="--nx  5 --ny  4 --nz  6 --ne 7 --nm 4 --na 10"
+    compare_runs   "-n1"  "$SOME_ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1" \
+                  "-n16"  "$SOME_ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
 
-    local ARGS_SIZES="--nx 5 --ny 8 --nz 16 --ne 9 --nm 1 --na 12"
-    compare_runs  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 1" \
-                  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2"
-    compare_runs  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 2" \
-                  "-n16"  "$ARGS_SIZES --nproc_x 4 --nproc_y 4 --nblock_z 4"
+    local SOME_ARGS="--nx 5 --ny 8 --nz 16 --ne 9 --nm 1 --na 12"
+    compare_runs  "-n16"  "$SOME_ARGS --nproc_x 4 --nproc_y 4 --nblock_z 1" \
+                  "-n16"  "$SOME_ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
+    compare_runs  "-n16"  "$SOME_ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2" \
+                  "-n16"  "$SOME_ARGS --nproc_x 4 --nproc_y 4 --nblock_z 4"
 
+    echo "------------------"
     echo "---OpenMP tests---"
+    echo "------------------"
 
     make OPENMP_OPTION=THREADS
 
-    local ARGS_SIZES="--nx  5 --ny  4 --nz  5 --ne 200 --nm 4 --na 10"
-    compare_runs   "-n1 -d1"  "$ARGS_SIZES --nthread_e 1" \
-                   "-n1 -d2"  "$ARGS_SIZES --nthread_e 2"
-    compare_runs   "-n1 -d2"  "$ARGS_SIZES --nthread_e 2" \
-                   "-n1 -d3"  "$ARGS_SIZES --nthread_e 3"
-    compare_runs   "-n1 -d3"  "$ARGS_SIZES --nthread_e 3" \
-                   "-n1 -d4"  "$ARGS_SIZES --nthread_e 4"
+    local SOME_ARGS="--nx  5 --ny  4 --nz  5 --ne 200 --nm 4 --na 10"
+    compare_runs   "-n1 -d1"  "$SOME_ARGS --nthread_e 1" \
+                   "-n1 -d2"  "$SOME_ARGS --nthread_e 2"
+    compare_runs   "-n1 -d2"  "$SOME_ARGS --nthread_e 2" \
+                   "-n1 -d3"  "$SOME_ARGS --nthread_e 3"
+    compare_runs   "-n1 -d3"  "$SOME_ARGS --nthread_e 3" \
+                   "-n1 -d4"  "$SOME_ARGS --nthread_e 4"
 
     make OPENMP_OPTION=THREADS
 
-    compare_runs   "-n1 -d1"  "$ARGS_SIZES --nthread_octant 1" \
-                   "-n1 -d2"  "$ARGS_SIZES --nthread_octant 2"
-    compare_runs   "-n1 -d2"  "$ARGS_SIZES --nthread_octant 2" \
-                   "-n1 -d4"  "$ARGS_SIZES --nthread_octant 4"
-    compare_runs   "-n1 -d4"  "$ARGS_SIZES --nthread_octant 4" \
-                   "-n1 -d8"  "$ARGS_SIZES --nthread_octant 8"
+    compare_runs   "-n1 -d1"  "$SOME_ARGS --nthread_octant 1" \
+                   "-n1 -d2"  "$SOME_ARGS --nthread_octant 2"
+    compare_runs   "-n1 -d2"  "$SOME_ARGS --nthread_octant 2" \
+                   "-n1 -d4"  "$SOME_ARGS --nthread_octant 4"
+    compare_runs   "-n1 -d4"  "$SOME_ARGS --nthread_octant 4" \
+                   "-n1 -d8"  "$SOME_ARGS --nthread_octant 8"
 
     make OPENMP_OPTION=THREADS
 
-    compare_runs   "-n1 -d1"  "$ARGS_SIZES --nthread_e 1 --nthread_octant 1" \
-                   "-n1 -d2"  "$ARGS_SIZES --nthread_e 2 --nthread_octant 1"
-    compare_runs   "-n1 -d2"  "$ARGS_SIZES --nthread_e 2 --nthread_octant 1" \
-                   "-n1 -d4"  "$ARGS_SIZES --nthread_e 2 --nthread_octant 2"
+    compare_runs   "-n1 -d1"  "$SOME_ARGS --nthread_e 1 --nthread_octant 1" \
+                   "-n1 -d2"  "$SOME_ARGS --nthread_e 2 --nthread_octant 1"
+    compare_runs   "-n1 -d2"  "$SOME_ARGS --nthread_e 2 --nthread_octant 1" \
+                   "-n1 -d4"  "$SOME_ARGS --nthread_e 2 --nthread_octant 2"
 
   fi
 
@@ -155,11 +189,11 @@ function main
       local ARG_NBLOCK_Z_5=""
     fi
 
-    local ARGS_SIZES="--nx  5 --ny  5 --nz  5 --ne 10 --nm 16 --na 20"
-    compare_runs  "-n1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_1" \
-                  "-n1" "$ARGS_SIZES --niterations 2 $ARG_NBLOCK_Z_1"
-    compare_runs  "-n1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_1" \
-                  "-n1" "$ARGS_SIZES --niterations 1 $ARG_NBLOCK_Z_5"
+    local SOME_ARGS="--nx  5 --ny  5 --nz  5 --ne 10 --nm 16 --na 20"
+    compare_runs  "-n1" "$SOME_ARGS --niterations 1 $ARG_NBLOCK_Z_1" \
+                  "-n1" "$SOME_ARGS --niterations 2 $ARG_NBLOCK_Z_1"
+    compare_runs  "-n1" "$SOME_ARGS --niterations 1 $ARG_NBLOCK_Z_1" \
+                  "-n1" "$SOME_ARGS --niterations 1 $ARG_NBLOCK_Z_5"
 
   done
 

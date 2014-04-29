@@ -11,6 +11,8 @@
 #ifndef _common_c__types_h_
 #define _common_c__types_h_
 
+#include "function_attributes.h"
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -30,8 +32,8 @@ enum{ Bool_true = 1, Bool_false = 0 };
 typedef double P;
 enum{ P_IS_DOUBLE = Bool_true };
 
-static inline P P_zero() { return (P)0; }
-static inline P P_one()  { return (P)1; }
+TARGET_HD static inline P P_zero() { return (P)0; }
+TARGET_HD static inline P P_one()  { return (P)1; }
 
 /*===========================================================================*/
 

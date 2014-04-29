@@ -77,9 +77,9 @@ void Sweeper_sweep(
   const Quantities*      quan,
   Env*                   env )
 {
-  assert( sweeper );
-  assert( vi );
-  assert( vo );
+  Assert( sweeper );
+  Assert( vi );
+  Assert( vo );
 
   /*---Declarations---*/
   int ix = 0;
@@ -127,7 +127,7 @@ void Sweeper_sweep(
     ---*/
 
     const int octant_in_block = do_tile_octants ? octant : 0;
-    assert( octant_in_block >= 0 &&
+    Assert( octant_in_block >= 0 &&
             octant_in_block < Sweeper_noctant_per_block( sweeper ) );
 
     /*---Decode octant directions from octant number---*/

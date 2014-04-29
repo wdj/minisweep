@@ -100,7 +100,7 @@ int Step_Scheduler_nstep( const Step_Scheduler* step_scheduler )
       break;
 
     default:
-      assert( Bool_false );
+      Assert( Bool_false );
       break;
   }
 
@@ -116,7 +116,7 @@ Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,
                                     const int             proc_x,
                                     const int             proc_y )
 {
-  assert( octant_in_block>=0 &&
+  Assert( octant_in_block>=0 &&
           octant_in_block * step_scheduler->nblock_octant__ < NOCTANT );
 
   const int nblock_octant = step_scheduler->nblock_octant__;

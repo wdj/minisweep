@@ -75,8 +75,8 @@ static void get_state_norms( const P* __restrict__  vi,
                              P*                     normsqp,
                              P*                     normsqdiffp )
 {
-  assert( normsqp     != NULL ? "Null pointer encountered" : 0 );
-  assert( normsqdiffp != NULL ? "Null pointer encountered" : 0);
+  Assert( normsqp     != NULL ? "Null pointer encountered" : 0 );
+  Assert( normsqdiffp != NULL ? "Null pointer encountered" : 0);
 
   int ix = 0;
   int iy = 0;
@@ -101,8 +101,8 @@ static void get_state_norms( const P* __restrict__  vi,
     normsq        += val_vo * val_vo;
     normsqdiff    += diff   * diff;
   }
-  assert( normsq     >= P_zero() );
-  assert( normsqdiff >= P_zero() );
+  Assert( normsq     >= P_zero() );
+  Assert( normsqdiff >= P_zero() );
   normsq     = Env_sum_P( normsq );
   normsqdiff = Env_sum_P( normsqdiff );
 

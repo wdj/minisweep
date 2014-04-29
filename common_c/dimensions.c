@@ -10,6 +10,7 @@
 
 #include <stdlib.h>
 
+#include "env.h"
 #include "definitions.h"
 #include "dimensions.h"
 

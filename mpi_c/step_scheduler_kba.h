@@ -29,6 +29,14 @@ typedef struct
 } Step_Info;
 
 /*===========================================================================*/
+/*---8 copies of the same---*/
+
+typedef struct
+{
+  Step_Info step_info[NOCTANT];
+} Step_Info_Values;
+
+/*===========================================================================*/
 /*---Struct with info to define the sweep step schedule---*/
 
 typedef struct

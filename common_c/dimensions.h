@@ -13,6 +13,7 @@
 
 #include <stdlib.h>
 
+#include "env.h"
 #include "types.h"
 
 #ifdef __cplusplus

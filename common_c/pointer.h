@@ -111,8 +111,8 @@ void Pointer_update_d( Pointer* p );
 
 static inline P* __restrict__ Pointer_h( Pointer* p )
 {
-  assert( p );
-  assert( p->h__ );
+  Assert( p );
+  Assert( p->h__ );
   return p->h__;
 }
 
@@ -120,8 +120,8 @@ static inline P* __restrict__ Pointer_h( Pointer* p )
 
 static inline const P* __restrict__ Pointer_const_h( const Pointer* p )
 {
-  assert( p );
-  assert( p->h__ );
+  Assert( p );
+  Assert( p->h__ );
   return p->h__;
 }
 
@@ -129,20 +129,20 @@ static inline const P* __restrict__ Pointer_const_h( const Pointer* p )
 
 static inline P* __restrict__ Pointer_d( Pointer* p )
 {
-  assert( p );
-  assert( p->d__ );
-  assert( p->is_using_device__ );
+  Assert( p );
+  Assert( p->d__ );
+  Assert( p->is_using_device__ );
   return p->d__;
 }
 
 /*---------------------------------------------------------------------------*/
 
-static inline P* __restrict__ Pointer_a( Pointer* p )
+static inline const P* __restrict__ Pointer_const_d( const Pointer* p )
 {
-  assert( p );
-  P* __restrict__ result = p->is_using_device__ ? p->d__ : p->h__;
-  assert( result );
-  return result;
+  Assert( p );
+  Assert( p->d__ );
+  Assert( p->is_using_device__ );
+  return p->d__;
 }
 
 /*===========================================================================*/

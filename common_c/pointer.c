@@ -10,10 +10,9 @@
 
 #include <stdlib.h>
 
+#include "env.h"
 #include "pointer.h"
 #include "types.h"
-#include "env_assert.h"
-#include "env.h"
 #include "memory.h"
 
 #ifdef __cplusplus
@@ -28,8 +27,8 @@ void Pointer_ctor( Pointer* p,
                    size_t   n,
                    Bool_t   is_using_device )
 {
-  assert( p );
-  assert( n+1 >= 1 );
+  Assert( p );
+  Assert( n+1 >= 1 );
 
   p->h__ = NULL;
   p->d__ = NULL;
@@ -43,8 +42,8 @@ void Pointer_ctor( Pointer* p,
 void Pointer_set_pinned( Pointer* p,
                          Bool_t   is_pinned )
 {
-  assert( p );
-  assert( ! p->h__
+  Assert( p );
+  Assert( ! p->h__
               ? "Currently cannot change pinnedness of allocated array" : 0 );
 
   p->is_pinned__ = is_pinned;
@@ -55,7 +54,7 @@ void Pointer_set_pinned( Pointer* p,
 
 void Pointer_dtor( Pointer* p )
 {
-  assert( p );
+  Assert( p );
 
   if( p->h__ )
   {
@@ -86,8 +85,8 @@ void Pointer_dtor( Pointer* p )
 
 void Pointer_create_h( Pointer* p )
 {
-  assert( p );
-  assert( ! p->h__ );
+  Assert( p );
+  Assert( ! p->h__ );
 
   if( p->is_pinned__ && p->is_using_device__ )
   {
@@ -97,21 +96,21 @@ void Pointer_create_h( Pointer* p )
   {
     p->h__ = malloc_P( p->n__ );
   }
-  assert( p->h__ );
+  Assert( p->h__ );
 }
 
 /*---------------------------------------------------------------------------*/
 
 void Pointer_create_d( Pointer* p )
 {
-  assert( p );
-  assert( ! p->d__ );
+  Assert( p );
+  Assert( ! p->d__ );
 
   if( p->is_using_device__ )
   {
     p->d__ = Env_cuda_malloc_P( p->n__ );
 
-    assert( p->d__ );
+    Assert( p->d__ );
   }
 }
 
@@ -119,7 +118,7 @@ void Pointer_create_d( Pointer* p )
 
 void Pointer_create( Pointer* p )
 {
-  assert( p );
+  Assert( p );
 
   Pointer_create_h( p );
   Pointer_create_d( p );
@@ -129,8 +128,8 @@ void Pointer_create( Pointer* p )
 
 void Pointer_delete_h( Pointer* p )
 {
-  assert( p );
-  assert( p->h__ );
+  Assert( p );
+  Assert( p->h__ );
 
   if( p->is_pinned__ && p->is_using_device__ )
   {
@@ -147,11 +146,11 @@ void Pointer_delete_h( Pointer* p )
 
 void Pointer_delete_d( Pointer* p )
 {
-  assert( p );
+  Assert( p );
 
   if( p->is_using_device__ )
   {
-    assert( p->d__ );
+    Assert( p->d__ );
 
     Env_cuda_free_P( p->d__ );
 
@@ -163,7 +162,7 @@ void Pointer_delete_d( Pointer* p )
 
 void Pointer_delete( Pointer* p )
 {
-  assert( p );
+  Assert( p );
 
   Pointer_delete_h( p );
   Pointer_delete_d( p );
@@ -174,7 +173,7 @@ void Pointer_delete( Pointer* p )
 
 void Pointer_update_h( Pointer* p )
 {
-  assert( p );
+  Assert( p );
 
   if( p->is_using_device__ )
   {
@@ -186,7 +185,7 @@ void Pointer_update_h( Pointer* p )
 
 void Pointer_update_d( Pointer* p )
 {
-  assert( p );
+  Assert( p );
 
   if( p->is_using_device__ )
   {

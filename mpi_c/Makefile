@@ -61,7 +61,7 @@ endif
 ifeq ($(COMPILER_OPTION),PGI)
   CC = cc
   CFLAGS := $(CFLAGS) -fast -Mfprelaxed -alias=ansi -Msafeptr -tp=istanbul-64
-    COMMON_FLAGS := $(COMMON_FLAGS) -DNDEBUG
+  COMMON_FLAGS := $(COMMON_FLAGS) -DNDEBUG
 endif
 
 ifeq ($(MPI_OPTION),MPI)
@@ -91,7 +91,7 @@ ifneq ($(CUDA_OPTION),)
     $(error "CUDA requires GNU compiler to be used.")
   endif
 make_cu: make_c
-	nvcc -c $(CUDA_SOURCES) $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS)
+	nvcc -c $(CUDA_SOURCES) $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS) -DUSING_CUDA -arch=sm_35
 else
 make_cu: make_c
 endif

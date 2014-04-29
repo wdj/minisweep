@@ -11,6 +11,7 @@
 #ifndef _mpi_c__env_openmp_h_
 #define _mpi_c__env_openmp_h_
 
+#include "function_attributes.h"
 #include "types.h"
 #include "env_assert.h"
 #include "arguments.h"
@@ -54,7 +55,7 @@ static void Env_omp_set_values__( Env *env, Arguments* args )
 /*===========================================================================*/
 /*---Get openmp current thread number---*/
 
-static inline int Env_omp_thread( const Env* env )
+TARGET_HD static inline int Env_omp_thread()
 {
   int result = 0;
 #ifdef USE_OPENMP
@@ -64,9 +65,21 @@ static inline int Env_omp_thread( const Env* env )
 }
 
 /*===========================================================================*/
+/*---Get openmp number of threads---*/
+
+TARGET_HD static inline int Env_omp_nthread()
+{
+  int result = 1;
+#ifdef USE_OPENMP
+  result = omp_get_num_threads();  
+#endif
+  return result;
+}
+
+/*===========================================================================*/
 /*---Are we in an openmp threaded region---*/
 
-static inline Bool_t Env_omp_in_parallel( const Env* env )
+TARGET_HD static inline Bool_t Env_omp_in_parallel()
 {
   Bool_t result = Bool_false;
 #ifdef USE_OPENMP

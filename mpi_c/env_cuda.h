@@ -25,6 +25,13 @@ extern "C"
 #endif
 
 /*===========================================================================*/
+/*---Pointer to device shared memory---*/
+
+#ifdef __CUDA_ARCH__
+__shared__ extern char cuda_shared_memory[];
+#endif
+
+/*===========================================================================*/
 /*---Initialize CUDA---*/
 
 static void Env_cuda_initialize__( Env *env, int argc, char** argv )
@@ -71,13 +78,13 @@ static Bool_t Env_cuda_is_using_device( Env *env )
 
 static P* Env_cuda_malloc_P( size_t n )
 {
-  assert( n+1 >= 1 );
+  Assert( n+1 >= 1 );
 
   P* result = NULL;
 
 #ifdef __CUDACC__
   cudaMalloc( &result, n==0 ? ((size_t)1) : n*sizeof(P) );
-  assert( result );
+  Assert( result );
 #endif
 
   return result;
@@ -87,7 +94,7 @@ static P* Env_cuda_malloc_P( size_t n )
 
 static P* Env_cuda_malloc_host_P( size_t n )
 {
-  assert( n+1 >= 1 );
+  Assert( n+1 >= 1 );
 
   P* result = NULL;
 
@@ -96,7 +103,7 @@ static P* Env_cuda_malloc_host_P( size_t n )
 #else
    result = malloc_P( n );
 #endif
-  assert( result );
+  Assert( result );
 
   return result;
 }
@@ -128,9 +135,9 @@ static void Env_cuda_copy_host_to_device_P( P*     p_d,
                                             size_t n )
 {
 #ifdef __CUDACC__
-  assert( p_d );
-  assert( p_h );
-  assert( n+1 >= 1 );
+  Assert( p_d );
+  Assert( p_h );
+  Assert( n+1 >= 1 );
 
   cudaMemcpy( p_d, p_h, n*sizeof(P), cudaMemcpyHostToDevice );
 #endif
@@ -143,11 +150,51 @@ static void Env_cuda_copy_device_to_host_P( P*     p_h,
                                             size_t n )
 {
 #ifdef __CUDACC__
-  assert( p_h );
-  assert( p_d );
-  assert( n+1 >= 1 );
+  Assert( p_h );
+  Assert( p_d );
+  Assert( n+1 >= 1 );
 
   cudaMemcpy( p_h, p_d, n*sizeof(P), cudaMemcpyDeviceToHost );
+#endif
+}
+
+/*===========================================================================*/
+/*---CUDA device thread management---*/
+
+TARGET_HD static int Env_cuda_threadblock( int axis )
+{
+  Assert( axis >= 0 && axis < 2 );
+
+#ifdef __CUDA_ARCH__
+  return axis==0 ? blockIdx.x :
+         axis==1 ? blockIdx.y :
+                   blockIdx.z;
+#else
+  return 0;
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+TARGET_HD static int Env_cuda_thread_in_threadblock( int axis )
+{
+  Assert( axis >= 0 && axis < 2 );
+
+#ifdef __CUDA_ARCH__
+  return axis==0 ? threadIdx.x :
+         axis==1 ? threadIdx.y :
+                   threadIdx.z;
+#else
+  return 0;
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+TARGET_HD static void Env_cuda_sync_threadblock()
+{
+#ifdef __CUDA_ARCH__
+  __syncthreads();
 #endif
 }
 

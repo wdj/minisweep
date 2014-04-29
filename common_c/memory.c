@@ -25,7 +25,7 @@ extern "C"
 int* malloc_i( size_t n )
 {
   int* p = (int*) malloc( n * sizeof( int ) );
-  assert( p );
+  Assert( p );
   return p;
 }
 
@@ -34,7 +34,7 @@ int* malloc_i( size_t n )
 
 void free_i( int* p )
 {
-  assert( p );
+  Assert( p );
   free( (void*) p );
 }
 
@@ -44,7 +44,7 @@ void free_i( int* p )
 P* malloc_P( size_t n )
 {
   P* p = (P*) malloc( n * sizeof( P ) );
-  assert( p );
+  Assert( p );
   return p;
 }
 
@@ -53,7 +53,7 @@ P* malloc_P( size_t n )
 
 void free_P( P* p )
 {
-  assert( p );
+  Assert( p );
   free( (void*) p );
 }
 

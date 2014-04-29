@@ -11,6 +11,7 @@
 #ifndef _serial_c__sweeper_kba_h_
 #define _serial_c__sweeper_kba_h_
 
+#include "function_attributes.h"
 #include "env.h"
 #include "definitions.h"
 #include "dimensions.h"
@@ -166,7 +167,7 @@ void Sweeper_recv_faces_end__(
 /*===========================================================================*/
 /*---Apply boundary condition: xy face---*/
 
-static void Sweeper_set_boundary_xy(
+TARGET_HD static void Sweeper_set_boundary_xy(
   const Sweeper*        sweeper,
   P* const __restrict__ facexy,
   const Quantities*     quan,
@@ -175,13 +176,12 @@ static void Sweeper_set_boundary_xy(
   const int             ixmin_b,
   const int             ixmax_b,
   const int             iymin_b,
-  const int             iymax_b,
-  Env*                  env );
+  const int             iymax_b );
 
 /*===========================================================================*/
 /*---Apply boundary condition: xz face---*/
 
-static void Sweeper_set_boundary_xz(
+TARGET_HD static void Sweeper_set_boundary_xz(
   const Sweeper*        sweeper,
   P* const __restrict__ facexz,
   const Quantities*     quan,
@@ -191,13 +191,12 @@ static void Sweeper_set_boundary_xz(
   const int             ixmin_b,
   const int             ixmax_b,
   const int             izmin_b,
-  const int             izmax_b,
-  Env*                  env );
+  const int             izmax_b );
 
 /*===========================================================================*/
 /*---Apply boundary condition: yz face---*/
 
-static void Sweeper_set_boundary_yz(
+TARGET_HD static void Sweeper_set_boundary_yz(
   const Sweeper*        sweeper,
   P* const __restrict__ faceyz,
   const Quantities*     quan,
@@ -207,8 +206,7 @@ static void Sweeper_set_boundary_yz(
   const int             iymin_b,
   const int             iymax_b,
   const int             izmin_b,
-  const int             izmax_b,
-  Env*                  env );
+  const int             izmax_b );
 
 /*===========================================================================*/
 /*---Selectors for faces---*/
@@ -220,8 +218,8 @@ static void Sweeper_set_boundary_yz(
 
 static Pointer* Sweeper_facexy__( Sweeper* sweeper, int i )
 {
-  assert( sweeper != NULL );
-  assert( i >= 0 && i < 1 );
+  Assert( sweeper != NULL );
+  Assert( i >= 0 && i < 1 );
   return & sweeper->facexy0;
 }
 
@@ -229,8 +227,8 @@ static Pointer* Sweeper_facexy__( Sweeper* sweeper, int i )
 
 static Pointer* Sweeper_facexz__( Sweeper* sweeper, int i )
 {
-  assert( sweeper != NULL );
-  assert( i >= 0 && i < ( Sweeper_is_face_comm_async() ? NDIM : 1 ) );
+  Assert( sweeper != NULL );
+  Assert( i >= 0 && i < ( Sweeper_is_face_comm_async() ? NDIM : 1 ) );
   Pointer* facesxz[NDIM] = { & sweeper->facexz0,
                              & sweeper->facexz1,
                              & sweeper->facexz2 };
@@ -241,8 +239,8 @@ static Pointer* Sweeper_facexz__( Sweeper* sweeper, int i )
 
 static Pointer* Sweeper_faceyz__( Sweeper* sweeper, int i )
 {
-  assert( sweeper != NULL );
-  assert( i >= 0 && i < ( Sweeper_is_face_comm_async() ? NDIM : 1 ) );
+  Assert( sweeper != NULL );
+  Assert( i >= 0 && i < ( Sweeper_is_face_comm_async() ? NDIM : 1 ) );
   Pointer* facesyz[NDIM] = { & sweeper->faceyz0,
                              & sweeper->faceyz1,
                              & sweeper->faceyz2 };
@@ -254,8 +252,8 @@ static Pointer* Sweeper_faceyz__( Sweeper* sweeper, int i )
 
 static Pointer* Sweeper_facexy_step__( Sweeper* sweeper, int step )
 {
-  assert( sweeper != NULL );
-  assert( step >= 0 );
+  Assert( sweeper != NULL );
+  Assert( step >= 0 );
   return Sweeper_facexy__( sweeper, 0 );
 }
 
@@ -263,8 +261,8 @@ static Pointer* Sweeper_facexy_step__( Sweeper* sweeper, int step )
 
 static Pointer* Sweeper_facexz_step__( Sweeper* sweeper, int step )
 {
-  assert( sweeper != NULL );
-  assert( step >= 0 );
+  Assert( sweeper != NULL );
+  Assert( step >= 0 );
 
   return Sweeper_facexz__( sweeper,
                            Sweeper_is_face_comm_async() ? (step+3)%3 : 0 );
@@ -274,47 +272,137 @@ static Pointer* Sweeper_facexz_step__( Sweeper* sweeper, int step )
 
 static Pointer* Sweeper_faceyz_step__( Sweeper* sweeper, int step )
 {
-  assert( sweeper != NULL );
-  assert( step >= 0 );
+  Assert( sweeper != NULL );
+  Assert( step >= 0 );
 
   return Sweeper_faceyz__( sweeper,
                            Sweeper_is_face_comm_async() ? (step+3)%3 : 0 );
 }
 
 /*===========================================================================*/
-/*---Select which part of v_local to use for current thread---*/
-
-static inline P* __restrict__ Sweeper_v_local_this__( Sweeper* sweeper,
-                                                      int      thread )
-{
-  return sweeper->v_local + sweeper->dims_b.na * NU * thread;
-}
-
-/*===========================================================================*/
 /*---Thread indexers---*/
 
-static inline int Sweeper_thread_e( const Sweeper* sweeper,
-                                    Env*           env )
+TARGET_HD static inline int Sweeper_thread_e( const Sweeper* sweeper )
 {
-  assert( sweeper->nthread_e * sweeper->nthread_octant ==1 ||
-          Env_omp_in_parallel( env ) );
-  return Env_omp_thread( env ) % sweeper->nthread_e;
+#ifdef __CUDA_ARCH__
+  return Env_cuda_threadblock( 0 );
+#else
+  Assert( sweeper->nthread_e * sweeper->nthread_octant == 1 ||
+                                                        Env_omp_in_parallel() );
+  return Env_omp_thread() % sweeper->nthread_e;
+#endif
 }
 
 /*---------------------------------------------------------------------------*/
 
-static inline int Sweeper_thread_octant( const Sweeper* sweeper,
-                                         Env*           env )
+TARGET_HD static inline int Sweeper_thread_octant( const Sweeper* sweeper )
 {
-  assert( sweeper->nthread_e * sweeper->nthread_octant ==1 ||
-         Env_omp_in_parallel( env ) );
-  return Env_omp_thread( env ) / sweeper->nthread_e;
+#ifdef __CUDA_ARCH__
+  return Env_cuda_thread_in_threadblock( 0 );
+#else
+  Assert( sweeper->nthread_e * sweeper->nthread_octant == 1 ||
+                                                       Env_omp_in_parallel() );
+  return Env_omp_thread() / sweeper->nthread_e;
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+TARGET_HD static inline int Sweeper_thread( const Sweeper* sweeper )
+{
+  return Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant *
+         Sweeper_thread_e(      sweeper );
+}
+
+/*===========================================================================*/
+/*---Synchronize across octant threads---*/
+
+TARGET_HD static void Sweeper_sync_octant_threads( Sweeper* sweeper )
+{
+#ifdef __CUDA_ARCH__
+  /*---NOTE: this is not needed if octant threads are mapped in-warp---*/
+  Env_cuda_sync_threadblock();
+#else
+#ifdef USE_OPENMP_THREADS
+#pragma omp barrier
+#endif
+#endif
+}
+
+/*===========================================================================*/
+/*---Select which part of v_local to use for current thread---*/
+
+TARGET_HD static inline P* __restrict__ Sweeper_v_local_this__(
+                                                            Sweeper* sweeper )
+{
+#ifdef __CUDA_ARCH__
+  return ( (P*) cuda_shared_memory )
+         + sweeper->dims_b.na * NU * Sweeper_thread_octant( sweeper );
+#else
+  return sweeper->v_local
+         + sweeper->dims_b.na * NU * Sweeper_thread( sweeper );
+#endif
+}
+
+/*===========================================================================*/
+/*---Information for CUDA case part 1.---*/
+
+/*---------------------------------------------------------------------------*/
+
+static int Sweeper_nthreadblock( const Sweeper* sweeper, int axis )
+{
+  Assert( axis >= 0 && axis < 2 );
+
+  return axis==0 ? sweeper->nthread_e : 1;
+}
+
+/*---------------------------------------------------------------------------*/
+
+static int Sweeper_nthread_in_threadblock( const Sweeper* sweeper, int axis )
+{
+  Assert( axis >= 0 && axis < 2 );
+
+  return axis==0 ? sweeper->nthread_octant : 1;
+}
+
+/*===========================================================================*/
+/*---Number of elements of v_local---*/
+
+TARGET_HD static inline int Sweeper_v_local_size__( Sweeper* sweeper,
+                                                    Env*     env )
+{
+  return Env_cuda_is_using_device( env )
+      ?
+         sweeper->dims_b.na *
+         NU *
+         Sweeper_nthread_in_threadblock( sweeper, 0 ) *
+         Sweeper_nthread_in_threadblock( sweeper, 1 ) *
+         Sweeper_nthread_in_threadblock( sweeper, 2 )
+       :
+         sweeper->dims_b.na *
+         NU *
+#ifdef USE_OPENMP_THREADS
+         sweeper->nthread_e *
+         sweeper->nthread_octant
+#else
+         1
+#endif
+       ;
+}
+
+/*===========================================================================*/
+/*---Information for CUDA case part 2.---*/
+
+static int Sweeper_shared_size__( Sweeper* sweeper,
+                                Env* env )
+{
+  return Sweeper_v_local_size__( sweeper, env ) * sizeof( P );
 }
 
 /*===========================================================================*/
 /*---Perform a sweep for a semiblock---*/
 
-void Sweeper_sweep_semiblock(
+TARGET_HD void Sweeper_sweep_semiblock(
   Sweeper*               sweeper,
   P* __restrict__        vo,
   const P* __restrict__  vi,
@@ -324,7 +412,6 @@ void Sweeper_sweep_semiblock(
   const P* __restrict__  a_from_m,
   const P* __restrict__  m_from_a,
   const Quantities*      quan,
-  Env*                   env,
   const Step_Info        step_info,
   const int              octant_in_block,
   const int              ixmin,
@@ -335,9 +422,9 @@ void Sweeper_sweep_semiblock(
   const int              izmax );
 
 /*===========================================================================*/
-/*---Perform a sweep for a block---*/
+/*---Perform a sweep for a block, implementation---*/
 
-void Sweeper_sweep_block(
+TARGET_HD void Sweeper_sweep_block_impl(
   Sweeper*               sweeper,
   P* __restrict__        vo,
   const P* __restrict__  vi,
@@ -346,6 +433,46 @@ void Sweeper_sweep_block(
   P* __restrict__        faceyz,
   const P* __restrict__  a_from_m,
   const P* __restrict__  m_from_a,
+  int                    step,
+  const Quantities*      quan,
+  Bool_t                 proc_x_min,
+  Bool_t                 proc_x_max,
+  Bool_t                 proc_y_min,
+  Bool_t                 proc_y_max,
+  Step_Info_Values       step_info_values );
+
+/*===========================================================================*/
+/*---Perform a sweep for a block, implementation, global---*/
+
+TARGET_G void Sweeper_sweep_block_impl_global(
+  Sweeper                sweeper,
+        P* __restrict__  vo,
+  const P* __restrict__  vi,
+        P* __restrict__  facexy,
+        P* __restrict__  facexz,
+        P* __restrict__  faceyz,
+  const P* __restrict__  a_from_m,
+  const P* __restrict__  m_from_a,
+  int                    step,
+  const Quantities       quan,
+  Bool_t                 proc_x_min,
+  Bool_t                 proc_x_max,
+  Bool_t                 proc_y_min,
+  Bool_t                 proc_y_max,
+  Step_Info_Values       step_info_values );
+
+/*===========================================================================*/
+/*---Perform a sweep for a block---*/
+
+void Sweeper_sweep_block(
+  Sweeper*               sweeper,
+  Pointer*               vo,
+  Pointer*               vi,
+  Pointer*               facexy,
+  Pointer*               facexz,
+  Pointer*               faceyz,
+  const Pointer*         a_from_m,
+  const Pointer*         m_from_a,
   int                    step,
   const Quantities*      quan,
   Env*                   env );

@@ -139,8 +139,8 @@ static void Env_increment_tag( Env* env, int value )
 
 static int Env_proc( const Env* env, int proc_x, int proc_y )
 {
-  assert( proc_x >= 0 && proc_x < Env_nproc_x( env ) );
-  assert( proc_y >= 0 && proc_y < Env_nproc_y( env ) );
+  Assert( proc_x >= 0 && proc_x < Env_nproc_x( env ) );
+  Assert( proc_y >= 0 && proc_y < Env_nproc_y( env ) );
   int result = proc_x + Env_nproc_x( env ) * proc_y;
   return result;
 }
@@ -149,7 +149,7 @@ static int Env_proc( const Env* env, int proc_x, int proc_y )
 
 static int Env_proc_x( const Env* env, int proc )
 {
-  assert( proc >= 0 && proc < Env_nproc( env ) );
+  Assert( proc >= 0 && proc < Env_nproc( env ) );
   int result = proc % Env_nproc_x( env );
   return result;
 }
@@ -158,7 +158,7 @@ static int Env_proc_x( const Env* env, int proc )
 
 static int Env_proc_y( const Env* env, int proc )
 {
-  assert( proc >= 0 && proc < Env_nproc( env ) );
+  Assert( proc >= 0 && proc < Env_nproc( env ) );
   int result = proc / Env_nproc_x( env );
   return result;
 }
@@ -232,7 +232,7 @@ typedef int Request_t;
 
 static void Env_send_i( const int* data, size_t n, int proc, int tag )
 {
-  assert( data != NULL );
+  Assert( data != NULL );
 
 #ifdef USE_MPI
   MPI_Send( (void*)data, n, MPI_INT, proc, tag, Env_mpi_default_comm__() );
@@ -243,7 +243,7 @@ static void Env_send_i( const int* data, size_t n, int proc, int tag )
 
 static void Env_recv_i( int* data, size_t n, int proc, int tag )
 {
-  assert( data != NULL );
+  Assert( data != NULL );
 
 #ifdef USE_MPI
   MPI_Status status;
@@ -257,8 +257,8 @@ static void Env_recv_i( int* data, size_t n, int proc, int tag )
 static void Env_send_P( const P* data, size_t n, int proc, int tag )
 {
   Static_Assert( P_IS_DOUBLE );
-  assert( data != NULL );
-  assert( n+1 >= 1 );
+  Assert( data != NULL );
+  Assert( n+1 >= 1 );
 
 #ifdef USE_MPI
   MPI_Send( (void*)data, n, MPI_DOUBLE, proc, tag, Env_mpi_default_comm__() );
@@ -270,8 +270,8 @@ static void Env_send_P( const P* data, size_t n, int proc, int tag )
 static void Env_recv_P( P* data, size_t n, int proc, int tag )
 {
   Static_Assert( P_IS_DOUBLE );
-  assert( data != NULL );
-  assert( n+1 >= 1 );
+  Assert( data != NULL );
+  Assert( n+1 >= 1 );
 
 #ifdef USE_MPI
   MPI_Status status;
@@ -286,9 +286,9 @@ static void Env_asend_P( const P* data, size_t n, int proc, int tag,
                                                           Request_t* request )
 {
   Static_Assert( P_IS_DOUBLE );
-  assert( data != NULL );
-  assert( n+1 >= 1 );
-  assert( request != NULL );
+  Assert( data != NULL );
+  Assert( n+1 >= 1 );
+  Assert( request != NULL );
 
 #ifdef USE_MPI
   MPI_Isend( (void*)data, n, MPI_DOUBLE, proc, tag, Env_mpi_default_comm__(),
@@ -302,9 +302,9 @@ static void Env_arecv_P( const P* data, size_t n, int proc, int tag,
                                                           Request_t* request )
 {
   Static_Assert( P_IS_DOUBLE );
-  assert( data != NULL );
-  assert( n+1 >= 1 );
-  assert( request != NULL );
+  Assert( data != NULL );
+  Assert( n+1 >= 1 );
+  Assert( request != NULL );
 
 #ifdef USE_MPI
   MPI_Irecv( (void*)data, n, MPI_DOUBLE, proc, tag, Env_mpi_default_comm__(),

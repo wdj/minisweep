@@ -22,6 +22,12 @@ extern "C"
 /*===========================================================================*/
 /*---Assertions---*/
 
+#ifdef USING_CUDA
+#define Assert(v)
+#else
+#define Assert(v) assert(v)
+#endif
+
 #ifndef Insist
 #define Insist( condition ) \
   (void)((condition) || (insist__ (#condition, __FILE__, __LINE__),0))
