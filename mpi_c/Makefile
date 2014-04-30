@@ -91,7 +91,7 @@ ifneq ($(CUDA_OPTION),)
     $(error "CUDA requires GNU compiler to be used.")
   endif
 make_cu: make_c
-	nvcc -c $(CUDA_SOURCES) $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS) -DUSING_CUDA -arch=sm_35
+	nvcc -c $(CUDA_SOURCES) $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS) -DUSE_CUDA -arch=sm_35
 else
 make_cu: make_c
 endif

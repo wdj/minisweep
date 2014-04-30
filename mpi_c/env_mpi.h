@@ -25,6 +25,17 @@ extern "C"
 #endif
 
 /*===========================================================================*/
+/*---Types---*/
+
+#ifdef USE_MPI
+typedef MPI_Comm    Comm_t;
+typedef MPI_Request Request_t;
+#else
+typedef int Comm_t;
+typedef int Request_t;
+#endif
+
+/*===========================================================================*/
 /*---Initialize mpi---*/
 
 static void Env_mpi_initialize__( Env *env, int argc, char** argv )
@@ -47,12 +58,6 @@ static void Env_mpi_finalize__( Env* env )
 
 /*===========================================================================*/
 /*---Default communicator---*/
-
-#ifdef USE_MPI
-typedef MPI_Comm Comm_t;
-#else
-typedef int Comm_t;
-#endif
 
 static Comm_t Env_mpi_default_comm__()
 {
@@ -223,12 +228,6 @@ static P Env_sum_P( P value )
 
 /*===========================================================================*/
 /*---MPI functions: point to point---*/
-
-#ifdef USE_MPI
-typedef MPI_Request Request_t;
-#else
-typedef int Request_t;
-#endif
 
 static void Env_send_i( const int* data, size_t n, int proc, int tag )
 {

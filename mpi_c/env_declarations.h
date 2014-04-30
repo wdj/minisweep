@@ -27,7 +27,10 @@ typedef struct
   int tag__;        /*---Next free message tag---*/
 #endif
 #ifdef __CUDACC__
-  Bool_t is_using_device__;
+  Bool_t       is_using_device__;
+  cudaStream_t stream_send_block__;
+  cudaStream_t stream_recv_block__;
+  cudaStream_t stream_kernel_faces__;
 #endif
 } Env;
 

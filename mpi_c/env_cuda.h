@@ -12,7 +12,7 @@
 #define _mpi_c__env_cuda_h_
 
 #ifdef USE_CUDA
-#incude "cuda.h"
+#include "cuda.h"
 #endif
 
 #include "types.h"
@@ -22,6 +22,15 @@
 #ifdef __cplusplus
 extern "C"
 {
+#endif
+
+/*===========================================================================*/
+/*---Types---*/
+
+#ifdef __CUDACC__
+typedef cudaStream_t Stream_t;
+#else
+typedef int Stream_t;
 #endif
 
 /*===========================================================================*/
@@ -37,6 +46,9 @@ __shared__ extern char cuda_shared_memory[];
 static void Env_cuda_initialize__( Env *env, int argc, char** argv )
 {
 #ifdef __CUDACC__
+  cudaStreamCreate( & env->stream_send_block__ );
+  cudaStreamCreate( & env->stream_recv_block__ );
+  cudaStreamCreate( & env->stream_kernel_faces__ );
 #endif
 }
 
@@ -46,6 +58,9 @@ static void Env_cuda_initialize__( Env *env, int argc, char** argv )
 static void Env_cuda_finalize__( Env* env )
 {
 #ifdef __CUDACC__
+  cudaStreamDestroy( env->stream_send_block__ );
+  cudaStreamDestroy( env->stream_recv_block__ );
+  cudaStreamDestroy( env->stream_kernel_faces__ );
 #endif
 }
 
@@ -75,6 +90,7 @@ static Bool_t Env_cuda_is_using_device( Env *env )
 }
 
 /*===========================================================================*/
+/*---Memory management---*/
 
 static P* Env_cuda_malloc_P( size_t n )
 {
@@ -158,8 +174,40 @@ static void Env_cuda_copy_device_to_host_P( P*     p_h,
 #endif
 }
 
+/*---------------------------------------------------------------------------*/
+
+static void Env_cuda_copy_host_to_device_stream_P( P*       p_d,
+                                                   P*       p_h,
+                                                   size_t   n,
+                                                   Stream_t stream )
+{
+#ifdef __CUDACC__
+  Assert( p_d );
+  Assert( p_h );
+  Assert( n+1 >= 1 );
+
+  cudaMemcpyAsync( p_d, p_h, n*sizeof(P), cudaMemcpyHostToDevice, stream );
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void Env_cuda_copy_device_to_host_stream_P( P*       p_h,
+                                                   P*       p_d,
+                                                   size_t   n,
+                                                   Stream_t stream )
+{
+#ifdef __CUDACC__
+  Assert( p_h );
+  Assert( p_d );
+  Assert( n+1 >= 1 );
+
+  cudaMemcpyAsync( p_h, p_d, n*sizeof(P), cudaMemcpyDeviceToHost, stream );
+#endif
+}
+
 /*===========================================================================*/
-/*---CUDA device thread management---*/
+/*---Device thread management---*/
 
 TARGET_HD static int Env_cuda_threadblock( int axis )
 {
@@ -195,6 +243,58 @@ TARGET_HD static void Env_cuda_sync_threadblock()
 {
 #ifdef __CUDA_ARCH__
   __syncthreads();
+#endif
+}
+
+/*===========================================================================*/
+/*---Stream management---*/
+
+static Stream_t Env_cuda_stream_send_block( Env* env )
+{
+#ifdef __CUDACC__
+  return env->stream_send_block__;
+#else
+  return 0;
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+static Stream_t Env_cuda_stream_recv_block( Env* env )
+{
+#ifdef __CUDACC__
+  return env->stream_recv_block__;
+#else
+  return 0;
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+static Stream_t Env_cuda_stream_kernel_faces( Env* env )
+{
+#ifdef __CUDACC__
+  return env->stream_kernel_faces__;
+#else
+  return 0;
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void Env_cuda_stream_wait( Stream_t stream )
+{
+#ifdef __CUDACC__
+  cudaStreamSynchronize( stream );
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void Env_cuda_stream_wait_all()
+{
+#ifdef __CUDACC__
+  cudaThreadSynchronize();
 #endif
 }
 

@@ -115,6 +115,14 @@ void Pointer_update_h( Pointer* p );
 
 void Pointer_update_d( Pointer* p );
 
+/*---------------------------------------------------------------------------*/
+
+void Pointer_update_h_stream( Pointer* p, Stream_t stream );
+
+/*---------------------------------------------------------------------------*/
+
+void Pointer_update_d_stream( Pointer* p, Stream_t stream );
+
 /*===========================================================================*/
 /*---Accessors---*/
 

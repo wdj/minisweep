@@ -232,6 +232,30 @@ void Pointer_update_d( Pointer* p )
   }
 }
 
+/*---------------------------------------------------------------------------*/
+
+void Pointer_update_h_stream( Pointer* p, Stream_t stream )
+{
+  Assert( p );
+
+  if( p->is_using_device__ )
+  {
+    Env_cuda_copy_device_to_host_stream_P( p->h__, p->d__, p->n__, stream );
+  }
+}
+
+/*---------------------------------------------------------------------------*/
+
+void Pointer_update_d_stream( Pointer* p, Stream_t stream )
+{
+  Assert( p );
+
+  if( p->is_using_device__ )
+  {
+    Env_cuda_copy_host_to_device_stream_P( p->d__, p->h__, p->n__, stream );
+  }
+}
+
 /*===========================================================================*/
   
 #ifdef __cplusplus
