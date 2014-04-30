@@ -1242,7 +1242,8 @@ void Sweeper_sweep_block(
                            dim3( Sweeper_nthread_in_threadblock( sweeper, 0 ),
                                  Sweeper_nthread_in_threadblock( sweeper, 1 ),
                                  Sweeper_nthread_in_threadblock( sweeper, 2 ) ),
-                           Sweeper_shared_size__( sweeper, env )
+                           Sweeper_shared_size__( sweeper, env ),
+                           Env_cuda_stream_kernel_faces( env )
                        >>>
 #endif
                             ( *sweeper,
@@ -1318,19 +1319,9 @@ void Sweeper_sweep(
   /*---Loop over kba parallel steps---*/
   /*--------------------*/
 
-  for( step=0; step<nstep; ++step )
+  for( step=0-1; step<nstep+1; ++step )
   {
-    /*---Determine blocks needing transfer, counting from top/bottom z---*/
-
-    const int    block_to_send[2] = {                                  step,
-                                      ( nblock_z - 1 ) -               step };
-    const int    block_to_recv[2] = { ( nblock_z - 1 ) - ( nstep - 1 - step ),
-                                                         ( nstep - 1 - step ) };
-
-    const Bool_t do_block_send[2] = { block_to_send[0] <  nblock_z/2,
-                                      block_to_send[1] >= nblock_z/2 };
-    const Bool_t do_block_recv[2] = { block_to_recv[0] >= nblock_z/2,
-                                      block_to_recv[1] <  nblock_z/2 };
+    const Bool_t is_sweep_step = step>=0 && step<nstep;
 
     int i = 0;
 
@@ -1346,10 +1337,6 @@ void Sweeper_sweep(
     Pointer* facexz = Sweeper_facexz_step__( sweeper, step );
     Pointer* faceyz = Sweeper_faceyz_step__( sweeper, step );
 
-    /*--------------------*/
-    /*---Communicate faces---*/
-    /*--------------------*/
-
     /*=========================================================================
     =    Faces are triple buffered via a circular buffer of face arrays.
     =    The following shows the pattern of face usage over a step:
@@ -1363,63 +1350,157 @@ void Sweeper_sweep(
     =    Send face from this step start ...  face0 face1 face2 face0  ...
     =========================================================================*/
 
-    if( Sweeper_is_face_comm_async() )
+    /*====================*/
+    /*---Recv face via MPI WAIT (i)---*/
+    /*====================*/
+
+    if( is_sweep_step &&  Sweeper_is_face_comm_async() )
     {
-      Sweeper_recv_faces_end__  (  sweeper, step-1, env );
-      Sweeper_recv_faces_start__(  sweeper, step,   env );
+      Sweeper_recv_faces_end__ ( sweeper, step-1, env );
     }
 
-    /*--------------------*/
-    /*---Sweep this kba block---*/
-    /*--------------------*/
+    /*====================*/
+    /*---Send face to device START (i)---*/
+    /*---Send face to device WAIT (i)---*/
+    /*====================*/
 
-    for( i=0; i<2; ++i )
+    if( is_sweep_step )
     {
-      if( do_block_send[i] )
+      if( step == 0 )
       {
-        Pointer_ctor_alias( &vi_b, vi, block_to_send[i] * size_state_block,
-                                                          size_state_block );
-        Pointer_update_d(   &vi_b );
-        Pointer_dtor(       &vi_b );
-        Pointer_ctor_alias( &vo_b, vo, block_to_send[i] * size_state_block,
-                                                          size_state_block );
-        Pointer_update_d(   &vo_b );
-        Pointer_dtor(       &vo_b );
+        Pointer_update_d_stream( facexy, Env_cuda_stream_kernel_faces( env ) );
       }
+      Pointer_update_d_stream(   facexz, Env_cuda_stream_kernel_faces( env ) );
+      Pointer_update_d_stream(   faceyz, Env_cuda_stream_kernel_faces( env ) );
+    }
+    Env_cuda_stream_wait( Env_cuda_stream_kernel_faces( env ) );
+
+    /*====================*/
+    /*---Recv face via MPI START (i+1)---*/
+    /*====================*/
+
+    if( is_sweep_step &&  Sweeper_is_face_comm_async() )
+    {
+      Sweeper_recv_faces_start__( sweeper, step, env );
     }
 
-    Pointer_update_d( facexy );
-    Pointer_update_d( facexz );
-    Pointer_update_d( faceyz );
+    /*====================*/
+    /*---Perform the sweep on the block START (i)---*/
+    /*====================*/
 
+    if( is_sweep_step )
+    {
     Sweeper_sweep_block( sweeper, vo, vi, facexy, facexz, faceyz,
                          & quan->a_from_m, & quan->m_from_a, step, quan, env );
+    }
+
+    /*====================*/
+    /*---Send block to device START (i+1)---*/
+    /*====================*/
 
     for( i=0; i<2; ++i )
     {
-      if( do_block_recv[i] )
+      /*---Determine blocks needing transfer, counting from top/bottom z---*/
+      /*---NOTE: for case of one octant thread, can speed this up by only
+           send/recv of one block per step, not two---*/
+
+      const int stept = step + 1;
+      const int    block_to_send[2] = {                                stept,
+                                        ( nblock_z-1 ) -               stept };
+      const Bool_t do_block_send[2] = { block_to_send[0] <  nblock_z/2,
+                                        block_to_send[1] >= nblock_z/2 };
+      Assert( nstep >= nblock_z );  /*---Sanity check---*/
+      if( do_block_send[i] )
       {
-        Pointer_ctor_alias( &vo_b, vo, block_to_recv[i] * size_state_block,
-                                                          size_state_block );
-        Pointer_update_h(   &vo_b );
-        Pointer_dtor(       &vo_b );
+        Pointer_ctor_alias(      &vi_b, vi, size_state_block * block_to_send[i],
+                                            size_state_block );
+        Pointer_update_d_stream( &vi_b, Env_cuda_stream_send_block( env ) );
+        Pointer_dtor(            &vi_b );
+        Pointer_ctor_alias(      &vo_b, vo, size_state_block * block_to_send[i],
+                                            size_state_block );
+        Pointer_update_d_stream( &vo_b, Env_cuda_stream_send_block( env ) );
+        Pointer_dtor(            &vo_b );
       }
     }
 
-    Pointer_update_h( facexy );
-    Pointer_update_h( facexz );
-    Pointer_update_h( faceyz );
+    /*====================*/
+    /*---Recv block from device START (i-1)---*/
+    /*====================*/
 
-    /*--------------------*/
-    /*---Communicate faces---*/
-    /*--------------------*/
-
-    if( Sweeper_is_face_comm_async() )
+    for( i=0; i<2; ++i )
     {
-      Sweeper_send_faces_end__  (  sweeper, step-1, env );
-      Sweeper_send_faces_start__(  sweeper, step, env );
+      /*---Determine blocks needing transfer, counting from top/bottom z---*/
+      /*---NOTE: for case of one octant thread, can speed this up by only
+           send/recv of one block per step, not two---*/
+
+      const int stept = step - 1;
+      const int    block_to_recv[2] = { ( nblock_z-1 ) - ( nstep-1 - stept ),
+                                                         ( nstep-1 - stept ) };
+      const Bool_t do_block_recv[2] = { block_to_recv[0] >= nblock_z/2,
+                                        block_to_recv[1] <  nblock_z/2 };
+      Assert( nstep >= nblock_z );  /*---Sanity check---*/
+      if( do_block_recv[i] )
+      {
+        Pointer_ctor_alias(      &vo_b, vo, size_state_block * block_to_recv[i],
+                                            size_state_block );
+        Pointer_update_h_stream( &vo_b, Env_cuda_stream_recv_block( env ) );
+        Pointer_dtor(            &vo_b );
+      }
     }
-    else
+
+    /*====================*/
+    /*---Send block to device WAIT (i+1)---*/
+    /*---Recv block from device WAIT (i-1)---*/
+    /*====================*/
+
+    Env_cuda_stream_wait( Env_cuda_stream_send_block( env ) );
+    Env_cuda_stream_wait( Env_cuda_stream_recv_block( env ) );
+
+    /*====================*/
+    /*---Send face via MPI WAIT (i-1)---*/
+    /*====================*/
+
+    if( is_sweep_step && Sweeper_is_face_comm_async() )
+    {
+      Sweeper_send_faces_end__ ( sweeper, step-1, env );
+    }
+
+    /*====================*/
+    /*---Perform the sweep on the block WAIT (i)---*/
+    /*====================*/
+
+    Env_cuda_stream_wait( Env_cuda_stream_kernel_faces( env ) );
+
+    /*====================*/
+    /*---Recv face from device START (i)---*/
+    /*---Recv face from device WAIT (i)---*/
+    /*====================*/
+
+    if( is_sweep_step )
+    {
+      if( step == nstep-1 )
+      {
+        Pointer_update_h_stream( facexy, Env_cuda_stream_kernel_faces( env ) );
+      }
+      Pointer_update_h_stream(   facexz, Env_cuda_stream_kernel_faces( env ) );
+      Pointer_update_h_stream(   faceyz, Env_cuda_stream_kernel_faces( env ) );
+    }
+    Env_cuda_stream_wait( Env_cuda_stream_kernel_faces( env ) );
+
+    /*====================*/
+    /*---Send face via MPI START (i)---*/
+    /*====================*/
+
+    if( is_sweep_step && Sweeper_is_face_comm_async() )
+    {
+      Sweeper_send_faces_start__( sweeper, step, env );
+    }
+
+    /*====================*/
+    /*---Communicate faces (synchronous)---*/
+    /*====================*/
+
+    if( is_sweep_step && ! Sweeper_is_face_comm_async() )
     {
       Sweeper_communicate_faces__( sweeper, step, env );
     }
