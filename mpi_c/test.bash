@@ -89,13 +89,15 @@ function main
 
   if [ "${PBS_NP:-}" != "" ] ; then
 
+    make
+
     echo "----------------"
     echo "---CUDA tests---"
     echo "----------------"
 
     make CUDA_OPTION=1
 
-    local SOME_ARGS="--nx  2 --ny  3 --nz  4 --ne 20 --nm 4 --na 5"
+    local SOME_ARGS="--nx  2 --ny  3 --nz  4 --ne 20 --nm 4 --na 5 --nblock_z 2"
 
     compare_runs \
       "-n1"  "$SOME_ARGS " \
@@ -155,16 +157,12 @@ function main
     compare_runs   "-n1 -d3"  "$SOME_ARGS --nthread_e 3" \
                    "-n1 -d4"  "$SOME_ARGS --nthread_e 4"
 
-    make OPENMP_OPTION=THREADS
-
     compare_runs   "-n1 -d1"  "$SOME_ARGS --nthread_octant 1" \
                    "-n1 -d2"  "$SOME_ARGS --nthread_octant 2"
     compare_runs   "-n1 -d2"  "$SOME_ARGS --nthread_octant 2" \
                    "-n1 -d4"  "$SOME_ARGS --nthread_octant 4"
     compare_runs   "-n1 -d4"  "$SOME_ARGS --nthread_octant 4" \
                    "-n1 -d8"  "$SOME_ARGS --nthread_octant 8"
-
-    make OPENMP_OPTION=THREADS
 
     compare_runs   "-n1 -d1"  "$SOME_ARGS --nthread_e 1 --nthread_octant 1" \
                    "-n1 -d2"  "$SOME_ARGS --nthread_e 2 --nthread_octant 1"

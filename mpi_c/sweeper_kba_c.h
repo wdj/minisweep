@@ -1299,6 +1299,8 @@ void Sweeper_sweep(
 
   /*---Declarations---*/
 
+  const int nblock_z = sweeper->nblock_z;
+
   const int nstep = Step_Scheduler_nstep( &(sweeper->step_scheduler) );
   int step = -1;
 
@@ -1306,7 +1308,7 @@ void Sweeper_sweep(
   Pointer vo_b = Pointer_null();
 
   const size_t size_state_block = Dimensions_size_state( sweeper->dims, NU )
-                                                           / sweeper->nblock_z;
+                                                                   / nblock_z;
 
   /*---Initialize result array to zero---*/
 
@@ -1318,13 +1320,19 @@ void Sweeper_sweep(
 
   for( step=0; step<nstep; ++step )
   {
-    /*---Determine blocks needing transfer---*/
+    /*---Determine blocks needing transfer, counting from top/bottom z---*/
 
-    const int block_to_send = step;
-    const int block_to_recv = nstep - 1 - step;
+    const int    block_to_send[2] = {                                  step,
+                                      ( nblock_z - 1 ) -               step };
+    const int    block_to_recv[2] = { ( nblock_z - 1 ) - ( nstep - 1 - step ),
+                                                         ( nstep - 1 - step ) };
 
-    const Bool_t do_block_send = block_to_send < sweeper->nblock_z;
-    const Bool_t do_block_recv = block_to_recv >= 0;
+    const Bool_t do_block_send[2] = { block_to_send[0] <  nblock_z/2,
+                                      block_to_send[1] >= nblock_z/2 };
+    const Bool_t do_block_recv[2] = { block_to_recv[0] >= nblock_z/2,
+                                      block_to_recv[1] <  nblock_z/2 };
+
+    int i = 0;
 
     /*---Pick up needed face pointers---*/
 
@@ -1365,16 +1373,19 @@ void Sweeper_sweep(
     /*---Sweep this kba block---*/
     /*--------------------*/
 
-    if( do_block_send )
+    for( i=0; i<2; ++i )
     {
-      Pointer_ctor_alias( &vi_b, vi, block_to_send * size_state_block,
-                                                     size_state_block );
-      Pointer_update_d( &vi_b );
-      Pointer_dtor( &vi_b );
-      Pointer_ctor_alias( &vo_b, vo, block_to_send * size_state_block,
-                                                     size_state_block );
-      Pointer_update_d( &vo_b );
-      Pointer_dtor( &vo_b );
+      if( do_block_send[i] )
+      {
+        Pointer_ctor_alias( &vi_b, vi, block_to_send[i] * size_state_block,
+                                                          size_state_block );
+        Pointer_update_d(   &vi_b );
+        Pointer_dtor(       &vi_b );
+        Pointer_ctor_alias( &vo_b, vo, block_to_send[i] * size_state_block,
+                                                          size_state_block );
+        Pointer_update_d(   &vo_b );
+        Pointer_dtor(       &vo_b );
+      }
     }
 
     Pointer_update_d( facexy );
@@ -1384,12 +1395,15 @@ void Sweeper_sweep(
     Sweeper_sweep_block( sweeper, vo, vi, facexy, facexz, faceyz,
                          & quan->a_from_m, & quan->m_from_a, step, quan, env );
 
-    if( do_block_recv )
+    for( i=0; i<2; ++i )
     {
-      Pointer_ctor_alias( &vo_b, vo, block_to_recv * size_state_block,
-                                                     size_state_block );
-      Pointer_update_h( &vo_b );
-      Pointer_dtor( &vo_b );
+      if( do_block_recv[i] )
+      {
+        Pointer_ctor_alias( &vo_b, vo, block_to_recv[i] * size_state_block,
+                                                          size_state_block );
+        Pointer_update_h(   &vo_b );
+        Pointer_dtor(       &vo_b );
+      }
     }
 
     Pointer_update_h( facexy );
