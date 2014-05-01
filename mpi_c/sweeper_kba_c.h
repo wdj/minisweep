@@ -827,7 +827,8 @@ TARGET_HD void Sweeper_sweep_semiblock(
   const int              iymin,
   const int              iymax,
   const int              izmin,
-  const int              izmax )
+  const int              izmax,
+  const Bool_t           do_block_init_this )
 {
   /*---Declarations---*/
 
@@ -875,7 +876,9 @@ TARGET_HD void Sweeper_sweep_semiblock(
     /*--------------------*/
 
     for( iz=izbeg; iz!=izend+Dir_inc(dir_z); iz+=Dir_inc(dir_z) )
+    {
     for( iy=iybeg; iy!=iyend+Dir_inc(dir_y); iy+=Dir_inc(dir_y) )
+    {
     for( ix=ixbeg; ix!=ixend+Dir_inc(dir_x); ix+=Dir_inc(dir_x) )
     {
       int im = 0;
@@ -931,12 +934,25 @@ TARGET_HD void Sweeper_sweep_semiblock(
         }
 #ifdef USE_OPENMP_VO_ATOMIC
 #pragma omp atomic update
-#endif
         *ref_state( vo_this, sweeper->dims_b, NU,
                     ix, iy, iz, ie, im, iu ) += result;
+#else
+        if( do_block_init_this )
+        {
+          *ref_state( vo_this, sweeper->dims_b, NU,
+                      ix, iy, iz, ie, im, iu ) = result;
+        }
+        else
+        {
+          *ref_state( vo_this, sweeper->dims_b, NU,
+                      ix, iy, iz, ie, im, iu ) += result;
+        }
+#endif
       }
       }
 
+    }
+    }
     } /*---ix/iy/iz---*/
 
   } /*---ie---*/
@@ -960,9 +976,12 @@ TARGET_HD void Sweeper_sweep_block_impl(
   Bool_t                 proc_x_max,
   Bool_t                 proc_y_min,
   Bool_t                 proc_y_max,
-  Step_Info_Values       step_info_values )
+  Step_Info_Values       step_info_values,
+  unsigned long int      do_block_init )
 {
   /*---Declarations---*/
+
+    const int noctant_per_block = sweeper->noctant_per_block;
 
     int semiblock = 0;
 
@@ -1053,6 +1072,11 @@ TARGET_HD void Sweeper_sweep_block_impl(
           const int dir_x = Dir_x( step_info.octant );
           const int dir_y = Dir_y( step_info.octant );
           const int dir_z = Dir_z( step_info.octant );
+
+          const int do_block_init_this = !! ( do_block_init &
+                           ( ((unsigned long int)1) <<
+                             ( octant_in_block + noctant_per_block *
+                               semiblock ) ) );
 
           /*--------------------*/
           /*---Compute semiblock bounds---*/
@@ -1156,7 +1180,8 @@ TARGET_HD void Sweeper_sweep_block_impl(
                                    quan, step_info, octant_in_block,
                                    ixmin_b, ixmax_b,
                                    iymin_b, iymax_b,
-                                   izmin_b, izmax_b );
+                                   izmin_b, izmax_b,
+                                   do_block_init_this );
 
         }  /*---is_active---*/
 
@@ -1187,12 +1212,13 @@ TARGET_G void Sweeper_sweep_block_impl_global(
   Bool_t                 proc_x_max,
   Bool_t                 proc_y_min,
   Bool_t                 proc_y_max,
-  Step_Info_Values       step_info_values )
+  Step_Info_Values       step_info_values,
+  unsigned long int      do_block_init )
 {
     Sweeper_sweep_block_impl( &sweeper, vo, vi, facexy, facexz, faceyz,
                               a_from_m, m_from_a, step, &quan,
                               proc_x_min, proc_x_max, proc_y_min, proc_y_max,
-                              step_info_values );
+                              step_info_values, do_block_init );
 }
 
 /*===========================================================================*/
@@ -1202,6 +1228,7 @@ void Sweeper_sweep_block(
   Sweeper*               sweeper,
   Pointer*               vo,
   Pointer*               vi,
+  int*                   is_block_init,
   Pointer*               facexy,
   Pointer*               facexz,
   Pointer*               faceyz,
@@ -1216,10 +1243,16 @@ void Sweeper_sweep_block(
   const int proc_x = Env_proc_x_this( env );
   const int proc_y = Env_proc_y_this( env );
 
+  const int noctant_per_block = sweeper->noctant_per_block;
+
   Step_Info_Values step_info_values;
                                 /*---But only use noctant_per_block values---*/
 
   int octant_in_block = 0;
+
+  int semiblock = 0;
+
+  unsigned long int do_block_init = 0;
 
   /*---Precalculate step_info for required octants---*/
 
@@ -1229,6 +1262,45 @@ void Sweeper_sweep_block(
     step_info_values.step_info[octant_in_block] = Step_Scheduler_step_info(
       &(sweeper->step_scheduler), step, octant_in_block, proc_x, proc_y );
   }
+
+  /*---Precalculate initialization schedule---*/
+
+  for( semiblock=0; semiblock<sweeper->nsemiblock; ++semiblock )
+  {
+    for( octant_in_block=0; octant_in_block<sweeper->noctant_per_block;
+                                                            ++octant_in_block )
+    {
+      const Step_Info step_info = step_info_values.step_info[octant_in_block];
+      if( step_info.is_active )
+      {
+        const int dir_x = Dir_x( step_info.octant );
+        const int dir_y = Dir_y( step_info.octant );
+        const int dir_z = Dir_z( step_info.octant );
+        const Bool_t is_x_semiblocked = sweeper->nsemiblock > (1<<0);
+        const Bool_t is_semiblock_x_lo = ( ( semiblock & (1<<0) ) == 0 ) ==
+                                         ( dir_x == Dir_up() );
+        const Bool_t has_x_lo =     is_semiblock_x_lo   || ! is_x_semiblocked;
+        const Bool_t is_y_semiblocked = sweeper->nsemiblock > (1<<1);
+        const Bool_t is_semiblock_y_lo = ( ( semiblock & (1<<1) ) == 0 ) ==
+                                         ( dir_y == Dir_up() );
+        const Bool_t has_y_lo =     is_semiblock_y_lo   || ! is_y_semiblocked;
+        const Bool_t is_z_semiblocked = sweeper->nsemiblock > (1<<2);
+        const Bool_t is_semiblock_z_lo = ( ( semiblock & (1<<2) ) == 0 ) ==
+                                         ( dir_z == Dir_up() );
+        const Bool_t has_z_lo =     is_semiblock_z_lo   || ! is_z_semiblocked;
+        const int semiblock_num = ( has_x_lo ? 0 : 1 ) + 2 * (
+                                  ( has_y_lo ? 0 : 1 ) + 2 * (
+                                  ( has_z_lo ? 0 : 1 ) ));
+        if( ! ( is_block_init[ step_info.block_z ] & ( 1 << semiblock_num ) ) )
+        {
+          do_block_init |= ( ((unsigned long int)1) <<
+                             ( octant_in_block + noctant_per_block *
+                               semiblock ) );
+          is_block_init[ step_info.block_z ] |= ( 1 << semiblock_num );
+        }
+      }
+    } /*---octant_in_block---*/
+  } /*---semiblock---*/
 
   /*---Call sweep block implementation function---*/
 
@@ -1259,7 +1331,8 @@ void Sweeper_sweep_block(
                               proc_x==Env_nproc_x( env )-1,
                               proc_y==0,
                               proc_y==Env_nproc_y( env )-1,
-                              step_info_values );
+                              step_info_values,
+                              do_block_init );
   }
   else
 #ifdef USE_OPENMP_THREADS
@@ -1279,7 +1352,8 @@ void Sweeper_sweep_block(
                               proc_x==Env_nproc_x( env )-1,
                               proc_y==0,
                               proc_y==Env_nproc_y( env )-1,
-                              step_info_values );
+                              step_info_values,
+                              do_block_init );
 
   } /*---OPENMP---*/
 }
@@ -1305,15 +1379,24 @@ void Sweeper_sweep(
   const int nstep = Step_Scheduler_nstep( &(sweeper->step_scheduler) );
   int step = -1;
 
-  Pointer vi_b = Pointer_null();
-  Pointer vo_b = Pointer_null();
-
   const size_t size_state_block = Dimensions_size_state( sweeper->dims, NU )
                                                                    / nblock_z;
 
-  /*---Initialize result array to zero---*/
+  Bool_t* is_block_init = (Bool_t*) malloc( nblock_z * sizeof( Bool_t ) );
 
-  initialize_state_zero( Pointer_h( vo ), sweeper->dims, NU );
+  int i = 0;
+
+  for( i=0; i<nblock_z; ++i )
+  {
+    is_block_init[i] = 0;
+  }
+
+  /*---Initialize result array to zero if needed---*/
+
+  if( sweeper->nsemiblock < sweeper->nthread_octant )
+  {
+    initialize_state_zero( Pointer_h( vo ), sweeper->dims, NU );
+  }
 
   /*--------------------*/
   /*---Loop over kba parallel steps---*/
@@ -1322,6 +1405,9 @@ void Sweeper_sweep(
   for( step=0-1; step<nstep+1; ++step )
   {
     const Bool_t is_sweep_step = step>=0 && step<nstep;
+
+    Pointer vi_b = Pointer_null();
+    Pointer vo_b = Pointer_null();
 
     int i = 0;
 
@@ -1356,7 +1442,7 @@ void Sweeper_sweep(
 
     if( is_sweep_step &&  Sweeper_is_face_comm_async() )
     {
-      Sweeper_recv_faces_end__ ( sweeper, step-1, env );
+      Sweeper_recv_faces_end__( sweeper, step-1, env );
     }
 
     /*====================*/
@@ -1390,8 +1476,10 @@ void Sweeper_sweep(
 
     if( is_sweep_step )
     {
-    Sweeper_sweep_block( sweeper, vo, vi, facexy, facexz, faceyz,
-                         & quan->a_from_m, & quan->m_from_a, step, quan, env );
+      Sweeper_sweep_block( sweeper, vo, vi, is_block_init,
+                           facexy, facexz, faceyz,
+                           & quan->a_from_m, & quan->m_from_a,
+                           step, quan, env );
     }
 
     /*====================*/
@@ -1416,10 +1504,17 @@ void Sweeper_sweep(
                                             size_state_block );
         Pointer_update_d_stream( &vi_b, Env_cuda_stream_send_block( env ) );
         Pointer_dtor(            &vi_b );
-        Pointer_ctor_alias(      &vo_b, vo, size_state_block * block_to_send[i],
+
+        /*---Initialize result array to zero if needed---*/
+        /*---NOTE: this is not performance-optimal---*/
+        if( sweeper->nsemiblock < sweeper->nthread_octant )
+        {
+          Pointer_ctor_alias(    &vo_b, vi, size_state_block * block_to_send[i],
                                             size_state_block );
-        Pointer_update_d_stream( &vo_b, Env_cuda_stream_send_block( env ) );
-        Pointer_dtor(            &vo_b );
+          initialize_state_zero( Pointer_h( &vo_b ), sweeper->dims, NU );
+          Pointer_update_d_stream( &vo_b, Env_cuda_stream_send_block( env ) );
+          Pointer_dtor(            &vo_b );
+        }
       }
     }
 
@@ -1462,7 +1557,7 @@ void Sweeper_sweep(
 
     if( is_sweep_step && Sweeper_is_face_comm_async() )
     {
-      Sweeper_send_faces_end__ ( sweeper, step-1, env );
+      Sweeper_send_faces_end__( sweeper, step-1, env );
     }
 
     /*====================*/
@@ -1510,6 +1605,10 @@ void Sweeper_sweep(
   /*---Increment message tag---*/
 
   Env_increment_tag( env, sweeper->noctant_per_block );
+
+  /*---Finish---*/
+
+  free( (void*) is_block_init );
 
 } /*---sweep---*/
 

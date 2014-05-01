@@ -253,7 +253,7 @@ static Pointer* Sweeper_faceyz__( Sweeper* sweeper, int i )
 static Pointer* Sweeper_facexy_step__( Sweeper* sweeper, int step )
 {
   Assert( sweeper != NULL );
-  Assert( step >= 0 );
+  Assert( step >= -1 );
   return Sweeper_facexy__( sweeper, 0 );
 }
 
@@ -262,7 +262,7 @@ static Pointer* Sweeper_facexy_step__( Sweeper* sweeper, int step )
 static Pointer* Sweeper_facexz_step__( Sweeper* sweeper, int step )
 {
   Assert( sweeper != NULL );
-  Assert( step >= 0 );
+  Assert( step >= -1 );
 
   return Sweeper_facexz__( sweeper,
                            Sweeper_is_face_comm_async() ? (step+3)%3 : 0 );
@@ -273,7 +273,7 @@ static Pointer* Sweeper_facexz_step__( Sweeper* sweeper, int step )
 static Pointer* Sweeper_faceyz_step__( Sweeper* sweeper, int step )
 {
   Assert( sweeper != NULL );
-  Assert( step >= 0 );
+  Assert( step >= -1 );
 
   return Sweeper_faceyz__( sweeper,
                            Sweeper_is_face_comm_async() ? (step+3)%3 : 0 );
@@ -419,7 +419,8 @@ TARGET_HD void Sweeper_sweep_semiblock(
   const int              iymin,
   const int              iymax,
   const int              izmin,
-  const int              izmax );
+  const int              izmax,
+  const Bool_t           do_block_init_this );
 
 /*===========================================================================*/
 /*---Perform a sweep for a block, implementation---*/
@@ -439,7 +440,8 @@ TARGET_HD void Sweeper_sweep_block_impl(
   Bool_t                 proc_x_max,
   Bool_t                 proc_y_min,
   Bool_t                 proc_y_max,
-  Step_Info_Values       step_info_values );
+  Step_Info_Values       step_info_values,
+  unsigned long int      do_block_init );
 
 /*===========================================================================*/
 /*---Perform a sweep for a block, implementation, global---*/
@@ -459,7 +461,8 @@ TARGET_G void Sweeper_sweep_block_impl_global(
   Bool_t                 proc_x_max,
   Bool_t                 proc_y_min,
   Bool_t                 proc_y_max,
-  Step_Info_Values       step_info_values );
+  Step_Info_Values       step_info_values,
+  unsigned long int      do_block_init );
 
 /*===========================================================================*/
 /*---Perform a sweep for a block---*/
@@ -468,6 +471,7 @@ void Sweeper_sweep_block(
   Sweeper*               sweeper,
   Pointer*               vo,
   Pointer*               vi,
+  int*                   is_block_init,
   Pointer*               facexy,
   Pointer*               facexz,
   Pointer*               faceyz,
