@@ -38,7 +38,7 @@ void Sweeper_ctor( Sweeper*          sweeper,
 
   /*---Allocate arrays---*/
 
-  sweeper->v_local = malloc_P( dims.na * NU );
+  sweeper->vslocal = malloc_P( dims.na * NU );
   sweeper->facexy  = malloc_P( dims.nx * dims.ny * dims.ne * dims.na *
                                   NU * Sweeper_noctant_per_block( sweeper ) );
   sweeper->facexz  = malloc_P( dims.nx * dims.nz * dims.ne * dims.na *
@@ -52,16 +52,17 @@ void Sweeper_ctor( Sweeper*          sweeper,
 /*===========================================================================*/
 /*---Pseudo-destructor for Sweeper struct---*/
 
-void Sweeper_dtor( Sweeper* sweeper )
+void Sweeper_dtor( Sweeper*     sweeper,
+                   Environment* env )
 {
   /*---Deallocate arrays---*/
 
-  free_P( sweeper->v_local );
+  free_P( sweeper->vslocal );
   free_P( sweeper->facexy );
   free_P( sweeper->facexz );
   free_P( sweeper->faceyz );
 
-  sweeper->v_local = NULL;
+  sweeper->vslocal = NULL;
   sweeper->facexy  = NULL;
   sweeper->facexz  = NULL;
   sweeper->faceyz  = NULL;
@@ -217,14 +218,14 @@ void Sweeper_sweep(
                                          sweeper->dims, im, ia, octant )*
                     *const_ref_state( Pointer_h( vi ), sweeper->dims, NU, ix, iy, iz, ie, im, iu );
         }
-        *ref_v_local( sweeper->v_local, sweeper->dims, NU, ia, iu ) = result;
+        *ref_vslocal( sweeper->vslocal, sweeper->dims, NU, ia, iu ) = result;
       }
 
       /*--------------------*/
       /*---Perform solve---*/
       /*--------------------*/
 
-      Quantities_solve( quan, sweeper->v_local,
+      Quantities_solve( quan, sweeper->vslocal,
                         sweeper->facexy, sweeper->facexz, sweeper->faceyz,
                         ix, iy, iz, ie, ix, iy, iz,
                         octant, octant_in_block,
@@ -247,7 +248,7 @@ void Sweeper_sweep(
         {
           result += *const_ref_m_from_a( Pointer_const_h( & quan->m_from_a ),
                                          sweeper->dims, im, ia, octant )*
-                    *const_ref_v_local( sweeper->v_local, sweeper->dims, NU, ia, iu );
+                    *const_ref_vslocal( sweeper->vslocal, sweeper->dims, NU, ia, iu );
         }
         *ref_state( Pointer_h( vo ), sweeper->dims, NU, ix, iy, iz, ie, im, iu ) += result;
       }

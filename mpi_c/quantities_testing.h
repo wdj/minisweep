@@ -397,7 +397,7 @@ static inline P Quantities_init_state(
 
 TARGET_HD static inline void Quantities_solve(
   const Quantities*  quan,
-  P* __restrict__    v_local,
+  P* __restrict__    vslocal,
   P* __restrict__    facexy,
   P* __restrict__    facexz,
   P* __restrict__    faceyz,
@@ -414,7 +414,7 @@ TARGET_HD static inline void Quantities_solve(
   const Dimensions   dims_b,
   const Dimensions   dims_g )
 {
-  Assert( v_local );
+  Assert( vslocal );
   Assert( facexy );
   Assert( facexz );
   Assert( faceyz );
@@ -450,7 +450,7 @@ TARGET_HD static inline void Quantities_solve(
   {
 
     const P result = (
-          *const_ref_v_local( v_local, dims_b, NU, ia, iu )
+          *const_ref_vslocal( vslocal, dims_b, NU, ia, iu )
              / Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g )
         + *const_ref_facexy( facexy, dims_b, NU, noctant_per_block,
                                      ix_b, iy_b, ie, ia, iu, octant_in_block )
@@ -472,7 +472,7 @@ TARGET_HD static inline void Quantities_solve(
                                                ix_g-Dir_inc(dir_x), iy_g, iz_g )
       )      * Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g );
 
-    *ref_v_local( v_local, dims_b, NU, ia, iu ) = result;
+    *ref_vslocal( vslocal, dims_b, NU, ia, iu ) = result;
     *ref_facexy( facexy, dims_b, NU, noctant_per_block,
                  ix_b, iy_b, ie, ia, iu, octant_in_block ) = result *
                  Quantities_scalefactor_octant__( octant );

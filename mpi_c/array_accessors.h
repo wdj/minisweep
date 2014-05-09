@@ -106,7 +106,7 @@ TARGET_HD static inline const P* const_ref_state(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-TARGET_HD static inline P* ref_v_local(
+TARGET_HD static inline P* ref_vslocal(
     P* __restrict__  v,
     Dimensions       dims,
     int              nu,
@@ -126,7 +126,7 @@ TARGET_HD static inline P* ref_v_local(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-TARGET_HD static inline const P* const_ref_v_local(
+TARGET_HD static inline const P* const_ref_vslocal(
     const P* __restrict__  v,
     Dimensions             dims,
     int                    nu,

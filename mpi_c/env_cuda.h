@@ -40,6 +40,15 @@ typedef int Stream_t;
 __shared__ extern char cuda_shared_memory[];
 #endif
 
+TARGET_HD static char* Env_cuda_shared_memory()
+{
+#ifdef __CUDA_ARCH__
+  return cuda_shared_memory;
+#else
+  return (char*) NULL;
+#endif
+}
+
 /*===========================================================================*/
 /*---Initialize CUDA---*/
 

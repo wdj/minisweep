@@ -167,7 +167,7 @@ int main( int argc, char** argv )
   Pointer_dtor( &vi );
   Pointer_dtor( &vo );
 
-  Sweeper_dtor( &sweeper );
+  Sweeper_dtor( &sweeper, &env );
   Quantities_dtor( &quan );
   Arguments_dtor( &args );
 

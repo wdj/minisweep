@@ -30,7 +30,7 @@ typedef struct
   P* __restrict__  facexy;
   P* __restrict__  facexz;
   P* __restrict__  faceyz;
-  P* __restrict__  v_local;
+  P* __restrict__  vslocal;
 
   Dimensions       dims;
 } Sweeper;
@@ -63,7 +63,8 @@ static int Sweeper_noctant_per_block( const Sweeper* sweeper )
 /*===========================================================================*/
 /*---Pseudo-destructor for Sweeper struct---*/
 
-void Sweeper_dtor( Sweeper* sweeper );
+void Sweeper_dtor( Sweeper*    sweeper,
+                   Environment env );
 
 /*===========================================================================*/
 /*---Perform a sweep---*/

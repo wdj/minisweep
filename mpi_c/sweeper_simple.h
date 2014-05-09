@@ -30,7 +30,7 @@ typedef struct
   P* __restrict__  facexy;
   P* __restrict__  facexz;
   P* __restrict__  faceyz;
-  P* __restrict__  v_local;
+  P* __restrict__  vslocal;
 
   Dimensions       dims;
 } Sweeper;
@@ -47,7 +47,8 @@ void Sweeper_ctor( Sweeper*          sweeper,
 /*===========================================================================*/
 /*---Pseudo-destructor for Sweeper struct---*/
 
-void Sweeper_dtor( Sweeper* sweeper );
+void Sweeper_dtor( Sweeper*     sweeper,
+                   Environment* env );
 
 /*===========================================================================*/
 /*---Number of octants in an octant block---*/

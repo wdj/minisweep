@@ -35,61 +35,82 @@ void Sweeper_ctor( Sweeper*          sweeper,
                    Env*              env,
                    Arguments*        args )
 {
+  /*====================*/
+  /*---Declarations---*/
+  /*====================*/
+
   int i = 0;
 
-  Insist( dims.nx > 0 ? "KBA sweeper currently requires all blocks nonempty":0);
-  Insist( dims.ny > 0 ? "KBA sweeper currently requires all blocks nonempty":0);
-  Insist( dims.nz > 0 ? "KBA sweeper currently requires all blocks nonempty":0);
+  Insist( dims.nx > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
+  Insist( dims.ny > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
+  Insist( dims.nz > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
 
+  /*====================*/
   /*---Set up number of kba blocks---*/
+  /*====================*/
 
   sweeper->nblock_z = Arguments_consume_int_or_default( args, "--nblock_z", 1);
+
   Insist( sweeper->nblock_z > 0 ? "Invalid z blocking factor supplied" : 0 );
   Insist( dims.nz % sweeper->nblock_z == 0
-     ? "KBA sweeper currently requires all blocks have same z dimension" : 0 );
+                  ? "Currently require all blocks have same z dimension" : 0 );
 
+  /*====================*/
   /*---Set up number of octant threads---*/
+  /*====================*/
 
   sweeper->nthread_octant
               = Arguments_consume_int_or_default( args, "--nthread_octant", 1);
+
   /*---Require a power of 2 between 1 and 8 inclusive---*/
   Insist( sweeper->nthread_octant>0 && sweeper->nthread_octant<=NOCTANT
           && ((sweeper->nthread_octant&(sweeper->nthread_octant-1))==0)
-          ? "Invalid octant thread count supplied" : 0 );
+                                ? "Invalid octant thread count supplied" : 0 );
   /*---Don't allow threading in cases where it doesn't make sense---*/
   Insist( sweeper->nthread_octant==1 || IS_USING_OPENMP_THREADS
                                      || Env_cuda_is_using_device( env ) ?
           "Threading not allowed for this case" : 0 );
-  sweeper->noctant_per_block = sweeper->nthread_octant;
-  sweeper->nblock_octant = NOCTANT / sweeper->noctant_per_block;
 
+  sweeper->noctant_per_block = sweeper->nthread_octant;
+  sweeper->nblock_octant     = NOCTANT / sweeper->noctant_per_block;
+
+  /*====================*/
   /*---Set up number of semiblock steps---*/
+  /*====================*/
 
   sweeper->nsemiblock = Arguments_consume_int_or_default(
                                args, "--nsemiblock", sweeper->nthread_octant );
+
   Insist( sweeper->nsemiblock>0 && sweeper->nsemiblock<=NOCTANT
           && ((sweeper->nsemiblock&(sweeper->nsemiblock-1))==0)
-          ? "Invalid semiblock count supplied" : 0 );
+                                ? "Invalid semiblock count supplied" : 0 );
   Insist( ( sweeper->nsemiblock >= sweeper->nthread_octant ||
             IS_USING_OPENMP_VO_ATOMIC )
          ? "Incomplete set of semiblock steps requires atomic vo update" : 0 );
 
+  /*====================*/
   /*---Set up number of energy threads---*/
+  /*====================*/
 
   sweeper->nthread_e
                    = Arguments_consume_int_or_default( args, "--nthread_e", 1);
+
   Insist( sweeper->nthread_e > 0 ? "Invalid e thread count supplied." : 0 );
   /*---Don't allow threading in cases where it doesn't make sense---*/
   Insist( sweeper->nthread_e==1 || IS_USING_OPENMP_THREADS
                                 || Env_cuda_is_using_device( env ) ?
           "Threading not allowed for this case" : 0 );
 
+  /*====================*/
   /*---Set up step scheduler---*/
+  /*====================*/
 
   Step_Scheduler_ctor( &(sweeper->step_scheduler),
                               sweeper->nblock_z, sweeper->nblock_octant, env );
 
+  /*====================*/
   /*---Set up dims structs---*/
+  /*====================*/
 
   sweeper->dims = dims;
 
@@ -100,12 +121,17 @@ void Sweeper_ctor( Sweeper*          sweeper,
   sweeper->dims_g.nx = quan->nx_g;
   sweeper->dims_g.ny = quan->ny_g;
 
+  /*====================*/
   /*---Allocate arrays---*/
+  /*====================*/
 
-  sweeper->v_local = Env_cuda_is_using_device( env ) ?
-                     NULL : malloc_P( Sweeper_v_local_size__( sweeper, env ) );
+  sweeper->vslocal = Env_cuda_is_using_device( env ) ?
+                     ( (P*) Env_cuda_shared_memory() ) :
+                     malloc_P( Sweeper_nvslocal__( sweeper, env ) );
 
+  /*====================*/
   /*---Allocate faces---*/
+  /*====================*/
 
   Pointer_ctor(       Sweeper_facexy__( sweeper, 0 ),
     Dimensions_size_facexy( sweeper->dims_b, NU, sweeper->noctant_per_block ),
@@ -135,16 +161,22 @@ void Sweeper_ctor( Sweeper*          sweeper,
 /*===========================================================================*/
 /*---Pseudo-destructor for Sweeper struct---*/
 
-void Sweeper_dtor( Sweeper* sweeper )
+void Sweeper_dtor( Sweeper* sweeper,
+                   Env*     env )
 {
   int i = 0;
 
+  /*====================*/
   /*---Deallocate arrays---*/
+  /*====================*/
 
-  if( sweeper->v_local )
+  if( sweeper->vslocal )
   {
-    free_P( sweeper->v_local );
-    sweeper->v_local = NULL;
+    if( Env_cuda_is_using_device( env ) )
+    {
+      free_P( sweeper->vslocal );
+    }
+    sweeper->vslocal = NULL;
   }
 
   Pointer_dtor( Sweeper_facexy__( sweeper, 0 ) );
@@ -154,6 +186,10 @@ void Sweeper_dtor( Sweeper* sweeper )
     Pointer_dtor( Sweeper_facexz__( sweeper, i ) );
     Pointer_dtor( Sweeper_faceyz__( sweeper, i ) );
   }
+
+  /*====================*/
+  /*---Terminate scheduler---*/
+  /*====================*/
 
   Step_Scheduler_dtor( &( sweeper->step_scheduler ) );
 }
@@ -833,14 +869,21 @@ TARGET_HD void Sweeper_sweep_semiblock(
   /*---Declarations---*/
 
   const int octant  = step_info.octant;
-  const int block_z = step_info.block_z;
-  const int iz_base = block_z * sweeper->dims_b.nz;
+  const int iz_base = step_info.block_z * sweeper->dims_b.nz;
 
   const int dir_x = Dir_x( octant );
   const int dir_y = Dir_y( octant );
   const int dir_z = Dir_z( octant );
 
-  /*---Calculate spatial loop extents---*/
+  const int dir_inc_x = Dir_inc(dir_x);
+  const int dir_inc_y = Dir_inc(dir_y);
+  const int dir_inc_z = Dir_inc(dir_z);
+
+  /*---Calculate vslocal part to use---*/
+
+  P* __restrict__ vslocal = Sweeper_vslocal_this__( sweeper );
+
+  /*---Calculate loop extents---*/
 
   const int ixbeg = dir_x==Dir_up() ? ixmin : ixmax;
   const int iybeg = dir_y==Dir_up() ? iymin : iymax;
@@ -849,8 +892,6 @@ TARGET_HD void Sweeper_sweep_semiblock(
   const int ixend = dir_x==Dir_dn() ? ixmin : ixmax;
   const int iyend = dir_y==Dir_dn() ? iymin : iymax;
   const int izend = dir_z==Dir_dn() ? izmin : izmax;
-
-  const int thread = Sweeper_thread( sweeper );
 
   const int ie_min = ( sweeper->dims.ne *
                        ( Sweeper_thread_e( sweeper )     ) )
@@ -861,12 +902,12 @@ TARGET_HD void Sweeper_sweep_semiblock(
 
   int ie = 0;
 
+  /*--------------------*/
+  /*---Loop over energy groups---*/
+  /*--------------------*/
+
   for( ie=ie_min; ie<ie_max; ++ie )
   {
-    /*---Get v_local part to be used by this thread---*/
-
-    P* __restrict__ v_local = Sweeper_v_local_this__( sweeper );
-
     int ix = 0;
     int iy = 0;
     int iz = 0;
@@ -875,12 +916,16 @@ TARGET_HD void Sweeper_sweep_semiblock(
     /*---Loop over gridcells, in proper direction---*/
     /*--------------------*/
 
-    for( iz=izbeg; iz!=izend+Dir_inc(dir_z); iz+=Dir_inc(dir_z) )
+    for( iz=izbeg; iz!=izend+dir_inc_z; iz+=dir_inc_z )
     {
-    for( iy=iybeg; iy!=iyend+Dir_inc(dir_y); iy+=Dir_inc(dir_y) )
+    for( iy=iybeg; iy!=iyend+dir_inc_y; iy+=dir_inc_y )
     {
-    for( ix=ixbeg; ix!=ixend+Dir_inc(dir_x); ix+=Dir_inc(dir_x) )
+    for( ix=ixbeg; ix!=ixend+dir_inc_x; ix+=dir_inc_x )
     {
+      /*--------------------*/
+      /*---Sweep cell---*/
+      /*--------------------*/
+
       int im = 0;
       int ia = 0;
       int iu = 0;
@@ -889,9 +934,9 @@ TARGET_HD void Sweeper_sweep_semiblock(
       /*---Transform state vector from moments to angles---*/
       /*--------------------*/
 
-      for( iu=0; iu<NU; ++iu )
-      {
       for( ia=0; ia<sweeper->dims.na; ++ia )
+      {
+      for( iu=0; iu<NU; ++iu )
       {
         P result = P_zero();
         for( im=0; im<sweeper->dims.nm; ++im )
@@ -901,7 +946,7 @@ TARGET_HD void Sweeper_sweep_semiblock(
             * *const_ref_state( vi_this, sweeper->dims_b, NU,
                                 ix, iy, iz, ie, im, iu );
         }
-        *ref_v_local( v_local, sweeper->dims, NU, ia, iu ) = result;
+        *ref_vslocal( vslocal, sweeper->dims, NU, ia, iu ) = result;
       }
       }
 
@@ -909,7 +954,7 @@ TARGET_HD void Sweeper_sweep_semiblock(
       /*---Perform solve---*/
       /*--------------------*/
 
-      Quantities_solve( quan, v_local,
+      Quantities_solve( quan, vslocal,
                         facexy, facexz, faceyz,
                         ix, iy, iz, ie,
                         ix+quan->ix_base, iy+quan->iy_base, iz+iz_base,
@@ -921,16 +966,16 @@ TARGET_HD void Sweeper_sweep_semiblock(
       /*---Transform state vector from angles to moments---*/
       /*--------------------*/
 
-      for( iu=0; iu<NU; ++iu )
-      {
       for( im=0; im<sweeper->dims.nm; ++im )
+      {
+      for( iu=0; iu<NU; ++iu )
       {
         P result = P_zero();
         for( ia=0; ia<sweeper->dims.na; ++ia )
         {
           result +=
             *const_ref_m_from_a( m_from_a, sweeper->dims, im, ia, octant )
-            * *const_ref_v_local( v_local, sweeper->dims, NU, ia, iu );
+            * *const_ref_vslocal( vslocal, sweeper->dims, NU, ia, iu );
         }
 #ifdef USE_OPENMP_VO_ATOMIC
 #pragma omp atomic update
