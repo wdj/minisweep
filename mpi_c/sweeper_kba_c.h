@@ -363,10 +363,6 @@ TARGET_HD void Sweeper_sweep_cell(
   const int              iz,
   const Bool_t           do_block_init_this )
 {
-  /*--------------------*/
-  /*---Sweep cell---*/
-  /*--------------------*/
-
   int im = 0;
   int ia = 0;
   int iu = 0;
@@ -436,11 +432,6 @@ TARGET_HD void Sweeper_sweep_cell(
 #endif
   }
   }
-
-
-
-
-
 }
 
 /*===========================================================================*/
@@ -522,89 +513,14 @@ TARGET_HD void Sweeper_sweep_semiblock(
     {
     for( ix=ixbeg; ix!=ixend+dir_inc_x; ix+=dir_inc_x )
     {
-
-
-    Sweeper_sweep_cell( sweeper, vo_this, vi_this, vslocal,
-                        facexy, facexz, faceyz, a_from_m, m_from_a, quan,
-                        octant, iz_base, octant_in_block, ie, ix, iy, iz,
-                        do_block_init_this );
-
-#if 0
       /*--------------------*/
       /*---Sweep cell---*/
       /*--------------------*/
 
-      int im = 0;
-      int ia = 0;
-      int iu = 0;
-
-      /*--------------------*/
-      /*---Transform state vector from moments to angles---*/
-      /*--------------------*/
-
-      for( ia=0; ia<sweeper->dims.na; ++ia )
-      {
-      for( iu=0; iu<NU; ++iu )
-      {
-        P result = P_zero();
-        for( im=0; im<sweeper->dims.nm; ++im )
-        {
-          result +=
-            *const_ref_a_from_m( a_from_m, sweeper->dims, im, ia, octant )
-            * *const_ref_state( vi_this, sweeper->dims_b, NU,
-                                ix, iy, iz, ie, im, iu );
-        }
-        *ref_vslocal( vslocal, sweeper->dims, NU, ia, iu ) = result;
-      }
-      }
-
-      /*--------------------*/
-      /*---Perform solve---*/
-      /*--------------------*/
-
-      Quantities_solve( quan, vslocal,
-                        facexy, facexz, faceyz,
-                        ix, iy, iz, ie,
-                        ix+quan->ix_base, iy+quan->iy_base, iz+iz_base,
-                        octant, octant_in_block,
-                        sweeper->noctant_per_block,
-                        sweeper->dims_b, sweeper->dims_g );
-
-      /*--------------------*/
-      /*---Transform state vector from angles to moments---*/
-      /*--------------------*/
-
-      for( im=0; im<sweeper->dims.nm; ++im )
-      {
-      for( iu=0; iu<NU; ++iu )
-      {
-        P result = P_zero();
-        for( ia=0; ia<sweeper->dims.na; ++ia )
-        {
-          result +=
-            *const_ref_m_from_a( m_from_a, sweeper->dims, im, ia, octant )
-            * *const_ref_vslocal( vslocal, sweeper->dims, NU, ia, iu );
-        }
-#ifdef USE_OPENMP_VO_ATOMIC
-#pragma omp atomic update
-        *ref_state( vo_this, sweeper->dims_b, NU,
-                    ix, iy, iz, ie, im, iu ) += result;
-#else
-        if( do_block_init_this )
-        {
-          *ref_state( vo_this, sweeper->dims_b, NU,
-                      ix, iy, iz, ie, im, iu ) = result;
-        }
-        else
-        {
-          *ref_state( vo_this, sweeper->dims_b, NU,
-                      ix, iy, iz, ie, im, iu ) += result;
-        }
-#endif
-      }
-      }
-#endif
-
+      Sweeper_sweep_cell( sweeper, vo_this, vi_this, vslocal,
+                          facexy, facexz, faceyz, a_from_m, m_from_a, quan,
+                          octant, iz_base, octant_in_block, ie, ix, iy, iz,
+                          do_block_init_this );
     }
     }
     } /*---ix/iy/iz---*/
