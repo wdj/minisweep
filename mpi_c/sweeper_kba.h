@@ -19,6 +19,7 @@
 #include "pointer.h"
 #include "quantities.h"
 #include "step_scheduler_kba.h"
+#include "faces_kba.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -45,16 +46,6 @@ enum{ IS_USING_OPENMP_VO_ATOMIC = 0 };
 
 typedef struct
 {
-  Pointer          facexy0;
-
-  Pointer          facexz0;
-  Pointer          facexz1;
-  Pointer          facexz2;
-
-  Pointer          faceyz0;
-  Pointer          faceyz1;
-  Pointer          faceyz2;
-
   P* __restrict__  vslocal;
 
   Dimensions       dims;
@@ -68,12 +59,9 @@ typedef struct
   int              noctant_per_block;
   int              nsemiblock;
 
-  Request_t        request_send_xz[NOCTANT];
-  Request_t        request_send_yz[NOCTANT];
-  Request_t        request_recv_xz[NOCTANT];
-  Request_t        request_recv_yz[NOCTANT];
-
   Step_Scheduler   step_scheduler;
+
+  Faces            faces;
 } Sweeper;
 
 /*===========================================================================*/
@@ -98,72 +86,6 @@ static int Sweeper_noctant_per_block( const Sweeper* sweeper )
 {
   return sweeper->noctant_per_block;
 }
-
-/*===========================================================================*/
-/*---Is face communication done asynchronously---*/
-
-static int Sweeper_is_face_comm_async()
-{
-  return Bool_true;
-}
-
-/*===========================================================================*/
-/*---Determine whether to send a face now---*/
-
-Bool_t Sweeper_must_do_send__(
-  Sweeper*           sweeper,
-  int                step,
-  int                axis,
-  int                dir_ind,
-  int                octant_in_block,
-  Env*               env );
-
-/*===========================================================================*/
-/*---Determine whether to receive a face now---*/
-
-Bool_t Sweeper_must_do_recv__(
-  Sweeper*           sweeper,
-  int                step,
-  int                axis,
-  int                dir_ind,
-  int                octant_in_block,
-  Env*               env );
-
-/*===========================================================================*/
-/*---Communicate faces---*/
-
-void Sweeper_communicate_faces__(
-  Sweeper*         sweeper,
-  int              step,
-  Env*             env );
-
-/*---------------------------------------------------------------------------*/
-
-void Sweeper_send_faces_start__(
-  Sweeper*           sweeper,
-  int                step,
-  Env*               env );
-
-/*---------------------------------------------------------------------------*/
-
-void Sweeper_send_faces_end__(
-  Sweeper*           sweeper,
-  int                step,
-  Env*               env );
-
-/*---------------------------------------------------------------------------*/
-
-void Sweeper_recv_faces_start__(
-  Sweeper*           sweeper,
-  int                step,
-  Env*               env );
-
-/*---------------------------------------------------------------------------*/
-
-void Sweeper_recv_faces_end__(
-  Sweeper*           sweeper,
-  int                step,
-  Env*               env );
 
 /*===========================================================================*/
 /*---Apply boundary condition: xy face---*/
@@ -208,77 +130,6 @@ TARGET_HD static void Sweeper_set_boundary_yz(
   const int             iymax_b,
   const int             izmin_b,
   const int             izmax_b );
-
-/*===========================================================================*/
-/*---Selectors for faces---*/
-
-/*---The xz and yz face arrays form a circular buffer of length three.
-     Three are needed because at any step there may be a send, a receive, and a
-     block-sweep-compute in-flight.
----*/
-
-static Pointer* Sweeper_facexy__( Sweeper* sweeper, int i )
-{
-  Assert( sweeper != NULL );
-  Assert( i >= 0 && i < 1 );
-  return & sweeper->facexy0;
-}
-
-/*---------------------------------------------------------------------------*/
-
-static Pointer* Sweeper_facexz__( Sweeper* sweeper, int i )
-{
-  Assert( sweeper != NULL );
-  Assert( i >= 0 && i < ( Sweeper_is_face_comm_async() ? NDIM : 1 ) );
-  Pointer* facesxz[NDIM] = { & sweeper->facexz0,
-                             & sweeper->facexz1,
-                             & sweeper->facexz2 };
-  return facesxz[i];
-}
-
-/*---------------------------------------------------------------------------*/
-
-static Pointer* Sweeper_faceyz__( Sweeper* sweeper, int i )
-{
-  Assert( sweeper != NULL );
-  Assert( i >= 0 && i < ( Sweeper_is_face_comm_async() ? NDIM : 1 ) );
-  Pointer* facesyz[NDIM] = { & sweeper->faceyz0,
-                             & sweeper->faceyz1,
-                             & sweeper->faceyz2 };
-  return facesyz[i];
-}
-
-/*---------------------------------------------------------------------------*/
-
-
-static Pointer* Sweeper_facexy_step__( Sweeper* sweeper, int step )
-{
-  Assert( sweeper != NULL );
-  Assert( step >= -1 );
-  return Sweeper_facexy__( sweeper, 0 );
-}
-
-/*---------------------------------------------------------------------------*/
-
-static Pointer* Sweeper_facexz_step__( Sweeper* sweeper, int step )
-{
-  Assert( sweeper != NULL );
-  Assert( step >= -1 );
-
-  return Sweeper_facexz__( sweeper,
-                           Sweeper_is_face_comm_async() ? (step+3)%3 : 0 );
-}
-
-/*---------------------------------------------------------------------------*/
-
-static Pointer* Sweeper_faceyz_step__( Sweeper* sweeper, int step )
-{
-  Assert( sweeper != NULL );
-  Assert( step >= -1 );
-
-  return Sweeper_faceyz__( sweeper,
-                           Sweeper_is_face_comm_async() ? (step+3)%3 : 0 );
-}
 
 /*===========================================================================*/
 /*---Thread indexers---*/

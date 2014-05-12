@@ -8,9 +8,6 @@
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _serial_c__step_scheduler_kba_c_h_
-#define _serial_c__step_scheduler_kba_c_h_
-
 #include "env.h"
 #include "definitions.h"
 #include "step_scheduler_kba.h"
@@ -251,11 +248,97 @@ Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,
 }
 
 /*===========================================================================*/
+/*---Determine whether to send a face computed at step, used at step+1---*/
+
+Bool_t Step_Scheduler_must_do_send(
+  Step_Scheduler* step_scheduler,
+  int             step,
+  int             axis,
+  int             dir_ind,
+  int             octant_in_block,
+  Env*            env )
+{
+  const int proc_x = Env_proc_x_this( env );
+  const int proc_y = Env_proc_y_this( env );
+
+  const Bool_t axis_x = axis==0;
+  const Bool_t axis_y = axis==1;
+
+  const int dir = dir_ind==0 ? Dir_up() : Dir_dn();
+  const int inc_x = axis_x ? Dir_inc( dir ) : 0;
+  const int inc_y = axis_y ? Dir_inc( dir ) : 0;
+
+  /*---Get step info for processors involved in communication---*/
+
+  const Step_Info step_info_send_source_step = Step_Scheduler_step_info(
+    step_scheduler, step,   octant_in_block, proc_x,       proc_y       );
+
+  const Step_Info step_info_send_target_step = Step_Scheduler_step_info(
+    step_scheduler, step+1, octant_in_block, proc_x+inc_x, proc_y+inc_y );
+
+  /*---Determine whether to communicate---*/
+
+  Bool_t const do_send = step_info_send_source_step.is_active
+                      && step_info_send_target_step.is_active
+                      && step_info_send_source_step.octant ==
+                         step_info_send_target_step.octant
+                      && step_info_send_source_step.block_z ==
+                         step_info_send_target_step.block_z
+                      && ( axis_x ?
+                           Dir_x( step_info_send_target_step.octant ) :
+                           Dir_y( step_info_send_target_step.octant ) ) == dir;
+
+  return do_send;
+}
+
+/*===========================================================================*/
+/*---Determine whether to recv a face computed at step, used at step+1---*/
+
+Bool_t Step_Scheduler_must_do_recv(
+  Step_Scheduler* step_scheduler,
+  int             step,
+  int             axis,
+  int             dir_ind,
+  int             octant_in_block,
+  Env*            env )
+{
+  const int proc_x = Env_proc_x_this( env );
+  const int proc_y = Env_proc_y_this( env );
+
+  const Bool_t axis_x = axis==0;
+  const Bool_t axis_y = axis==1;
+
+  const int dir = dir_ind==0 ? Dir_up() : Dir_dn();
+  const int inc_x = axis_x ? Dir_inc( dir ) : 0;
+  const int inc_y = axis_y ? Dir_inc( dir ) : 0;
+
+  /*---Get step info for processors involved in communication---*/
+
+  const Step_Info step_info_recv_source_step = Step_Scheduler_step_info(
+    step_scheduler, step,   octant_in_block, proc_x-inc_x, proc_y-inc_y );
+
+  const Step_Info step_info_recv_target_step = Step_Scheduler_step_info(
+    step_scheduler, step+1, octant_in_block, proc_x,       proc_y       );
+
+  /*---Determine whether to communicate---*/
+
+  Bool_t const do_recv = step_info_recv_source_step.is_active
+                      && step_info_recv_target_step.is_active
+                      && step_info_recv_source_step.octant ==
+                         step_info_recv_target_step.octant
+                      && step_info_recv_source_step.block_z ==
+                         step_info_recv_target_step.block_z
+                      && ( axis_x ?
+                           Dir_x( step_info_recv_target_step.octant ) :
+                           Dir_y( step_info_recv_target_step.octant ) ) == dir;
+
+  return do_recv;
+}
+
+/*===========================================================================*/
 
 #ifdef __cplusplus
 } /*---extern "C"---*/
 #endif
-
-#endif /*---_serial_c__step_scheduler_kba_c_h_---*/
 
 /*---------------------------------------------------------------------------*/

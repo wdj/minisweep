@@ -8,8 +8,8 @@
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _serial_c__step_scheduler_kba_h_
-#define _serial_c__step_scheduler_kba_h_
+#ifndef _mpi_c__step_scheduler_kba_h_
+#define _mpi_c__step_scheduler_kba_h_
 
 #include "env.h"
 
@@ -90,11 +90,33 @@ Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,
                                     const int             proc_y );
 
 /*===========================================================================*/
+/*---Determine whether to send a face computed at step, used at step+1---*/
+
+Bool_t Step_Scheduler_must_do_send(
+  Step_Scheduler* step_scheduler,
+  int             step,
+  int             axis,
+  int             dir_ind,
+  int             octant_in_block,
+  Env*            env );
+
+/*===========================================================================*/
+/*---Determine whether to recv a face computed at step, used at step+1---*/
+
+Bool_t Step_Scheduler_must_do_recv(
+  Step_Scheduler* step_scheduler,
+  int             step,
+  int             axis,
+  int             dir_ind,
+  int             octant_in_block,
+  Env*            env );
+
+/*===========================================================================*/
 
 #ifdef __cplusplus
 } /*---extern "C"---*/
 #endif
 
-#endif /*---_step_scheduler_kba_h_---*/
+#endif /*---_mpi_c__step_scheduler_kba_h_---*/
 
 /*---------------------------------------------------------------------------*/

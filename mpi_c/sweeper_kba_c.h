@@ -39,7 +39,7 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Declarations---*/
   /*====================*/
 
-  int i = 0;
+  Bool_t is_face_comm_async = Bool_true;
 
   Insist( dims.nx > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
   Insist( dims.ny > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
@@ -133,29 +133,8 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Allocate faces---*/
   /*====================*/
 
-  Pointer_ctor(       Sweeper_facexy__( sweeper, 0 ),
-    Dimensions_size_facexy( sweeper->dims_b, NU, sweeper->noctant_per_block ),
-    Env_cuda_is_using_device( env ) );
-  Pointer_set_pinned( Sweeper_facexy__( sweeper, 0 ), Bool_true );
-  Pointer_create(     Sweeper_facexy__( sweeper, 0 ) );
-
-  for( i = 0; i < NDIM; ++i )
-  {
-    Pointer_ctor(       Sweeper_facexz__( sweeper, i ),
-      Dimensions_size_facexz( sweeper->dims_b, NU, sweeper->noctant_per_block ),
-      Env_cuda_is_using_device( env ) );
-    Pointer_set_pinned( Sweeper_facexz__( sweeper, i ), Bool_true );
-    Pointer_ctor(       Sweeper_faceyz__( sweeper, i ),
-      Dimensions_size_faceyz( sweeper->dims_b, NU, sweeper->noctant_per_block ),
-      Env_cuda_is_using_device( env ) );
-    Pointer_set_pinned( Sweeper_faceyz__( sweeper, i ), Bool_true );
-  }
-
-  for( i = 0; i < ( Sweeper_is_face_comm_async() ? NDIM : 1 ); ++i )
-  {
-    Pointer_create( Sweeper_facexz__( sweeper, i ) );
-    Pointer_create( Sweeper_faceyz__( sweeper, i ) );
-  }
+  Faces_ctor( &(sweeper->faces), sweeper->dims_b,
+                sweeper->noctant_per_block, is_face_comm_async, env );
 }
 
 /*===========================================================================*/
@@ -164,8 +143,6 @@ void Sweeper_ctor( Sweeper*          sweeper,
 void Sweeper_dtor( Sweeper* sweeper,
                    Env*     env )
 {
-  int i = 0;
-
   /*====================*/
   /*---Deallocate arrays---*/
   /*====================*/
@@ -179,498 +156,17 @@ void Sweeper_dtor( Sweeper* sweeper,
     sweeper->vslocal = NULL;
   }
 
-  Pointer_dtor( Sweeper_facexy__( sweeper, 0 ) );
+  /*====================*/
+  /*---Deallocate faces---*/
+  /*====================*/
 
-  for( i = 0; i < NDIM; ++i )
-  {
-    Pointer_dtor( Sweeper_facexz__( sweeper, i ) );
-    Pointer_dtor( Sweeper_faceyz__( sweeper, i ) );
-  }
+  Faces_dtor( &(sweeper->faces) );
 
   /*====================*/
   /*---Terminate scheduler---*/
   /*====================*/
 
   Step_Scheduler_dtor( &( sweeper->step_scheduler ) );
-}
-
-/*===========================================================================*/
-/*---Determine whether to send a face computed at step, used at step+1---*/
-
-Bool_t Sweeper_must_do_send__(
-  Sweeper*           sweeper,
-  int                step,
-  int                axis,
-  int                dir_ind,
-  int                octant_in_block,
-  Env*               env )
-{
-  const int proc_x = Env_proc_x_this( env );
-  const int proc_y = Env_proc_y_this( env );
-
-  const Bool_t axis_x = axis==0;
-  const Bool_t axis_y = axis==1;
-
-  const int dir = dir_ind==0 ? Dir_up() : Dir_dn();
-  const int inc_x = axis_x ? Dir_inc( dir ) : 0;
-  const int inc_y = axis_y ? Dir_inc( dir ) : 0;
-
-  /*---Get step info for processors involved in communication---*/
-
-  const Step_Info step_info_send_source_step = Step_Scheduler_step_info(
-    &(sweeper->step_scheduler), step,   octant_in_block,
-                                                  proc_x,       proc_y);
-
-  const Step_Info step_info_send_target_step = Step_Scheduler_step_info(
-    &(sweeper->step_scheduler), step+1, octant_in_block,
-                                                  proc_x+inc_x, proc_y+inc_y );
-
-  /*---Determine whether to communicate---*/
-
-  Bool_t const do_send = step_info_send_source_step.is_active
-                      && step_info_send_target_step.is_active
-                      && step_info_send_source_step.octant ==
-                         step_info_send_target_step.octant
-                      && step_info_send_source_step.block_z ==
-                         step_info_send_target_step.block_z
-                      && ( axis_x ?
-                           Dir_x( step_info_send_target_step.octant ) :
-                           Dir_y( step_info_send_target_step.octant ) ) == dir;
-
-  return do_send;
-}
-
-/*===========================================================================*/
-/*---Determine whether to recv a face computed at step, used at step+1---*/
-
-Bool_t Sweeper_must_do_recv__(
-  Sweeper*           sweeper,
-  int                step,
-  int                axis,
-  int                dir_ind,
-  int                octant_in_block,
-  Env*               env )
-{
-  const int proc_x = Env_proc_x_this( env );
-  const int proc_y = Env_proc_y_this( env );
-
-  const Bool_t axis_x = axis==0;
-  const Bool_t axis_y = axis==1;
-
-  const int dir = dir_ind==0 ? Dir_up() : Dir_dn();
-  const int inc_x = axis_x ? Dir_inc( dir ) : 0;
-  const int inc_y = axis_y ? Dir_inc( dir ) : 0;
-
-  /*---Get step info for processors involved in communication---*/
-
-  const Step_Info step_info_recv_source_step = Step_Scheduler_step_info(
-    &(sweeper->step_scheduler), step,   octant_in_block,
-                                                  proc_x-inc_x, proc_y-inc_y );
-
-  const Step_Info step_info_recv_target_step = Step_Scheduler_step_info(
-    &(sweeper->step_scheduler), step+1, octant_in_block,
-                                                  proc_x,       proc_y );
-
-  /*---Determine whether to communicate---*/
-
-  Bool_t const do_recv = step_info_recv_source_step.is_active
-                      && step_info_recv_target_step.is_active
-                      && step_info_recv_source_step.octant ==
-                         step_info_recv_target_step.octant
-                      && step_info_recv_source_step.block_z ==
-                         step_info_recv_target_step.block_z
-                      && ( axis_x ?
-                           Dir_x( step_info_recv_target_step.octant ) :
-                           Dir_y( step_info_recv_target_step.octant ) ) == dir;
-
-  return do_recv;
-}
-
-/*===========================================================================*/
-/*---Communicate faces computed at step, used at step+1---*/
-
-void Sweeper_communicate_faces__(
-  Sweeper*           sweeper,
-  int                step,
-  Env*               env )
-{
-  Assert( ! Sweeper_is_face_comm_async() );
-
-  const int proc_x = Env_proc_x_this( env );
-  const int proc_y = Env_proc_y_this( env );
-
-  const size_t size_facexz_per_octant = Dimensions_size_facexz( sweeper->dims_b,
-                 NU, sweeper->noctant_per_block ) / sweeper->noctant_per_block;
-  const size_t size_faceyz_per_octant = Dimensions_size_faceyz( sweeper->dims_b,
-                 NU, sweeper->noctant_per_block ) / sweeper->noctant_per_block;
-
-  /*---Allocate temporary face buffers---*/
-
-  P* __restrict__ buf_xz  = malloc_P( size_facexz_per_octant );
-  P* __restrict__ buf_yz  = malloc_P( size_faceyz_per_octant );
-
-  /*---Loop over octants---*/
-
-  int octant_in_block = 0;
-
-  for( octant_in_block=0; octant_in_block<sweeper->noctant_per_block;
-                                                            ++octant_in_block )
-  {
-    /*---Communicate +/-X, +/-Y---*/
-
-    int axis = 0;
-
-    for( axis=0; axis<2; ++axis )  /*---Loop: X, Y---*/
-    {
-      const Bool_t axis_x = axis==0;
-      const Bool_t axis_y = axis==1;
-
-      const int proc_axis = axis_x ? proc_x : proc_y;
-
-      const size_t    size_face_per_octant    = axis_x ? size_faceyz_per_octant
-                                                       : size_facexz_per_octant;
-      P* __restrict__ buf                     = axis_x ? buf_yz
-                                                       : buf_xz;
-      P* __restrict__ face_per_octant = axis_x ?
-        ref_faceyz( Pointer_h( Sweeper_faceyz_step__( sweeper, step ) ),
-                    sweeper->dims_b, NU, sweeper->noctant_per_block,
-                    0, 0, 0, 0, 0, octant_in_block ) :
-        ref_facexz( Pointer_h( Sweeper_facexz_step__( sweeper, step ) ),
-                    sweeper->dims_b, NU, sweeper->noctant_per_block,
-                     0, 0, 0, 0, 0, octant_in_block );
-
-      int dir_ind = 0;
-
-      for( dir_ind=0; dir_ind<2; ++dir_ind ) /*---Loop: up, down---*/
-      {
-        const int dir = dir_ind==0 ? Dir_up() : Dir_dn();
-        const int inc_x = axis_x ? Dir_inc( dir ) : 0;
-        const int inc_y = axis_y ? Dir_inc( dir ) : 0;
-
-        /*---Determine whether to communicate---*/
-
-        Bool_t const do_send = Sweeper_must_do_send__(
-                          sweeper, step, axis, dir_ind, octant_in_block, env );
-
-        Bool_t const do_recv = Sweeper_must_do_recv__(
-                          sweeper, step, axis, dir_ind, octant_in_block, env );
-
-        /*---Communicate as needed - red/black coloring to avoid deadlock---*/
-
-        int color = 0;
-
-        Bool_t use_buf = Bool_false;
-
-        for( color=0; color<2; ++color )
-        {
-          if( color == 0 )
-          {
-            if( proc_axis % 2 == 0 )
-            {
-              if( do_send )
-              {
-                const int proc_other
-                                 = Env_proc( env, proc_x+inc_x, proc_y+inc_y );
-                Env_send_P( face_per_octant, size_face_per_octant,
-                            proc_other, Env_tag( env )+octant_in_block );
-              }
-            }
-            else
-            {
-              if( do_recv )
-              {
-                const int proc_other
-                                 = Env_proc( env, proc_x-inc_x, proc_y-inc_y );
-                /*---save copy else color 0 recv will destroy color 1 send---*/
-                copy_vector( buf, face_per_octant, size_face_per_octant );
-                use_buf = Bool_true;
-                Env_recv_P( face_per_octant, size_face_per_octant,
-                            proc_other, Env_tag( env )+octant_in_block );
-              }
-            }
-          }
-          else /*---if color---*/
-          {
-            if( proc_axis % 2 == 0 )
-            {
-              if( do_recv )
-              {
-                const int proc_other
-                                 = Env_proc( env, proc_x-inc_x, proc_y-inc_y );
-                Env_recv_P( face_per_octant, size_face_per_octant,
-                            proc_other, Env_tag( env )+octant_in_block );
-              }
-            }
-            else
-            {
-              if( do_send )
-              {
-                const int proc_other
-                                 = Env_proc( env, proc_x+inc_x, proc_y+inc_y );
-                Env_send_P( use_buf ? buf : face_per_octant,
-                  size_face_per_octant, proc_other, Env_tag( env )+octant_in_block );
-              }
-            }
-          } /*---if color---*/
-        } /*---color---*/
-      } /*---dir_ind---*/
-    } /*---axis---*/
-  } /*---octant_in_block---*/
-
-  /*---Deallocations---*/
-
-  free_P( buf_xz );
-  free_P( buf_yz );
-}
-
-/*===========================================================================*/
-/*---Asynchronously send faces computed at step, used at step+1: start---*/
-
-void Sweeper_send_faces_start__(
-  Sweeper*           sweeper,
-  int                step,
-  Env*               env )
-{
-  Assert( Sweeper_is_face_comm_async() );
-
-  const int proc_x = Env_proc_x_this( env );
-  const int proc_y = Env_proc_y_this( env );
-
-  const size_t size_facexz_per_octant = Dimensions_size_facexz( sweeper->dims_b,
-                 NU, sweeper->noctant_per_block ) / sweeper->noctant_per_block;
-  const size_t size_faceyz_per_octant = Dimensions_size_faceyz( sweeper->dims_b,
-                 NU, sweeper->noctant_per_block ) / sweeper->noctant_per_block;
-
-  /*---Loop over octants---*/
-
-  int octant_in_block = 0;
-
-  for( octant_in_block=0; octant_in_block<sweeper->noctant_per_block;
-                                                            ++octant_in_block )
-  {
-    /*---Communicate +/-X, +/-Y---*/
-
-    int axis = 0;
-
-    for( axis=0; axis<2; ++axis )
-    {
-      const Bool_t axis_x = axis==0;
-      const Bool_t axis_y = axis==1;
-
-      /*---Send values computed on this step---*/
-
-      const size_t    size_face_per_octant    = axis_x ? size_faceyz_per_octant
-                                                       : size_facexz_per_octant;
-      P* __restrict__ face_per_octant = axis_x ?
-        ref_faceyz( Pointer_h( Sweeper_faceyz_step__( sweeper, step ) ),
-                    sweeper->dims_b, NU, sweeper->noctant_per_block,
-                    0, 0, 0, 0, 0, octant_in_block ) :
-        ref_facexz( Pointer_h( Sweeper_facexz_step__( sweeper, step ) ),
-                    sweeper->dims_b, NU, sweeper->noctant_per_block,
-                    0, 0, 0, 0, 0, octant_in_block );
-
-      int dir_ind = 0;
-
-      for( dir_ind=0; dir_ind<2; ++dir_ind )
-      {
-        const int dir = dir_ind==0 ? Dir_up() : Dir_dn();
-        const int inc_x = axis_x ? Dir_inc( dir ) : 0;
-        const int inc_y = axis_y ? Dir_inc( dir ) : 0;
-
-        /*---Determine whether to communicate---*/
-
-        Bool_t const do_send = Sweeper_must_do_send__(
-                          sweeper, step, axis, dir_ind, octant_in_block, env );
-
-        if( do_send )
-        {
-          const int proc_other = Env_proc( env, proc_x+inc_x, proc_y+inc_y );
-          Request_t* request = axis_x ?
-                                   & sweeper->request_send_xz[octant_in_block]
-                                 : & sweeper->request_send_yz[octant_in_block];
-          Env_asend_P( face_per_octant, size_face_per_octant,
-                       proc_other, Env_tag( env )+octant_in_block, request );
-        }
-      } /*---dir_ind---*/
-    } /*---axis---*/
-  } /*---octant_in_block---*/
-}
-
-/*===========================================================================*/
-/*---Asynchronously send faces computed at step, used at step+1: end---*/
-
-void Sweeper_send_faces_end__(
-  Sweeper*           sweeper,
-  int                step,
-  Env*               env )
-{
-  Assert( Sweeper_is_face_comm_async() );
-
-  const int proc_x = Env_proc_x_this( env );
-  const int proc_y = Env_proc_y_this( env );
-
-  /*---Loop over octants---*/
-
-  int octant_in_block = 0;
-
-  for( octant_in_block=0; octant_in_block<sweeper->noctant_per_block;
-                                                            ++octant_in_block )
-  {
-    /*---Communicate +/-X, +/-Y---*/
-
-    int axis = 0;
-
-    for( axis=0; axis<2; ++axis )
-    {
-      const Bool_t axis_x = axis==0;
-
-      int dir_ind = 0;
-
-      for( dir_ind=0; dir_ind<2; ++dir_ind )
-      {
-
-        /*---Determine whether to communicate---*/
-
-        Bool_t const do_send = Sweeper_must_do_send__(
-                          sweeper, step, axis, dir_ind, octant_in_block, env );
-
-        if( do_send )
-        {
-          Request_t* request = axis_x ?
-                                   & sweeper->request_send_xz[octant_in_block]
-                                 : & sweeper->request_send_yz[octant_in_block];
-          Env_wait( request );
-        }
-      } /*---dir_ind---*/
-    } /*---axis---*/
-  } /*---octant_in_block---*/
-}
-
-/*===========================================================================*/
-/*---Asynchronously recv faces computed at step, used at step+1: start---*/
-
-void Sweeper_recv_faces_start__(
-  Sweeper*           sweeper,
-  int                step,
-  Env*               env )
-{
-  Assert( Sweeper_is_face_comm_async() );
-
-  const int proc_x = Env_proc_x_this( env );
-  const int proc_y = Env_proc_y_this( env );
-
-  const size_t size_facexz_per_octant = Dimensions_size_facexz( sweeper->dims_b,
-                 NU, sweeper->noctant_per_block ) / sweeper->noctant_per_block;
-  const size_t size_faceyz_per_octant = Dimensions_size_faceyz( sweeper->dims_b,
-                 NU, sweeper->noctant_per_block ) / sweeper->noctant_per_block;
-
-  /*---Loop over octants---*/
-
-  int octant_in_block = 0;
-
-  for( octant_in_block=0; octant_in_block<sweeper->noctant_per_block;
-                                                            ++octant_in_block )
-  {
-    /*---Communicate +/-X, +/-Y---*/
-
-    int axis = 0;
-
-    for( axis=0; axis<2; ++axis )
-    {
-      const Bool_t axis_x = axis==0;
-      const Bool_t axis_y = axis==1;
-
-      /*---Receive values computed on the next step---*/
-
-      const size_t    size_face_per_octant    = axis_x ? size_faceyz_per_octant
-                                                       : size_facexz_per_octant;
-      P* __restrict__ face_per_octant = axis_x ?
-        ref_faceyz( Pointer_h( Sweeper_faceyz_step__( sweeper, step+1 ) ),
-                    sweeper->dims_b, NU, sweeper->noctant_per_block,
-                    0, 0, 0, 0, 0, octant_in_block ) :
-        ref_facexz( Pointer_h( Sweeper_facexz_step__( sweeper, step+1 ) ),
-                    sweeper->dims_b, NU, sweeper->noctant_per_block,
-                    0, 0, 0, 0, 0, octant_in_block );
-
-      int dir_ind = 0;
-
-      for( dir_ind=0; dir_ind<2; ++dir_ind )
-      {
-        const int dir = dir_ind==0 ? Dir_up() : Dir_dn();
-        const int inc_x = axis_x ? Dir_inc( dir ) : 0;
-        const int inc_y = axis_y ? Dir_inc( dir ) : 0;
-
-        /*---Determine whether to communicate---*/
-
-        Bool_t const do_recv = Sweeper_must_do_recv__(
-                          sweeper, step, axis, dir_ind, octant_in_block, env );
-
-        if( do_recv )
-        {
-          const int proc_other = Env_proc( env, proc_x-inc_x, proc_y-inc_y );
-          Request_t* request = axis_x ?
-                                   & sweeper->request_recv_xz[octant_in_block]
-                                 : & sweeper->request_recv_yz[octant_in_block];
-          Env_arecv_P( face_per_octant, size_face_per_octant,
-                       proc_other, Env_tag( env )+octant_in_block, request );
-        }
-      } /*---dir_ind---*/
-    } /*---axis---*/
-  } /*---octant_in_block---*/
-}
-
-/*===========================================================================*/
-/*---Asynchronously recv faces computed at step, used at step+1: end---*/
-
-void Sweeper_recv_faces_end__(
-  Sweeper*           sweeper,
-  int                step,
-  Env*               env )
-{
-  Assert( Sweeper_is_face_comm_async() );
-
-  const int proc_x = Env_proc_x_this( env );
-  const int proc_y = Env_proc_y_this( env );
-
-  const size_t size_facexz_per_octant = Dimensions_size_facexz( sweeper->dims_b,
-                 NU, sweeper->noctant_per_block ) / sweeper->noctant_per_block;
-  const size_t size_faceyz_per_octant = Dimensions_size_faceyz( sweeper->dims_b,
-                 NU, sweeper->noctant_per_block ) / sweeper->noctant_per_block;
-
-  /*---Loop over octants---*/
-
-  int octant_in_block = 0;
-
-  for( octant_in_block=0; octant_in_block<sweeper->noctant_per_block;
-                                                            ++octant_in_block )
-  {
-    /*---Communicate +/-X, +/-Y---*/
-
-    int axis = 0;
-
-    for( axis=0; axis<2; ++axis )
-    {
-      const Bool_t axis_x = axis==0;
-
-      int dir_ind = 0;
-
-      for( dir_ind=0; dir_ind<2; ++dir_ind )
-      {
-        /*---Determine whether to communicate---*/
-
-        Bool_t const do_recv = Sweeper_must_do_recv__(
-                          sweeper, step, axis, dir_ind, octant_in_block, env );
-
-        if( do_recv )
-        {
-          Request_t* request = axis_x ?
-                                   & sweeper->request_recv_xz[octant_in_block]
-                                 : & sweeper->request_recv_yz[octant_in_block];
-          Env_wait( request );
-        }
-      } /*---dir_ind---*/
-    } /*---axis---*/
-  } /*---octant_in_block---*/
 }
 
 /*===========================================================================*/
@@ -1465,9 +961,9 @@ void Sweeper_sweep(
     =    The _s face for a step must match the _c face for the prev step.
     =========================================================================*/
 
-    Pointer* facexy = Sweeper_facexy_step__( sweeper, step );
-    Pointer* facexz = Sweeper_facexz_step__( sweeper, step );
-    Pointer* faceyz = Sweeper_faceyz_step__( sweeper, step );
+    Pointer* facexy = Faces_facexy_step( &(sweeper->faces), step );
+    Pointer* facexz = Faces_facexz_step( &(sweeper->faces), step );
+    Pointer* faceyz = Faces_faceyz_step( &(sweeper->faces), step );
 
     /*=========================================================================
     =    Faces are triple buffered via a circular buffer of face arrays.
@@ -1486,9 +982,10 @@ void Sweeper_sweep(
     /*---Recv face via MPI WAIT (i)---*/
     /*====================*/
 
-    if( is_sweep_step &&  Sweeper_is_face_comm_async() )
+    if( is_sweep_step &&  Faces_is_face_comm_async( &(sweeper->faces)) )
     {
-      Sweeper_recv_faces_end__( sweeper, step-1, env );
+      Faces_recv_faces_end( &(sweeper->faces), &(sweeper->step_scheduler),
+                            sweeper->dims_b, step-1, env );
     }
 
     /*====================*/
@@ -1511,9 +1008,10 @@ void Sweeper_sweep(
     /*---Recv face via MPI START (i+1)---*/
     /*====================*/
 
-    if( is_sweep_step &&  Sweeper_is_face_comm_async() )
+    if( is_sweep_step &&  Faces_is_face_comm_async( &(sweeper->faces)) )
     {
-      Sweeper_recv_faces_start__( sweeper, step, env );
+      Faces_recv_faces_start( &(sweeper->faces), &(sweeper->step_scheduler),
+                            sweeper->dims_b, step, env );
     }
 
     /*====================*/
@@ -1601,9 +1099,10 @@ void Sweeper_sweep(
     /*---Send face via MPI WAIT (i-1)---*/
     /*====================*/
 
-    if( is_sweep_step && Sweeper_is_face_comm_async() )
+    if( is_sweep_step && Faces_is_face_comm_async( &(sweeper->faces)) )
     {
-      Sweeper_send_faces_end__( sweeper, step-1, env );
+      Faces_send_faces_end( &(sweeper->faces), &(sweeper->step_scheduler),
+                            sweeper->dims_b, step-1, env );
     }
 
     /*====================*/
@@ -1632,18 +1131,20 @@ void Sweeper_sweep(
     /*---Send face via MPI START (i)---*/
     /*====================*/
 
-    if( is_sweep_step && Sweeper_is_face_comm_async() )
+    if( is_sweep_step && Faces_is_face_comm_async( &(sweeper->faces)) )
     {
-      Sweeper_send_faces_start__( sweeper, step, env );
+      Faces_send_faces_start( &(sweeper->faces), &(sweeper->step_scheduler),
+                            sweeper->dims_b, step, env );
     }
 
     /*====================*/
     /*---Communicate faces (synchronous)---*/
     /*====================*/
 
-    if( is_sweep_step && ! Sweeper_is_face_comm_async() )
+    if( is_sweep_step && ! Faces_is_face_comm_async( &(sweeper->faces)) )
     {
-      Sweeper_communicate_faces__( sweeper, step, env );
+      Faces_communicate_faces( &(sweeper->faces), &(sweeper->step_scheduler),
+                            sweeper->dims_b, step, env );
     }
 
   } /*---step---*/
