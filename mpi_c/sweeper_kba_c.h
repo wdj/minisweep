@@ -39,7 +39,8 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Declarations---*/
   /*====================*/
 
-  Bool_t is_face_comm_async = Bool_true;
+  Bool_t is_face_comm_async = Arguments_consume_int_or_default( args,
+                                           "--is_face_comm_async", Bool_true );
 
   Insist( dims.nx > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
   Insist( dims.ny > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
@@ -340,6 +341,109 @@ static void Sweeper_set_boundary_yz(
 }
 
 /*===========================================================================*/
+/*---Perform a sweep for a cell---*/
+
+TARGET_HD void Sweeper_sweep_cell(
+  Sweeper*               sweeper,
+  P* __restrict__        vo_this,
+  const P* __restrict__  vi_this,
+  P* __restrict__        vslocal,
+  P* __restrict__        facexy,
+  P* __restrict__        facexz,
+  P* __restrict__        faceyz,
+  const P* __restrict__  a_from_m,
+  const P* __restrict__  m_from_a,
+  const Quantities*      quan,
+  const int              octant,
+  const int              iz_base,
+  const int              octant_in_block,
+  const int              ie,
+  const int              ix,
+  const int              iy,
+  const int              iz,
+  const Bool_t           do_block_init_this )
+{
+  /*--------------------*/
+  /*---Sweep cell---*/
+  /*--------------------*/
+
+  int im = 0;
+  int ia = 0;
+  int iu = 0;
+
+  /*--------------------*/
+  /*---Transform state vector from moments to angles---*/
+  /*--------------------*/
+
+  for( ia=0; ia<sweeper->dims.na; ++ia )
+  {
+  for( iu=0; iu<NU; ++iu )
+  {
+    P result = P_zero();
+    for( im=0; im<sweeper->dims.nm; ++im )
+    {
+      result +=
+        *const_ref_a_from_m( a_from_m, sweeper->dims, im, ia, octant )
+        * *const_ref_state( vi_this, sweeper->dims_b, NU,
+                            ix, iy, iz, ie, im, iu );
+    }
+    *ref_vslocal( vslocal, sweeper->dims, NU, ia, iu ) = result;
+  }
+  }
+
+  /*--------------------*/
+  /*---Perform solve---*/
+  /*--------------------*/
+
+  Quantities_solve( quan, vslocal,
+                    facexy, facexz, faceyz,
+                    ix, iy, iz, ie,
+                    ix+quan->ix_base, iy+quan->iy_base, iz+iz_base,
+                    octant, octant_in_block,
+                    sweeper->noctant_per_block,
+                    sweeper->dims_b, sweeper->dims_g );
+
+  /*--------------------*/
+  /*---Transform state vector from angles to moments---*/
+  /*--------------------*/
+
+  for( im=0; im<sweeper->dims.nm; ++im )
+  {
+  for( iu=0; iu<NU; ++iu )
+  {
+    P result = P_zero();
+    for( ia=0; ia<sweeper->dims.na; ++ia )
+    {
+      result +=
+        *const_ref_m_from_a( m_from_a, sweeper->dims, im, ia, octant )
+        * *const_ref_vslocal( vslocal, sweeper->dims, NU, ia, iu );
+    }
+#ifdef USE_OPENMP_VO_ATOMIC
+#pragma omp atomic update
+    *ref_state( vo_this, sweeper->dims_b, NU,
+                ix, iy, iz, ie, im, iu ) += result;
+#else
+    if( do_block_init_this )
+    {
+      *ref_state( vo_this, sweeper->dims_b, NU,
+                  ix, iy, iz, ie, im, iu ) = result;
+    }
+    else
+    {
+      *ref_state( vo_this, sweeper->dims_b, NU,
+                  ix, iy, iz, ie, im, iu ) += result;
+    }
+#endif
+  }
+  }
+
+
+
+
+
+}
+
+/*===========================================================================*/
 /*---Perform a sweep for a semiblock---*/
 
 TARGET_HD void Sweeper_sweep_semiblock(
@@ -418,6 +522,14 @@ TARGET_HD void Sweeper_sweep_semiblock(
     {
     for( ix=ixbeg; ix!=ixend+dir_inc_x; ix+=dir_inc_x )
     {
+
+
+    Sweeper_sweep_cell( sweeper, vo_this, vi_this, vslocal,
+                        facexy, facexz, faceyz, a_from_m, m_from_a, quan,
+                        octant, iz_base, octant_in_block, ie, ix, iy, iz,
+                        do_block_init_this );
+
+#if 0
       /*--------------------*/
       /*---Sweep cell---*/
       /*--------------------*/
@@ -491,6 +603,7 @@ TARGET_HD void Sweeper_sweep_semiblock(
 #endif
       }
       }
+#endif
 
     }
     }

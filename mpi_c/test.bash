@@ -169,6 +169,10 @@ function main
     compare_runs  "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2" \
                   "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 4"
 
+    local ARGS="--nx  5 --ny  4 --nz  6 --ne 7 --nm 4 --na 10 --is_face_comm_async 0"
+    compare_runs   "-n1"  "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1" \
+                  "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
+
     echo "------------------"
     echo "---OpenMP tests---"
     echo "------------------"

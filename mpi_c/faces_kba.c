@@ -42,7 +42,7 @@ void Faces_ctor( Faces*      faces,
   Pointer_create(     Faces_facexy( faces, 0 ) );
 
 
-  for( i = 0; i < NDIM; ++i )
+  for( i = 0; i < ( Faces_is_face_comm_async( faces ) ? NDIM : 1 ); ++i )
   {
     Pointer_ctor(       Faces_facexz( faces, i ),
       Dimensions_size_facexz( dims_b, NU, noctant_per_block ),
@@ -75,7 +75,7 @@ void Faces_dtor( Faces* faces )
 
   Pointer_dtor( Faces_facexy( faces, 0 ) );
 
-  for( i = 0; i < NDIM; ++i )
+  for( i = 0; i < ( Faces_is_face_comm_async( faces ) ? NDIM : 1 ); ++i )
   {
     Pointer_dtor( Faces_facexz( faces, i ) );
     Pointer_dtor( Faces_faceyz( faces, i ) );

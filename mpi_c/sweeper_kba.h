@@ -252,6 +252,29 @@ static int Sweeper_shared_size__( Sweeper* sweeper,
 }
 
 /*===========================================================================*/
+/*---Perform a sweep for a cell---*/
+
+TARGET_HD void Sweeper_sweep_cell(
+  Sweeper*               sweeper,
+  P* __restrict__        vo_this,
+  const P* __restrict__  vi_this,
+  P* __restrict__        vslocal,
+  P* __restrict__        facexy,
+  P* __restrict__        facexz,
+  P* __restrict__        faceyz,
+  const P* __restrict__  a_from_m,
+  const P* __restrict__  m_from_a,
+  const Quantities*      quan,
+  const int              octant,
+  const int              iz_base,
+  const int              octant_in_block,
+  const int              ie,
+  const int              ix,
+  const int              iy,
+  const int              iz,
+  const Bool_t           do_block_init_this );
+
+/*===========================================================================*/
 /*---Perform a sweep for a semiblock---*/
 
 TARGET_HD void Sweeper_sweep_semiblock(
