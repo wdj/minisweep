@@ -64,7 +64,7 @@ static int Sweeper_noctant_per_block( const Sweeper* sweeper )
 /*---Pseudo-destructor for Sweeper struct---*/
 
 void Sweeper_dtor( Sweeper* sweeper,
-                   Env      env );
+                   Env*     env );
 
 /*===========================================================================*/
 /*---Perform a sweep---*/
