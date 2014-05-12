@@ -126,7 +126,7 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*====================*/
 
   sweeper->vslocal = Env_cuda_is_using_device( env ) ?
-                     ( (P*) Env_cuda_shared_memory() ) :
+                     ( (P*) NULL ) :
                      malloc_P( Sweeper_nvslocal__( sweeper, env ) );
 
   /*====================*/
@@ -1378,6 +1378,7 @@ void Sweeper_sweep_block(
                               proc_y==Env_nproc_y( env )-1,
                               step_info_values,
                               do_block_init );
+    Assert( Env_cuda_last_call_succeeded() );
   }
   else
 #ifdef USE_OPENMP_THREADS

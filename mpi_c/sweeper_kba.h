@@ -378,14 +378,17 @@ TARGET_HD static inline int Sweeper_nvslocal__( Sweeper* sweeper,
 TARGET_HD static inline P* __restrict__ Sweeper_vslocal_this__(
                                                             Sweeper* sweeper )
 {
-  return sweeper->vslocal + sweeper->dims_b.na *
-                            NU *
 #ifdef __CUDA_ARCH__
-                            Sweeper_thread_octant( sweeper )
-#else
-                            Sweeper_thread( sweeper )
-#endif
+  return ( (P*) Env_cuda_shared_memory() )
+    + sweeper->dims_b.na * NU *
+      Sweeper_thread_octant( sweeper )
   ;
+#else
+  return sweeper->vslocal
+    + sweeper->dims_b.na * NU *
+      Sweeper_thread( sweeper )
+  ;
+#endif
 }
 
 /*===========================================================================*/
