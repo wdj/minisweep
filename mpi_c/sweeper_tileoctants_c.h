@@ -52,8 +52,8 @@ void Sweeper_ctor( Sweeper*          sweeper,
 /*===========================================================================*/
 /*---Pseudo-destructor for Sweeper struct---*/
 
-void Sweeper_dtor( Sweeper*     sweeper,
-                   Environment* env )
+void Sweeper_dtor( Sweeper* sweeper,
+                   Env*     env )
 {
   /*---Deallocate arrays---*/
 
