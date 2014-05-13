@@ -218,19 +218,22 @@ void Sweeper_sweep(
                                          sweeper->dims, im, ia, octant )*
                     *const_ref_state( Pointer_h( vi ), sweeper->dims, NU, ix, iy, iz, ie, im, iu );
         }
-        *ref_vslocal( sweeper->vslocal, sweeper->dims, NU, ia, iu ) = result;
+        *ref_vslocal( sweeper->vslocal, sweeper->dims, NU, sweeper->dims.na, ia, iu ) = result;
       }
 
       /*--------------------*/
       /*---Perform solve---*/
       /*--------------------*/
 
-      Quantities_solve( quan, sweeper->vslocal,
-                        sweeper->facexy, sweeper->facexz, sweeper->faceyz,
-                        ix, iy, iz, ie, ix, iy, iz,
-                        octant, octant_in_block,
-                        Sweeper_noctant_per_block( sweeper ),
-                        sweeper->dims, sweeper->dims );
+      for( ia=0; ia<sweeper->dims.na; ++ia )
+      {
+        Quantities_solve( quan, sweeper->vslocal, ia, sweeper->dims.na,
+                          sweeper->facexy, sweeper->facexz, sweeper->faceyz,
+                          ix, iy, iz, ie, ix, iy, iz,
+                          octant, octant_in_block,
+                          Sweeper_noctant_per_block( sweeper ),
+                          sweeper->dims, sweeper->dims );
+      }
 
       /*--------------------*/
       /*---Transform state vector from angles to moments---*/
@@ -248,7 +251,7 @@ void Sweeper_sweep(
         {
           result += *const_ref_m_from_a( Pointer_const_h( & quan->m_from_a ),
                                          sweeper->dims, im, ia, octant )*
-                    *const_ref_vslocal( sweeper->vslocal, sweeper->dims, NU, ia, iu );
+                    *const_ref_vslocal( sweeper->vslocal, sweeper->dims, NU, sweeper->dims.na, ia, iu );
         }
         *ref_state( Pointer_h( vo ), sweeper->dims, NU, ix, iy, iz, ie, im, iu ) += result;
       }

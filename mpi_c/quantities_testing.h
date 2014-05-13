@@ -398,6 +398,8 @@ static inline P Quantities_init_state(
 TARGET_HD static inline void Quantities_solve(
   const Quantities*  quan,
   P* __restrict__    vslocal,
+  int                ia,
+  int                iamax,
   P* __restrict__    facexy,
   P* __restrict__    facexz,
   P* __restrict__    faceyz,
@@ -428,12 +430,11 @@ TARGET_HD static inline void Quantities_solve(
   Assert( octant >= 0 && octant < NOCTANT );
   Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
-  int iu = 0;
-  int ia = 0;
+  const int dir_x = Dir_x( octant );
+  const int dir_y = Dir_y( octant );
+  const int dir_z = Dir_z( octant );
 
-  int dir_x = Dir_x( octant );
-  int dir_y = Dir_y( octant );
-  int dir_z = Dir_z( octant );
+  int iu = 0;
 
   /*---Average the face values and accumulate---*/
 
@@ -446,11 +447,9 @@ TARGET_HD static inline void Quantities_solve(
   ---*/
 
   for( iu=0; iu<NU; ++iu )
-  for( ia=0; ia<dims_b.na; ++ia )
   {
-
     const P result = (
-          *const_ref_vslocal( vslocal, dims_b, NU, ia, iu )
+          *const_ref_vslocal( vslocal, dims_b, NU, iamax, ia, iu )
              / Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g )
         + *const_ref_facexy( facexy, dims_b, NU, noctant_per_block,
                                      ix_b, iy_b, ie, ia, iu, octant_in_block )
@@ -472,7 +471,7 @@ TARGET_HD static inline void Quantities_solve(
                                                ix_g-Dir_inc(dir_x), iy_g, iz_g )
       )      * Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g );
 
-    *ref_vslocal( vslocal, dims_b, NU, ia, iu ) = result;
+    *ref_vslocal( vslocal, dims_b, NU, iamax, ia, iu ) = result;
     *ref_facexy( facexy, dims_b, NU, noctant_per_block,
                  ix_b, iy_b, ie, ia, iu, octant_in_block ) = result *
                  Quantities_scalefactor_octant__( octant );

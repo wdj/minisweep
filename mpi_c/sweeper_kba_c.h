@@ -110,6 +110,17 @@ void Sweeper_ctor( Sweeper*          sweeper,
                               sweeper->nblock_z, sweeper->nblock_octant, env );
 
   /*====================*/
+  /*---Set up amu threads---*/
+  /*====================*/
+
+  sweeper->nthread_u = Env_cuda_is_using_device( env ) ? NU        : 1;
+  sweeper->nthread_a = Env_cuda_is_using_device( env ) ? WARP_SIZE : 1;
+  Insist( sweeper->nthread_u > 0 );
+  Insist( sweeper->nthread_a > 0 );
+  Insist( sweeper->nthread_a % sweeper->nthread_u == 0 );
+  sweeper->nthread_m = sweeper->nthread_a / sweeper->nthread_u;
+
+  /*====================*/
   /*---Set up dims structs---*/
   /*====================*/
 
@@ -126,9 +137,9 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Allocate arrays---*/
   /*====================*/
 
-  sweeper->vslocal = Env_cuda_is_using_device( env ) ?
-                     ( (P*) NULL ) :
-                     malloc_P( Sweeper_nvslocal__( sweeper, env ) );
+  sweeper->vslocal_host__ = Env_cuda_is_using_device( env ) ?
+                            ( (P*) NULL ) :
+                            malloc_P( Sweeper_nvslocal__( sweeper, env ) );
 
   /*====================*/
   /*---Allocate faces---*/
@@ -148,13 +159,13 @@ void Sweeper_dtor( Sweeper* sweeper,
   /*---Deallocate arrays---*/
   /*====================*/
 
-  if( sweeper->vslocal )
+  if( sweeper->vslocal_host__ )
   {
     if( Env_cuda_is_using_device( env ) )
     {
-      free_P( sweeper->vslocal );
+      free_P( sweeper->vslocal_host__ );
     }
-    sweeper->vslocal = NULL;
+    sweeper->vslocal_host__ = NULL;
   }
 
   /*====================*/
@@ -383,7 +394,7 @@ TARGET_HD void Sweeper_sweep_cell(
         * *const_ref_state( vi_this, sweeper->dims_b, NU,
                             ix, iy, iz, ie, im, iu );
     }
-    *ref_vslocal( vslocal, sweeper->dims, NU, ia, iu ) = result;
+    *ref_vslocal( vslocal, sweeper->dims, NU, sweeper->dims.na, ia, iu ) = result;
   }
   }
 
@@ -391,13 +402,16 @@ TARGET_HD void Sweeper_sweep_cell(
   /*---Perform solve---*/
   /*--------------------*/
 
-  Quantities_solve( quan, vslocal,
-                    facexy, facexz, faceyz,
-                    ix, iy, iz, ie,
-                    ix+quan->ix_base, iy+quan->iy_base, iz+iz_base,
-                    octant, octant_in_block,
-                    sweeper->noctant_per_block,
-                    sweeper->dims_b, sweeper->dims_g );
+  for( ia=0; ia<sweeper->dims.na; ++ia )
+  {
+    Quantities_solve( quan, vslocal, ia, sweeper->dims_b.na,
+                      facexy, facexz, faceyz,
+                      ix, iy, iz, ie,
+                      ix+quan->ix_base, iy+quan->iy_base, iz+iz_base,
+                      octant, octant_in_block,
+                      sweeper->noctant_per_block,
+                      sweeper->dims_b, sweeper->dims_g );
+  }
 
   /*--------------------*/
   /*---Transform state vector from angles to moments---*/
@@ -412,7 +426,7 @@ TARGET_HD void Sweeper_sweep_cell(
     {
       result +=
         *const_ref_m_from_a( m_from_a, sweeper->dims, im, ia, octant )
-        * *const_ref_vslocal( vslocal, sweeper->dims, NU, ia, iu );
+        * *const_ref_vslocal( vslocal, sweeper->dims, NU, sweeper->dims.na, ia, iu );
     }
 #ifdef USE_OPENMP_VO_ATOMIC
 #pragma omp atomic update

@@ -110,16 +110,17 @@ TARGET_HD static inline P* ref_vslocal(
     P* __restrict__  v,
     Dimensions       dims,
     int              nu,
+    int              iamax,
     int              ia,
     int              iu )
 {
   Assert( v != NULL );
   Assert( nu > 0 );
-  Assert( ia >= 0 && ia < dims.na );
+  Assert( ia >= 0 && ia < iamax );
   Assert( iu >= 0 && iu < nu );
 
-  return & v[ ia + dims.na * (
-              iu + nu      * (
+  return & v[ ia + iamax * (
+              iu + nu    * (
               0 )) ];
 }
 
@@ -130,16 +131,17 @@ TARGET_HD static inline const P* const_ref_vslocal(
     const P* __restrict__  v,
     Dimensions             dims,
     int                    nu,
+    int                    iamax,
     int                    ia,
     int                    iu )
 {
   Assert( v != NULL );
   Assert( nu > 0 );
-  Assert( ia >= 0 && ia < dims.na );
+  Assert( ia >= 0 && ia < iamax );
   Assert( iu >= 0 && iu < nu );
 
-  return & v[ ia + dims.na * (
-              iu + nu      * (
+  return & v[ ia + iamax * (
+              iu + nu    * (
               0 )) ];
 }
 

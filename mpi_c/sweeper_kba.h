@@ -46,16 +46,27 @@ enum{ IS_USING_OPENMP_VO_ATOMIC = 0 };
 
 typedef struct
 {
-  P* __restrict__  vslocal;
+#if 0
+  P* __restrict__  vilocal_host__;
+#endif
+  P* __restrict__  vslocal_host__;
+#if 0
+  P* __restrict__  volocal_host__;
+#endif
 
   Dimensions       dims;
   Dimensions       dims_b;
   Dimensions       dims_g;
 
-  int              nblock_z;
-  int              nblock_octant;
   int              nthread_e;
   int              nthread_octant;
+
+  int              nthread_a;
+  int              nthread_m;
+  int              nthread_u;
+
+  int              nblock_z;
+  int              nblock_octant;
   int              noctant_per_block;
   int              nsemiblock;
 
@@ -158,16 +169,8 @@ TARGET_HD static inline int Sweeper_thread_octant( const Sweeper* sweeper )
 #endif
 }
 
-/*---------------------------------------------------------------------------*/
-
-TARGET_HD static inline int Sweeper_thread( const Sweeper* sweeper )
-{
-  return Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant *
-         Sweeper_thread_e(      sweeper );
-}
-
 /*===========================================================================*/
-/*---Synchronize across octant threads---*/
+/*---Thread synchronization---*/
 
 TARGET_HD static void Sweeper_sync_octant_threads( Sweeper* sweeper )
 {
@@ -181,10 +184,51 @@ TARGET_HD static void Sweeper_sync_octant_threads( Sweeper* sweeper )
 #endif
 }
 
-/*===========================================================================*/
-/*---CUDA thread information---*/
-
 /*---------------------------------------------------------------------------*/
+
+
+
+/*===========================================================================*/
+/*---Number of elements to allocate for vslocal---*/
+
+TARGET_HD static inline int Sweeper_nvslocal__( Sweeper* sweeper,
+                                                Env*     env )
+{
+  return Env_cuda_is_using_device( env )
+      ?
+         sweeper->dims_b.na *
+         NU *
+         sweeper->nthread_octant
+       :
+         sweeper->dims_b.na *
+         NU *
+         sweeper->nthread_e *
+         sweeper->nthread_octant
+       ;
+}
+
+/*===========================================================================*/
+/*---Select which part of vslocal to use for current thread/block---*/
+
+TARGET_HD static inline P* __restrict__ Sweeper_vslocal_this__(
+                                                            Sweeper* sweeper )
+{
+#ifdef __CUDA_ARCH__
+  return ( (P*) Env_cuda_shared_memory() )
+    + sweeper->dims_b.na * NU *
+      Sweeper_thread_octant( sweeper )
+  ;
+#else
+  return sweeper->vslocal_host__
+    + sweeper->dims_b.na * NU *
+      ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant *
+        Sweeper_thread_e(      sweeper ) )
+  ;
+#endif
+}
+
+/*===========================================================================*/
+/*---For kernel launch: CUDA thread/block counts---*/
 
 static int Sweeper_nthreadblock( const Sweeper* sweeper, int axis )
 {
@@ -203,47 +247,7 @@ static int Sweeper_nthread_in_threadblock( const Sweeper* sweeper, int axis )
 }
 
 /*===========================================================================*/
-/*---Number of elements of vslocal---*/
-
-TARGET_HD static inline int Sweeper_nvslocal__( Sweeper* sweeper,
-                                                Env*     env )
-{
-  return Env_cuda_is_using_device( env )
-      ?
-         sweeper->dims_b.na *
-         NU *
-         Sweeper_nthread_in_threadblock( sweeper, 0 ) *
-         Sweeper_nthread_in_threadblock( sweeper, 1 ) *
-         Sweeper_nthread_in_threadblock( sweeper, 2 )
-       :
-         sweeper->dims_b.na *
-         NU *
-         sweeper->nthread_e *
-         sweeper->nthread_octant
-       ;
-}
-
-/*===========================================================================*/
-/*---Select which part of vslocal to use for current thread---*/
-
-TARGET_HD static inline P* __restrict__ Sweeper_vslocal_this__(
-                                                            Sweeper* sweeper )
-{
-#ifdef __CUDA_ARCH__
-  return ( (P*) Env_cuda_shared_memory() )
-    + sweeper->dims_b.na * NU *
-      Sweeper_thread_octant( sweeper )
-  ;
-#else
-  return sweeper->vslocal
-    + sweeper->dims_b.na * NU *
-      Sweeper_thread( sweeper )
-  ;
-#endif
-}
-
-/*===========================================================================*/
-/*---Full size of vslocal---*/
+/*---Fof kernel launch: full size of CUDA shared memory---*/
 
 static int Sweeper_shared_size__( Sweeper* sweeper,
                                 Env* env )
