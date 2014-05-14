@@ -106,6 +106,48 @@ TARGET_HD static inline const P* const_ref_state(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
+TARGET_HD static inline P* ref_vilocal(
+    P* __restrict__  v,
+    Dimensions       dims,
+    int              nu,
+    int              immax,
+    int              im,
+    int              iu )
+{
+  Assert( v != NULL );
+  Assert( nu > 0 );
+  Assert( im >= 0 && im < immax );
+  Assert( iu >= 0 && iu < nu );
+
+  return & v[ im + immax * (
+              iu + nu    * (
+              0 )) ];
+}
+
+/*===========================================================================*/
+/*---Multidimensional array accessor function---*/
+
+TARGET_HD static inline const P* const_ref_vilocal(
+    const P* __restrict__  v,
+    Dimensions             dims,
+    int                    nu,
+    int                    immax,
+    int                    im,
+    int                    iu )
+{
+  Assert( v != NULL );
+  Assert( nu > 0 );
+  Assert( im >= 0 && im < immax );
+  Assert( iu >= 0 && iu < nu );
+
+  return & v[ im + immax * (
+              iu + nu    * (
+              0 )) ];
+}
+
+/*===========================================================================*/
+/*---Multidimensional array accessor function---*/
+
 TARGET_HD static inline P* ref_vslocal(
     P* __restrict__  v,
     Dimensions       dims,
@@ -141,6 +183,27 @@ TARGET_HD static inline const P* const_ref_vslocal(
   Assert( iu >= 0 && iu < nu );
 
   return & v[ ia + iamax * (
+              iu + nu    * (
+              0 )) ];
+}
+
+/*===========================================================================*/
+/*---Multidimensional array accessor function---*/
+
+TARGET_HD static inline P* ref_volocal(
+    P* __restrict__  v,
+    Dimensions       dims,
+    int              nu,
+    int              immax,
+    int              im,
+    int              iu )
+{
+  Assert( v != NULL );
+  Assert( nu > 0 );
+  Assert( im >= 0 && im < immax );
+  Assert( iu >= 0 && iu < nu );
+
+  return & v[ im + immax * (
               iu + nu    * (
               0 )) ];
 }

@@ -227,7 +227,7 @@ void Sweeper_sweep(
 
       for( ia=0; ia<sweeper->dims.na; ++ia )
       {
-        Quantities_solve( quan, sweeper->vslocal, ia, sweeper->dims.na,
+        Quantities_solve( quan, sweeper->vslocal, ia, ia, sweeper->dims.na,
                           sweeper->facexy, sweeper->facexz, sweeper->faceyz,
                           ix, iy, iz, ie, ix, iy, iz,
                           octant, octant_in_block,

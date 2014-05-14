@@ -46,13 +46,9 @@ enum{ IS_USING_OPENMP_VO_ATOMIC = 0 };
 
 typedef struct
 {
-#if 0
   P* __restrict__  vilocal_host__;
-#endif
   P* __restrict__  vslocal_host__;
-#if 0
   P* __restrict__  volocal_host__;
-#endif
 
   Dimensions       dims;
   Dimensions       dims_b;
@@ -161,11 +157,44 @@ TARGET_HD static inline int Sweeper_thread_e( const Sweeper* sweeper )
 TARGET_HD static inline int Sweeper_thread_octant( const Sweeper* sweeper )
 {
 #ifdef __CUDA_ARCH__
-  return Env_cuda_thread_in_threadblock( 0 );
+  return Env_cuda_thread_in_threadblock( 1 );
 #else
   Assert( sweeper->nthread_e * sweeper->nthread_octant == 1 ||
                                                        Env_omp_in_parallel() );
   return Env_omp_thread() / sweeper->nthread_e;
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+TARGET_HD static inline int Sweeper_thread_a( const Sweeper* sweeper )
+{
+#ifdef __CUDA_ARCH__
+  return Env_cuda_thread_in_threadblock( 0 );
+#else
+  return 0;
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+TARGET_HD static inline int Sweeper_thread_m( const Sweeper* sweeper )
+{
+#ifdef __CUDA_ARCH__
+  return Env_cuda_thread_in_threadblock( 0 ) / sweeper->nthread_u;
+#else
+  return 0;
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+TARGET_HD static inline int Sweeper_thread_u( const Sweeper* sweeper )
+{
+#ifdef __CUDA_ARCH__
+  return Env_cuda_thread_in_threadblock( 0 ) % sweeper->nthread_u;
+#else
+  return 0;
 #endif
 }
 
@@ -186,41 +215,126 @@ TARGET_HD static void Sweeper_sync_octant_threads( Sweeper* sweeper )
 
 /*---------------------------------------------------------------------------*/
 
-
+TARGET_HD static void Sweeper_sync_amu_threads( Sweeper* sweeper )
+{
+#ifdef __CUDA_ARCH__
+  Env_cuda_sync_threadblock();
+#endif
+}
 
 /*===========================================================================*/
-/*---Number of elements to allocate for vslocal---*/
+/*---Number of elements to allocate for v*local---*/
+
+TARGET_HD static inline int Sweeper_nvilocal__( Sweeper* sweeper,
+                                                Env*     env )
+{
+  return Env_cuda_is_using_device( env )
+      ?
+         sweeper->nthread_m *
+         NU *
+         sweeper->nthread_octant
+       :
+         sweeper->nthread_m *
+         NU *
+         sweeper->nthread_octant *
+         sweeper->nthread_e
+       ;
+}
+
+/*---------------------------------------------------------------------------*/
 
 TARGET_HD static inline int Sweeper_nvslocal__( Sweeper* sweeper,
                                                 Env*     env )
 {
   return Env_cuda_is_using_device( env )
       ?
-         sweeper->dims_b.na *
+         sweeper->nthread_a *
          NU *
          sweeper->nthread_octant
        :
-         sweeper->dims_b.na *
+         sweeper->nthread_a *
          NU *
-         sweeper->nthread_e *
+         sweeper->nthread_octant *
+         sweeper->nthread_e
+       ;
+}
+
+/*---------------------------------------------------------------------------*/
+
+TARGET_HD static inline int Sweeper_nvolocal__( Sweeper* sweeper,
+                                                Env*     env )
+{
+  return Env_cuda_is_using_device( env )
+      ?
+         sweeper->nthread_m *
+         NU *
          sweeper->nthread_octant
+       :
+         sweeper->nthread_m *
+         NU *
+         sweeper->nthread_octant *
+         sweeper->nthread_e
        ;
 }
 
 /*===========================================================================*/
-/*---Select which part of vslocal to use for current thread/block---*/
+/*---Select which part of v*local to use for current thread/block---*/
+
+TARGET_HD static inline P* __restrict__ Sweeper_vilocal_this__(
+                                                            Sweeper* sweeper )
+{
+#ifdef __CUDA_ARCH__
+  return ( (P*) Env_cuda_shared_memory() )
+    + sweeper->nthread_m * NU *
+      Sweeper_thread_octant( sweeper )
+  ;
+#else
+  return sweeper->vilocal_host__
+    + sweeper->nthread_m * NU *
+      ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant *
+        Sweeper_thread_e(      sweeper ) )
+  ;
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
 
 TARGET_HD static inline P* __restrict__ Sweeper_vslocal_this__(
                                                             Sweeper* sweeper )
 {
 #ifdef __CUDA_ARCH__
   return ( (P*) Env_cuda_shared_memory() )
-    + sweeper->dims_b.na * NU *
+    + ( sweeper->nthread_a *
+         NU *
+         sweeper->nthread_octant ) * 2
+    + sweeper->nthread_a * NU *
       Sweeper_thread_octant( sweeper )
   ;
 #else
   return sweeper->vslocal_host__
-    + sweeper->dims_b.na * NU *
+    + sweeper->nthread_a * NU *
+      ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant *
+        Sweeper_thread_e(      sweeper ) )
+  ;
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+TARGET_HD static inline P* __restrict__ Sweeper_volocal_this__(
+                                                            Sweeper* sweeper )
+{
+#ifdef __CUDA_ARCH__
+  return ( (P*) Env_cuda_shared_memory() )
+    + ( sweeper->nthread_a *
+         NU *
+         sweeper->nthread_octant ) * 1
+    + sweeper->nthread_m * NU *
+      Sweeper_thread_octant( sweeper )
+  ;
+#else
+  return sweeper->volocal_host__
+    + sweeper->nthread_m * NU *
       ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant *
         Sweeper_thread_e(      sweeper ) )
   ;
@@ -234,7 +348,9 @@ static int Sweeper_nthreadblock( const Sweeper* sweeper, int axis )
 {
   Assert( axis >= 0 && axis < 2 );
 
-  return axis==0 ? sweeper->nthread_e : 1;
+  return axis==0 ? sweeper->nthread_e :
+         axis==1 ? 1 :
+                   1;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -243,14 +359,16 @@ static int Sweeper_nthread_in_threadblock( const Sweeper* sweeper, int axis )
 {
   Assert( axis >= 0 && axis < 2 );
 
-  return axis==0 ? sweeper->nthread_octant : 1;
+  return axis==0 ? sweeper->nthread_a :
+         axis==1 ? sweeper->nthread_octant :
+                   1;
 }
 
 /*===========================================================================*/
 /*---Fof kernel launch: full size of CUDA shared memory---*/
 
 static int Sweeper_shared_size__( Sweeper* sweeper,
-                                Env* env )
+                                  Env*     env )
 {
   return Sweeper_nvslocal__( sweeper, env ) * sizeof( P );
 }
@@ -262,7 +380,9 @@ TARGET_HD void Sweeper_sweep_cell(
   Sweeper*               sweeper,
   P* __restrict__        vo_this,
   const P* __restrict__  vi_this,
+  P* __restrict__        vilocal,
   P* __restrict__        vslocal,
+  P* __restrict__        volocal,
   P* __restrict__        facexy,
   P* __restrict__        facexz,
   P* __restrict__        faceyz,

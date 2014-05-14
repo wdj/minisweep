@@ -399,6 +399,7 @@ TARGET_HD static inline void Quantities_solve(
   const Quantities*  quan,
   P* __restrict__    vslocal,
   int                ia,
+  int                iaind,
   int                iamax,
   P* __restrict__    facexy,
   P* __restrict__    facexz,
@@ -417,6 +418,9 @@ TARGET_HD static inline void Quantities_solve(
   const Dimensions   dims_g )
 {
   Assert( vslocal );
+  Assert( ia >= 0 && ia < dims_b.na );
+  Assert( iaind >= 0 && iaind < iamax );
+  Assert( iamax >= 0 );
   Assert( facexy );
   Assert( facexz );
   Assert( faceyz );
@@ -449,7 +453,7 @@ TARGET_HD static inline void Quantities_solve(
   for( iu=0; iu<NU; ++iu )
   {
     const P result = (
-          *const_ref_vslocal( vslocal, dims_b, NU, iamax, ia, iu )
+          *const_ref_vslocal( vslocal, dims_b, NU, iamax, iaind, iu )
              / Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g )
         + *const_ref_facexy( facexy, dims_b, NU, noctant_per_block,
                                      ix_b, iy_b, ie, ia, iu, octant_in_block )
@@ -471,7 +475,7 @@ TARGET_HD static inline void Quantities_solve(
                                                ix_g-Dir_inc(dir_x), iy_g, iz_g )
       )      * Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g );
 
-    *ref_vslocal( vslocal, dims_b, NU, iamax, ia, iu ) = result;
+    *ref_vslocal( vslocal, dims_b, NU, iamax, iaind, iu ) = result;
     *ref_facexy( facexy, dims_b, NU, noctant_per_block,
                  ix_b, iy_b, ie, ia, iu, octant_in_block ) = result *
                  Quantities_scalefactor_octant__( octant );
