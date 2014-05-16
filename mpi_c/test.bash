@@ -95,25 +95,19 @@ function main
 
     if [ "$PBS_NUM_NODES" -ge 4 ] ; then
 
-      make CUDA_OPTION=1
+      make CUDA_OPTION=1 NM_VALUE=4
 
-      local ARGS="--nx 3 --ny 5 --nz 2 --ne 2 --nm 4 --na 5 --nblock_z 2"
+      local ARGS="--nx 3 --ny 5 --nz 6 --ne 2 --na 5 --nblock_z 2"
 
-      compare_runs \
-        "-n1 -N1" "$ARGS " \
-        "-n2 -N1" "$ARGS --is_using_device 1 --nproc_x 2 --nproc_y 1"
-      compare_runs \
-        "-n1 -N1" "$ARGS " \
-        "-n2 -N1" "$ARGS --is_using_device 1 --nproc_x 1 --nproc_y 2"
-      compare_runs \
-        "-n1 -N1" "$ARGS " \
-        "-n4 -N1" "$ARGS --is_using_device 1 --nproc_x 2 --nproc_y 2"
-      compare_runs \
-        "-n1 -N1" "$ARGS " \
-        "-n4 -N1" "$ARGS --is_using_device 1 --nproc_x 2 --nproc_y 2 --nthread_e 3"
-      compare_runs \
-        "-n1 -N1" "$ARGS " \
-        "-n4 -N1" "$ARGS --is_using_device 1 --nproc_x 2 --nproc_y 2 --nthread_e 3 --nthread_octant 8"
+      for nproc_x in 1 2 ; do
+      for nproc_y in 1 2 ; do
+      for nthread_octant in 1 2 4 8 ; do
+        compare_runs \
+          "-n1 -N1" "$ARGS " \
+          "-n$(( $nproc_x * $nproc_y )) -N1" "$ARGS --is_using_device 1 --nproc_x $nproc_x --nproc_y $nproc_y --nthread_e 3 --nthread_octant $nthread_octant"
+      done
+      done
+      done
 
     fi #---PBS_NUM_NODES
 
@@ -121,65 +115,56 @@ function main
     echo "---CUDA tests---"
     echo "----------------"
 
-    make CUDA_OPTION=1
+    make CUDA_OPTION=1 NM_VALUE=4
 
-    local ARGS="--nx  2 --ny  3 --nz  4 --ne 20 --nm 4 --na 5 --nblock_z 2"
+    local ARGS="--nx  2 --ny  3 --nz  4 --ne 20 --na 5 --nblock_z 2"
 
-    compare_runs \
-      "-n1"  "$ARGS " \
-      "-n1"  "$ARGS --is_using_device 1 --nthread_e 1 --nthread_octant 1"
-    compare_runs \
-      "-n1"  "$ARGS " \
-      "-n1"  "$ARGS --is_using_device 1 --nthread_e 1 --nthread_octant 2"
-    compare_runs \
-      "-n1"  "$ARGS " \
-      "-n1"  "$ARGS --is_using_device 1 --nthread_e 1 --nthread_octant 4"
-    compare_runs \
-      "-n1"  "$ARGS " \
-      "-n1"  "$ARGS --is_using_device 1 --nthread_e 1 --nthread_octant 8"
-    compare_runs \
-      "-n1"  "$ARGS " \
-      "-n1"  "$ARGS --is_using_device 1 --nthread_e 2 --nthread_octant 8"
-    compare_runs \
-      "-n1"  "$ARGS " \
-      "-n1"  "$ARGS --is_using_device 1 --nthread_e 10 --nthread_octant 8"
-    compare_runs \
-      "-n1"  "$ARGS " \
-      "-n1"  "$ARGS --is_using_device 1 --nthread_e 20 --nthread_octant 8"
+    for nthread_octant in 1 2 4 8 ; do
+      compare_runs \
+        "-n1"  "$ARGS " \
+        "-n1"  "$ARGS --is_using_device 1 --nthread_e 1 --nthread_octant $nthread_octant"
+    done
+
+    for nthread_e in 2 10 20 ; do
+      compare_runs \
+        "-n1"  "$ARGS " \
+        "-n1"  "$ARGS --is_using_device 1 --nthread_e $nthread_e --nthread_octant 8"
+    done
 
     echo "---------------"
     echo "---MPI tests---"
     echo "---------------"
 
-    make
+    make NM_VALUE=4
 
-    local ARGS="--nx  5 --ny  4 --nz  5 --ne 7 --nm 4 --na 10"
+    local ARGS="--nx  5 --ny  4 --nz  5 --ne 7 --na 10"
     compare_runs   "-n1"  "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1" \
                    "-n2"  "$ARGS --nproc_x 2 --nproc_y 1 --nblock_z 1"
     compare_runs   "-n1"  "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1" \
                    "-n2"  "$ARGS --nproc_x 1 --nproc_y 2 --nblock_z 1"
 
-    local ARGS="--nx  5 --ny  4 --nz  6 --ne 7 --nm 4 --na 10"
+    local ARGS="--nx  5 --ny  4 --nz  6 --ne 7 --na 10"
+    compare_runs   "-n1"  "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1" \
+                  "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
+    local ARGS="--nx  5 --ny  4 --nz  6 --ne 7 --na 10 --is_face_comm_async 0"
     compare_runs   "-n1"  "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1" \
                   "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
 
-    local ARGS="--nx 5 --ny 8 --nz 16 --ne 9 --nm 1 --na 12"
+    make NM_VALUE=1
+
+    local ARGS="--nx 5 --ny 8 --nz 16 --ne 9 --na 12"
     compare_runs  "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 1" \
                   "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
     compare_runs  "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2" \
                   "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 4"
 
-    local ARGS="--nx  5 --ny  4 --nz  6 --ne 7 --nm 4 --na 10 --is_face_comm_async 0"
-    compare_runs   "-n1"  "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1" \
-                  "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
-
     echo "------------------"
     echo "---OpenMP tests---"
     echo "------------------"
 
-    make OPENMP_OPTION=THREADS
+    make OPENMP_OPTION=THREADS NM_VALUE=4
 
-    local ARGS="--nx  5 --ny  4 --nz  5 --ne 200 --nm 4 --na 10"
+    local ARGS="--nx  5 --ny  4 --nz  5 --ne 200 --na 10"
     compare_runs   "-n1 -d1"  "$ARGS --nthread_e 1" \
                    "-n1 -d2"  "$ARGS --nthread_e 2"
     compare_runs   "-n1 -d2"  "$ARGS --nthread_e 2" \
@@ -207,7 +192,7 @@ function main
 
   for alg_options in -DSWEEPER_KBA -DSWEEPER_SIMPLE -DSWEEPER_TILEOCTANTS ; do
 
-    make MPI_OPTION= ALG_OPTIONS="$alg_options"
+    make MPI_OPTION= ALG_OPTIONS="$alg_options" NM_VALUE=16
 
     if [ $alg_options = "-DSWEEPER_KBA" ] ; then
       local ARG_NBLOCK_Z_1="--nblock_z 1"
@@ -217,7 +202,7 @@ function main
       local ARG_NBLOCK_Z_5=""
     fi
 
-    local ARGS="--nx  5 --ny  5 --nz  5 --ne 10 --nm 16 --na 20"
+    local ARGS="--nx  5 --ny  5 --nz  5 --ne 10 --na 20"
     compare_runs  "-n1" "$ARGS --niterations 1 $ARG_NBLOCK_Z_1" \
                   "-n1" "$ARGS --niterations 2 $ARG_NBLOCK_Z_1"
     compare_runs  "-n1" "$ARGS --niterations 1 $ARG_NBLOCK_Z_1" \

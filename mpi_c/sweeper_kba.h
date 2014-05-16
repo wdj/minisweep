@@ -30,16 +30,36 @@ extern "C"
 /*---Set up enums---*/
 
 #ifdef USE_OPENMP_THREADS
-enum{ IS_USING_OPENMP_THREADS = 1 };
+  enum{ IS_USING_OPENMP_THREADS = 1 };
 #else
-enum{ IS_USING_OPENMP_THREADS = 0 };
+  enum{ IS_USING_OPENMP_THREADS = 0 };
 #endif
 
 #ifdef USE_OPENMP_VO_ATOMIC
-enum{ IS_USING_OPENMP_VO_ATOMIC = 1 };
+  enum{ IS_USING_OPENMP_VO_ATOMIC = 1 };
 #else
-enum{ IS_USING_OPENMP_VO_ATOMIC = 0 };
+  enum{ IS_USING_OPENMP_VO_ATOMIC = 0 };
 #endif
+
+/*---NOTE: these should NOT be accessed outside of the Sweeper pseudo-class---*/
+
+enum{ NTHREAD_DEVICE_U = ( NU * NM * 1 <= WARP_SIZE * 1 ) ? NU :
+                           NM - 0 == 16 && NU - 0 == 4    ?  2 :
+                                                            NU };
+enum{ NTHREAD_DEVICE_M = WARP_SIZE / NTHREAD_DEVICE_U };
+enum{ NTHREAD_DEVICE_A = NTHREAD_DEVICE_U * NTHREAD_DEVICE_M };
+
+#ifdef __CUDA_ARCH__
+  enum{ NTHREAD_A = NTHREAD_DEVICE_A };
+  enum{ NTHREAD_M = NTHREAD_DEVICE_M };
+  enum{ NTHREAD_U = NTHREAD_DEVICE_U };
+#else
+  enum{ NTHREAD_A = 1 };
+  enum{ NTHREAD_M = 1 };
+  enum{ NTHREAD_U = 1 };
+#endif
+
+enum{ NU_PER_THREAD = NU / NTHREAD_U };
 
 /*===========================================================================*/
 /*---Struct with pointers etc. used to perform sweep---*/
@@ -56,10 +76,6 @@ typedef struct
 
   int              nthread_e;
   int              nthread_octant;
-
-  int              nthread_a;
-  int              nthread_m;
-  int              nthread_u;
 
   int              nblock_z;
   int              nblock_octant;
@@ -181,7 +197,7 @@ TARGET_HD static inline int Sweeper_thread_a( const Sweeper* sweeper )
 TARGET_HD static inline int Sweeper_thread_m( const Sweeper* sweeper )
 {
 #ifdef __CUDA_ARCH__
-  return Env_cuda_thread_in_threadblock( 0 ) / sweeper->nthread_u;
+  return Env_cuda_thread_in_threadblock( 0 ) / NTHREAD_U;
 #else
   return 0;
 #endif
@@ -192,7 +208,7 @@ TARGET_HD static inline int Sweeper_thread_m( const Sweeper* sweeper )
 TARGET_HD static inline int Sweeper_thread_u( const Sweeper* sweeper )
 {
 #ifdef __CUDA_ARCH__
-  return Env_cuda_thread_in_threadblock( 0 ) % sweeper->nthread_u;
+  return Env_cuda_thread_in_threadblock( 0 ) % NTHREAD_U;
 #else
   return 0;
 #endif
@@ -230,11 +246,11 @@ TARGET_HD static inline int Sweeper_nvilocal__( Sweeper* sweeper,
 {
   return Env_cuda_is_using_device( env )
       ?
-         sweeper->nthread_m *
+         NTHREAD_DEVICE_M *
          NU *
          sweeper->nthread_octant
        :
-         sweeper->nthread_m *
+         NTHREAD_M *
          NU *
          sweeper->nthread_octant *
          sweeper->nthread_e
@@ -248,11 +264,11 @@ TARGET_HD static inline int Sweeper_nvslocal__( Sweeper* sweeper,
 {
   return Env_cuda_is_using_device( env )
       ?
-         sweeper->nthread_a *
+         NTHREAD_DEVICE_A *
          NU *
          sweeper->nthread_octant
        :
-         sweeper->nthread_a *
+         NTHREAD_A *
          NU *
          sweeper->nthread_octant *
          sweeper->nthread_e
@@ -266,11 +282,11 @@ TARGET_HD static inline int Sweeper_nvolocal__( Sweeper* sweeper,
 {
   return Env_cuda_is_using_device( env )
       ?
-         sweeper->nthread_m *
+         NTHREAD_DEVICE_M *
          NU *
          sweeper->nthread_octant
        :
-         sweeper->nthread_m *
+         NTHREAD_M *
          NU *
          sweeper->nthread_octant *
          sweeper->nthread_e
@@ -285,12 +301,12 @@ TARGET_HD static inline P* __restrict__ Sweeper_vilocal_this__(
 {
 #ifdef __CUDA_ARCH__
   return ( (P*) Env_cuda_shared_memory() )
-    + sweeper->nthread_m * NU *
+    + NTHREAD_DEVICE_M * NU *
       Sweeper_thread_octant( sweeper )
   ;
 #else
   return sweeper->vilocal_host__
-    + sweeper->nthread_m * NU *
+    + NTHREAD_M * NU *
       ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant *
         Sweeper_thread_e(      sweeper ) )
   ;
@@ -304,15 +320,15 @@ TARGET_HD static inline P* __restrict__ Sweeper_vslocal_this__(
 {
 #ifdef __CUDA_ARCH__
   return ( (P*) Env_cuda_shared_memory() )
-    + ( sweeper->nthread_a *
-         NU *
-         sweeper->nthread_octant ) * 2
-    + sweeper->nthread_a * NU *
+    + ( NTHREAD_DEVICE_M *
+        NU *
+        sweeper->nthread_octant ) * 2
+    + NTHREAD_A * NU *
       Sweeper_thread_octant( sweeper )
   ;
 #else
   return sweeper->vslocal_host__
-    + sweeper->nthread_a * NU *
+    + NTHREAD_A * NU *
       ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant *
         Sweeper_thread_e(      sweeper ) )
   ;
@@ -326,15 +342,15 @@ TARGET_HD static inline P* __restrict__ Sweeper_volocal_this__(
 {
 #ifdef __CUDA_ARCH__
   return ( (P*) Env_cuda_shared_memory() )
-    + ( sweeper->nthread_a *
-         NU *
-         sweeper->nthread_octant ) * 1
-    + sweeper->nthread_m * NU *
+    + ( NTHREAD_DEVICE_M *
+        NU *
+        sweeper->nthread_octant ) * 1
+    + NTHREAD_M * NU *
       Sweeper_thread_octant( sweeper )
   ;
 #else
   return sweeper->volocal_host__
-    + sweeper->nthread_m * NU *
+    + NTHREAD_M * NU *
       ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant *
         Sweeper_thread_e(      sweeper ) )
   ;
@@ -359,7 +375,7 @@ static int Sweeper_nthread_in_threadblock( const Sweeper* sweeper, int axis )
 {
   Assert( axis >= 0 && axis < 2 );
 
-  return axis==0 ? sweeper->nthread_a :
+  return axis==0 ? NTHREAD_DEVICE_A :
          axis==1 ? sweeper->nthread_octant :
                    1;
 }
@@ -370,7 +386,9 @@ static int Sweeper_nthread_in_threadblock( const Sweeper* sweeper, int axis )
 static int Sweeper_shared_size__( Sweeper* sweeper,
                                   Env*     env )
 {
-  return Sweeper_nvslocal__( sweeper, env ) * sizeof( P );
+  return ( Sweeper_nvilocal__( sweeper, env ) +
+           Sweeper_nvslocal__( sweeper, env ) +
+           Sweeper_nvolocal__( sweeper, env ) ) * sizeof( P );
 }
 
 /*===========================================================================*/
@@ -396,7 +414,8 @@ TARGET_HD void Sweeper_sweep_cell(
   const int              ix,
   const int              iy,
   const int              iz,
-  const Bool_t           do_block_init_this );
+  const Bool_t           do_block_init_this,
+  const Bool_t           is_cell_active );
 
 /*===========================================================================*/
 /*---Perform a sweep for a semiblock---*/

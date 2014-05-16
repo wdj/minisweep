@@ -22,6 +22,19 @@ extern "C"
 #endif
 
 /*===========================================================================*/
+/*---Enums for compile-time sizes---*/
+
+/*---Number of unknowns per gridcell---*/
+enum{ NU = 4 };
+
+/*---Number of moments---*/
+#ifdef NM_VALUE
+enum{ NM = NM_VALUE };
+#else
+enum{ NM = 16 };
+#endif
+
+/*===========================================================================*/
 /*---Struct to hold problem dimensions---*/
 
 typedef struct

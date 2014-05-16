@@ -293,7 +293,7 @@ void Sweeper_sweep(
                                          dims, im, ia, octant )*
                     *const_ref_state( Pointer_h( vi ), dims, NU, ix, iy, iz, ie, im, iu );
         }
-        *ref_vslocal( sweeper->vslocal, dims, NU, ia, dims.na, iu ) = result;
+        *ref_vslocal( sweeper->vslocal, dims, NU, dims.na, ia, iu ) = result;
       }
 
       /*--------------------*/

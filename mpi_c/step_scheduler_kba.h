@@ -45,6 +45,7 @@ typedef struct
   int nproc_x__;
   int nproc_y__;
   int nblock_octant__;
+  int noctant_per_block__;
 } Step_Scheduler;
 
 /*===========================================================================*/

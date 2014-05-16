@@ -62,10 +62,10 @@ int main( int argc, char** argv )
   dims_g.ny   = Arguments_consume_int_or_default( &args, "--ny",  5 );
   dims_g.nz   = Arguments_consume_int_or_default( &args, "--nz",  5 );
   dims_g.ne   = Arguments_consume_int_or_default( &args, "--ne", 30 );
-  dims_g.nm   = Arguments_consume_int_or_default( &args, "--nm", 16 );
   dims_g.na   = Arguments_consume_int_or_default( &args, "--na", 33 );
   niterations = Arguments_consume_int_or_default( &args, "--niterations",
                                                                     1 );
+  dims_g.nm   = NM;
 
   Insist( dims_g.nx > 0 ? "Invalid nx supplied." : 0 );
   Insist( dims_g.ny > 0 ? "Invalid ny supplied." : 0 );

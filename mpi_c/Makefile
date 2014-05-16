@@ -86,6 +86,10 @@ ifneq ($(OPENMP_OPTION),)
   endif
 endif
 
+ifneq ($(NM_VALUE),)
+  COMMON_FLAGS := $(COMMON_FLAGS) -DNM_VALUE=$(NM_VALUE)
+endif
+
 ifneq ($(CUDA_OPTION),)
   ifeq ($(COMPILER_OPTION),PGI)
     $(error "CUDA requires GNU compiler to be used.")
