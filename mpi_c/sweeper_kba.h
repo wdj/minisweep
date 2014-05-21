@@ -43,10 +43,11 @@ extern "C"
 
 /*---NOTE: these should NOT be accessed outside of the Sweeper pseudo-class---*/
 
-enum{ NTHREAD_DEVICE_U = ( NU * NM * 1 <= WARP_SIZE * 1 ) ? NU :
-                           NM - 0 == 16 && NU - 0 == 4    ?  2 :
-                                                            NU };
-enum{ NTHREAD_DEVICE_M = WARP_SIZE / NTHREAD_DEVICE_U };
+enum{ NTHREAD_DEVICE_U = VEC_LEN <= NU                  ? VEC_LEN :
+                         ( NU * NM * 1 <= VEC_LEN * 1 ) ? NU :
+                           NM - 0 == 16 && NU - 0 == 4  ?  2 :
+                                                          NU };
+enum{ NTHREAD_DEVICE_M = VEC_LEN / NTHREAD_DEVICE_U };
 enum{ NTHREAD_DEVICE_A = NTHREAD_DEVICE_U * NTHREAD_DEVICE_M };
 
 #ifdef __CUDA_ARCH__
@@ -54,12 +55,16 @@ enum{ NTHREAD_DEVICE_A = NTHREAD_DEVICE_U * NTHREAD_DEVICE_M };
   enum{ NTHREAD_M = NTHREAD_DEVICE_M };
   enum{ NTHREAD_U = NTHREAD_DEVICE_U };
 #else
+#ifdef __MIC__
+  enum{ NTHREAD_A = 16 };
+  enum{ NTHREAD_M = NM };
+  enum{ NTHREAD_U = 2 };
+#else
   enum{ NTHREAD_A = 1 };
   enum{ NTHREAD_M = 1 };
   enum{ NTHREAD_U = 1 };
 #endif
-
-enum{ NU_PER_THREAD = NU / NTHREAD_U };
+#endif
 
 /*===========================================================================*/
 /*---Struct with pointers etc. used to perform sweep---*/
@@ -239,18 +244,43 @@ TARGET_HD static void Sweeper_sync_amu_threads( Sweeper* sweeper )
 }
 
 /*===========================================================================*/
+/*---Thread counts for amu for execution target as understood by the host---*/
+
+static inline int Sweeper_nthread_a( const Sweeper* sweeper,
+                                     const Env*     env )
+{
+  return Env_cuda_is_using_device( env ) ? NTHREAD_DEVICE_A : NTHREAD_A;
+}
+
+/*---------------------------------------------------------------------------*/
+
+static inline int Sweeper_nthread_m( const Sweeper* sweeper,
+                                     const Env*     env )
+{
+  return Env_cuda_is_using_device( env ) ? NTHREAD_DEVICE_M : NTHREAD_M;
+}
+
+/*---------------------------------------------------------------------------*/
+
+static inline int Sweeper_nthread_u( const Sweeper* sweeper,
+                                     const Env*     env )
+{
+  return Env_cuda_is_using_device( env ) ? NTHREAD_DEVICE_U : NTHREAD_U;
+}
+
+/*===========================================================================*/
 /*---Number of elements to allocate for v*local---*/
 
-TARGET_HD static inline int Sweeper_nvilocal__( Sweeper* sweeper,
-                                                Env*     env )
+static inline int Sweeper_nvilocal__( Sweeper* sweeper,
+                                      Env*     env )
 {
   return Env_cuda_is_using_device( env )
       ?
-         NTHREAD_DEVICE_M *
+         Sweeper_nthread_m( sweeper, env ) *
          NU *
          sweeper->nthread_octant
        :
-         NTHREAD_M *
+         Sweeper_nthread_m( sweeper, env ) *
          NU *
          sweeper->nthread_octant *
          sweeper->nthread_e
@@ -259,16 +289,16 @@ TARGET_HD static inline int Sweeper_nvilocal__( Sweeper* sweeper,
 
 /*---------------------------------------------------------------------------*/
 
-TARGET_HD static inline int Sweeper_nvslocal__( Sweeper* sweeper,
-                                                Env*     env )
+static inline int Sweeper_nvslocal__( Sweeper* sweeper,
+                                      Env*     env )
 {
   return Env_cuda_is_using_device( env )
       ?
-         NTHREAD_DEVICE_A *
+         Sweeper_nthread_a( sweeper, env ) *
          NU *
          sweeper->nthread_octant
        :
-         NTHREAD_A *
+         Sweeper_nthread_a( sweeper, env ) *
          NU *
          sweeper->nthread_octant *
          sweeper->nthread_e
@@ -277,16 +307,16 @@ TARGET_HD static inline int Sweeper_nvslocal__( Sweeper* sweeper,
 
 /*---------------------------------------------------------------------------*/
 
-TARGET_HD static inline int Sweeper_nvolocal__( Sweeper* sweeper,
-                                                Env*     env )
+static inline int Sweeper_nvolocal__( Sweeper* sweeper,
+                                      Env*     env )
 {
   return Env_cuda_is_using_device( env )
       ?
-         NTHREAD_DEVICE_M *
+         Sweeper_nthread_m( sweeper, env ) *
          NU *
          sweeper->nthread_octant
        :
-         NTHREAD_M *
+         Sweeper_nthread_m( sweeper, env ) *
          NU *
          sweeper->nthread_octant *
          sweeper->nthread_e
@@ -301,7 +331,7 @@ TARGET_HD static inline P* __restrict__ Sweeper_vilocal_this__(
 {
 #ifdef __CUDA_ARCH__
   return ( (P*) Env_cuda_shared_memory() )
-    + NTHREAD_DEVICE_M * NU *
+    + NTHREAD_M * NU *
       Sweeper_thread_octant( sweeper )
   ;
 #else
@@ -320,7 +350,7 @@ TARGET_HD static inline P* __restrict__ Sweeper_vslocal_this__(
 {
 #ifdef __CUDA_ARCH__
   return ( (P*) Env_cuda_shared_memory() )
-    + ( NTHREAD_DEVICE_M *
+    + ( NTHREAD_M *
         NU *
         sweeper->nthread_octant ) * 2
     + NTHREAD_A * NU *
@@ -342,7 +372,7 @@ TARGET_HD static inline P* __restrict__ Sweeper_volocal_this__(
 {
 #ifdef __CUDA_ARCH__
   return ( (P*) Env_cuda_shared_memory() )
-    + ( NTHREAD_DEVICE_M *
+    + ( NTHREAD_M *
         NU *
         sweeper->nthread_octant ) * 1
     + NTHREAD_M * NU *
@@ -360,7 +390,9 @@ TARGET_HD static inline P* __restrict__ Sweeper_volocal_this__(
 /*===========================================================================*/
 /*---For kernel launch: CUDA thread/block counts---*/
 
-static int Sweeper_nthreadblock( const Sweeper* sweeper, int axis )
+static int Sweeper_nthreadblock( const Sweeper* sweeper,
+                                 int            axis,
+                                 Env*           env )
 {
   Assert( axis >= 0 && axis < 2 );
 
@@ -371,11 +403,13 @@ static int Sweeper_nthreadblock( const Sweeper* sweeper, int axis )
 
 /*---------------------------------------------------------------------------*/
 
-static int Sweeper_nthread_in_threadblock( const Sweeper* sweeper, int axis )
+static int Sweeper_nthread_in_threadblock( const Sweeper* sweeper,
+                                           int            axis,
+                                           Env*           env )
 {
   Assert( axis >= 0 && axis < 2 );
 
-  return axis==0 ? NTHREAD_DEVICE_A :
+  return axis==0 ? Sweeper_nthread_a( sweeper, env ) :
          axis==1 ? sweeper->nthread_octant :
                    1;
 }

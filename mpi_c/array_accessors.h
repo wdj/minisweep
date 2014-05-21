@@ -52,6 +52,40 @@ TARGET_HD static inline size_t ind_state(
 }
 
 /*===========================================================================*/
+/*---Multidimensional indexing function---*/
+
+TARGET_HD static inline size_t ind_state_flat(
+    int              dims_nx,
+    int              dims_ny,
+    int              dims_nz,
+    int              dims_ne,
+    int              dims_nm,
+    int              nu,
+    int              ix,
+    int              iy,
+    int              iz,
+    int              ie,
+    int              im,
+    int              iu )
+{
+  Assert( nu > 0 );
+  Assert( ix >= 0 && ix < dims_nx );
+  Assert( iy >= 0 && iy < dims_ny );
+  Assert( iz >= 0 && iz < dims_nz );
+  Assert( ie >= 0 && ie < dims_ne );
+  Assert( im >= 0 && im < dims_nm );
+  Assert( iu >= 0 && iu < nu );
+
+  return  im + dims_nm * (
+          iu + nu      * (
+          ix + dims_nx * (
+          iy + dims_ny * (
+          ie + dims_ne * (
+          iz + dims_nz * ( /*---NOTE: This axis MUST be slowest-varying---*/
+          0 ))))));
+}
+
+/*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
 TARGET_HD static inline P* ref_state(
@@ -106,13 +140,44 @@ TARGET_HD static inline const P* const_ref_state(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
+TARGET_HD static inline const P* const_ref_state_flat(
+    const P* __restrict__  v,
+    int                    dims_nx,
+    int                    dims_ny,
+    int                    dims_nz,
+    int                    dims_ne,
+    int                    dims_nm,
+    int                    nu,
+    int                    ix,
+    int                    iy,
+    int                    iz,
+    int                    ie,
+    int                    im,
+    int                    iu )
+{
+  Assert( v != NULL );
+  Assert( nu > 0 );
+  Assert( ix >= 0 && ix < dims_nx );
+  Assert( iy >= 0 && iy < dims_ny );
+  Assert( iz >= 0 && iz < dims_nz );
+  Assert( ie >= 0 && ie < dims_ne );
+  Assert( im >= 0 && im < dims_nm );
+  Assert( iu >= 0 && iu < nu );
+
+  return & v[ ind_state_flat( dims_nx, dims_ny, dims_nz, dims_ne, dims_nm, nu,
+                              ix, iy, iz, ie, im, iu ) ];
+}
+
+/*===========================================================================*/
+/*---Multidimensional array accessor function---*/
+
 TARGET_HD static inline P* ref_vilocal(
-    P* __restrict__  v,
-    Dimensions       dims,
-    int              nu,
-    int              immax,
-    int              im,
-    int              iu )
+    P* const __restrict__  v,
+    const Dimensions       dims,
+    const int              nu,
+    const int              immax,
+    const int              im,
+    const int              iu )
 {
   Assert( v != NULL );
   Assert( nu > 0 );
@@ -128,12 +193,12 @@ TARGET_HD static inline P* ref_vilocal(
 /*---Multidimensional array accessor function---*/
 
 TARGET_HD static inline const P* const_ref_vilocal(
-    const P* __restrict__  v,
-    Dimensions             dims,
-    int                    nu,
-    int                    immax,
-    int                    im,
-    int                    iu )
+    const P* const __restrict__  v,
+    const Dimensions             dims,
+    const int                    nu,
+    const int                    immax,
+    const int                    im,
+    const int                    iu )
 {
   Assert( v != NULL );
   Assert( nu > 0 );
@@ -146,15 +211,34 @@ TARGET_HD static inline const P* const_ref_vilocal(
 }
 
 /*===========================================================================*/
+/*---Multidimensional array indexing function---*/
+
+TARGET_HD static inline int ind_vslocal(
+    const Dimensions dims,
+    const int        nu,
+    const int        iamax,
+    const int        ia,
+    const int        iu )
+{
+  Assert( nu > 0 );
+  Assert( ia >= 0 && ia < iamax );
+  Assert( iu >= 0 && iu < nu );
+
+  return ia + iamax * (
+         iu + nu    * (
+         0 ));
+}
+
+/*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
 TARGET_HD static inline P* ref_vslocal(
-    P* __restrict__  v,
-    Dimensions       dims,
-    int              nu,
-    int              iamax,
-    int              ia,
-    int              iu )
+    P* const __restrict__  v,
+    const Dimensions       dims,
+    const int              nu,
+    const int              iamax,
+    const int              ia,
+    const int              iu )
 {
   Assert( v != NULL );
   Assert( nu > 0 );
@@ -170,12 +254,12 @@ TARGET_HD static inline P* ref_vslocal(
 /*---Multidimensional array accessor function---*/
 
 TARGET_HD static inline const P* const_ref_vslocal(
-    const P* __restrict__  v,
-    Dimensions             dims,
-    int                    nu,
-    int                    iamax,
-    int                    ia,
-    int                    iu )
+    const P* const __restrict__  v,
+    const Dimensions             dims,
+    const int                    nu,
+    const int                    iamax,
+    const int                    ia,
+    const int                    iu )
 {
   Assert( v != NULL );
   Assert( nu > 0 );
@@ -191,12 +275,12 @@ TARGET_HD static inline const P* const_ref_vslocal(
 /*---Multidimensional array accessor function---*/
 
 TARGET_HD static inline P* ref_volocal(
-    P* __restrict__  v,
-    Dimensions       dims,
-    int              nu,
-    int              immax,
-    int              im,
-    int              iu )
+    P* const __restrict__  v,
+    const Dimensions       dims,
+    const int              nu,
+    const int              immax,
+    const int              im,
+    const int              iu )
 {
   Assert( v != NULL );
   Assert( nu > 0 );
@@ -212,11 +296,11 @@ TARGET_HD static inline P* ref_volocal(
 /*---Multidimensional array accessor function---*/
 
 TARGET_HD static inline P* ref_a_from_m(
-    P* __restrict__  v,
-    Dimensions       dims,
-    int              im,
-    int              ia,
-    int              octant )
+    P* const __restrict__  v,
+    const Dimensions       dims,
+    const int              im,
+    const int              ia,
+    const int              octant )
 {
   Assert( v != NULL );
   Assert( im >= 0 && im < dims.nm );
@@ -233,11 +317,11 @@ TARGET_HD static inline P* ref_a_from_m(
 /*---Multidimensional array accessor function---*/
 
 TARGET_HD static inline const P* const_ref_a_from_m(
-    const P* __restrict__  v,
-    Dimensions             dims,
-    int                    im,
-    int                    ia,
-    int                    octant )
+    const P* const __restrict__  v,
+    const Dimensions             dims,
+    const int                    im,
+    const int                    ia,
+    const int                    octant )
 {
   Assert( v != NULL );
   Assert( im >= 0 && im < dims.nm );
@@ -253,12 +337,34 @@ TARGET_HD static inline const P* const_ref_a_from_m(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
+TARGET_HD static inline const P* const_ref_a_from_m_flat(
+    const P* const __restrict__  v,
+    const int                    dims_nm,
+    const int                    dims_na,
+    const int                    im,
+    const int                    ia,
+    const int                    octant )
+{
+  Assert( v != NULL );
+  Assert( im >= 0 && im < dims_nm );
+  Assert( ia >= 0 && ia < dims_na );
+  Assert( octant >= 0 && octant < NOCTANT );
+
+  return & v[ im     + dims_nm * (
+              ia     + dims_na * (
+              octant + NOCTANT * (
+              0 ))) ];
+}
+
+/*===========================================================================*/
+/*---Multidimensional array accessor function---*/
+
 TARGET_HD static inline P* ref_m_from_a(
-    P* __restrict__  v,
-    Dimensions       dims,
-    int              im,
-    int              ia,
-    int              octant )
+    P* const __restrict__  v,
+    const Dimensions       dims,
+    const int              im,
+    const int              ia,
+    const int              octant )
 {
   Assert( v != NULL );
   Assert( im >= 0 && im < dims.nm );
@@ -275,11 +381,11 @@ TARGET_HD static inline P* ref_m_from_a(
 /*---Multidimensional array accessor function---*/
 
 TARGET_HD static inline const P* const_ref_m_from_a(
-    const P* __restrict__  v,
-    Dimensions             dims,
-    int                    im,
-    int                    ia,
-    int                    octant )
+    const P* const __restrict__  v,
+    const Dimensions             dims,
+    const int                    im,
+    const int                    ia,
+    const int                    octant )
 {
   Assert( v != NULL );
   Assert( im >= 0 && im < dims.nm );
@@ -290,6 +396,26 @@ TARGET_HD static inline const P* const_ref_m_from_a(
               ia     + dims.na * (
               octant + NOCTANT * (
               0 ))) ];
+}
+
+/*===========================================================================*/
+/*---Multidimensional array indexing function---*/
+
+TARGET_HD static inline int ind_m_from_a_flat(
+    const int dims_nm,
+    const int dims_na,
+    const int im,
+    const int ia,
+    const int octant )
+{
+  Assert( im >= 0 && im < dims_nm );
+  Assert( ia >= 0 && ia < dims_na );
+  Assert( octant >= 0 && octant < NOCTANT );
+
+  return im     + dims_nm * (
+         ia     + dims_na * (
+         octant + NOCTANT * (
+         0 )));
 }
 
 /*===========================================================================*/

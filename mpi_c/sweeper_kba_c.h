@@ -113,12 +113,17 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Set up amu threads---*/
   /*====================*/
 
-  Insist( NU > 0 );
-  Insist( NTHREAD_U > 0 );
-  Insist( NU * 1 == NTHREAD_U * NU_PER_THREAD * 1 );
-  Insist( NTHREAD_A * 1 > 0 );
-  Insist( ( NTHREAD_A % NTHREAD_U ) * 1 == 0 );
-  Insist( NTHREAD_A * 1 == NTHREAD_U * NTHREAD_M * 1 );
+  Insist( NU * 1 > 0 );
+  Insist(      Sweeper_nthread_u( sweeper, env ) > 0 );
+  Insist( NU % Sweeper_nthread_u( sweeper, env ) == 0 );
+  Insist( Sweeper_nthread_a( sweeper, env ) > 0 );
+#ifndef __MIC__
+  Insist( Sweeper_nthread_a( sweeper, env ) %
+          Sweeper_nthread_u( sweeper, env ) == 0 );
+  Insist( Sweeper_nthread_a( sweeper, env ) ==
+          Sweeper_nthread_u( sweeper, env ) *
+          Sweeper_nthread_m( sweeper, env ) );
+#endif
 
   /*====================*/
   /*---Set up dims structs---*/
@@ -207,7 +212,7 @@ static void Sweeper_set_boundary_xy(
   P* const __restrict__ facexy,
   const Quantities*     quan,
   int                   octant,
-  int                   octant_in_block, 
+  int                   octant_in_block,
   const int             ixmin_b,
   const int             ixmax_b,
   const int             iymin_b,
@@ -262,9 +267,9 @@ static void Sweeper_set_boundary_xz(
   const Sweeper*        sweeper,
   P* const __restrict__ facexz,
   const Quantities*     quan,
-  int                   block_z, 
+  int                   block_z,
   int                   octant,
-  int                   octant_in_block, 
+  int                   octant_in_block,
   const int             ixmin_b,
   const int             ixmax_b,
   const int             izmin_b,
@@ -319,9 +324,9 @@ static void Sweeper_set_boundary_yz(
   const Sweeper*        sweeper,
   P* const __restrict__ faceyz,
   const Quantities*     quan,
-  int                   block_z, 
+  int                   block_z,
   int                   octant,
-  int                   octant_in_block, 
+  int                   octant_in_block,
   const int             iymin_b,
   const int             iymax_b,
   const int             izmin_b,
@@ -374,46 +379,34 @@ static void Sweeper_set_boundary_yz(
 
 TARGET_HD void Sweeper_sweep_cell(
   Sweeper*               sweeper,
-  P* __restrict__        vo_this,
-  const P* __restrict__  vi_this,
-  P* __restrict__        vilocal,
-  P* __restrict__        vslocal,
-  P* __restrict__        volocal,
-  P* __restrict__        facexy,
-  P* __restrict__        facexz,
-  P* __restrict__        faceyz,
-  const P* __restrict__  a_from_m,
-  const P* __restrict__  m_from_a,
-  const Quantities*      quan,
-  const int              octant,
-  const int              iz_base,
-  const int              octant_in_block,
-  const int              ie,
-  const int              ix,
-  const int              iy,
-  const int              iz,
-  const Bool_t           do_block_init_this,
-  const Bool_t           is_cell_active )
+  P* const __restrict__        vo_this,
+  const P* const __restrict__  vi_this,
+  P* const __restrict__        vilocal,
+  P* const __restrict__        vslocal,
+  P* const __restrict__        volocal,
+  P* const __restrict__        facexy,
+  P* const __restrict__        facexz,
+  P* const __restrict__        faceyz,
+  const P* const __restrict__  a_from_m,
+  const P* const __restrict__  m_from_a,
+  const Quantities*            quan,
+  const int                    octant,
+  const int                    iz_base,
+  const int                    octant_in_block,
+  const int                    ie,
+  const int                    ix,
+  const int                    iy,
+  const int                    iz,
+  const Bool_t                 do_block_init_this,
+  const Bool_t                 is_cell_active )
 {
+  enum{ NU_PER_THREAD = NU / NTHREAD_U };
+
   int ia_base = 0;
 
-/*
-if( Sweeper_thread_a( sweeper ) == 0)
-if( octant==1 )
-printf("%i %i %i %i\n",octant,ix+quan->ix_base, iy+quan->iy_base, iz+iz_base);
-*/
-
-#if 0
-if( Sweeper_thread_a( sweeper ) == 0 )
-if(ix+quan->ix_base==0 && iy+quan->iy_base==0 && iz+iz_base==1)
-{
-int im=0;
-int iu=0;
-printf("1 %i  %i %i %i  %i A %e %li\n",octant, ix+quan->ix_base, iy+quan->iy_base, iz+iz_base, iu, *ref_state( vo_this, sweeper->dims_b, NU, ix, iy, iz, ie, im, iu ), (long int )ref_state( vo_this, sweeper->dims_b, NU, ix, iy, iz, ie, im, iu ) );
-}
-if( is_cell_active )
-if(quan->ix_base==0 && quan->iy_base==0)
-#endif
+  const int sweeper_thread_a = Sweeper_thread_a( sweeper );
+  const int sweeper_thread_m = Sweeper_thread_m( sweeper );
+  const int sweeper_thread_u = Sweeper_thread_u( sweeper );
 
   /*====================*/
   /*---Master loop over angle blocks---*/
@@ -421,13 +414,10 @@ if(quan->ix_base==0 && quan->iy_base==0)
 
   for( ia_base=0; ia_base<sweeper->dims_b.na; ia_base += NTHREAD_A )
   {
-    const int ia = ia_base + Sweeper_thread_a( sweeper );
-
     int im_base = 0;
 
-    for( im_base=0; im_base<sweeper->dims_b.nm; im_base += NTHREAD_M )
+    for( im_base=0; im_base<NM; im_base += NTHREAD_M )
     {
-      const int im = im_base + Sweeper_thread_m( sweeper );
 
       /*====================*/
       /*---If needed: reassign threads from angles to moments---*/
@@ -442,26 +432,54 @@ if(quan->ix_base==0 && quan->iy_base==0)
       /*---Load portion of vi---*/
       /*====================*/
 
-      if( im < sweeper->dims_b.nm && is_cell_active )
       {
-        if( ia_base == 0 ||
-            sweeper->dims_b.nm > NTHREAD_M )
+#ifdef __MIC__
+        int sweeper_thread_mu = 0;
+        __assume_aligned( vilocal, VEC_LEN );
+        __assume_aligned( vi_this, VEC_LEN );
+#pragma simd assert, vectorlengthfor( P )
+        for( sweeper_thread_mu=0; sweeper_thread_mu<NTHREAD_M*NTHREAD_U;
+                                                          ++sweeper_thread_mu )
         {
-          int iu_base = 0;
-  
-#pragma unroll
-          for( iu_base=0; iu_base<NU; iu_base += NTHREAD_U )
+          const int sweeper_thread_m = sweeper_thread_mu % NTHREAD_M;
+          const int sweeper_thread_u = sweeper_thread_mu / NTHREAD_M;
+#else
+        {
+#endif
+          const int im = im_base + sweeper_thread_m;
+          if( ( NM % NTHREAD_M == 0 || im < NM ) &&
+              is_cell_active )
           {
-            const int iu = iu_base + Sweeper_thread_u( sweeper );
-  
-            /*---if( iu < NU )---*/
+            if( ia_base == 0 ||
+                NM > NTHREAD_M )
             {
-              *ref_vilocal( vilocal, sweeper->dims_b, NU, NTHREAD_M,
-                                        Sweeper_thread_m( sweeper ), iu ) =
-              *const_ref_state( vi_this, sweeper->dims_b, NU,
-                                ix, iy, iz, ie, im, iu );
+              int iu_base = 0;
+#pragma unroll
+              for( iu_base=0; iu_base<NU; iu_base += NTHREAD_U )
+              {
+                const int iu = iu_base + sweeper_thread_u;
+
+                if( NU % NTHREAD_U == 0 || iu < NU )
+                {
+                  *ref_vilocal( vilocal, sweeper->dims_b, NU, NTHREAD_M,
+                                            sweeper_thread_m, iu ) =
+#ifdef __MIC__
+                  *const_ref_state_flat( vi_this,
+                                         sweeper->dims_b.nx,
+                                         sweeper->dims_b.ny,
+                                         sweeper->dims_b.nz,
+                                         sweeper->dims_b.ne,
+                                         NM,
+                                         NU,
+                                         ix, iy, iz, ie, im, iu );
+#else
+                  *const_ref_state( vi_this, sweeper->dims_b, NU,
+                                    ix, iy, iz, ie, im, iu );
+#endif
+                }
+              } /*---for iu---*/
             }
-          } /*---for iu---*/
+          }
         }
       }
 
@@ -475,81 +493,118 @@ if(quan->ix_base==0 && quan->iy_base==0)
       /*---Transform moments to angles---*/
       /*====================*/
 
-      if( ia < sweeper->dims_b.na && is_cell_active )
       {
-        int im_in_block = 0;
-        int iu = 0;
-
-        P v[NU];
-
-#pragma unroll
-        for( iu=0; iu<NU; ++iu )
+#ifdef __MIC__
+        int sweeper_thread_a = 0;
+        __assume_aligned( vilocal, VEC_LEN );
+        __assume_aligned( vslocal, VEC_LEN );
+        __assume_aligned( a_from_m, VEC_LEN );
+#pragma simd assert, vectorlengthfor( P )
+        for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A;
+                                                           ++sweeper_thread_a )
+#endif
         {
-          v[iu] = P_zero();
-        }
-
-        /*--------------------*/
-        /*---Compute matvec in registers---*/
-        /*--------------------*/
-
-        for( im_in_block=0; im_in_block<NTHREAD_M; ++im_in_block )
-        {
-          const int im = im_base + im_in_block;
-
-          if( im < sweeper->dims_b.nm )
+          const int ia = ia_base + sweeper_thread_a;
+          if( ia < sweeper->dims_b.na && is_cell_active )
           {
+            int im_in_block = 0;
+            int iu = 0;
+
+            P v[NU];
+
 #pragma unroll
             for( iu=0; iu<NU; ++iu )
             {
-              v[iu] +=
-                *const_ref_a_from_m( a_from_m, sweeper->dims_b, im, ia, octant )
-                * *const_ref_vilocal( vilocal, sweeper->dims_b,
-                                    NU, NTHREAD_M, im_in_block, iu );
+              v[iu] = P_zero();
             }
-          }
-        } /*---for im_in_block---*/
 
-        /*--------------------*/
-        /*---Store/update to shared memory---*/
-        /*--------------------*/
+            /*--------------------*/
+            /*---Compute matvec in registers---*/
+            /*--------------------*/
 
-        if( im_base == 0 )
-        {
+            for( im_in_block=0; im_in_block<NTHREAD_M; ++im_in_block )
+            {
+              const int im = im_base + im_in_block;
+
+              if( NM % NTHREAD_M == 0 || im < NM )
+              {
 #pragma unroll
-          for( iu=0; iu<NU; ++iu )
-          {
-            *ref_vslocal( vslocal, sweeper->dims_b, NU, NTHREAD_A,
-                                    Sweeper_thread_a( sweeper ), iu )  = v[iu];
-          }
-        }
-        else
-        {
+                for( iu=0; iu<NU; ++iu )
+                {
+                  v[iu] +=
+#ifdef __MIC__
+                    *const_ref_a_from_m_flat( a_from_m,
+                                              NM,
+                                              sweeper->dims_b.na,
+                                              im, ia, octant )
+#else
+                    *const_ref_a_from_m( a_from_m, sweeper->dims_b,
+                                         im, ia, octant )
+#endif
+                    * *const_ref_vilocal( vilocal, sweeper->dims_b,
+                                        NU, NTHREAD_M, im_in_block, iu );
+                }
+              }
+            } /*---for im_in_block---*/
+
+            /*--------------------*/
+            /*---Store/update to shared memory---*/
+            /*--------------------*/
+
+            if( im_base == 0 )
+            {
 #pragma unroll
-          for( iu=0; iu<NU; ++iu )
-          {
-            *ref_vslocal( vslocal, sweeper->dims_b, NU, NTHREAD_A,
-                                    Sweeper_thread_a( sweeper ), iu ) += v[iu];
-          }
+              for( iu=0; iu<NU; ++iu )
+              {
+#ifdef __MIC__
+                vslocal[ ind_vslocal( sweeper->dims_b, NU, NTHREAD_A,
+                                        sweeper_thread_a, iu ) ] = v[iu];
+#else
+                *ref_vslocal( vslocal, sweeper->dims_b, NU, NTHREAD_A,
+                                        sweeper_thread_a, iu )  = v[iu];
+#endif
+              }
+            }
+            else
+            {
+#pragma unroll
+              for( iu=0; iu<NU; ++iu )
+              {
+                vslocal[ ind_vslocal( sweeper->dims_b, NU, NTHREAD_A,
+                                        sweeper_thread_a, iu ) ] += v[iu];
+              }
+            }
+          } /*---if ia---*/
         }
-
-      } /*---if ia---*/
-
+      }
     } /*---for im_base---*/
 
     /*====================*/
     /*---Perform solve---*/
     /*====================*/
 
-    if( ia < sweeper->dims_b.na && is_cell_active )
+#ifdef __MIC__
+    int sweeper_thread_a = 0;
+    __assume_aligned( vslocal, VEC_LEN );
+#if 0
+#pragma simd assert, vectorlengthfor( P )
+#endif
+    for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A; ++sweeper_thread_a )
+#endif
     {
-      Quantities_solve( quan, vslocal,
-                        ia, Sweeper_thread_a( sweeper ), NTHREAD_A,
-                        facexy, facexz, faceyz,
-                        ix, iy, iz, ie,
-                        ix+quan->ix_base, iy+quan->iy_base, iz+iz_base,
-                        octant, octant_in_block,
-                        sweeper->noctant_per_block,
-                        sweeper->dims_b, sweeper->dims_g );
+      const int ia = ia_base + sweeper_thread_a;
+      if( ia < sweeper->dims_b.na && is_cell_active )
+      {
+
+        Quantities_solve( quan, vslocal,
+                          ia, sweeper_thread_a, NTHREAD_A,
+                          facexy, facexz, faceyz,
+                          ix, iy, iz, ie,
+                          ix+quan->ix_base, iy+quan->iy_base, iz+iz_base,
+                          octant, octant_in_block,
+                          sweeper->noctant_per_block,
+                          sweeper->dims_b, sweeper->dims_g );
+      }
     }
 
     /*====================*/
@@ -558,209 +613,194 @@ if(quan->ix_base==0 && quan->iy_base==0)
 
     Sweeper_sync_amu_threads( sweeper );
 
-    for( im_base=0; im_base<sweeper->dims_b.nm; im_base += NTHREAD_M )
+    /*====================*/
+
+    for( im_base=0; im_base<NM; im_base += NTHREAD_M )
     {
-      const int im = im_base + Sweeper_thread_m( sweeper );
-
-      /*====================*/
-      /*---Transform angles to moments---*/
-      /*====================*/
-
-      if( im < sweeper->dims_b.nm && is_cell_active )
+      const int im = im_base + sweeper_thread_m;
       {
-        int ia_in_block = 0;
-        int iu_per_thread = 0;
-
-        P w[NU_PER_THREAD];
-
-#pragma unroll
-        for( iu_per_thread=0; iu_per_thread<NU_PER_THREAD; ++iu_per_thread )
+#ifdef __MIC__
+        int sweeper_thread_mu = 0;
+        __assume_aligned( vslocal, VEC_LEN );
+        __assume_aligned( volocal, VEC_LEN );
+        __assume_aligned( vo_this, VEC_LEN );
+        __assume_aligned( m_from_a, VEC_LEN );
+#if 0
+#pragma simd assert, vectorlengthfor( P )
+#endif
+        for( sweeper_thread_mu=0; sweeper_thread_mu<NTHREAD_M*NTHREAD_U;
+                                                          ++sweeper_thread_mu )
         {
-          w[iu_per_thread] = P_zero();
-        }
-
-        /*--------------------*/
-        /*---Compute matvec in registers---*/
-        /*--------------------*/
-
-        for( ia_in_block=0; ia_in_block<NTHREAD_A; ++ia_in_block )
+          const int sweeper_thread_m = sweeper_thread_mu % NTHREAD_M;
+          const int sweeper_thread_u = sweeper_thread_mu / NTHREAD_M;
+#else
         {
-          const int ia = ia_base + ia_in_block;
+#endif
+          const int im = im_base + sweeper_thread_m;
 
-          if( ia < sweeper->dims_b.na )
+          /*====================*/
+          /*---Transform angles to moments---*/
+          /*====================*/
+
+          if( ( NM % NTHREAD_M == 0 || im < NM ) &&
+              is_cell_active )
           {
+            int ia_in_block = 0;
+            int iu_per_thread = 0;
+
+            P w[NU_PER_THREAD];
+
 #pragma unroll
             for( iu_per_thread=0; iu_per_thread<NU_PER_THREAD; ++iu_per_thread )
             {
-              const int iu =  Sweeper_thread_u( sweeper ) + NTHREAD_U *
-                              iu_per_thread;
+              w[iu_per_thread] = P_zero();
+            }
 
-              /*---if( iu < NU )---*/
+            /*--------------------*/
+            /*---Compute matvec in registers---*/
+            /*--------------------*/
+
+            for( ia_in_block=0; ia_in_block<NTHREAD_A; ++ia_in_block )
+            {
+              const int ia = ia_base + ia_in_block;
+
+              if( ia < sweeper->dims_b.na )
               {
-                w[ iu_per_thread ] +=
-                *const_ref_m_from_a( m_from_a, sweeper->dims_b, im, ia, octant )
-                * *const_ref_vslocal( vslocal, sweeper->dims_b, NU,
-                                               NTHREAD_A, ia_in_block, iu );
+/*---NOTE: thoe outer loop won't simd-ize because this is a doubly-nested inner loop -- even though unrolled!!---*/
+#pragma unroll
+                for( iu_per_thread=0; iu_per_thread<NU_PER_THREAD;
+                                                              ++iu_per_thread )
+                {
+                  const int iu =  sweeper_thread_u + NTHREAD_U *
+                                  iu_per_thread;
+
+                  if( NU % NTHREAD_U == 0 || iu < NU )
+                  {
+                    w[ iu_per_thread ] +=
+#ifdef __MIC__
+                        m_from_a[ ind_m_from_a_flat( sweeper->dims_b.nm,
+                                                     sweeper->dims_b.na,
+                                                     im, ia, octant ) ]
+#else
+                        *const_ref_m_from_a( m_from_a, sweeper->dims_b,
+                                            im, ia, octant )
+#endif
+                      * *const_ref_vslocal( vslocal, sweeper->dims_b, NU,
+                                            NTHREAD_A, ia_in_block, iu );
+                  }
+                } /*---for iu_per_thread---*/
               }
-            } /*---for iu_per_thread---*/
-          }
-        } /*---for ia_in_block---*/
+            } /*---for ia_in_block---*/
 
-        /*--------------------*/
-        /*---Store/update to shared memory---*/
-        /*--------------------*/
+            /*--------------------*/
+            /*---Store/update to shared memory---*/
+            /*--------------------*/
 
-        if( ia_base == 0 ||
-            sweeper->dims_b.nm > NTHREAD_M )
-        {
-#pragma unroll
-          for( iu_per_thread=0; iu_per_thread<NU_PER_THREAD; ++iu_per_thread )
-          {
-            const int iu =  Sweeper_thread_u( sweeper ) + NTHREAD_U *
-                            iu_per_thread;
-
-            /*---if( iu < NU )---*/
+            if( ia_base == 0 ||
+                NM > NTHREAD_M )
             {
-              *ref_volocal( volocal, sweeper->dims_b, NU, NTHREAD_M,
-                        Sweeper_thread_m( sweeper ), iu )  = w[ iu_per_thread ];
-            }
-          } /*---for iu_per_thread---*/
-        }
-        else
-        {
 #pragma unroll
-          for( iu_per_thread=0; iu_per_thread<NU_PER_THREAD; ++iu_per_thread )
-          {
-            const int iu =  Sweeper_thread_u( sweeper ) + NTHREAD_U *
-                            iu_per_thread;
+              for( iu_per_thread=0; iu_per_thread<NU_PER_THREAD;
+                                                              ++iu_per_thread )
+              {
+                const int iu =  sweeper_thread_u + NTHREAD_U *
+                                iu_per_thread;
 
-            /*---if( iu < NU )---*/
-            {
-              *ref_volocal( volocal, sweeper->dims_b, NU, NTHREAD_M,
-                        Sweeper_thread_m( sweeper ), iu ) += w[ iu_per_thread ];
+                if( NU % NTHREAD_U == 0 || iu < NU )
+                {
+                  *ref_volocal( volocal, sweeper->dims_b, NU, NTHREAD_M,
+                            sweeper_thread_m, iu )  = w[ iu_per_thread ];
+                }
+              } /*---for iu_per_thread---*/
             }
-          } /*---for iu_per_thread---*/
-        }
-      } /*---if im---*/
+            else
+            {
+#pragma unroll
+              for( iu_per_thread=0; iu_per_thread<NU_PER_THREAD;
+                                                              ++iu_per_thread )
+              {
+                const int iu =  sweeper_thread_u + NTHREAD_U *
+                                iu_per_thread;
 
-      /*====================*/
-      /*---Store/update portion of vo---*/
-      /*====================*/
+                if( NU % NTHREAD_U == 0 || iu < NU )
+                {
+                  *ref_volocal( volocal, sweeper->dims_b, NU, NTHREAD_M,
+                            sweeper_thread_m, iu ) += w[ iu_per_thread ];
+                }
+              } /*---for iu_per_thread---*/
+            }
+          } /*---if im---*/
 
-      if( im < sweeper->dims_b.nm && is_cell_active )
-      {
-        if( ia_base+NTHREAD_A >= sweeper->dims_b.na ||
-            sweeper->dims_b.nm > NTHREAD_M )
-        {
-          int iu_base = 0;
+          /*====================*/
+          /*---Store/update portion of vo---*/
+          /*====================*/
+
+          if( ( NM % NTHREAD_M == 0 || im < NM ) &&
+              is_cell_active )
+          {
+            if( ia_base+NTHREAD_A >= sweeper->dims_b.na ||
+                NM > NTHREAD_M )
+            {
+              int iu_base = 0;
 #ifdef USE_OPENMP_VO_ATOMIC
 #pragma unroll
-          for( iu_base=0; iu_base<NU; iu += NTHREAD_U )
-          {
-            const int iu = iu_base + Sweeper_thread_u( sweeper );
+              for( iu_base=0; iu_base<NU; iu += NTHREAD_U )
+              {
+                const int iu = iu_base + sweeper_thread_u;
 
-            /*---if( iu < NU )---*/
-            {
+                if( NU % NTHREAD_U == 0 || iu < NU )
+                {
 #pragma omp atomic update
-              *ref_state( vo_this, sweeper->dims_b, NU,
-                          ix, iy, iz, ie, im, iu ) +=
-                *ref_volocal( volocal, sweeper->dims_b, NU, NTHREAD_M,
-                              Sweeper_thread_m( sweeper ), iu );
-            }
-          }
+                  *ref_state( vo_this, sweeper->dims_b, NU,
+                              ix, iy, iz, ie, im, iu ) +=
+                    *ref_volocal( volocal, sweeper->dims_b, NU, NTHREAD_M,
+                                  sweeper_thread_m, iu );
+                }
+              }
 #else
-          if( ( ! do_block_init_this ) ||
-              ( sweeper->dims_b.nm > NTHREAD_M && ! ia_base==0 ) )
-          {
-#pragma unroll
-            for( iu_base=0; iu_base<NU; iu_base += NTHREAD_U )
-            {
-              const int iu = iu_base + Sweeper_thread_u( sweeper );
-
-              /*---if( iu < NU )---*/
-/*FIX*/
-/*
-if(octant==0)
-*/
+              if( ( ! do_block_init_this ) ||
+                  ( NM > NTHREAD_M && ! ia_base==0 ) )
               {
-#if 0
-if( iu==0)
-if( im==0)
-if(ix+quan->ix_base==0 && iy+quan->iy_base==0 && iz+iz_base==1)
-if(ix+quan->ix_base<1 && iy+quan->iy_base<2)
-if(quan->ix_base==0 && quan->iy_base==0)
-printf("1 %i  %i %i %i  %i a %e %li\n",octant, ix+quan->ix_base, iy+quan->iy_base, iz+iz_base, iu, *ref_state( vo_this, sweeper->dims_b, NU, ix, iy, iz, ie, im, iu ), (long int )ref_state( vo_this, sweeper->dims_b, NU, ix, iy, iz, ie, im, iu ) );
-#endif
-                *ref_state( vo_this, sweeper->dims_b, NU,
-                            ix, iy, iz, ie, im, iu ) +=
-                *ref_volocal( volocal, sweeper->dims_b, NU, NTHREAD_M,
-                                Sweeper_thread_m( sweeper ), iu );
-#if 0
-if( iu==0)
-if( im==0)
-if(ix+quan->ix_base==0 && iy+quan->iy_base==0 && iz+iz_base==1)
-if(ix+quan->ix_base<1 && iy+quan->iy_base<2)
-if(quan->ix_base==0 && quan->iy_base==0)
-printf("1 %i  %i %i %i  %i b %e %li\n",octant, ix+quan->ix_base, iy+quan->iy_base, iz+iz_base, iu, *ref_state( vo_this, sweeper->dims_b, NU, ix, iy, iz, ie, im, iu ), (long int )ref_state( vo_this, sweeper->dims_b, NU, ix, iy, iz, ie, im, iu ) );
-#endif
-              }
-            }
-          }
-          else
-          {
 #pragma unroll
-            for( iu_base=0; iu_base<NU; iu_base += NTHREAD_U )
-            {
-              const int iu = iu_base + Sweeper_thread_u( sweeper );
+                for( iu_base=0; iu_base<NU; iu_base += NTHREAD_U )
+                {
+                  const int iu = iu_base + sweeper_thread_u;
 
-              /*---if( iu < NU )---*/
-/*FIX*/
-/*
-if(octant==0)
-*/
-              {
-#if 0
-if( iu==0)
-if( im==0)
-if(ix+quan->ix_base==0 && iy+quan->iy_base==0 && iz+iz_base==1)
-if(ix+quan->ix_base<1 && iy+quan->iy_base<2)
-if(quan->ix_base==0 && quan->iy_base==0)
-printf("0 %i  %i %i %i  %i a %e %li\n",octant, ix+quan->ix_base, iy+quan->iy_base, iz+iz_base, iu, *ref_state( vo_this, sweeper->dims_b, NU, ix, iy, iz, ie, im, iu ), (long int )ref_state( vo_this, sweeper->dims_b, NU, ix, iy, iz, ie, im, iu ) );
-#endif
-                *ref_state( vo_this, sweeper->dims_b, NU,
-                            ix, iy, iz, ie, im, iu ) =
-                  *ref_volocal( volocal, sweeper->dims_b, NU, NTHREAD_M,
-                                Sweeper_thread_m( sweeper ), iu );
-#if 0
-if( iu==0)
-if( im==0)
-if(ix+quan->ix_base==0 && iy+quan->iy_base==0 && iz+iz_base==1)
-if(ix+quan->ix_base<1 && iy+quan->iy_base<2)
-if(quan->ix_base==0 && quan->iy_base==0)
-printf("0 %i  %i %i %i  %i b %e %li\n",octant, ix+quan->ix_base, iy+quan->iy_base, iz+iz_base, iu, *ref_state( vo_this, sweeper->dims_b, NU, ix, iy, iz, ie, im, iu ), (long int )ref_state( vo_this, sweeper->dims_b, NU, ix, iy, iz, ie, im, iu ) );
-#endif
+                  if( NU % NTHREAD_U == 0 || iu < NU )
+                  {
+                    *ref_state( vo_this, sweeper->dims_b, NU,
+                                ix, iy, iz, ie, im, iu ) +=
+                    *ref_volocal( volocal, sweeper->dims_b, NU, NTHREAD_M,
+                                    sweeper_thread_m, iu );
+                  }
+                }
               }
-            }
-          }
+              else
+              {
+#pragma unroll
+                for( iu_base=0; iu_base<NU; iu_base += NTHREAD_U )
+                {
+                  const int iu = iu_base + sweeper_thread_u;
+
+                  if( NU % NTHREAD_U == 0 || iu < NU )
+                  {
+                    *ref_state( vo_this, sweeper->dims_b, NU,
+                                ix, iy, iz, ie, im, iu ) =
+                      *ref_volocal( volocal, sweeper->dims_b, NU, NTHREAD_M,
+                                sweeper_thread_m, iu );
+                  }
+                }
+              }
 #endif
+            }
+          } /*---if im---*/
         }
-
-      } /*---if im---*/
+      }
 
     } /*---for im_base---*/
 
   } /*---for ia_base---*/
 
-#if 0
-if( Sweeper_thread_a( sweeper ) == 0 )
-if(ix+quan->ix_base==0 && iy+quan->iy_base==0 && iz+iz_base==1)
-{
-int im=0;
-int iu=0;
-printf("1 %i  %i %i %i  %i B %e %li\n",octant, ix+quan->ix_base, iy+quan->iy_base, iz+iz_base, iu, *ref_state( vo_this, sweeper->dims_b, NU, ix, iy, iz, ie, im, iu ), (long int )ref_state( vo_this, sweeper->dims_b, NU, ix, iy, iz, ie, im, iu ) );
-}
-if(quan->ix_base==0 && quan->iy_base==0)
-#endif
 }
 
 /*===========================================================================*/
@@ -834,11 +874,6 @@ TARGET_HD void Sweeper_sweep_semiblock(
     int iy = 0;
     int iz = 0;
 
-#if 0
-if( Sweeper_thread_a( sweeper ) == 0)
-if( octant==1 )
-printf("                %i %i %i %i %i %i %i %i %i\n",ixbeg,ixend,iybeg,iyend,izbeg,izend,dir_inc_x,dir_inc_y,dir_inc_z);
-#endif
     /*--------------------*/
     /*---Loop over gridcells, in proper direction---*/
     /*--------------------*/
@@ -852,11 +887,6 @@ printf("                %i %i %i %i %i %i %i %i %i\n",ixbeg,ixend,iybeg,iyend,iz
       const Bool_t is_cell_active = ix < sweeper->dims_b.nx &&
                                     iy < sweeper->dims_b.ny &&
                                     iz < sweeper->dims_b.nz;
-#if 0
-if( Sweeper_thread_a( sweeper ) == 0)
-if( octant==1 )
-printf("%i %i %i %i\n",octant,ix+quan->ix_base, iy+quan->iy_base, iz+iz_base);
-#endif
       /*--------------------*/
       /*---Sweep cell---*/
       /*--------------------*/
@@ -965,20 +995,12 @@ TARGET_HD void Sweeper_sweep_block_impl(
 
         int octant_in_block = 0;
 
-/*
-printf("Hey %i %i %i\n",step,semiblock,Sweeper_thread_octant( sweeper ));
-*/
       for( octant_in_block=octant_in_block_min;
            octant_in_block<octant_in_block_max; ++octant_in_block )
       {
         /*---Get step info---*/
 
         const Step_Info step_info = step_info_values.step_info[octant_in_block];
-/*
-if( Sweeper_thread_a( sweeper ) == 0)
-if( step_info.octant==1 )
-printf("Hey %i %i %i\n",step,semiblock,octant_in_block);
-*/
 
         /*--------------------*/
         /*---Begin compute section---*/
@@ -1099,20 +1121,9 @@ printf("Hey %i %i %i\n",step,semiblock,octant_in_block);
                                      iymin_b, iymax_b, izmin_b, izmax_b );
           }
 
-#if 0
-if( Sweeper_thread_a( sweeper ) == 0 )
-if(quan->ix_base==0 && quan->iy_base==0)
-if( ixmax_b-ixmin_b >= 0 )
-if( iymax_b-iymin_b >= 0 )
-if( izmax_b-izmin_b >= 0 )
-printf("%i %i %i  %i %i  %i %i  %i %i\n",step,semiblock,step_info.octant,ixmin_b,ixmax_b,iymin_b,iymax_b,izmin_b,izmax_b);
-#endif
           /*--------------------*/
           /*---Perform sweep on relevant block---*/
           /*--------------------*/
-#if 0
-if( iymax_b != iymax_b_up2 ) printf("%i %i %i %i\n",iymin_b, iymax_b, iymax_b_up2, sweeper->dims_b.ny );
-#endif
 
           Sweeper_sweep_semiblock( sweeper, vo_this, vi_this,
                                    facexy, facexz, faceyz,
@@ -1202,9 +1213,6 @@ void Sweeper_sweep_block(
     step_info_values.step_info[octant_in_block] = Step_Scheduler_step_info(
       &(sweeper->step_scheduler), step, octant_in_block, proc_x, proc_y );
 
-/*
-printf("%i %i %i    %i    %i\n",step,proc_y,octant_in_block,step_info_values.step_info[octant_in_block].octant,step_info_values.step_info[octant_in_block].block_z);
-*/
   }
 
   /*---Precalculate initialization schedule---*/
@@ -1252,15 +1260,15 @@ printf("%i %i %i    %i    %i\n",step,proc_y,octant_in_block,step_info_values.ste
   {
     Sweeper_sweep_block_impl_global
 #ifdef __CUDACC__
-                       <<< dim3( Sweeper_nthreadblock( sweeper, 0 ),
-                                 Sweeper_nthreadblock( sweeper, 1 ),
-                                 Sweeper_nthreadblock( sweeper, 2 ) ),
-                           dim3( Sweeper_nthread_in_threadblock( sweeper, 0 ),
-                                 Sweeper_nthread_in_threadblock( sweeper, 1 ),
-                                 Sweeper_nthread_in_threadblock( sweeper, 2 ) ),
-                           Sweeper_shared_size__( sweeper, env ),
-                           Env_cuda_stream_kernel_faces( env )
-                       >>>
+                 <<< dim3( Sweeper_nthreadblock( sweeper, 0, env ),
+                           Sweeper_nthreadblock( sweeper, 1, env ),
+                           Sweeper_nthreadblock( sweeper, 2, env ) ),
+                     dim3( Sweeper_nthread_in_threadblock( sweeper, 0, env ),
+                           Sweeper_nthread_in_threadblock( sweeper, 1, env ),
+                           Sweeper_nthread_in_threadblock( sweeper, 2, env ) ),
+                     Sweeper_shared_size__( sweeper, env ),
+                     Env_cuda_stream_kernel_faces( env )
+                 >>>
 #endif
                             ( *sweeper,
                               Pointer_d( vo ),

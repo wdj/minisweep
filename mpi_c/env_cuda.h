@@ -27,7 +27,11 @@ extern "C"
 /*===========================================================================*/
 /*---Enums---*/
 
-enum{ WARP_SIZE = 32 };
+#ifndef __MIC__
+enum{ VEC_LEN = 32 };
+#else
+enum{ VEC_LEN = P_IS_DOUBLE ? 8 : 16 };
+#endif
 
 /*===========================================================================*/
 /*---Types---*/
@@ -121,7 +125,7 @@ static void Env_cuda_set_values__( Env *env, Arguments* args )
 /*===========================================================================*/
 /*---Determine whether using device---*/
 
-static Bool_t Env_cuda_is_using_device( Env *env )
+static Bool_t Env_cuda_is_using_device( const Env *env )
 {
 #ifdef __CUDACC__
   return env->is_using_device__;

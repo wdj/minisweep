@@ -470,9 +470,6 @@ TARGET_HD static inline void Quantities_solve(
                                                ix_g-Dir_inc(dir_x), iy_g, iz_g )
       )      * Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g );
 
-/*
-printf("%i %i %i %i %i %e\n",octant,iu,ix_g,iy_g,iz_g,result);
-*/
     *ref_vslocal( vslocal, dims_b, NU, iamax, iaind, iu ) = result;
     *ref_facexy( facexy, dims_b, NU, noctant_per_block,
                  ix_b, iy_b, ie, ia, iu, octant_in_block ) = result *

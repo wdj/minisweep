@@ -58,6 +58,19 @@ ifeq ($(COMPILER_OPTION),GNU)
   endif
 endif
 
+ifeq ($(COMPILER_OPTION),INTELMIC)
+  CC = mpiicc
+  CFLAGS := $(CFLAGS) -mmic -opt-report=0 -vec-report -Dinline=__inline -finline -finline-functions -finline-limit=100 -ip -fno-alias -prec-div
+  ifeq ($(RELEASE_OPTION),DEBUG)
+    CFLAGS := $(CFLAGS)
+    COMMON_FLAGS := $(COMMON_FLAGS)
+                   # -strict-ansi -Dinline=
+  else
+    CFLAGS := $(CFLAGS)
+    COMMON_FLAGS := $(COMMON_FLAGS) -DNDEBUG
+  endif
+endif
+
 ifeq ($(COMPILER_OPTION),PGI)
   CC = cc
   CFLAGS := $(CFLAGS) -fast -Mfprelaxed -alias=ansi -Msafeptr -tp=istanbul-64
@@ -65,8 +78,13 @@ ifeq ($(COMPILER_OPTION),PGI)
 endif
 
 ifeq ($(MPI_OPTION),MPI)
-  CFLAGS := $(CFLAGS) -L$(MPICH_DIR)/lib -Wl,-rpath=$(MPICH_DIR)/lib -lmpich
-  COMMON_FLAGS := $(COMMON_FLAGS) -DUSE_MPI -I$(MPICH_DIR)/include
+  ifneq ($(COMPILER_OPTION),INTELMIC)
+    CFLAGS := $(CFLAGS) -L$(MPICH_DIR)/lib -Wl,-rpath=$(MPICH_DIR)/lib -lmpich
+    COMMON_FLAGS := $(COMMON_FLAGS) -DUSE_MPI -I$(MPICH_DIR)/include
+  else
+    CFLAGS := $(CFLAGS)
+    COMMON_FLAGS := $(COMMON_FLAGS) -DUSE_MPI
+  endif
 endif
 
 ifneq ($(OPENMP_OPTION),)
@@ -113,6 +131,16 @@ make_executable: make_cu
 
 test:
 	./test.bash
+
+#==============================================================================
+
+#make COMPILER_OPTION=INTELMIC NM_VALUE=16 RELEASE_OPTION=
+#
+#if [ $? = 0 ] ; then
+#  \cp $HOME/minisweep/mpi_c/sweep.x $TMPDIR/mic0
+#  ARGS="--nx 1 --ny 1 --nz 1 --ne 1 --na 32 --nproc_x 1 --nproc_y 1"
+#  micmpiexec -n 1 -wdir $TMPDIR -host ${HOSTNAME}-mic0 $TMPDIR/sweep.x $ARGS
+#fi
 
 #==============================================================================
 
