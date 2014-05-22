@@ -108,12 +108,20 @@ ifneq ($(NM_VALUE),)
   COMMON_FLAGS := $(COMMON_FLAGS) -DNM_VALUE=$(NM_VALUE)
 endif
 
+ifeq ($(RELAXED_TESTING),1)
+  COMMON_FLAGS := $(COMMON_FLAGS) -DRELAXED_TESTING
+endif
+
 ifneq ($(CUDA_OPTION),)
+  CUDA_ARGS := -arch=sm_35 -O3 -use_fast_math --maxrregcount 128 -Xcompiler "-fstrict-aliasing" -Xcompiler "-fargument-noalias-global"
+  ifneq ($(RELEASE_OPTION),DEBUG)
+    CUDA_ARGS := $(CUDA_ARGS) -DNDEBUG
+  endif
   ifeq ($(COMPILER_OPTION),PGI)
     $(error "CUDA requires GNU compiler to be used.")
   endif
 make_cu: make_c
-	nvcc -c $(CUDA_SOURCES) $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS) -DUSE_CUDA -arch=sm_35
+	nvcc -c $(CUDA_SOURCES) $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS) -DUSE_CUDA $(CUDA_ARGS)
 else
 make_cu: make_c
 endif

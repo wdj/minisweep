@@ -210,8 +210,12 @@ function main
 
   done
 
-  echo -n "Total tests $g_ntest PASSED $g_ntest_passed"
-  echo " FAILED $(( $g_ntest - $g_ntest_passed ))."
+  echo -n "Total tests $g_ntest"
+  echo -n "    "
+  echo -n "PASSED $g_ntest_passed"
+  echo -n "    "
+  echo -n "FAILED $(( $g_ntest - $g_ntest_passed ))"
+  echo "."
 
 }
 #==============================================================================

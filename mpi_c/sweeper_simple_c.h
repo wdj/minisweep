@@ -216,9 +216,11 @@ void Sweeper_sweep(
         {
           result += *const_ref_a_from_m( Pointer_const_h( & quan->a_from_m ),
                                          sweeper->dims, im, ia, octant )*
-                    *const_ref_state( Pointer_h( vi ), sweeper->dims, NU, ix, iy, iz, ie, im, iu );
+                    *const_ref_state(    Pointer_h( vi ), sweeper->dims, NU,
+                                         ix, iy, iz, ie, im, iu );
         }
-        *ref_vslocal( sweeper->vslocal, sweeper->dims, NU, sweeper->dims.na, ia, iu ) = result;
+        *ref_vslocal( sweeper->vslocal, sweeper->dims, NU,
+                      sweeper->dims.na, ia, iu ) = result;
       }
 
       /*--------------------*/
@@ -251,9 +253,11 @@ void Sweeper_sweep(
         {
           result += *const_ref_m_from_a( Pointer_const_h( & quan->m_from_a ),
                                          sweeper->dims, im, ia, octant )*
-                    *const_ref_vslocal( sweeper->vslocal, sweeper->dims, NU, sweeper->dims.na, ia, iu );
+                    *const_ref_vslocal(  sweeper->vslocal, sweeper->dims, NU,
+                                         sweeper->dims.na, ia, iu );
         }
-        *ref_state( Pointer_h( vo ), sweeper->dims, NU, ix, iy, iz, ie, im, iu ) += result;
+        *ref_state( Pointer_h( vo ), sweeper->dims, NU,
+                    ix, iy, iz, ie, im, iu ) += result;
       }
 
     } /*---ix/iy/iz---*/

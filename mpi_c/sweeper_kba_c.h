@@ -659,13 +659,14 @@ TARGET_HD void Sweeper_sweep_cell(
             /*---Compute matvec in registers---*/
             /*--------------------*/
 
+#pragma unroll 4
             for( ia_in_block=0; ia_in_block<NTHREAD_A; ++ia_in_block )
             {
               const int ia = ia_base + ia_in_block;
 
               if( ia < sweeper->dims_b.na )
               {
-/*---NOTE: thoe outer loop won't simd-ize because this is a doubly-nested inner loop -- even though unrolled!!---*/
+/*---NOTE: the outer loop won't simd-ize because this is a doubly-nested inner loop -- even though unrolled!!---*/
 #pragma unroll
                 for( iu_per_thread=0; iu_per_thread<NU_PER_THREAD;
                                                               ++iu_per_thread )
@@ -1350,11 +1351,6 @@ void Sweeper_sweep(
     initialize_state_zero( Pointer_h( vo ), sweeper->dims, NU );
     Pointer_update_d_stream( vo, Env_cuda_stream_kernel_faces( env ) );
   }
-/*
-FIX
-    initialize_state_zero( Pointer_h( vo ), sweeper->dims, NU );
-    Pointer_update_d_stream( vo, Env_cuda_stream_kernel_faces( env ) );
-*/
 
   /*--------------------*/
   /*---Loop over kba parallel steps---*/

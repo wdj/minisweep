@@ -139,15 +139,20 @@ TARGET_HD static inline int Quantities_scalefactor_space__(
   Assert( iy_g >= -1 && iy_g <= quan->ny_g );
   Assert( iz_g >= -1 && iz_g <= quan->nz_g );
 
+  int result = 0;
+
+#ifndef RELAXED_TESTING
   const int im = 134456;
   const int ia = 8121;
   const int ic = 28411;
 
-  int result = 0;
   result = ( (result+(ix_g+2))*ia + ic ) % im;
   result = ( (result+(iy_g+2))*ia + ic ) % im;
   result = ( (result+(iz_g+2))*ia + ic ) % im;
+  result = ( (result+(ix_g+3*iy_g+7*iz_g+2))*ia + ic ) % im;
+  result = ix_g+3*iy_g+7*iz_g+2;
   result = result & ( (1<<2) - 1 );
+#endif
   result = 1 << result;
 
   return result;
@@ -231,7 +236,14 @@ TARGET_HD static inline P Quantities_zfluxweight__( Dimensions dims,
 TARGET_HD static inline int Quantities_scalefactor_octant__( int octant )
 {
   Assert( octant>=0 && octant<NOCTANT );
-  return ( 1 + octant );
+
+#ifndef RELAXED_TESTING
+  const int result = 1 + octant;
+#else
+  const int result = 1;
+#endif
+
+  return result;
 }
 
 /*===========================================================================*/
@@ -445,6 +457,7 @@ TARGET_HD static inline void Quantities_solve(
        stored.
   ---*/
 
+#pragma unroll
   for( iu=0; iu<NU; ++iu )
   {
     const P result = (
