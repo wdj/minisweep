@@ -249,7 +249,7 @@ TARGET_HD static void Sweeper_sync_amu_threads( Sweeper* sweeper )
 static inline int Sweeper_nthread_a( const Sweeper* sweeper,
                                      const Env*     env )
 {
-  return Env_cuda_is_using_device( env ) ? NTHREAD_DEVICE_A : NTHREAD_A;
+  return Env_cuda_is_using_device( env ) ? NTHREAD_DEVICE_A*1 : NTHREAD_A*1;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -257,7 +257,7 @@ static inline int Sweeper_nthread_a( const Sweeper* sweeper,
 static inline int Sweeper_nthread_m( const Sweeper* sweeper,
                                      const Env*     env )
 {
-  return Env_cuda_is_using_device( env ) ? NTHREAD_DEVICE_M : NTHREAD_M;
+  return Env_cuda_is_using_device( env ) ? NTHREAD_DEVICE_M*1 : NTHREAD_M*1;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -265,7 +265,7 @@ static inline int Sweeper_nthread_m( const Sweeper* sweeper,
 static inline int Sweeper_nthread_u( const Sweeper* sweeper,
                                      const Env*     env )
 {
-  return Env_cuda_is_using_device( env ) ? NTHREAD_DEVICE_U : NTHREAD_U;
+  return Env_cuda_is_using_device( env ) ? NTHREAD_DEVICE_U*1 : NTHREAD_U*1;
 }
 
 /*===========================================================================*/

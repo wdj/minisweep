@@ -451,7 +451,7 @@ TARGET_HD void Sweeper_sweep_cell(
               is_cell_active )
           {
             if( ia_base == 0 ||
-                NM > NTHREAD_M )
+                NM*1 > NTHREAD_M*1 )
             {
               int iu_base = 0;
 #pragma unroll
@@ -617,7 +617,6 @@ TARGET_HD void Sweeper_sweep_cell(
 
     for( im_base=0; im_base<NM; im_base += NTHREAD_M )
     {
-      const int im = im_base + sweeper_thread_m;
       {
 #ifdef __MIC__
         int sweeper_thread_mu = 0;
@@ -697,7 +696,7 @@ TARGET_HD void Sweeper_sweep_cell(
             /*--------------------*/
 
             if( ia_base == 0 ||
-                NM > NTHREAD_M )
+                NM*1 > NTHREAD_M*1 )
             {
 #pragma unroll
               for( iu_per_thread=0; iu_per_thread<NU_PER_THREAD;
@@ -722,7 +721,7 @@ TARGET_HD void Sweeper_sweep_cell(
                 const int iu =  sweeper_thread_u + NTHREAD_U *
                                 iu_per_thread;
 
-                if( NU % NTHREAD_U == 0 || iu < NU )
+                if( (NU*1) % (NTHREAD_U*1) == 0 || iu < NU*1 )
                 {
                   *ref_volocal( volocal, sweeper->dims_b, NU, NTHREAD_M,
                             sweeper_thread_m, iu ) += w[ iu_per_thread ];
@@ -735,11 +734,11 @@ TARGET_HD void Sweeper_sweep_cell(
           /*---Store/update portion of vo---*/
           /*====================*/
 
-          if( ( NM % NTHREAD_M == 0 || im < NM ) &&
+          if( ( (NM*1) % (NTHREAD_M*1) == 0 || im < NM*1 ) &&
               is_cell_active )
           {
             if( ia_base+NTHREAD_A >= sweeper->dims_b.na ||
-                NM > NTHREAD_M )
+                NM*1 > NTHREAD_M*1 )
             {
               int iu_base = 0;
 #ifdef USE_OPENMP_VO_ATOMIC
@@ -748,7 +747,7 @@ TARGET_HD void Sweeper_sweep_cell(
               {
                 const int iu = iu_base + sweeper_thread_u;
 
-                if( NU % NTHREAD_U == 0 || iu < NU )
+                if( (NU*1) % (NTHREAD_U*1) == 0 || iu < (NU*1) )
                 {
 #pragma omp atomic update
                   *ref_state( vo_this, sweeper->dims_b, NU,
@@ -759,14 +758,14 @@ TARGET_HD void Sweeper_sweep_cell(
               }
 #else
               if( ( ! do_block_init_this ) ||
-                  ( NM > NTHREAD_M && ! ia_base==0 ) )
+                  ( NM*1 > NTHREAD_M*1 && ! ia_base==0 ) )
               {
 #pragma unroll
                 for( iu_base=0; iu_base<NU; iu_base += NTHREAD_U )
                 {
                   const int iu = iu_base + sweeper_thread_u;
 
-                  if( NU % NTHREAD_U == 0 || iu < NU )
+                  if( (NU*1) % (NTHREAD_U*1) == 0 || iu < NU*1 )
                   {
                     *ref_state( vo_this, sweeper->dims_b, NU,
                                 ix, iy, iz, ie, im, iu ) +=
@@ -782,7 +781,7 @@ TARGET_HD void Sweeper_sweep_cell(
                 {
                   const int iu = iu_base + sweeper_thread_u;
 
-                  if( NU % NTHREAD_U == 0 || iu < NU )
+                  if( (NU*1) % (NTHREAD_U*1) == 0 || iu < NU*1 )
                   {
                     *ref_state( vo_this, sweeper->dims_b, NU,
                                 ix, iy, iz, ie, im, iu ) =
