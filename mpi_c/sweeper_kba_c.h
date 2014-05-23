@@ -207,7 +207,7 @@ void Sweeper_dtor( Sweeper* sweeper,
 /*===========================================================================*/
 /*---Apply boundary condition: xy face---*/
 
-static void Sweeper_set_boundary_xy(
+TARGET_HD static void Sweeper_set_boundary_xy(
   const Sweeper*        sweeper,
   P* const __restrict__ facexy,
   const Quantities*     quan,
@@ -263,7 +263,7 @@ static void Sweeper_set_boundary_xy(
 /*===========================================================================*/
 /*---Apply boundary condition: xz face---*/
 
-static void Sweeper_set_boundary_xz(
+TARGET_HD static void Sweeper_set_boundary_xz(
   const Sweeper*        sweeper,
   P* const __restrict__ facexz,
   const Quantities*     quan,
@@ -320,7 +320,7 @@ static void Sweeper_set_boundary_xz(
 /*===========================================================================*/
 /*---Apply boundary condition: yz face---*/
 
-static void Sweeper_set_boundary_yz(
+TARGET_HD static void Sweeper_set_boundary_yz(
   const Sweeper*        sweeper,
   P* const __restrict__ faceyz,
   const Quantities*     quan,
