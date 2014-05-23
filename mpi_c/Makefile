@@ -112,7 +112,7 @@ ifeq ($(RELAXED_TESTING),1)
   COMMON_FLAGS := $(COMMON_FLAGS) -DRELAXED_TESTING
 endif
 
-ifneq ($(CUDA_OPTION),)
+ifeq ($(CUDA_OPTION),1)
   CUDA_ARGS := -arch=sm_35 -O3 -use_fast_math --maxrregcount 128 -Xcompiler "-fstrict-aliasing" -Xcompiler "-fargument-noalias-global"
   ifneq ($(RELEASE_OPTION),DEBUG)
     CUDA_ARGS := $(CUDA_ARGS) -DNDEBUG

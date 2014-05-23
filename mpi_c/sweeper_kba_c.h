@@ -433,18 +433,20 @@ TARGET_HD void Sweeper_sweep_cell(
       /*====================*/
 
       {
-#ifdef __MIC__
+#ifndef __CUDA_ARCH__
         int sweeper_thread_mu = 0;
+#ifdef __MIC__
         __assume_aligned( vilocal, VEC_LEN );
         __assume_aligned( vi_this, VEC_LEN );
 #pragma simd assert, vectorlengthfor( P )
+#endif /*---__MIC__---*/
         for( sweeper_thread_mu=0; sweeper_thread_mu<NTHREAD_M*NTHREAD_U;
                                                           ++sweeper_thread_mu )
+#endif
         {
+#ifndef __CUDA_ARCH__
           const int sweeper_thread_m = sweeper_thread_mu % NTHREAD_M;
           const int sweeper_thread_u = sweeper_thread_mu / NTHREAD_M;
-#else
-        {
 #endif
           const int im = im_base + sweeper_thread_m;
           if( ( NM % NTHREAD_M == 0 || im < NM ) &&
@@ -472,10 +474,10 @@ TARGET_HD void Sweeper_sweep_cell(
                                          NM,
                                          NU,
                                          ix, iy, iz, ie, im, iu );
-#else
+#else /*---__MIC__---*/
                   *const_ref_state( vi_this, sweeper->dims_b, NU,
                                     ix, iy, iz, ie, im, iu );
-#endif
+#endif /*---__MIC__---*/
                 }
               } /*---for iu---*/
             }
@@ -494,12 +496,14 @@ TARGET_HD void Sweeper_sweep_cell(
       /*====================*/
 
       {
-#ifdef __MIC__
+#ifndef __CUDA_ARCH__
         int sweeper_thread_a = 0;
+#ifdef __MIC__
         __assume_aligned( vilocal, VEC_LEN );
         __assume_aligned( vslocal, VEC_LEN );
         __assume_aligned( a_from_m, VEC_LEN );
 #pragma simd assert, vectorlengthfor( P )
+#endif /*---__MIC__---*/
         for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A;
                                                            ++sweeper_thread_a )
 #endif
@@ -537,10 +541,10 @@ TARGET_HD void Sweeper_sweep_cell(
                                               NM,
                                               sweeper->dims_b.na,
                                               im, ia, octant )
-#else
+#else /*---__MIC__---*/
                     *const_ref_a_from_m( a_from_m, sweeper->dims_b,
                                          im, ia, octant )
-#endif
+#endif /*---__MIC__---*/
                     * *const_ref_vilocal( vilocal, sweeper->dims_b,
                                         NU, NTHREAD_M, im_in_block, iu );
                 }
@@ -559,10 +563,10 @@ TARGET_HD void Sweeper_sweep_cell(
 #ifdef __MIC__
                 vslocal[ ind_vslocal( sweeper->dims_b, NU, NTHREAD_A,
                                         sweeper_thread_a, iu ) ] = v[iu];
-#else
+#else /*---__MIC__---*/
                 *ref_vslocal( vslocal, sweeper->dims_b, NU, NTHREAD_A,
                                         sweeper_thread_a, iu )  = v[iu];
-#endif
+#endif /*---__MIC__---*/
               }
             }
             else
@@ -583,11 +587,11 @@ TARGET_HD void Sweeper_sweep_cell(
     /*---Perform solve---*/
     /*====================*/
 
-#ifdef __MIC__
+#ifndef __CUDA_ARCH__
     int sweeper_thread_a = 0;
+#ifdef __MIC__
     __assume_aligned( vslocal, VEC_LEN );
-#if 0
-#pragma simd assert, vectorlengthfor( P )
+/* #pragma simd assert, vectorlengthfor( P ) */
 #endif
     for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A; ++sweeper_thread_a )
 #endif
@@ -618,22 +622,22 @@ TARGET_HD void Sweeper_sweep_cell(
     for( im_base=0; im_base<NM; im_base += NTHREAD_M )
     {
       {
-#ifdef __MIC__
+#ifndef __CUDA_ARCH__
         int sweeper_thread_mu = 0;
+#ifdef __MIC__
         __assume_aligned( vslocal, VEC_LEN );
         __assume_aligned( volocal, VEC_LEN );
         __assume_aligned( vo_this, VEC_LEN );
         __assume_aligned( m_from_a, VEC_LEN );
-#if 0
-#pragma simd assert, vectorlengthfor( P )
-#endif
+/* #pragma simd assert, vectorlengthfor( P ) */
+#endif /*---__MIC__---*/
         for( sweeper_thread_mu=0; sweeper_thread_mu<NTHREAD_M*NTHREAD_U;
                                                           ++sweeper_thread_mu )
+#endif
         {
+#ifndef __CUDA_ARCH__
           const int sweeper_thread_m = sweeper_thread_mu % NTHREAD_M;
           const int sweeper_thread_u = sweeper_thread_mu / NTHREAD_M;
-#else
-        {
 #endif
           const int im = im_base + sweeper_thread_m;
 
@@ -681,10 +685,10 @@ TARGET_HD void Sweeper_sweep_cell(
                         m_from_a[ ind_m_from_a_flat( sweeper->dims_b.nm,
                                                      sweeper->dims_b.na,
                                                      im, ia, octant ) ]
-#else
+#else /*---__MIC__---*/
                         *const_ref_m_from_a( m_from_a, sweeper->dims_b,
                                             im, ia, octant )
-#endif
+#endif /*---__MIC__---*/
                       * *const_ref_vslocal( vslocal, sweeper->dims_b, NU,
                                             NTHREAD_A, ia_in_block, iu );
                   }

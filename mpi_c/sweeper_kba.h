@@ -60,9 +60,9 @@ enum{ NTHREAD_DEVICE_A = NTHREAD_DEVICE_U * NTHREAD_DEVICE_M };
   enum{ NTHREAD_M = NM };
   enum{ NTHREAD_U = 2 };
 #else
-  enum{ NTHREAD_A = 1 };
-  enum{ NTHREAD_M = 1 };
-  enum{ NTHREAD_U = 1 };
+  enum{ NTHREAD_A = NTHREAD_DEVICE_A };
+  enum{ NTHREAD_M = NTHREAD_DEVICE_M };
+  enum{ NTHREAD_U = NTHREAD_DEVICE_U };
 #endif
 #endif
 
