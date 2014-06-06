@@ -591,7 +591,9 @@ TARGET_HD void Sweeper_sweep_cell(
     int sweeper_thread_a = 0;
 #ifdef __MIC__
     __assume_aligned( vslocal, VEC_LEN );
+/*
 #pragma simd assert, vectorlengthfor( P )
+*/
 #endif
     for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A; ++sweeper_thread_a )
 #endif
