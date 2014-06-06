@@ -591,24 +591,21 @@ TARGET_HD void Sweeper_sweep_cell(
     int sweeper_thread_a = 0;
 #ifdef __MIC__
     __assume_aligned( vslocal, VEC_LEN );
-/* #pragma simd assert, vectorlengthfor( P ) */
+#pragma simd assert, vectorlengthfor( P )
 #endif
     for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A; ++sweeper_thread_a )
 #endif
     {
       const int ia = ia_base + sweeper_thread_a;
-      if( ia < sweeper->dims_b.na && is_cell_active )
-      {
-
-        Quantities_solve( quan, vslocal,
-                          ia, sweeper_thread_a, NTHREAD_A,
-                          facexy, facexz, faceyz,
-                          ix, iy, iz, ie,
-                          ix+quan->ix_base, iy+quan->iy_base, iz+iz_base,
-                          octant, octant_in_block,
-                          sweeper->noctant_per_block,
-                          sweeper->dims_b, sweeper->dims_g );
-      }
+      Quantities_solve( quan, vslocal,
+                        ia, sweeper_thread_a, NTHREAD_A,
+                        facexy, facexz, faceyz,
+                        ix, iy, iz, ie,
+                        ix+quan->ix_base, iy+quan->iy_base, iz+iz_base,
+                        octant, octant_in_block,
+                        sweeper->noctant_per_block,
+                        sweeper->dims_b, sweeper->dims_g,
+                        is_cell_active );
     }
 
     /*====================*/
@@ -629,7 +626,9 @@ TARGET_HD void Sweeper_sweep_cell(
         __assume_aligned( volocal, VEC_LEN );
         __assume_aligned( vo_this, VEC_LEN );
         __assume_aligned( m_from_a, VEC_LEN );
-/* #pragma simd assert, vectorlengthfor( P ) */
+/*
+#pragma simd assert, vectorlengthfor( P )
+*/
 #endif /*---__MIC__---*/
         for( sweeper_thread_mu=0; sweeper_thread_mu<NTHREAD_M*NTHREAD_U;
                                                           ++sweeper_thread_mu )
@@ -662,8 +661,11 @@ TARGET_HD void Sweeper_sweep_cell(
             /*--------------------*/
             /*---Compute matvec in registers---*/
             /*--------------------*/
-
+#ifdef __MIC__
+/* "If applied to outer loop nests, the current implementation supports complete outer loop unrolling." */
+#else
 #pragma unroll 4
+#endif
             for( ia_in_block=0; ia_in_block<NTHREAD_A; ++ia_in_block )
             {
               const int ia = ia_base + ia_in_block;

@@ -234,7 +234,7 @@ void Sweeper_sweep(
                           ix, iy, iz, ie, ix, iy, iz,
                           octant, octant_in_block,
                           Sweeper_noctant_per_block( sweeper ),
-                          sweeper->dims, sweeper->dims );
+                          sweeper->dims, sweeper->dims, Bool_true );
       }
 
       /*--------------------*/

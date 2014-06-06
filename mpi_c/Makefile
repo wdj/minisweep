@@ -60,7 +60,7 @@ endif
 
 ifeq ($(COMPILER_OPTION),INTELMIC)
   CC = mpiicc
-  CFLAGS := $(CFLAGS) -mmic -opt-report=0 -vec-report -Dinline=__inline -finline -finline-functions -finline-limit=100 -ip -fno-alias -prec-div
+  CFLAGS := $(CFLAGS) -mmic -opt-report=0 -vec-report -Dinline=__inline -finline -finline-functions -finline-limit=100 -ip -fno-alias -prec-div -inline-forceinline
   ifeq ($(RELEASE_OPTION),DEBUG)
     CFLAGS := $(CFLAGS)
     COMMON_FLAGS := $(COMMON_FLAGS)

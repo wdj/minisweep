@@ -306,7 +306,8 @@ void Sweeper_sweep(
                           sweeper->facexy, sweeper->facexz, sweeper->faceyz,
                           ix, iy, iz, ie, ix, iy, iz, 
                           octant, octant_in_block,
-                          Sweeper_noctant_per_block( sweeper ), dims, dims );
+                          Sweeper_noctant_per_block( sweeper ),
+                          dims, dims, Bool_true );
       }
 
       /*--------------------*/

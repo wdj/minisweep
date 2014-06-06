@@ -422,7 +422,8 @@ TARGET_HD static inline void Quantities_solve(
   int                octant_in_block,
   int                noctant_per_block,
   const Dimensions   dims_b,
-  const Dimensions   dims_g )
+  const Dimensions   dims_g,
+  Bool_t             is_cell_active )
 {
   Assert( vslocal );
   Assert( ia >= 0 && ia < dims_b.na );
@@ -460,6 +461,8 @@ TARGET_HD static inline void Quantities_solve(
 #pragma unroll
   for( iu=0; iu<NU; ++iu )
   {
+    if( ia < dims_b.na && is_cell_active )
+    {
     const P result = (
           *const_ref_vslocal( vslocal, dims_b, NU, iamax, iaind, iu )
              / Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g )
@@ -493,6 +496,7 @@ TARGET_HD static inline void Quantities_solve(
     *ref_faceyz( faceyz, dims_b, NU, noctant_per_block,
                  iy_b, iz_b, ie, ia, iu, octant_in_block ) = result *
                  Quantities_scalefactor_octant__( octant );
+    }
   } /*---for---*/
 
 } /*---Quantities_solve---*/
