@@ -117,13 +117,14 @@ void Sweeper_ctor( Sweeper*          sweeper,
   Insist(      Sweeper_nthread_u( sweeper, env ) > 0 );
   Insist( NU % Sweeper_nthread_u( sweeper, env ) == 0 );
   Insist( Sweeper_nthread_a( sweeper, env ) > 0 );
-#ifndef __MIC__
-  Insist( Sweeper_nthread_a( sweeper, env ) %
-          Sweeper_nthread_u( sweeper, env ) == 0 );
-  Insist( Sweeper_nthread_a( sweeper, env ) ==
-          Sweeper_nthread_u( sweeper, env ) *
-          Sweeper_nthread_m( sweeper, env ) );
-#endif
+  if( ! IS_USING_MIC )
+  {
+    Insist( Sweeper_nthread_a( sweeper, env ) %
+            Sweeper_nthread_u( sweeper, env ) == 0 );
+    Insist( Sweeper_nthread_a( sweeper, env ) ==
+            Sweeper_nthread_u( sweeper, env ) *
+            Sweeper_nthread_m( sweeper, env ) );
+  }
 
   /*====================*/
   /*---Set up dims structs---*/
@@ -144,15 +145,15 @@ void Sweeper_ctor( Sweeper*          sweeper,
 
   sweeper->vilocal_host__ = Env_cuda_is_using_device( env ) ?
                             ( (P*) NULL ) :
-                            malloc_P( Sweeper_nvilocal__( sweeper, env ) );
+                            malloc_host_P( Sweeper_nvilocal__( sweeper, env ) );
 
   sweeper->vslocal_host__ = Env_cuda_is_using_device( env ) ?
                             ( (P*) NULL ) :
-                            malloc_P( Sweeper_nvslocal__( sweeper, env ) );
+                            malloc_host_P( Sweeper_nvslocal__( sweeper, env ) );
 
   sweeper->volocal_host__ = Env_cuda_is_using_device( env ) ?
                             ( (P*) NULL ) :
-                            malloc_P( Sweeper_nvolocal__( sweeper, env ) );
+                            malloc_host_P( Sweeper_nvolocal__( sweeper, env ) );
 
   /*====================*/
   /*---Allocate faces---*/
@@ -176,15 +177,15 @@ void Sweeper_dtor( Sweeper* sweeper,
   {
     if( sweeper->vilocal_host__ )
     {
-      free_P( sweeper->vilocal_host__ );
+      free_host_P( sweeper->vilocal_host__ );
     }
     if( sweeper->vslocal_host__ )
     {
-      free_P( sweeper->vslocal_host__ );
+      free_host_P( sweeper->vslocal_host__ );
     }
     if( sweeper->volocal_host__ )
     {
-      free_P( sweeper->volocal_host__ );
+      free_host_P( sweeper->volocal_host__ );
     }
     sweeper->vilocal_host__ = NULL;
     sweeper->vslocal_host__ = NULL;
@@ -378,7 +379,7 @@ TARGET_HD static void Sweeper_set_boundary_yz(
 /*---Perform a sweep for a cell---*/
 
 TARGET_HD void Sweeper_sweep_cell(
-  Sweeper*               sweeper,
+  Sweeper*                     sweeper,
   P* const __restrict__        vo_this,
   const P* const __restrict__  vi_this,
   P* const __restrict__        vilocal,
@@ -433,20 +434,22 @@ TARGET_HD void Sweeper_sweep_cell(
       /*====================*/
 
       {
+        __assume_aligned( vi_this, ( VEC_LEN < NTHREAD_M*NTHREAD_U ?
+                                     VEC_LEN : NTHREAD_M*NTHREAD_U ) * sizeof(P) );
+        __assume_aligned( vilocal, ( VEC_LEN < NTHREAD_M*NTHREAD_U ? 
+                                     VEC_LEN : NTHREAD_M*NTHREAD_U ) * sizeof(P) );
 #ifndef __CUDA_ARCH__
         int sweeper_thread_mu = 0;
-#ifdef __MIC__
-        __assume_aligned( vilocal, VEC_LEN );
-        __assume_aligned( vi_this, VEC_LEN );
+        /*---NOTE: to vectorize, require (NM*NU)%VEC_LEN==0---*/
+#pragma ivdep
 #pragma simd assert, vectorlengthfor( P )
-#endif /*---__MIC__---*/
         for( sweeper_thread_mu=0; sweeper_thread_mu<NTHREAD_M*NTHREAD_U;
                                                           ++sweeper_thread_mu )
-#endif
         {
-#ifndef __CUDA_ARCH__
           const int sweeper_thread_m = sweeper_thread_mu % NTHREAD_M;
           const int sweeper_thread_u = sweeper_thread_mu / NTHREAD_M;
+#else
+        {
 #endif
           const int im = im_base + sweeper_thread_m;
           if( ( NM % NTHREAD_M == 0 || im < NM ) &&
@@ -465,7 +468,6 @@ TARGET_HD void Sweeper_sweep_cell(
                 {
                   *ref_vilocal( vilocal, sweeper->dims_b, NU, NTHREAD_M,
                                             sweeper_thread_m, iu ) =
-#ifdef __MIC__
                   *const_ref_state_flat( vi_this,
                                          sweeper->dims_b.nx,
                                          sweeper->dims_b.ny,
@@ -474,10 +476,10 @@ TARGET_HD void Sweeper_sweep_cell(
                                          NM,
                                          NU,
                                          ix, iy, iz, ie, im, iu );
-#else /*---__MIC__---*/
-                  *const_ref_state( vi_this, sweeper->dims_b, NU,
-                                    ix, iy, iz, ie, im, iu );
-#endif /*---__MIC__---*/
+                  /*---Can use this for non-MIC case:
+                  /*--- *const_ref_state( vi_this, sweeper->dims_b, NU,
+                  /*---                   ix, iy, iz, ie, im, iu );
+                  ---*/
                 }
               } /*---for iu---*/
             }
@@ -496,18 +498,19 @@ TARGET_HD void Sweeper_sweep_cell(
       /*====================*/
 
       {
+        __assume_aligned( vslocal,  VEC_LEN * sizeof(P) );
+        __assume_aligned( a_from_m, VEC_LEN * sizeof(P) );
+        __assume_aligned( vilocal,  ( VEC_LEN < NTHREAD_M*NTHREAD_U ? 
+                                      VEC_LEN : NTHREAD_M*NTHREAD_U ) * sizeof(P) );
 #ifndef __CUDA_ARCH__
         int sweeper_thread_a = 0;
-#ifdef __MIC__
-        __assume_aligned( vilocal, VEC_LEN );
-        __assume_aligned( vslocal, VEC_LEN );
-        __assume_aligned( a_from_m, VEC_LEN );
 #pragma simd assert, vectorlengthfor( P )
-#endif /*---__MIC__---*/
         for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A;
                                                            ++sweeper_thread_a )
-#endif
         {
+#else
+        {
+#endif
           const int ia = ia_base + sweeper_thread_a;
           if( ia < sweeper->dims_b.na && is_cell_active )
           {
@@ -536,15 +539,14 @@ TARGET_HD void Sweeper_sweep_cell(
                 for( iu=0; iu<NU; ++iu )
                 {
                   v[iu] +=
-#ifdef __MIC__
                     *const_ref_a_from_m_flat( a_from_m,
                                               NM,
                                               sweeper->dims_b.na,
                                               im, ia, octant )
-#else /*---__MIC__---*/
-                    *const_ref_a_from_m( a_from_m, sweeper->dims_b,
-                                         im, ia, octant )
-#endif /*---__MIC__---*/
+                    /*---Can use this for non-MIC case:
+                    /*--- *const_ref_a_from_m( a_from_m, sweeper->dims_b,
+                    /*---                      im, ia, octant )
+                    ---*/
                     * *const_ref_vilocal( vilocal, sweeper->dims_b,
                                         NU, NTHREAD_M, im_in_block, iu );
                 }
@@ -560,13 +562,12 @@ TARGET_HD void Sweeper_sweep_cell(
 #pragma unroll
               for( iu=0; iu<NU; ++iu )
               {
-#ifdef __MIC__
                 vslocal[ ind_vslocal( sweeper->dims_b, NU, NTHREAD_A,
                                         sweeper_thread_a, iu ) ] = v[iu];
-#else /*---__MIC__---*/
+                /*---Can use this for non-MIC case
                 *ref_vslocal( vslocal, sweeper->dims_b, NU, NTHREAD_A,
                                         sweeper_thread_a, iu )  = v[iu];
-#endif /*---__MIC__---*/
+                */
               }
             }
             else
@@ -587,17 +588,18 @@ TARGET_HD void Sweeper_sweep_cell(
     /*---Perform solve---*/
     /*====================*/
 
+    __assume_aligned( vslocal, VEC_LEN * sizeof(P) );
+    __assume_aligned( facexy,  VEC_LEN * sizeof(P) );
+    __assume_aligned( facexz,  VEC_LEN * sizeof(P) );
+    __assume_aligned( faceyz,  VEC_LEN * sizeof(P) );
 #ifndef __CUDA_ARCH__
     int sweeper_thread_a = 0;
-#ifdef __MIC__
-    __assume_aligned( vslocal, VEC_LEN );
-/*
 #pragma simd assert, vectorlengthfor( P )
-*/
-#endif
     for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A; ++sweeper_thread_a )
-#endif
     {
+#else
+    {
+#endif
       const int ia = ia_base + sweeper_thread_a;
       Quantities_solve( quan, vslocal,
                         ia, sweeper_thread_a, NTHREAD_A,
@@ -621,26 +623,33 @@ TARGET_HD void Sweeper_sweep_cell(
     for( im_base=0; im_base<NM; im_base += NTHREAD_M )
     {
       {
+        __assume_aligned( vslocal,  VEC_LEN * sizeof(P) );
+        __assume_aligned( m_from_a, VEC_LEN * sizeof(P) );
+        __assume_aligned( vi_this,  ( VEC_LEN < NTHREAD_M*NTHREAD_U ?
+                                      VEC_LEN : NTHREAD_M*NTHREAD_U ) * sizeof(P) );
+        __assume_aligned( vilocal,  ( VEC_LEN < NTHREAD_M*NTHREAD_U ? 
+                                      VEC_LEN : NTHREAD_M*NTHREAD_U ) * sizeof(P) );
 #ifndef __CUDA_ARCH__
         int sweeper_thread_mu = 0;
-#ifdef __MIC__
-        __assume_aligned( vslocal, VEC_LEN );
-        __assume_aligned( volocal, VEC_LEN );
-        __assume_aligned( vo_this, VEC_LEN );
-        __assume_aligned( m_from_a, VEC_LEN );
-/*
 #pragma simd assert, vectorlengthfor( P )
-*/
-#endif /*---__MIC__---*/
         for( sweeper_thread_mu=0; sweeper_thread_mu<NTHREAD_M*NTHREAD_U;
                                                           ++sweeper_thread_mu )
-#endif
         {
-#ifndef __CUDA_ARCH__
           const int sweeper_thread_m = sweeper_thread_mu % NTHREAD_M;
           const int sweeper_thread_u = sweeper_thread_mu / NTHREAD_M;
+#else
+        {
 #endif
           const int im = im_base + sweeper_thread_m;
+
+          P w[NU_PER_THREAD];
+
+          int iu_per_thread = 0;
+#pragma unroll
+          for( iu_per_thread=0; iu_per_thread<NU_PER_THREAD; ++iu_per_thread )
+          {
+            w[iu_per_thread] = P_zero();
+          }
 
           /*====================*/
           /*---Transform angles to moments---*/
@@ -650,21 +659,13 @@ TARGET_HD void Sweeper_sweep_cell(
               is_cell_active )
           {
             int ia_in_block = 0;
-            int iu_per_thread = 0;
-
-            P w[NU_PER_THREAD];
-
-#pragma unroll
-            for( iu_per_thread=0; iu_per_thread<NU_PER_THREAD; ++iu_per_thread )
-            {
-              w[iu_per_thread] = P_zero();
-            }
 
             /*--------------------*/
             /*---Compute matvec in registers---*/
             /*--------------------*/
 #ifdef __MIC__
 /* "If applied to outer loop nests, the current implementation supports complete outer loop unrolling." */
+#pragma unroll
 #else
 #pragma unroll 4
 #endif
@@ -674,7 +675,6 @@ TARGET_HD void Sweeper_sweep_cell(
 
               if( ia < sweeper->dims_b.na )
               {
-/*---NOTE: the outer loop won't simd-ize because this is a doubly-nested inner loop -- even though unrolled!!---*/
 #pragma unroll
                 for( iu_per_thread=0; iu_per_thread<NU_PER_THREAD;
                                                               ++iu_per_thread )
@@ -685,14 +685,13 @@ TARGET_HD void Sweeper_sweep_cell(
                   if( NU % NTHREAD_U == 0 || iu < NU )
                   {
                     w[ iu_per_thread ] +=
-#ifdef __MIC__
                         m_from_a[ ind_m_from_a_flat( sweeper->dims_b.nm,
                                                      sweeper->dims_b.na,
                                                      im, ia, octant ) ]
-#else /*---__MIC__---*/
-                        *const_ref_m_from_a( m_from_a, sweeper->dims_b,
-                                            im, ia, octant )
-#endif /*---__MIC__---*/
+                        /*---Can use this for non-MIC case:
+                        /*--- *const_ref_m_from_a( m_from_a, sweeper->dims_b,
+                        /*---                     im, ia, octant )
+                        ---*/
                       * *const_ref_vslocal( vslocal, sweeper->dims_b, NU,
                                             NTHREAD_A, ia_in_block, iu );
                   }
@@ -765,7 +764,7 @@ TARGET_HD void Sweeper_sweep_cell(
                                   sweeper_thread_m, iu );
                 }
               }
-#else
+#else /*---USE_OPENMP_VO_ATOMIC---*/
               if( ( ! do_block_init_this ) ||
                   ( NM*1 > NTHREAD_M*1 && ! ia_base==0 ) )
               {
@@ -776,8 +775,18 @@ TARGET_HD void Sweeper_sweep_cell(
 
                   if( (NU*1) % (NTHREAD_U*1) == 0 || iu < NU*1 )
                   {
-                    *ref_state( vo_this, sweeper->dims_b, NU,
-                                ix, iy, iz, ie, im, iu ) +=
+                    /*---Can use this for non-MIC case:
+                    /*--- *ref_state( vo_this, sweeper->dims_b, NU,
+                    /*---             ix, iy, iz, ie, im, iu ) +=
+                    */
+                    *ref_state_flat( vo_this,
+                                     sweeper->dims_b.nx,
+                                     sweeper->dims_b.ny,
+                                     sweeper->dims_b.nz,
+                                     sweeper->dims_b.ne,
+                                     NM,
+                                     NU,
+                                     ix, iy, iz, ie, im, iu ) +=
                     *ref_volocal( volocal, sweeper->dims_b, NU, NTHREAD_M,
                                     sweeper_thread_m, iu );
                   }
@@ -792,14 +801,24 @@ TARGET_HD void Sweeper_sweep_cell(
 
                   if( (NU*1) % (NTHREAD_U*1) == 0 || iu < NU*1 )
                   {
-                    *ref_state( vo_this, sweeper->dims_b, NU,
-                                ix, iy, iz, ie, im, iu ) =
+                    /*---Can use this for non-MIC case:
+                    /*--- *ref_state( vo_this, sweeper->dims_b, NU,
+                    /*---             ix, iy, iz, ie, im, iu ) =
+                    */
+                    *ref_state_flat( vo_this,
+                                     sweeper->dims_b.nx,
+                                     sweeper->dims_b.ny,
+                                     sweeper->dims_b.nz,
+                                     sweeper->dims_b.ne,
+                                     NM,
+                                     NU,
+                                     ix, iy, iz, ie, im, iu )  =
                       *ref_volocal( volocal, sweeper->dims_b, NU, NTHREAD_M,
                                 sweeper_thread_m, iu );
                   }
                 }
               }
-#endif
+#endif /*---USE_OPENMP_VO_ATOMIC---*/
             }
           } /*---if im---*/
         }
@@ -1227,6 +1246,7 @@ void Sweeper_sweep_block(
 
   for( semiblock=0; semiblock<sweeper->nsemiblock; ++semiblock )
   {
+#pragma novector
     for( octant_in_block=0; octant_in_block<sweeper->noctant_per_block;
                                                             ++octant_in_block )
     {

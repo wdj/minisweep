@@ -29,8 +29,6 @@ extern "C"
 
 #ifndef __MIC__
 enum{ VEC_LEN = 32 };
-#else
-enum{ VEC_LEN = P_IS_DOUBLE ? 8 : 16 };
 #endif
 
 /*===========================================================================*/
@@ -137,7 +135,38 @@ static Bool_t Env_cuda_is_using_device( const Env *env )
 /*===========================================================================*/
 /*---Memory management---*/
 
-static P* Env_cuda_malloc_P( size_t n )
+#ifndef __MIC__
+
+static P* malloc_host_P( size_t n )
+{
+  Assert( n+1 >= 1 );
+  P* result = malloc_P( n );
+  Assert( result );
+  return result;
+}
+
+/*---------------------------------------------------------------------------*/
+
+static P* malloc_host_pinned_P( size_t n )
+{
+  Assert( n+1 >= 1 );
+
+  P* result = NULL;
+
+#ifdef __CUDACC__
+  cudaMallocHost( &result, n==0 ? ((size_t)1) : n*sizeof(P) );
+  Assert( Env_cuda_last_call_succeeded() );
+#else
+  result = malloc_P( n );
+#endif
+  Assert( result );
+
+  return result;
+}
+
+/*---------------------------------------------------------------------------*/
+
+static P* malloc_device_P( size_t n )
 {
   Assert( n+1 >= 1 );
 
@@ -154,37 +183,17 @@ static P* Env_cuda_malloc_P( size_t n )
 
 /*---------------------------------------------------------------------------*/
 
-static P* Env_cuda_malloc_host_P( size_t n )
+static void free_host_P( P* p )
 {
-  Assert( n+1 >= 1 );
-
-  P* result = NULL;
-
-#ifdef __CUDACC__
-  cudaMallocHost( &result, n==0 ? ((size_t)1) : n*sizeof(P) );
-  Assert( Env_cuda_last_call_succeeded() );
-#else
-   result = malloc_P( n );
-#endif
-  Assert( result );
-
-  return result;
+  Assert( p );
+  free_P( p );
 }
 
 /*---------------------------------------------------------------------------*/
 
-static void Env_cuda_free_P( P* p )
+static void free_host_pinned_P( P* p )
 {
-#ifdef __CUDACC__
-  cudaFree( p );
-  Assert( Env_cuda_last_call_succeeded() );
-#endif
-}
-
-/*---------------------------------------------------------------------------*/
-
-static void Env_cuda_free_host_P( P* p )
-{
+  Assert( p );
 #ifdef __CUDACC__
   cudaFreeHost( p );
   Assert( Env_cuda_last_call_succeeded() );
@@ -192,6 +201,18 @@ static void Env_cuda_free_host_P( P* p )
   free_P( p );
 #endif
 }
+
+/*---------------------------------------------------------------------------*/
+
+static void free_device_P( P* p )
+{
+#ifdef __CUDACC__
+  cudaFree( p );
+  Assert( Env_cuda_last_call_succeeded() );
+#endif
+}
+
+#endif /*---__MIC__---*/
 
 /*---------------------------------------------------------------------------*/
 

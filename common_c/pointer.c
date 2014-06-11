@@ -93,18 +93,18 @@ void Pointer_dtor( Pointer* p )
   {
     if( p->is_pinned__ && p->is_using_device__ )
     {
-      Env_cuda_free_host_P( p->h__ );
+      free_host_pinned_P( p->h__ );
     }
     else
     {
-      free_P( p->h__ );
+      free_host_P( p->h__ );
     }
   }
   p->h__ = NULL;
 
   if( p->d__ && ! p->is_alias__ )
   {
-    Env_cuda_free_P( p->d__ );
+    free_device_P( p->d__ );
   }
   p->d__ = NULL;
 
@@ -124,11 +124,11 @@ void Pointer_create_h( Pointer* p )
 
   if( p->is_pinned__ && p->is_using_device__ )
   {
-    p->h__ = Env_cuda_malloc_host_P( p->n__ );
+    p->h__ = malloc_host_pinned_P( p->n__ );
   }
   else
   {
-    p->h__ = malloc_P( p->n__ );
+    p->h__ = malloc_host_P( p->n__ );
   }
   Assert( p->h__ );
 }
@@ -143,7 +143,7 @@ void Pointer_create_d( Pointer* p )
 
   if( p->is_using_device__ )
   {
-    p->d__ = Env_cuda_malloc_P( p->n__ );
+    p->d__ = malloc_device_P( p->n__ );
 
     Assert( p->d__ );
   }
@@ -170,11 +170,11 @@ void Pointer_delete_h( Pointer* p )
 
   if( p->is_pinned__ && p->is_using_device__ )
   {
-    Env_cuda_free_host_P( p->h__ );
+    free_host_pinned_P( p->h__ );
   }
   else
   {
-    free_P( p->h__ );
+    free_host_P( p->h__ );
   }
   p->h__ = NULL;
 }
@@ -190,7 +190,7 @@ void Pointer_delete_d( Pointer* p )
   {
     Assert( p->d__ );
 
-    Env_cuda_free_P( p->d__ );
+    free_device_P( p->d__ );
 
     p->d__ = NULL;
   }

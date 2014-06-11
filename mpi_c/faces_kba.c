@@ -103,8 +103,8 @@ void Faces_communicate_faces(
 
   /*---Allocate temporary face buffers---*/
 
-  P* __restrict__ buf_xz  = malloc_P( size_facexz_per_octant );
-  P* __restrict__ buf_yz  = malloc_P( size_faceyz_per_octant );
+  P* __restrict__ buf_xz  = malloc_host_P( size_facexz_per_octant );
+  P* __restrict__ buf_yz  = malloc_host_P( size_faceyz_per_octant );
 
   /*---Loop over octants---*/
 
@@ -216,8 +216,8 @@ void Faces_communicate_faces(
 
   /*---Deallocations---*/
 
-  free_P( buf_xz );
-  free_P( buf_yz );
+  free_host_P( buf_xz );
+  free_host_P( buf_yz );
 }
 
 /*===========================================================================*/
