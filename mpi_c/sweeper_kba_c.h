@@ -596,10 +596,10 @@ TARGET_HD inline void Sweeper_sweep_cell(
     /*---Perform solve---*/
     /*====================*/
 
-        /*
-        WARNING!!!
-        __assume( sweeper->dims_b.na % NTHREAD_A == 0 );
-        */
+    /*
+    WARNING!!!
+    __assume( sweeper->dims_b.na % NTHREAD_A == 0 );
+    */
     __assume_aligned( vslocal, VEC_LEN * sizeof(P) );
     __assume_aligned( facexy,  VEC_LEN * sizeof(P) );
     __assume_aligned( facexz,  VEC_LEN * sizeof(P) );

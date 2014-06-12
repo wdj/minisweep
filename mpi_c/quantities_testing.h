@@ -426,19 +426,22 @@ TARGET_HD static inline void Quantities_solve(
   Bool_t             is_cell_active )
 {
   Assert( vslocal );
+  /*
   Assert( ia >= 0 && ia < dims_b.na );
+  */
+  Assert( ia >= 0 );
   Assert( iaind >= 0 && iaind < iamax );
   Assert( iamax >= 0 );
   Assert( facexy );
   Assert( facexz );
   Assert( faceyz );
-  Assert( ix_b >= 0 && ix_b < dims_b.nx );
-  Assert( iy_b >= 0 && iy_b < dims_b.ny );
-  Assert( iz_b >= 0 && iz_b < dims_b.nz );
+  Assert( ( ix_b >= 0 && ix_b < dims_b.nx ) || ! is_cell_active );
+  Assert( ( iy_b >= 0 && iy_b < dims_b.ny ) || ! is_cell_active );
+  Assert( ( iz_b >= 0 && iz_b < dims_b.nz ) || ! is_cell_active );
+  Assert( ( ix_g >= 0 && ix_g < dims_g.nx ) || ! is_cell_active );
+  Assert( ( iy_g >= 0 && iy_g < dims_g.ny ) || ! is_cell_active );
+  Assert( ( iz_g >= 0 && iz_g < dims_g.nz ) || ! is_cell_active );
   Assert( ie   >= 0 && ie   < dims_b.ne );
-  Assert( ix_g >= 0 && ix_g < dims_g.nx );
-  Assert( iy_g >= 0 && iy_g < dims_g.ny );
-  Assert( iz_g >= 0 && iz_g < dims_g.nz );
   Assert( octant >= 0 && octant < NOCTANT );
   Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 

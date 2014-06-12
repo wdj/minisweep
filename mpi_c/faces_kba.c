@@ -140,7 +140,7 @@ void Faces_communicate_faces(
 
       for( dir_ind=0; dir_ind<2; ++dir_ind ) /*---Loop: up, down---*/
       {
-        const int dir = dir_ind==0 ? DIR_UP : DIR_DN;
+        const int dir = dir_ind==0 ? DIR_UP*1 : DIR_DN*1;
         const int inc_x = axis_x ? Dir_inc( dir ) : 0;
         const int inc_y = axis_y ? Dir_inc( dir ) : 0;
 
@@ -272,7 +272,7 @@ void Faces_send_faces_start(
 
       for( dir_ind=0; dir_ind<2; ++dir_ind )
       {
-        const int dir = dir_ind==0 ? DIR_UP : DIR_DN;
+        const int dir = dir_ind==0 ? DIR_UP*1 : DIR_DN*1;
         const int inc_x = axis_x ? Dir_inc( dir ) : 0;
         const int inc_y = axis_y ? Dir_inc( dir ) : 0;
 
@@ -399,7 +399,7 @@ void Faces_recv_faces_start(
 
       for( dir_ind=0; dir_ind<2; ++dir_ind )
       {
-        const int dir = dir_ind==0 ? DIR_UP : DIR_DN;
+        const int dir = dir_ind==0 ? DIR_UP*1 : DIR_DN*1;
         const int inc_x = axis_x ? Dir_inc( dir ) : 0;
         const int inc_y = axis_y ? Dir_inc( dir ) : 0;
 
