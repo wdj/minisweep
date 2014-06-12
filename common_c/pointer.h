@@ -43,7 +43,7 @@ typedef struct
 /*===========================================================================*/
 /*---Null object---*/
 
-static Pointer Pointer_null()
+static inline Pointer Pointer_null()
 {
   Pointer p;
 

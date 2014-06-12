@@ -262,8 +262,8 @@ TARGET_HD static inline P Quantities_init_facexy(
 {
   Assert( ix_g >=  0 && ix_g <  dims_g.nx );
   Assert( iy_g >=  0 && iy_g <  dims_g.ny );
-  Assert( ( iz_g == -1        && Dir_z(octant)==Dir_up() ) ||
-          ( iz_g == dims_g.nz && Dir_z(octant)==Dir_dn() ) );
+  Assert( ( iz_g == -1        && Dir_z(octant)==DIR_UP ) ||
+          ( iz_g == dims_g.nz && Dir_z(octant)==DIR_DN ) );
   Assert( ie >=  0 && ie < dims_g.ne );
   Assert( ia >=  0 && ia < dims_g.na );
   Assert( iu >=  0 && iu < NU );
@@ -275,7 +275,7 @@ TARGET_HD static inline P Quantities_init_facexy(
 
   if( Quantities_bc_vacuum() )
   {
-    return P_zero();
+    return ((P)0);
   }
   else
   {
@@ -303,8 +303,8 @@ TARGET_HD static inline P Quantities_init_facexz(
   const Dimensions   dims_g )
 {
   Assert( ix_g >=  0 && ix_g < dims_g.nx );
-  Assert( ( iy_g == -1        && Dir_y(octant)==Dir_up() ) ||
-          ( iy_g == dims_g.ny && Dir_y(octant)==Dir_dn() ) );
+  Assert( ( iy_g == -1        && Dir_y(octant)==DIR_UP ) ||
+          ( iy_g == dims_g.ny && Dir_y(octant)==DIR_DN ) );
   Assert( iz_g >=  0 && iz_g < dims_g.nz );
   Assert( ie >=  0 && ie < dims_g.ne );
   Assert( ia >=  0 && ia < dims_g.na );
@@ -313,7 +313,7 @@ TARGET_HD static inline P Quantities_init_facexz(
 
   if( Quantities_bc_vacuum() )
   {
-    return P_zero();
+    return ((P)0);
   }
   else
   {
@@ -340,8 +340,8 @@ TARGET_HD static inline P Quantities_init_faceyz(
   int                octant,
   const Dimensions   dims_g )
 {
-  Assert( ( ix_g == -1        && Dir_x(octant)==Dir_up() ) ||
-          ( ix_g == dims_g.nx && Dir_x(octant)==Dir_dn() ) );
+  Assert( ( ix_g == -1        && Dir_x(octant)==DIR_UP ) ||
+          ( ix_g == dims_g.nx && Dir_x(octant)==DIR_DN ) );
   Assert( iy_g >=  0 && iy_g < dims_g.ny );
   Assert( iz_g >=  0 && iz_g < dims_g.nz );
   Assert( ie >=  0 && ie < dims_g.ne );
@@ -351,7 +351,7 @@ TARGET_HD static inline P Quantities_init_faceyz(
 
   if( Quantities_bc_vacuum() )
   {
-    return P_zero();
+    return ((P)0);
   }
   else
   {
@@ -386,7 +386,7 @@ static inline P Quantities_init_state(
 
   if( Quantities_bc_vacuum() )
   {
-    return P_zero();
+    return ((P)0);
   }
   else
   {
@@ -468,19 +468,19 @@ TARGET_HD static inline void Quantities_solve(
              / Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g )
         + *const_ref_facexy( facexy, dims_b, NU, noctant_per_block,
                                      ix_b, iy_b, ie, ia, iu, octant_in_block )
-           * ( Quantities_xfluxweight__( dims_g, ia ) * P_one()
+           * ( Quantities_xfluxweight__( dims_g, ia ) * ((P)1)
              / Quantities_scalefactor_octant__( octant ) )
              / Quantities_scalefactor_space__( quan,
                                                ix_g, iy_g, iz_g-Dir_inc(dir_z) )
         + *const_ref_facexz( facexz, dims_b, NU, noctant_per_block,
                                      ix_b, iz_b, ie, ia, iu, octant_in_block )
-           * ( Quantities_yfluxweight__( dims_g, ia ) * P_one()
+           * ( Quantities_yfluxweight__( dims_g, ia ) * ((P)1)
              / Quantities_scalefactor_octant__( octant ) )
              / Quantities_scalefactor_space__( quan,
                                                ix_g, iy_g-Dir_inc(dir_y), iz_g )
         + *const_ref_faceyz( faceyz, dims_b, NU, noctant_per_block,
                                      iy_b, iz_b, ie, ia, iu, octant_in_block )
-           * ( Quantities_zfluxweight__( dims_g, ia ) * P_one()
+           * ( Quantities_zfluxweight__( dims_g, ia ) * ((P)1)
              / Quantities_scalefactor_octant__( octant ) )
              / Quantities_scalefactor_space__( quan,
                                                ix_g-Dir_inc(dir_x), iy_g, iz_g )

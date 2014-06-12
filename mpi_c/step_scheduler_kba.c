@@ -241,9 +241,9 @@ Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,
   dir_z  = Dir_z( folded_octant );
 
   /*---Get coordinates of the starting corner block of the wavefront---*/
-  start_x = dir_x==Dir_up() ? 0 : ( nproc_x - 1 );
-  start_y = dir_y==Dir_up() ? 0 : ( nproc_y - 1 );
-  start_z = dir_z==Dir_up() ? 0 : ( nblock  - 1 );
+  start_x = dir_x==DIR_UP ? 0 : ( nproc_x - 1 );
+  start_y = dir_y==DIR_UP ? 0 : ( nproc_y - 1 );
+  start_z = dir_z==DIR_UP ? 0 : ( nblock  - 1 );
 
   /*---Get coordinate of block on this processor to be processed---*/
   folded_block = ( wave - ( start_x + folded_proc_x * dir_x )
@@ -288,7 +288,7 @@ Bool_t Step_Scheduler_must_do_send(
   const Bool_t axis_x = axis==0;
   const Bool_t axis_y = axis==1;
 
-  const int dir = dir_ind==0 ? Dir_up() : Dir_dn();
+  const int dir = dir_ind==0 ? DIR_UP : DIR_DN;
   const int inc_x = axis_x ? Dir_inc( dir ) : 0;
   const int inc_y = axis_y ? Dir_inc( dir ) : 0;
 
@@ -332,7 +332,7 @@ Bool_t Step_Scheduler_must_do_recv(
   const Bool_t axis_x = axis==0;
   const Bool_t axis_y = axis==1;
 
-  const int dir = dir_ind==0 ? Dir_up() : Dir_dn();
+  const int dir = dir_ind==0 ? DIR_UP : DIR_DN;
   const int inc_x = axis_x ? Dir_inc( dir ) : 0;
   const int inc_y = axis_y ? Dir_inc( dir ) : 0;
 

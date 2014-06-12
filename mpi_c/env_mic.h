@@ -30,7 +30,9 @@ enum{ VEC_LEN = P_IS_DOUBLE ? 8 : 16 };
 /*---Define dummy function/macros for non-MIC case---*/
 
 #ifndef __MIC__
+#define __assume( a )
 #define __assume_aligned( a, b )
+#define __declspec( a )
 #endif
 
 /*===========================================================================*/

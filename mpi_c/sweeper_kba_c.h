@@ -222,7 +222,7 @@ TARGET_HD static void Sweeper_set_boundary_xy(
   const int ix_base = quan->ix_base;
   const int iy_base = quan->iy_base;
   const int dir_z = Dir_z( octant );
-  const int iz_g = dir_z == Dir_up() ? -1 : sweeper->dims_g.nz;
+  const int iz_g = dir_z == DIR_UP ? -1 : sweeper->dims_g.nz;
 
   const int ie_min = ( sweeper->dims.ne *
                        ( Sweeper_thread_e( sweeper )     ) )
@@ -279,7 +279,7 @@ TARGET_HD static void Sweeper_set_boundary_xz(
   const int ix_base = quan->ix_base;
   const int iz_base = block_z * sweeper->dims_b.nz;
   const int dir_y = Dir_y( octant );
-  const int iy_g = dir_y == Dir_up() ? -1 : sweeper->dims_g.ny;
+  const int iy_g = dir_y == DIR_UP ? -1 : sweeper->dims_g.ny;
 
   const int ie_min = ( sweeper->dims.ne *
                        ( Sweeper_thread_e( sweeper )     ) )
@@ -336,7 +336,7 @@ TARGET_HD static void Sweeper_set_boundary_yz(
   const int iy_base = quan->iy_base;
   const int iz_base = block_z * sweeper->dims_b.nz;
   const int dir_x = Dir_x( octant );
-  const int ix_g = dir_x == Dir_up() ? -1 : sweeper->dims_g.nx;
+  const int ix_g = dir_x == DIR_UP ? -1 : sweeper->dims_g.nx;
 
   const int ie_min = ( sweeper->dims.ne *
                        ( Sweeper_thread_e( sweeper )     ) )
@@ -378,7 +378,7 @@ TARGET_HD static void Sweeper_set_boundary_yz(
 /*===========================================================================*/
 /*---Perform a sweep for a cell---*/
 
-TARGET_HD void Sweeper_sweep_cell(
+TARGET_HD inline void Sweeper_sweep_cell(
   Sweeper*                     sweeper,
   P* const __restrict__        vo_this,
   const P* const __restrict__  vi_this,
@@ -435,9 +435,11 @@ TARGET_HD void Sweeper_sweep_cell(
 
       {
         __assume_aligned( vi_this, ( VEC_LEN < NTHREAD_M*NTHREAD_U ?
-                                     VEC_LEN : NTHREAD_M*NTHREAD_U ) * sizeof(P) );
+                                     VEC_LEN : NTHREAD_M*NTHREAD_U )
+                                                                 * sizeof(P) );
         __assume_aligned( vilocal, ( VEC_LEN < NTHREAD_M*NTHREAD_U ? 
-                                     VEC_LEN : NTHREAD_M*NTHREAD_U ) * sizeof(P) );
+                                     VEC_LEN : NTHREAD_M*NTHREAD_U )
+                                                                 * sizeof(P) );
 #ifndef __CUDA_ARCH__
         int sweeper_thread_mu = 0;
         /*---NOTE: to vectorize, require (NM*NU)%VEC_LEN==0---*/
@@ -498,12 +500,18 @@ TARGET_HD void Sweeper_sweep_cell(
       /*====================*/
 
       {
+        /*
+        WARNING!!!
+        __assume( sweeper->dims_b.na % NTHREAD_A == 0 );
+        */
         __assume_aligned( vslocal,  VEC_LEN * sizeof(P) );
         __assume_aligned( a_from_m, VEC_LEN * sizeof(P) );
         __assume_aligned( vilocal,  ( VEC_LEN < NTHREAD_M*NTHREAD_U ? 
-                                      VEC_LEN : NTHREAD_M*NTHREAD_U ) * sizeof(P) );
+                                      VEC_LEN : NTHREAD_M*NTHREAD_U )
+                                                                 * sizeof(P) );
 #ifndef __CUDA_ARCH__
         int sweeper_thread_a = 0;
+#pragma ivdep
 #pragma simd assert, vectorlengthfor( P )
         for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A;
                                                            ++sweeper_thread_a )
@@ -522,7 +530,7 @@ TARGET_HD void Sweeper_sweep_cell(
 #pragma unroll
             for( iu=0; iu<NU; ++iu )
             {
-              v[iu] = P_zero();
+              v[iu] = ((P)0);
             }
 
             /*--------------------*/
@@ -588,12 +596,17 @@ TARGET_HD void Sweeper_sweep_cell(
     /*---Perform solve---*/
     /*====================*/
 
+        /*
+        WARNING!!!
+        __assume( sweeper->dims_b.na % NTHREAD_A == 0 );
+        */
     __assume_aligned( vslocal, VEC_LEN * sizeof(P) );
     __assume_aligned( facexy,  VEC_LEN * sizeof(P) );
     __assume_aligned( facexz,  VEC_LEN * sizeof(P) );
     __assume_aligned( faceyz,  VEC_LEN * sizeof(P) );
 #ifndef __CUDA_ARCH__
     int sweeper_thread_a = 0;
+#pragma ivdep
 #pragma simd assert, vectorlengthfor( P )
     for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A; ++sweeper_thread_a )
     {
@@ -623,14 +636,21 @@ TARGET_HD void Sweeper_sweep_cell(
     for( im_base=0; im_base<NM; im_base += NTHREAD_M )
     {
       {
+        /*
+        WARNING!!!
+        __assume( sweeper->dims_b.na % NTHREAD_A == 0 );
+        */
         __assume_aligned( vslocal,  VEC_LEN * sizeof(P) );
         __assume_aligned( m_from_a, VEC_LEN * sizeof(P) );
         __assume_aligned( vi_this,  ( VEC_LEN < NTHREAD_M*NTHREAD_U ?
-                                      VEC_LEN : NTHREAD_M*NTHREAD_U ) * sizeof(P) );
+                                      VEC_LEN : NTHREAD_M*NTHREAD_U )
+                                                                 * sizeof(P) );
         __assume_aligned( vilocal,  ( VEC_LEN < NTHREAD_M*NTHREAD_U ? 
-                                      VEC_LEN : NTHREAD_M*NTHREAD_U ) * sizeof(P) );
+                                      VEC_LEN : NTHREAD_M*NTHREAD_U )
+                                                                 * sizeof(P) );
 #ifndef __CUDA_ARCH__
         int sweeper_thread_mu = 0;
+#pragma ivdep
 #pragma simd assert, vectorlengthfor( P )
         for( sweeper_thread_mu=0; sweeper_thread_mu<NTHREAD_M*NTHREAD_U;
                                                           ++sweeper_thread_mu )
@@ -648,7 +668,7 @@ TARGET_HD void Sweeper_sweep_cell(
 #pragma unroll
           for( iu_per_thread=0; iu_per_thread<NU_PER_THREAD; ++iu_per_thread )
           {
-            w[iu_per_thread] = P_zero();
+            w[iu_per_thread] = ((P)0);
           }
 
           /*====================*/
@@ -833,7 +853,7 @@ TARGET_HD void Sweeper_sweep_cell(
 /*===========================================================================*/
 /*---Perform a sweep for a semiblock---*/
 
-TARGET_HD void Sweeper_sweep_semiblock(
+TARGET_HD inline void Sweeper_sweep_semiblock(
   Sweeper*               sweeper,
   P* __restrict__        vo_this,
   const P* __restrict__  vi_this,
@@ -874,13 +894,13 @@ TARGET_HD void Sweeper_sweep_semiblock(
 
   /*---Calculate loop extents---*/
 
-  const int ixbeg = dir_x==Dir_up() ? ixmin : ixmax;
-  const int iybeg = dir_y==Dir_up() ? iymin : iymax;
-  const int izbeg = dir_z==Dir_up() ? izmin : izmax;
+  const int ixbeg = dir_x==DIR_UP ? ixmin : ixmax;
+  const int iybeg = dir_y==DIR_UP ? iymin : iymax;
+  const int izbeg = dir_z==DIR_UP ? izmin : izmax;
 
-  const int ixend = dir_x==Dir_dn() ? ixmin : ixmax;
-  const int iyend = dir_y==Dir_dn() ? iymin : iymax;
-  const int izend = dir_z==Dir_dn() ? izmin : izmax;
+  const int ixend = dir_x==DIR_DN ? ixmin : ixmax;
+  const int iyend = dir_y==DIR_DN ? iymin : iymax;
+  const int izend = dir_z==DIR_DN ? izmin : izmax;
 
   const int ie_min = ( sweeper->dims.ne *
                        ( Sweeper_thread_e( sweeper )     ) )
@@ -1071,7 +1091,7 @@ TARGET_HD void Sweeper_sweep_block_impl(
 
           const Bool_t is_x_semiblocked = sweeper->nsemiblock > (1<<0);
           const Bool_t is_semiblock_x_lo = ( ( semiblock & (1<<0) ) == 0 ) ==
-                                           ( dir_x == Dir_up() );
+                                           ( dir_x == DIR_UP );
 
           const Bool_t has_x_lo =     is_semiblock_x_lo   || ! is_x_semiblocked;
           const Bool_t has_x_hi = ( ! is_semiblock_x_lo ) || ! is_x_semiblocked;
@@ -1087,7 +1107,7 @@ TARGET_HD void Sweeper_sweep_block_impl(
 
           const Bool_t is_y_semiblocked = sweeper->nsemiblock > (1<<1);
           const Bool_t is_semiblock_y_lo = ( ( semiblock & (1<<1) ) == 0 ) ==
-                                           ( dir_y == Dir_up() );
+                                           ( dir_y == DIR_UP );
 
           const Bool_t has_y_lo =     is_semiblock_y_lo   || ! is_y_semiblocked;
           const Bool_t has_y_hi = ( ! is_semiblock_y_lo ) || ! is_y_semiblocked;
@@ -1103,7 +1123,7 @@ TARGET_HD void Sweeper_sweep_block_impl(
 
           const Bool_t is_z_semiblocked = sweeper->nsemiblock > (1<<2);
           const Bool_t is_semiblock_z_lo = ( ( semiblock & (1<<2) ) == 0 ) ==
-                                           ( dir_z == Dir_up() );
+                                           ( dir_z == DIR_UP );
 
           const Bool_t has_z_lo =     is_semiblock_z_lo   || ! is_z_semiblocked;
           const Bool_t has_z_hi = ( ! is_semiblock_z_lo ) || ! is_z_semiblocked;
@@ -1119,8 +1139,8 @@ TARGET_HD void Sweeper_sweep_block_impl(
           /*---Set physical boundary conditions if part of semiblock---*/
           /*--------------------*/
 
-          if( ( dir_z == Dir_up() && step_info.block_z == 0 && has_z_lo ) ||
-              ( dir_z == Dir_dn() && step_info.block_z ==
+          if( ( dir_z == DIR_UP && step_info.block_z == 0 && has_z_lo ) ||
+              ( dir_z == DIR_DN && step_info.block_z ==
                                       sweeper->nblock_z - 1 && has_z_hi ) )
           {
             Sweeper_set_boundary_xy( sweeper, facexy, quan,
@@ -1130,8 +1150,8 @@ TARGET_HD void Sweeper_sweep_block_impl(
 
           /*--------------------*/
 
-          if( ( dir_y == Dir_up() && proc_y_min && has_y_lo ) ||
-              ( dir_y == Dir_dn() && proc_y_max && has_y_hi ) )
+          if( ( dir_y == DIR_UP && proc_y_min && has_y_lo ) ||
+              ( dir_y == DIR_DN && proc_y_max && has_y_hi ) )
           {
             Sweeper_set_boundary_xz( sweeper, facexz, quan, step_info.block_z,
                                      step_info.octant, octant_in_block,
@@ -1140,8 +1160,8 @@ TARGET_HD void Sweeper_sweep_block_impl(
 
           /*--------------------*/
 
-          if( ( dir_x == Dir_up() && proc_x_min && has_x_lo ) ||
-              ( dir_x == Dir_dn() && proc_x_max && has_x_hi ) )
+          if( ( dir_x == DIR_UP && proc_x_min && has_x_lo ) ||
+              ( dir_x == DIR_DN && proc_x_max && has_x_hi ) )
           {
             Sweeper_set_boundary_yz( sweeper, faceyz, quan, step_info.block_z,
                                      step_info.octant, octant_in_block,
@@ -1258,15 +1278,15 @@ void Sweeper_sweep_block(
         const int dir_z = Dir_z( step_info.octant );
         const Bool_t is_x_semiblocked = sweeper->nsemiblock > (1<<0);
         const Bool_t is_semiblock_x_lo = ( ( semiblock & (1<<0) ) == 0 ) ==
-                                         ( dir_x == Dir_up() );
+                                         ( dir_x == DIR_UP );
         const Bool_t has_x_lo =     is_semiblock_x_lo   || ! is_x_semiblocked;
         const Bool_t is_y_semiblocked = sweeper->nsemiblock > (1<<1);
         const Bool_t is_semiblock_y_lo = ( ( semiblock & (1<<1) ) == 0 ) ==
-                                         ( dir_y == Dir_up() );
+                                         ( dir_y == DIR_UP );
         const Bool_t has_y_lo =     is_semiblock_y_lo   || ! is_y_semiblocked;
         const Bool_t is_z_semiblocked = sweeper->nsemiblock > (1<<2);
         const Bool_t is_semiblock_z_lo = ( ( semiblock & (1<<2) ) == 0 ) ==
-                                         ( dir_z == Dir_up() );
+                                         ( dir_z == DIR_UP );
         const Bool_t has_z_lo =     is_semiblock_z_lo   || ! is_z_semiblocked;
         const int semiblock_num = ( has_x_lo ? 0 : 1 ) + 2 * (
                                   ( has_y_lo ? 0 : 1 ) + 2 * (

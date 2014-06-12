@@ -60,9 +60,26 @@ endif
 
 ifeq ($(COMPILER_OPTION),INTELMIC)
   CC = mpiicc
-  #-vec-report6
+  #
+  # -guide
   # -guide-vec=4
-  CFLAGS := $(CFLAGS) -mmic -opt-report=0 -vec-report -Dinline=__forceinline -finline -finline-functions -finline-limit=100 -ip -fno-alias -prec-div -restrict -O3 -align -fargument-noalias -ansi-alias -D__restrict__=restrict
+  # -openmp-report=2
+  # -watch
+  # -Winline   #---this appears to give inaccurate information.
+  # -opt-report=3
+  # -vec-report6
+  # -S -fsource-asm
+  #
+  # -no-vec -no-simd
+  # -openmp-simd
+  # -opt-assume-safe-padding
+  # -opt-streaming-cache-evict=3
+  # -opt-threads-per-core=2
+  # -finline-functions
+  # -finline -finline-limit=1000
+  # -fno-alias -fargument-noalias
+  #
+  CFLAGS := $(CFLAGS) -mmic -vec-report1 -Dinline=__forceinline -ip -prec-div -O3 -align -ansi-alias -fargument-noalias -restrict -D__restrict__=restrict
   ifeq ($(RELEASE_OPTION),DEBUG)
     CFLAGS := $(CFLAGS)
     COMMON_FLAGS := $(COMMON_FLAGS)
@@ -96,6 +113,9 @@ ifneq ($(OPENMP_OPTION),)
   endif
   ifeq ($(COMPILER_OPTION),GNU)
     CFLAGS := $(CFLAGS) -fopenmp
+  endif
+  ifeq ($(COMPILER_OPTION),INTELMIC)
+    CFLAGS := $(CFLAGS) -openmp
   endif
   COMMA := ,
   ifneq ($(findstring $(COMMA)THREADS$(COMMA),$(COMMA)$(OPENMP_OPTION)$(COMMA)),)
@@ -137,7 +157,7 @@ make_c:
 
 make_executable: make_cu
 	$(CC) -o $(EXECUTABLE) *.o $(COMMON_FLAGS) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
-	rm *.o
+	rm -f *.o
 
 test:
 	./test.bash
@@ -167,6 +187,6 @@ test:
 #	aprun -n 1 $(EXECUTABLE) --nx 10 --ny 10 --nz 10 --ne 30 --nm 16 --na 64
 
 distclean:
-	rm $(EXECUTABLE)
+	rm -f $(EXECUTABLE)
 
 #==============================================================================

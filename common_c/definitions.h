@@ -32,21 +32,21 @@ enum{ NOCTANT = 8 };
 /*===========================================================================*/
 /*---Functions to manipulate sweep directions---*/
 
-TARGET_HD static inline int Dir_up() { return +1; }
-TARGET_HD static inline int Dir_dn() { return -1; }
+enum{ DIR_UP = +1 };
+enum{ DIR_DN = -1 };
 
-TARGET_HD static inline int Dir_hi() { return +1; }
-TARGET_HD static inline int Dir_lo() { return -1; }
+enum{ DIR_HI = +1 };
+enum{ DIR_LO = -1 };
 
 TARGET_HD static inline int Dir_x( int octant ) { return octant & (1<<0)
-                                                               ? Dir_dn()
-                                                               : Dir_up(); }
+                                                               ? DIR_DN
+                                                               : DIR_UP; }
 TARGET_HD static inline int Dir_y( int octant ) { return octant & (1<<1)
-                                                               ? Dir_dn()
-                                                               : Dir_up(); }
+                                                               ? DIR_DN
+                                                               : DIR_UP; }
 TARGET_HD static inline int Dir_z( int octant ) { return octant & (1<<2)
-                                                               ? Dir_dn()
-                                                               : Dir_up(); }
+                                                               ? DIR_DN
+                                                               : DIR_UP; }
 
 TARGET_HD static inline int Dir_inc( int dir ) { return dir; }
 

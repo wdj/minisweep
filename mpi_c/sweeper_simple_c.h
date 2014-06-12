@@ -129,7 +129,7 @@ void Sweeper_sweep(
     ---*/
 
     {
-      iz = dir_z == Dir_up() ? -1 : sweeper->dims.nz;
+      iz = dir_z == DIR_UP ? -1 : sweeper->dims.nz;
       for( iu=0; iu<NU; ++iu )
       for( iy=0; iy<sweeper->dims.ny; ++iy )
       for( ix=0; ix<sweeper->dims.nx; ++ix )
@@ -145,7 +145,7 @@ void Sweeper_sweep(
     }
 
     {
-      iy = dir_y == Dir_up() ? -1 : sweeper->dims.ny;
+      iy = dir_y == DIR_UP ? -1 : sweeper->dims.ny;
       for( iu=0; iu<NU; ++iu )
       for( iz=0; iz<sweeper->dims.nz; ++iz )
       for( ix=0; ix<sweeper->dims.nx; ++ix )
@@ -161,7 +161,7 @@ void Sweeper_sweep(
     }
 
     {
-      ix = dir_x == Dir_up() ? -1 : sweeper->dims.nx;
+      ix = dir_x == DIR_UP ? -1 : sweeper->dims.nx;
       for( iu=0; iu<NU; ++iu )
       for( iz=0; iz<sweeper->dims.nz; ++iz )
       for( iy=0; iy<sweeper->dims.ny; ++iy )
@@ -182,13 +182,13 @@ void Sweeper_sweep(
     {
       /*---Calculate spatial loop extents---*/
 
-      int ixbeg = dir_x==Dir_up() ? 0 : sweeper->dims.nx-1;
-      int iybeg = dir_y==Dir_up() ? 0 : sweeper->dims.ny-1;
-      int izbeg = dir_z==Dir_up() ? 0 : sweeper->dims.nz-1;
+      int ixbeg = dir_x==DIR_UP ? 0 : sweeper->dims.nx-1;
+      int iybeg = dir_y==DIR_UP ? 0 : sweeper->dims.ny-1;
+      int izbeg = dir_z==DIR_UP ? 0 : sweeper->dims.nz-1;
 
-      int ixend = dir_x==Dir_dn() ? 0 : sweeper->dims.nx-1;
-      int iyend = dir_y==Dir_dn() ? 0 : sweeper->dims.ny-1;
-      int izend = dir_z==Dir_dn() ? 0 : sweeper->dims.nz-1;
+      int ixend = dir_x==DIR_DN ? 0 : sweeper->dims.nx-1;
+      int iyend = dir_y==DIR_DN ? 0 : sweeper->dims.ny-1;
+      int izend = dir_z==DIR_DN ? 0 : sweeper->dims.nz-1;
 
       /*---Loop over gridcells, in proper direction---*/
 

@@ -222,7 +222,7 @@ TARGET_HD static inline int Sweeper_thread_u( const Sweeper* sweeper )
 /*===========================================================================*/
 /*---Thread synchronization---*/
 
-TARGET_HD static void Sweeper_sync_octant_threads( Sweeper* sweeper )
+TARGET_HD static inline void Sweeper_sync_octant_threads( Sweeper* sweeper )
 {
 #ifdef __CUDA_ARCH__
   /*---NOTE: this is not needed if octant threads are mapped in-warp---*/
@@ -236,7 +236,7 @@ TARGET_HD static void Sweeper_sync_octant_threads( Sweeper* sweeper )
 
 /*---------------------------------------------------------------------------*/
 
-TARGET_HD static void Sweeper_sync_amu_threads( Sweeper* sweeper )
+TARGET_HD static inline void Sweeper_sync_amu_threads( Sweeper* sweeper )
 {
 #ifdef __CUDA_ARCH__
   Env_cuda_sync_threadblock();
@@ -428,7 +428,7 @@ static int Sweeper_shared_size__( Sweeper* sweeper,
 /*===========================================================================*/
 /*---Perform a sweep for a cell---*/
 
-TARGET_HD void Sweeper_sweep_cell(
+TARGET_HD inline void Sweeper_sweep_cell(
   Sweeper*               sweeper,
   P* __restrict__        vo_this,
   const P* __restrict__  vi_this,
@@ -454,7 +454,7 @@ TARGET_HD void Sweeper_sweep_cell(
 /*===========================================================================*/
 /*---Perform a sweep for a semiblock---*/
 
-TARGET_HD void Sweeper_sweep_semiblock(
+TARGET_HD inline void Sweeper_sweep_semiblock(
   Sweeper*               sweeper,
   P* __restrict__        vo,
   const P* __restrict__  vi,
