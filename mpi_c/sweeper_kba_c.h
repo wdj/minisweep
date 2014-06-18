@@ -685,7 +685,11 @@ TARGET_HD inline void Sweeper_sweep_cell(
 
             /*---TODO: set up logic here to run fast for all cases---*/
 
+#ifndef __CUDA_ARCH__
             if( ia_base + NTHREAD_A == sweeper->dims_b.na )
+#else
+            if( Bool_false )
+#endif
             {
 #ifdef __MIC__
 /* "If applied to outer loop nests, the current implementation supports complete outer loop unrolling." */
@@ -737,10 +741,11 @@ TARGET_HD inline void Sweeper_sweep_cell(
                 const int ia = ia_base + ia_in_block;
                 const Bool_t mask = ia < sweeper->dims_b.na;
 
-                const P m_from_a_this = m_from_a[
+                const P m_from_a_this = mask ? m_from_a[
                                     ind_m_from_a_flat( sweeper->dims_b.nm,
                                                        sweeper->dims_b.na,
-                                                       im, ia, octant ) ];
+                                                       im, ia, octant ) ]
+                                    : ((P)0);
                 {
 #pragma unroll
                   for( iu_per_thread=0; iu_per_thread<NU_PER_THREAD;

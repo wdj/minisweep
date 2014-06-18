@@ -19,7 +19,7 @@
 #ifdef __MIC__
 enum{ IS_USING_MIC = Bool_true };
 #else
-enum{ IS_USING_MIC = Bool_true };
+enum{ IS_USING_MIC = Bool_false };
 #endif
 
 #ifdef __MIC__
