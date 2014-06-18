@@ -56,6 +56,9 @@ enum{ NTHREAD_DEVICE_A = NTHREAD_DEVICE_U * NTHREAD_DEVICE_M };
   enum{ NTHREAD_U = NTHREAD_DEVICE_U };
 #else
 #ifdef __MIC__
+#if 0
+  enum{ NTHREAD_A = VEC_LEN * 4 }; /*---tuning parameter---*/
+#endif
   enum{ NTHREAD_A = VEC_LEN * 4 }; /*---tuning parameter---*/
   enum{ NTHREAD_M = NM };
   enum{ NTHREAD_U = NU };
@@ -429,27 +432,27 @@ static int Sweeper_shared_size__( Sweeper* sweeper,
 /*---Perform a sweep for a cell---*/
 
 TARGET_HD inline void Sweeper_sweep_cell(
-  Sweeper*               sweeper,
-  P* __restrict__        vo_this,
-  const P* __restrict__  vi_this,
-  P* __restrict__        vilocal,
-  P* __restrict__        vslocal,
-  P* __restrict__        volocal,
-  P* __restrict__        facexy,
-  P* __restrict__        facexz,
-  P* __restrict__        faceyz,
-  const P* __restrict__  a_from_m,
-  const P* __restrict__  m_from_a,
-  const Quantities*      quan,
-  const int              octant,
-  const int              iz_base,
-  const int              octant_in_block,
-  const int              ie,
-  const int              ix,
-  const int              iy,
-  const int              iz,
-  const Bool_t           do_block_init_this,
-  const Bool_t           is_cell_active );
+  Sweeper* __restrict__          sweeper,
+  P* __restrict__                vo_this,
+  const P* const __restrict__    vi_this,
+  P* __restrict__                vilocal,
+  P* __restrict__                vslocal,
+  P* __restrict__                volocal,
+  P* __restrict__                facexy,
+  P* __restrict__                facexz,
+  P* __restrict__                faceyz,
+  const P* const __restrict__    a_from_m,
+  const P* const __restrict__    m_from_a,
+  const Quantities* __restrict__ quan,
+  const int                      octant,
+  const int                      iz_base,
+  const int                      octant_in_block,
+  const int                      ie,
+  const int                      ix,
+  const int                      iy,
+  const int                      iz,
+  const Bool_t                   do_block_init_this,
+  const Bool_t                   is_cell_active );
 
 /*===========================================================================*/
 /*---Perform a sweep for a semiblock---*/

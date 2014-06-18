@@ -403,27 +403,27 @@ static inline P Quantities_init_state(
 /*---Perform equation solve at a gridcell---*/
 
 TARGET_HD static inline void Quantities_solve(
-  const Quantities*  quan,
-  P* __restrict__    vslocal,
-  int                ia,
-  int                iaind,
-  int                iamax,
-  P* __restrict__    facexy,
-  P* __restrict__    facexz,
-  P* __restrict__    faceyz,
-  int                ix_b,
-  int                iy_b,
-  int                iz_b,
-  int                ie,
-  int                ix_g,
-  int                iy_g,
-  int                iz_g,
-  int                octant,
-  int                octant_in_block,
-  int                noctant_per_block,
-  const Dimensions   dims_b,
-  const Dimensions   dims_g,
-  Bool_t             is_cell_active )
+  const Quantities* const  quan,
+  P* const __restrict__ vslocal,
+  const int             ia,
+  const int             iaind,
+  const int             iamax,
+  P* const __restrict__ facexy,
+  P* const __restrict__ facexz,
+  P* const __restrict__ faceyz,
+  const int             ix_b,
+  const int             iy_b,
+  const int             iz_b,
+  const int             ie,
+  const int             ix_g,
+  const int             iy_g,
+  const int             iz_g,
+  const int             octant,
+  const int             octant_in_block,
+  const int             noctant_per_block,
+  const Dimensions      dims_b,
+  const Dimensions      dims_g,
+  const Bool_t          is_cell_active )
 {
   Assert( vslocal );
   /*
@@ -445,63 +445,72 @@ TARGET_HD static inline void Quantities_solve(
   Assert( octant >= 0 && octant < NOCTANT );
   Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
-  const int dir_x = Dir_x( octant );
-  const int dir_y = Dir_y( octant );
-  const int dir_z = Dir_z( octant );
+  if( ia < dims_b.na && is_cell_active )
+  {
+    const int dir_x = Dir_x( octant );
+    const int dir_y = Dir_y( octant );
+    const int dir_z = Dir_z( octant );
 
-  int iu = 0;
+    int iu = 0;
 
-  /*---Average the face values and accumulate---*/
+    /*---Average the face values and accumulate---*/
 
-  /*---The state value and incoming face values are first adjusted to
-       normalized values by removing the spatial scaling.
-       They are then combined using a weighted average chosen in a special
-       way to give just the expected result.
-       Finally, spatial scaling is applied to the result which is then
-       stored.
-  ---*/
+    /*---The state value and incoming face values are first adjusted to
+         normalized values by removing the spatial scaling.
+         They are then combined using a weighted average chosen in a special
+         way to give just the expected result.
+         Finally, spatial scaling is applied to the result which is then
+         stored.
+    ---*/
+
+    const P scalefactor_octant = Quantities_scalefactor_octant__( octant );
+    const P scalefactor_octant_r = ((P)1) / scalefactor_octant;
+    const P scalefactor_space
+                    = Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g );
+    const P scalefactor_space_r = ((P)1) / scalefactor_space;
+    const P scalefactor_space_x_r = ((P)1) /
+       Quantities_scalefactor_space__( quan, ix_g-Dir_inc(dir_x), iy_g, iz_g );
+    const P scalefactor_space_y_r = ((P)1) /
+       Quantities_scalefactor_space__( quan, ix_g, iy_g-Dir_inc(dir_y), iz_g );
+    const P scalefactor_space_z_r = ((P)1) /
+       Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g-Dir_inc(dir_z) );
 
 #pragma unroll
-  for( iu=0; iu<NU; ++iu )
-  {
-    if( ia < dims_b.na && is_cell_active )
+    for( iu=0; iu<NU; ++iu )
     {
-    const P result = (
-          *const_ref_vslocal( vslocal, dims_b, NU, iamax, iaind, iu )
-             / Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g )
-        + *const_ref_facexy( facexy, dims_b, NU, noctant_per_block,
+      P* const __restrict__ vslocal_this
+                        = ref_vslocal( vslocal, dims_b, NU, iamax, iaind, iu );
+      P* const __restrict__ facexy_this
+                        = ref_facexy( facexy, dims_b, NU, noctant_per_block,
+                                      ix_b, iy_b, ie, ia, iu, octant_in_block );
+
+      const P result = ( *vslocal_this * scalefactor_space_r + (
+          *const_ref_facexy( facexy, dims_b, NU, noctant_per_block,
                                      ix_b, iy_b, ie, ia, iu, octant_in_block )
-           * ( Quantities_xfluxweight__( dims_g, ia ) * ((P)1)
-             / Quantities_scalefactor_octant__( octant ) )
-             / Quantities_scalefactor_space__( quan,
-                                               ix_g, iy_g, iz_g-Dir_inc(dir_z) )
+           * Quantities_xfluxweight__( dims_g, ia )
+           * scalefactor_space_z_r
         + *const_ref_facexz( facexz, dims_b, NU, noctant_per_block,
                                      ix_b, iz_b, ie, ia, iu, octant_in_block )
-           * ( Quantities_yfluxweight__( dims_g, ia ) * ((P)1)
-             / Quantities_scalefactor_octant__( octant ) )
-             / Quantities_scalefactor_space__( quan,
-                                               ix_g, iy_g-Dir_inc(dir_y), iz_g )
+           * Quantities_yfluxweight__( dims_g, ia )
+           * scalefactor_space_y_r
         + *const_ref_faceyz( faceyz, dims_b, NU, noctant_per_block,
                                      iy_b, iz_b, ie, ia, iu, octant_in_block )
-           * ( Quantities_zfluxweight__( dims_g, ia ) * ((P)1)
-             / Quantities_scalefactor_octant__( octant ) )
-             / Quantities_scalefactor_space__( quan,
-                                               ix_g-Dir_inc(dir_x), iy_g, iz_g )
-      )      * Quantities_scalefactor_space__( quan, ix_g, iy_g, iz_g );
+           * Quantities_zfluxweight__( dims_g, ia )
+           * scalefactor_space_x_r
+      ) * scalefactor_octant_r ) * scalefactor_space;
 
-    *ref_vslocal( vslocal, dims_b, NU, iamax, iaind, iu ) = result;
-    *ref_facexy( facexy, dims_b, NU, noctant_per_block,
-                 ix_b, iy_b, ie, ia, iu, octant_in_block ) = result *
-                 Quantities_scalefactor_octant__( octant );
-    *ref_facexz( facexz, dims_b, NU, noctant_per_block,
-                 ix_b, iz_b, ie, ia, iu, octant_in_block ) = result *
-                 Quantities_scalefactor_octant__( octant );
-    *ref_faceyz( faceyz, dims_b, NU, noctant_per_block,
-                 iy_b, iz_b, ie, ia, iu, octant_in_block ) = result *
-                 Quantities_scalefactor_octant__( octant );
-    }
-  } /*---for---*/
+      *vslocal_this = result;
+      const P result_scaled = result * scalefactor_octant;
+      *ref_facexy( facexy, dims_b, NU, noctant_per_block,
+                   ix_b, iy_b, ie, ia, iu, octant_in_block ) = result_scaled;
+      *ref_facexz( facexz, dims_b, NU, noctant_per_block,
+                   ix_b, iz_b, ie, ia, iu, octant_in_block ) = result_scaled;
+      *ref_faceyz( faceyz, dims_b, NU, noctant_per_block,
+                   iy_b, iz_b, ie, ia, iu, octant_in_block ) = result_scaled;
 
+    } /*---for---*/
+
+  }
 } /*---Quantities_solve---*/
 
 /*===========================================================================*/

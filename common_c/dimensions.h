@@ -25,7 +25,11 @@ extern "C"
 /*---Enums for compile-time sizes---*/
 
 /*---Number of unknowns per gridcell---*/
+#ifdef NU_VALUE
+enum{ NU = NU_VALUE };
+#else
 enum{ NU = 4 };
+#endif
 
 /*---Number of moments---*/
 #ifdef NM_VALUE

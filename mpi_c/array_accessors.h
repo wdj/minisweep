@@ -368,7 +368,7 @@ TARGET_HD static inline const P* const_ref_a_from_m(
 /*===========================================================================*/
 /*---Multidimensional array accessor function---*/
 
-TARGET_HD static inline const P* const_ref_a_from_m_flat(
+TARGET_HD static inline const P* __restrict__ const_ref_a_from_m_flat(
     const P* const __restrict__  v,
     const int                    dims_nm,
     const int                    dims_na,
@@ -581,16 +581,16 @@ TARGET_HD static inline const P* const_ref_facexz(
 /*---Multidimensional array accessor function---*/
 
 TARGET_HD static inline P* ref_faceyz(
-    P* const __restrict__  v,
-    const Dimensions       dims,
-    const int              nu,
-    const int              noctant_per_block,
-    const int              iy,
-    const int              iz,
-    const int              ie,
-    const int              ia,
-    const int              iu,
-    const int              octant_in_block )
+    P* const __restrict__ v,
+    const Dimensions      dims,
+    const int             nu,
+    const int             noctant_per_block,
+    const int             iy,
+    const int             iz,
+    const int             ie,
+    const int             ia,
+    const int             iu,
+    const int             octant_in_block )
 {
   Assert( v != NULL );
   Assert( nu > 0 );

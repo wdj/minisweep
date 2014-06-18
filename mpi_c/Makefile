@@ -72,14 +72,14 @@ ifeq ($(COMPILER_OPTION),INTELMIC)
   #
   # -no-vec -no-simd
   # -openmp-simd
-  # -opt-assume-safe-padding
   # -opt-streaming-cache-evict=3
   # -opt-threads-per-core=2
+  # -opt-assume-safe-padding
   # -finline-functions
   # -finline -finline-limit=1000
   # -fno-alias -fargument-noalias
   #
-  CFLAGS := $(CFLAGS) -mmic -vec-report1 -Dinline=__forceinline -ip -prec-div -O3 -align -ansi-alias -fargument-noalias -restrict -D__restrict__=restrict
+  CFLAGS := $(CFLAGS) -mmic -vec-report1 -Dinline=__forceinline -ip -prec-div -O3 -align -ansi-alias -fargument-noalias -restrict -D__restrict__=restrict -fno-alias -fargument-noalias
   ifeq ($(RELEASE_OPTION),DEBUG)
     CFLAGS := $(CFLAGS)
     COMMON_FLAGS := $(COMMON_FLAGS)
@@ -128,6 +128,10 @@ endif
 
 ifneq ($(NM_VALUE),)
   COMMON_FLAGS := $(COMMON_FLAGS) -DNM_VALUE=$(NM_VALUE)
+endif
+
+ifneq ($(NU_VALUE),)
+  COMMON_FLAGS := $(COMMON_FLAGS) -DNU_VALUE=$(NU_VALUE)
 endif
 
 ifeq ($(RELAXED_TESTING),1)
