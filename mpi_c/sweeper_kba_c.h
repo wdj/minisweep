@@ -127,6 +127,8 @@ void Sweeper_ctor( Sweeper*          sweeper,
   }
   if( IS_USING_MIC )
   {
+    /*---For alignment, make this assumption.  For user case, assume this
+         may mean some padding---*/
     Insist( dims.na % VEC_LEN == 0 );
   }
 
@@ -517,10 +519,8 @@ TARGET_HD inline void Sweeper_sweep_cell(
 #pragma simd assert, vectorlengthfor( P )
         for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A;
                                                            ++sweeper_thread_a )
-        {
-#else
-        {
 #endif
+        {
           const int ia = ia_base + sweeper_thread_a;
           if( ia < sweeper->dims_b.na && is_cell_active )
           {
@@ -609,10 +609,8 @@ TARGET_HD inline void Sweeper_sweep_cell(
 #pragma ivdep
 #pragma simd assert, vectorlengthfor( P )
     for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A; ++sweeper_thread_a )
-    {
-#else
-    {
 #endif
+    {
       const int ia = ia_base + sweeper_thread_a;
       Quantities_solve( quan, vslocal,
                         ia, sweeper_thread_a, NTHREAD_A,
@@ -685,7 +683,7 @@ TARGET_HD inline void Sweeper_sweep_cell(
 
             /*---TODO: set up logic here to run fast for all cases---*/
 
-#ifndef __CUDA_ARCH__
+#ifdef __MIC__
             if( ia_base + NTHREAD_A == sweeper->dims_b.na )
 #else
             if( Bool_false )
