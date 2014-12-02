@@ -397,7 +397,7 @@ static int Sweeper_nthreadblock( const Sweeper* sweeper,
                                  int            axis,
                                  Env*           env )
 {
-  Assert( axis >= 0 && axis < 2 );
+  Assert( axis >= 0 && axis < 3 );
 
   return axis==0 ? sweeper->nthread_e :
          axis==1 ? 1 :
@@ -410,7 +410,7 @@ static int Sweeper_nthread_in_threadblock( const Sweeper* sweeper,
                                            int            axis,
                                            Env*           env )
 {
-  Assert( axis >= 0 && axis < 2 );
+  Assert( axis >= 0 && axis < 3 );
 
   return axis==0 ? Sweeper_nthread_a( sweeper, env ) :
          axis==1 ? sweeper->nthread_octant :

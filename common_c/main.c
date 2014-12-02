@@ -26,12 +26,12 @@ int main( int argc, char** argv )
 {
   /*---Declarations---*/
 
-  Dimensions  dims_g;
-  Dimensions  dims;         /*---dims for the part on this MPI proc---*/
+  Env         env;
   Arguments   args;
+  Dimensions  dims_g;       /*---dims for entire problem---*/
+  Dimensions  dims;         /*---dims for the part on this MPI proc---*/
   Quantities  quan;
   Sweeper     sweeper;
-  Env         env;
 
   Pointer vi = Pointer_null();
   Pointer vo = Pointer_null();
@@ -42,9 +42,9 @@ int main( int argc, char** argv )
   int iteration   = 0;
   int niterations = 0;
 
-  Timer_t t1      = 0.;
-  Timer_t t2      = 0.;
-  Timer_t time    = 0.;
+  Timer t1      = 0.;
+  Timer t2      = 0.;
+  Timer time    = 0.;
   double flops    = 0.;
   double floprate = 0.;
 
@@ -56,15 +56,14 @@ int main( int argc, char** argv )
 
   Env_set_values( &env, &args );
 
-  /*---Set problem specifications---*/
+  /*---Define problem specs---*/
 
   dims_g.nx   = Arguments_consume_int_or_default( &args, "--nx",  5 );
   dims_g.ny   = Arguments_consume_int_or_default( &args, "--ny",  5 );
   dims_g.nz   = Arguments_consume_int_or_default( &args, "--nz",  5 );
   dims_g.ne   = Arguments_consume_int_or_default( &args, "--ne", 30 );
   dims_g.na   = Arguments_consume_int_or_default( &args, "--na", 33 );
-  niterations = Arguments_consume_int_or_default( &args, "--niterations",
-                                                                    1 );
+  niterations = Arguments_consume_int_or_default( &args, "--niterations", 1 );
   dims_g.nm   = NM;
 
   Insist( dims_g.nx > 0 ? "Invalid nx supplied." : 0 );
@@ -75,7 +74,7 @@ int main( int argc, char** argv )
   Insist( dims_g.na > 0 ? "Invalid na supplied." : 0 );
   Insist( niterations >= 0 ? "Invalid iteration count supplied." : 0 );
 
-  /*---Initialize (local) dimensions---*/
+  /*---Initialize (local) dimensions - domain decomposition---*/
 
   dims = dims_g;
 
@@ -147,7 +146,7 @@ int main( int argc, char** argv )
                                            * Quantities_flops_per_solve( dims )
             + Dimensions_size_state( dims, NU ) * NOCTANT * 2. * dims.na ) );
 
-  floprate = time <= (Timer_t)0. ? 0. : flops / time / 1e9;
+  floprate = time <= (Timer)0 ? 0. : flops / time / 1e9;
 
   /*---Compute, print norm squared of result---*/
 

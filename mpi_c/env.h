@@ -96,23 +96,23 @@ static Bool_t Env_do_output( const Env* env )
 /*===========================================================================*/
 /*---Timer type---*/
 
-typedef double Timer_t;
+typedef double Timer;
 
 /*===========================================================================*/
 /*---Timer utilities---*/
 
-static Timer_t Env_get_time()
+static Timer Env_get_time()
 {
     struct timeval tv;
     int i = gettimeofday( &tv, NULL );
-    Timer_t result = ( (Timer_t) tv.tv_sec +
-                       (Timer_t) tv.tv_usec * 1.e-6 );
+    Timer result = ( (Timer) tv.tv_sec +
+                     (Timer) tv.tv_usec * 1.e-6 );
     return result;
 }
 
 /*---------------------------------------------------------------------------*/
 
-static Timer_t Env_get_synced_time()
+static Timer Env_get_synced_time()
 {
   Env_mpi_barrier();
   return Env_get_time();

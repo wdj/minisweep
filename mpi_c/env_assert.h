@@ -23,7 +23,7 @@ extern "C"
 /*---Assertions---*/
 
 #ifdef USE_CUDA
-#define Assert(v)
+#define Assert(v) assert(v)
 #else
 #define Assert(v) assert(v)
 #endif

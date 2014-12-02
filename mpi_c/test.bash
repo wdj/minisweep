@@ -1,5 +1,7 @@
 #!/bin/bash -l
 #==============================================================================
+# Run tests on the code.
+#==============================================================================
 
 set -eu
 
@@ -8,20 +10,23 @@ declare g_ntest_passed=0
 declare g_verbose=1
 
 #==============================================================================
+# Run the executable once.
+#==============================================================================
 function perform_run
 {
-  local exec_args="$1"
-  local app_args="$2"
+  local exec_config_args="$(echo "$1" | tr '\n' ' ')"
+  local application_args="$(echo "$2" | tr '\n' ' ')"
 
   if [ "${PBS_NP:-}" != "" -a "${CRAY_MPICH2_ROOTDIR:-}" != "" ] ; then
+    #---If running on Cray, must cd to Lustre to make the aprun work.
     local wd="$PWD"
     pushd "$MEMBERWORK" >/dev/null
-    aprun $exec_args "$wd/sweep.x" $app_args
+    aprun $exec_config_args "$wd/sweep.x" $application_args
     #assert $? = 0
     popd >/dev/null
   else
-    #assert $exec_args = "-n1"
-    ./sweep.x $app_args
+    #assert $exec_config_args = "-n1"
+    ./sweep.x $application_args
     #assert $? = 0
   fi
 
@@ -29,24 +34,30 @@ function perform_run
 #==============================================================================
 
 #==============================================================================
+# Compare the output of two runs for match.
+#==============================================================================
 function compare_runs
 {
-  local app_args1="$2"
-  local app_args2="$4"
+  local exec_config_args1="$(echo "$1" | tr '\n' ' ')"
+  local exec_config_args2="$(echo "$3" | tr '\n' ' ')"
 
-  local exec_args1="$1"
-  local exec_args2="$3"
+  local application_args1="$(echo "$2" | tr '\n' ' ')"
+  local application_args2="$(echo "$4" | tr '\n' ' ')"
 
-  local is_pass is_pass1 is_pass2
-  local normsq1 normsq2
-  local time1 time2
+  local is_pass
+  local is_pass1
+  local is_pass2
+  local normsq1
+  local normsq2
+  local time1
+  local time2
 
   g_ntest=$(( $g_ntest + 1 ))
 
   #---Run 1.
 
-  echo -n "$g_ntest // $exec_args1 / $app_args1 / "
-  local result1="$( perform_run "$exec_args1" "$app_args1" )"
+  echo -n "$g_ntest // $exec_config_args1 / $application_args1 / "
+  local result1="$( perform_run "$exec_config_args1" "$application_args1" )"
   normsq1=$( echo "$result1" | grep '^Normsq result: ' \
                              | sed -e 's/^Normsq result: *//' -e 's/ .*//' )
   time1=$(   echo "$result1" | grep '^Normsq result: ' \
@@ -57,8 +68,8 @@ function compare_runs
 
   #---Run 2.
 
-  echo -n "$exec_args2 / $app_args2 / "
-  local result2="$( perform_run "$exec_args2" "$app_args2" )"
+  echo -n "$exec_config_args2 / $application_args2 / "
+  local result2="$( perform_run "$exec_config_args2" "$application_args2" )"
   normsq2=$( echo "$result2" | grep '^Normsq result: ' \
                              | sed -e 's/^Normsq result: *//' -e 's/ .*//' )
   time2=$(   echo "$result2" | grep '^Normsq result: ' \
@@ -67,7 +78,9 @@ function compare_runs
   is_pass2=$([ "$result2" != "${result2/ PASS }" ] && echo 1 || echo 0 )
   [[ g_verbose -ge 2 ]] && echo "$result2"
 
-  #---
+  #---Final test of success.
+
+  # Check whether each run passed and whether the results match each other.
 
   is_pass=$([ "$normsq1" = "$normsq2" ] && echo 1 || echo 0 )
 
@@ -83,37 +96,69 @@ function compare_runs
 #==============================================================================
 
 #==============================================================================
+# Initialize build/execution environment.
+#==============================================================================
+function initialize
+{
+  #if [ "$PE_ENV" = "PGI" ] ; then
+  #  module swap PrgEnv-pgi PrgEnv-gnu
+  #fi
+  ##module load cudatoolkit
+  #module load cudatoolkit/5.5.22-1.0502.7944.3.1 # need on chester currently
+
+  if [ "$PE_ENV" != "GNU" ] ; then
+    echo "Error: GNU compiler required." 1>&2
+    exit 1
+  fi
+}
+#==============================================================================
+
+#==============================================================================
 function main
 {
-# nx ny nz ne nm na numiterations nproc_x nproc_y nblock_z 
+  initialize
+
+  #---args to use below:
+  #---  nx ny nz ne nm na numiterations nproc_x nproc_y nblock_z 
+
+  #==============================
+  # MPI + CUDA.
+  #==============================
+
+  if [ "${PBS_NP:-}" != "" -a "$PBS_NP" -ge 4 ] ; then
+
+    echo "--------------------------------------------------------"
+    echo "---MPI + CUDA tests---"
+    echo "--------------------------------------------------------"
+
+    make CUDA_OPTION=1 NM_VALUE=4
+
+    local ARGS="--nx 3 --ny 5 --nz 6 --ne 2 --na 5 --nblock_z 2"
+
+    for nproc_x in 1 2 ; do
+    for nproc_y in 1 2 ; do
+    for nthread_octant in 1 2 4 8 ; do
+      compare_runs \
+        "-n1" \
+        "$ARGS" \
+        "-n$(( $nproc_x * $nproc_y ))" \
+        "$ARGS --is_using_device 1 --nproc_x $nproc_x --nproc_y $nproc_y \
+               --nthread_e 3 --nthread_octant $nthread_octant"
+    done
+    done
+    done
+
+  fi #---PBS_NP
+
+  #==============================
+  # CUDA.
+  #==============================
 
   if [ "${PBS_NP:-}" != "" ] ; then
 
-    echo "----------------"
-    echo "---MPI + CUDA tests---"
-    echo "----------------"
-
-    if [ "$PBS_NUM_NODES" -ge 4 ] ; then
-
-      make CUDA_OPTION=1 NM_VALUE=4
-
-      local ARGS="--nx 3 --ny 5 --nz 6 --ne 2 --na 5 --nblock_z 2"
-
-      for nproc_x in 1 2 ; do
-      for nproc_y in 1 2 ; do
-      for nthread_octant in 1 2 4 8 ; do
-        compare_runs \
-          "-n1 -N1" "$ARGS " \
-          "-n$(( $nproc_x * $nproc_y )) -N1" "$ARGS --is_using_device 1 --nproc_x $nproc_x --nproc_y $nproc_y --nthread_e 3 --nthread_octant $nthread_octant"
-      done
-      done
-      done
-
-    fi #---PBS_NUM_NODES
-
-    echo "----------------"
+    echo "--------------------------------------------------------"
     echo "---CUDA tests---"
-    echo "----------------"
+    echo "--------------------------------------------------------"
 
     make CUDA_OPTION=1 NM_VALUE=4
 
@@ -122,18 +167,28 @@ function main
     for nthread_octant in 1 2 4 8 ; do
       compare_runs \
         "-n1"  "$ARGS " \
-        "-n1"  "$ARGS --is_using_device 1 --nthread_e 1 --nthread_octant $nthread_octant"
+        "-n1"  "$ARGS --is_using_device 1 --nthread_e 1 \
+                      --nthread_octant $nthread_octant"
     done
 
     for nthread_e in 2 10 20 ; do
       compare_runs \
         "-n1"  "$ARGS " \
-        "-n1"  "$ARGS --is_using_device 1 --nthread_e $nthread_e --nthread_octant 8"
+        "-n1"  "$ARGS --is_using_device 1 --nthread_e $nthread_e \
+                      --nthread_octant 8"
     done
 
-    echo "---------------"
+  fi #---PBS_NP
+
+  #==============================
+  # MPI.
+  #==============================
+
+  if [ "${PBS_NP:-}" != "" ] ; then
+
+    echo "--------------------------------------------------------"
     echo "---MPI tests---"
-    echo "---------------"
+    echo "--------------------------------------------------------"
 
     make NM_VALUE=4
 
@@ -158,9 +213,17 @@ function main
     compare_runs  "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2" \
                   "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 4"
 
-    echo "------------------"
+  fi #---PBS_NP
+
+  #==============================
+  # OpenMP
+  #==============================
+
+  if [ "${PBS_NP:-}" != "" ] ; then
+
+    echo "--------------------------------------------------------"
     echo "---OpenMP tests---"
-    echo "------------------"
+    echo "--------------------------------------------------------"
 
     make OPENMP_OPTION=THREADS NM_VALUE=4
 
@@ -184,9 +247,15 @@ function main
     compare_runs   "-n1 -d2"  "$ARGS --nthread_e 2 --nthread_octant 1" \
                    "-n1 -d4"  "$ARGS --nthread_e 2 --nthread_octant 2"
 
-  fi
+  fi #---PBS_NP
 
+  #==============================
+  # Variants.
+  #==============================
+
+  echo "--------------------------------------------------------"
   echo "---Tests of sweeper variants---"
+  echo "--------------------------------------------------------"
 
   local alg_options
 
@@ -208,7 +277,11 @@ function main
     compare_runs  "-n1" "$ARGS --niterations 1 $ARG_NBLOCK_Z_1" \
                   "-n1" "$ARGS --niterations 1 $ARG_NBLOCK_Z_5"
 
-  done
+  done #---alg_options
+
+  #==============================
+  # Finalize.
+  #==============================
 
   echo -n "Total tests $g_ntest"
   echo -n "    "
@@ -220,6 +293,6 @@ function main
 }
 #==============================================================================
 
-main
+time main
 
 #==============================================================================
