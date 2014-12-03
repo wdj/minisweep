@@ -11,7 +11,7 @@
 #ifndef _common_c__arguments_h_
 #define _common_c__arguments_h_
 
-#include <stdlib.h>
+#include <stddef.h>
 
 #include "types.h"
 

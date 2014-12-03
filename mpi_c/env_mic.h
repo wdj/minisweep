@@ -13,27 +13,7 @@
 
 #include "types.h"
 
-/*===========================================================================*/
-/*---Enums---*/
-
-#ifdef __MIC__
-enum{ IS_USING_MIC = Bool_true };
-#else
-enum{ IS_USING_MIC = Bool_false };
-#endif
-
-#ifdef __MIC__
-enum{ VEC_LEN = P_IS_DOUBLE ? 8 : 16 };
-#endif
-
-/*===========================================================================*/
-/*---Define dummy function/macros for non-MIC case---*/
-
-#ifndef __MIC__
-#define __assume( a )
-#define __assume_aligned( a, b )
-#define __declspec( a )
-#endif
+#include "env_mic_kernels.h"
 
 /*===========================================================================*/
 /*---Memory management---*/

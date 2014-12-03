@@ -1,18 +1,18 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   definitions.h
+ * \file   quantities_kernels.h
  * \author Wayne Joubert
  * \date   Wed Jan 15 16:06:28 EST 2014
- * \brief  Basic definitions.
+ * \brief  Declarations for physical quantities. Code for device kernels.
  * \note   Copyright (C) 2014 Oak Ridge National Laboratory, UT-Battelle, LLC.
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _common_c__definitions_h_
-#define _common_c__definitions_h_
+#ifndef _serial_c__quantities_kernels_h_
+#define _serial_c__quantities_kernels_h_
 
-#include "definitions_kernels.h"
+#include "quantities_testing_kernels.h"
 
-#endif /*---_common_c__definitions_h_---*/
+#endif /*---_serial_c__quantities_kernels_h_---*/
 
 /*---------------------------------------------------------------------------*/

@@ -35,8 +35,8 @@ endif
 #==============================================================================
 
 INCLUDES = -I. -I../common_c
-SOURCES      = $(wildcard *.c  ../common_c/*.c  )
-CUDA_SOURCES = $(wildcard *.cu ../common_c/*.cu )
+SOURCES      = $(filter-out sweeper_kernels.c,  $(wildcard *.c  ../common_c/*.c  ) )
+CUDA_SOURCES = $(filter-out sweeper_kernels.cu, $(wildcard *.cu ../common_c/*.cu ) )
 EXECUTABLE = sweep.x
 
 default: make_executable
@@ -148,6 +148,8 @@ ifeq ($(CUDA_OPTION),1)
   endif
 make_cu: make_c
 	nvcc -c $(CUDA_SOURCES) $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS) -DUSE_CUDA $(CUDA_ARGS)
+	nvcc -c sweeper_kernels.cu $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS) -DUSE_CUDA $(CUDA_ARGS)
+	rm sweeper_kernels.o
 else
 make_cu: make_c
 endif

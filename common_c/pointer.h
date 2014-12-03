@@ -11,34 +11,17 @@
 #ifndef _common_c__pointer_h_
 #define _common_c__pointer_h_
 
-#include <stdlib.h>
+#include <stddef.h>
 
 #include "types.h"
 #include "env_assert.h"
+
+#include "pointer_kernels.h"
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-
-/*===========================================================================*/
-/*---Enums---*/
-
-enum{ IS_USING_DEVICE = Bool_true, IS_NOT_USING_DEVICE = Bool_false };
-enum{ IS_PINNED = Bool_true, IS_NOT_PINNED = Bool_false };
-
-/*===========================================================================*/
-/*---Pointer struct---*/
-
-typedef struct
-{
-  size_t          n__;
-  P* __restrict__ h__;
-  P* __restrict__ d__;
-  Bool_t          is_using_device__;
-  Bool_t          is_pinned__;
-  Bool_t           is_alias__;
-} Pointer;
 
 /*===========================================================================*/
 /*---Null object---*/
@@ -122,45 +105,6 @@ void Pointer_update_h_stream( Pointer* p, Stream_t stream );
 /*---------------------------------------------------------------------------*/
 
 void Pointer_update_d_stream( Pointer* p, Stream_t stream );
-
-/*===========================================================================*/
-/*---Accessors---*/
-
-static inline P* __restrict__ Pointer_h( Pointer* p )
-{
-  Assert( p );
-  Assert( p->h__ );
-  return p->h__;
-}
-
-/*---------------------------------------------------------------------------*/
-
-static inline const P* __restrict__ Pointer_const_h( const Pointer* p )
-{
-  Assert( p );
-  Assert( p->h__ );
-  return p->h__;
-}
-
-/*---------------------------------------------------------------------------*/
-
-static inline P* __restrict__ Pointer_d( Pointer* p )
-{
-  Assert( p );
-  Assert( p->d__ );
-  Assert( p->is_using_device__ );
-  return p->d__;
-}
-
-/*---------------------------------------------------------------------------*/
-
-static inline const P* __restrict__ Pointer_const_d( const Pointer* p )
-{
-  Assert( p );
-  Assert( p->d__ );
-  Assert( p->is_using_device__ );
-  return p->d__;
-}
 
 /*===========================================================================*/
 

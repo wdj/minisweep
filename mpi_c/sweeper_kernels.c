@@ -1,18 +1,21 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   definitions.h
+ * \file   sweeper_kernels.c
  * \author Wayne Joubert
  * \date   Wed Jan 15 16:06:28 EST 2014
- * \brief  Basic definitions.
+ * \brief  Definitions for performing a sweep. Code for device kernels.
  * \note   Copyright (C) 2014 Oak Ridge National Laboratory, UT-Battelle, LLC.
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _common_c__definitions_h_
-#define _common_c__definitions_h_
+#ifdef SWEEPER_SIMPLE
+#endif
 
-#include "definitions_kernels.h"
+#ifdef SWEEPER_TILEOCTANTS
+#endif
 
-#endif /*---_common_c__definitions_h_---*/
+#ifdef SWEEPER_KBA
+#include "sweeper_kba_c_kernels.h"
+#endif
 
 /*---------------------------------------------------------------------------*/

@@ -1,19 +1,18 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   memory.h
+ * \file   step_scheduler_kba_kernels.h
  * \author Wayne Joubert
- * \date   Wed Jan 15 16:06:28 EST 2014
- * \brief  Utilities for memory management.
+ * \date   Tue Jan 28 16:37:41 EST 2014
+ * \brief  step_scheduler_kba, code for device kernels.
  * \note   Copyright (C) 2014 Oak Ridge National Laboratory, UT-Battelle, LLC.
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _common_c__memory_h_
-#define _common_c__memory_h_
+#ifndef _mpi_c__step_scheduler_kba_kernels_h_
+#define _mpi_c__step_scheduler_kba_kernels_h_
 
-#include <stddef.h>
-
-#include "types.h"
+#include "types_kernels.h"
+#include "definitions_kernels.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -21,31 +20,29 @@ extern "C"
 #endif
 
 /*===========================================================================*/
-/*---Allocate array of type int---*/
+/*---Struct with info describing a sweep step---*/
 
-int* malloc_i( size_t n );
-
-/*===========================================================================*/
-/*---Deallocate array of type int---*/
-
-void free_i( int* p );
-
-/*===========================================================================*/
-/*---Allocate array of type P---*/
-
-P* malloc_P( size_t n );
+typedef struct
+{
+  int     block_z;
+  int     octant;
+  Bool_t  is_active;
+} Step_Info;
 
 /*===========================================================================*/
-/*---Deallocate array of type P---*/
+/*---8 copies of the same---*/
 
-void free_P( P* p );
+typedef struct
+{
+  Step_Info step_info[NOCTANT];
+} Step_Info_Values;
 
 /*===========================================================================*/
-  
+
 #ifdef __cplusplus
 } /*---extern "C"---*/
 #endif
 
-#endif /*---_common_c__memory_h_---*/
+#endif /*---_mpi_c__step_scheduler_kba_kernels_h_---*/
 
 /*---------------------------------------------------------------------------*/

@@ -8,7 +8,7 @@
  */
 /*---------------------------------------------------------------------------*/
 
-#include <stdlib.h>
+#include <stddef.h>
 
 #include "env.h"
 #include "pointer.h"

@@ -11,35 +11,7 @@
 #ifndef _common_c__types_h_
 #define _common_c__types_h_
 
-#include "function_attributes.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-/*===========================================================================*/
-/*---Basic types---*/
-
-/*---Boolean type---*/
-
-typedef int Bool_t;
-
-enum{ Bool_true = 1, Bool_false = 0 };
-
-/*---Default floating point type---*/
-
-typedef double P;
-enum{ P_IS_DOUBLE = Bool_true };
-
-TARGET_HD static inline P P_zero() { return (P)0; }
-TARGET_HD static inline P P_one()  { return (P)1; }
-
-/*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
+#include "types_kernels.h"
 
 #endif /*---_common_c__types_h_---*/
 

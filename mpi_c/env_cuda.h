@@ -19,16 +19,11 @@
 #include "env_assert.h"
 #include "memory.h"
 
+#include "env_cuda_kernels.h"
+
 #ifdef __cplusplus
 extern "C"
 {
-#endif
-
-/*===========================================================================*/
-/*---Enums---*/
-
-#ifndef __MIC__
-enum{ VEC_LEN = 32 };
 #endif
 
 /*===========================================================================*/
@@ -39,22 +34,6 @@ typedef cudaStream_t Stream_t;
 #else
 typedef int Stream_t;
 #endif
-
-/*===========================================================================*/
-/*---Pointer to device shared memory---*/
-
-#ifdef __CUDA_ARCH__
-__shared__ extern char cuda_shared_memory[];
-#endif
-
-TARGET_HD static char* Env_cuda_shared_memory()
-{
-#ifdef __CUDA_ARCH__
-  return cuda_shared_memory;
-#else
-  return (char*) NULL;
-#endif
-}
 
 /*===========================================================================*/
 /*---Error handling---*/
@@ -277,46 +256,6 @@ static void Env_cuda_copy_device_to_host_stream_P( P*       p_h,
 
   cudaMemcpyAsync( p_h, p_d, n*sizeof(P), cudaMemcpyDeviceToHost, stream );
   Assert( Env_cuda_last_call_succeeded() );
-#endif
-}
-
-/*===========================================================================*/
-/*---Device thread management---*/
-
-TARGET_HD static int Env_cuda_threadblock( int axis )
-{
-  Assert( axis >= 0 && axis < 2 );
-
-#ifdef __CUDA_ARCH__
-  return axis==0 ? blockIdx.x :
-         axis==1 ? blockIdx.y :
-                   blockIdx.z;
-#else
-  return 0;
-#endif
-}
-
-/*---------------------------------------------------------------------------*/
-
-TARGET_HD static int Env_cuda_thread_in_threadblock( int axis )
-{
-  Assert( axis >= 0 && axis < 2 );
-
-#ifdef __CUDA_ARCH__
-  return axis==0 ? threadIdx.x :
-         axis==1 ? threadIdx.y :
-                   threadIdx.z;
-#else
-  return 0;
-#endif
-}
-
-/*---------------------------------------------------------------------------*/
-
-TARGET_HD static void Env_cuda_sync_threadblock()
-{
-#ifdef __CUDA_ARCH__
-  __syncthreads();
 #endif
 }
 

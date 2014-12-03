@@ -11,8 +11,9 @@
 #ifndef _mpi_c__env_assert_h_
 #define _mpi_c__env_assert_h_
 
-#include <stdio.h>
+#include <stdlib.h>
 #include <assert.h>
+#include <stdio.h>
 
 #ifdef __cplusplus
 extern "C"

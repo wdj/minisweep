@@ -15,6 +15,7 @@
 #include "definitions.h"
 #include "dimensions.h"
 #include "memory.h"
+#include "pointer.h"
 #include "quantities.h"
 #include "array_operations.h"
 #include "sweeper.h"

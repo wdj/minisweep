@@ -11,9 +11,6 @@
 #ifndef _mpi_c__env_h_
 #define _mpi_c__env_h_
 
-#include <stdio.h>
-#include <stdlib.h>
-
 #include <sys/time.h>
 
 #include "arguments.h"

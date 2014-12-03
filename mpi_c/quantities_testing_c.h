@@ -11,11 +11,12 @@
 #ifndef _serial_c__quantities_testing_c_h_
 #define _serial_c__quantities_testing_c_h_
 
+#include "env.h"
 #include "dimensions.h"
 #include "memory.h"
 #include "array_accessors.h"
+#include "pointer.h"
 #include "quantities_testing.h"
-#include "env.h"
 
 #ifdef __cplusplus
 extern "C"
