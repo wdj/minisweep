@@ -27,6 +27,7 @@ typedef struct
 {
   int    argc;
   char** argv_unconsumed; /*---Working copy of argument list---*/
+  char*  argstring;
 } Arguments;
 
 /*===========================================================================*/
@@ -35,6 +36,12 @@ typedef struct
 void Arguments_ctor( Arguments* args,
                      int        argc,
                      char**     argv );
+
+/*===========================================================================*/
+/* Pseudo-constructor that takes a string instead of an args array---*/
+
+void Arguments_ctor_string( Arguments* args,
+                            char*      argstring );
 
 /*===========================================================================*/
 /* Pseudo-destructor for Arguments struct---*/

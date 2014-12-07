@@ -87,7 +87,7 @@ static void Env_finalize( Env* env )
 
 static Bool_t Env_do_output( const Env* env )
 {
-  return ( Env_proc_this( env ) == 0 );
+  return ( Env_proc_this( env ) == 0 && Env_is_proc_active( env ) );
 }
 
 /*===========================================================================*/
@@ -109,9 +109,9 @@ static Timer Env_get_time()
 
 /*---------------------------------------------------------------------------*/
 
-static Timer Env_get_synced_time()
+static Timer Env_get_synced_time( Env* env )
 {
-  Env_mpi_barrier();
+  Env_mpi_barrier( env );
   return Env_get_time();
 }
 

@@ -169,7 +169,7 @@ void Faces_communicate_faces(
                 const int proc_other
                                  = Env_proc( env, proc_x+inc_x, proc_y+inc_y );
                 Env_send_P( face_per_octant, size_face_per_octant,
-                            proc_other, Env_tag( env )+octant_in_block );
+                            proc_other, Env_tag( env )+octant_in_block, env );
               }
             }
             else
@@ -182,7 +182,7 @@ void Faces_communicate_faces(
                 copy_vector( buf, face_per_octant, size_face_per_octant );
                 use_buf = Bool_true;
                 Env_recv_P( face_per_octant, size_face_per_octant,
-                            proc_other, Env_tag( env )+octant_in_block );
+                            proc_other, Env_tag( env )+octant_in_block, env );
               }
             }
           }
@@ -195,7 +195,7 @@ void Faces_communicate_faces(
                 const int proc_other
                                  = Env_proc( env, proc_x-inc_x, proc_y-inc_y );
                 Env_recv_P( face_per_octant, size_face_per_octant,
-                            proc_other, Env_tag( env )+octant_in_block );
+                            proc_other, Env_tag( env )+octant_in_block, env );
               }
             }
             else
@@ -205,7 +205,8 @@ void Faces_communicate_faces(
                 const int proc_other
                                  = Env_proc( env, proc_x+inc_x, proc_y+inc_y );
                 Env_send_P( use_buf ? buf : face_per_octant,
-                  size_face_per_octant, proc_other, Env_tag( env )+octant_in_block );
+                  size_face_per_octant, proc_other,
+                  Env_tag( env )+octant_in_block, env );
               }
             }
           } /*---if color---*/
@@ -288,7 +289,7 @@ void Faces_send_faces_start(
                                    & faces->request_send_xz[octant_in_block]
                                  : & faces->request_send_yz[octant_in_block];
           Env_asend_P( face_per_octant, size_face_per_octant,
-                       proc_other, Env_tag( env )+octant_in_block, request );
+                    proc_other, Env_tag( env )+octant_in_block, request, env );
         }
       } /*---dir_ind---*/
     } /*---axis---*/
@@ -415,7 +416,7 @@ void Faces_recv_faces_start(
                                    & faces->request_recv_xz[octant_in_block]
                                  : & faces->request_recv_yz[octant_in_block];
           Env_arecv_P( face_per_octant, size_face_per_octant,
-                       proc_other, Env_tag( env )+octant_in_block, request );
+                    proc_other, Env_tag( env )+octant_in_block, request, env );
         }
       } /*---dir_ind---*/
     } /*---axis---*/

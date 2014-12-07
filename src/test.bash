@@ -100,11 +100,10 @@ function compare_runs
 #==============================================================================
 function initialize
 {
-  #if [ "$PE_ENV" = "PGI" ] ; then
-  #  module swap PrgEnv-pgi PrgEnv-gnu
-  #fi
-  ##module load cudatoolkit
-  #module load cudatoolkit/5.5.22-1.0502.7944.3.1 # need on chester currently
+  if [ "$PE_ENV" = "PGI" ] ; then
+    module swap PrgEnv-pgi PrgEnv-gnu
+  fi
+  module load cudatoolkit
 
   if [ "$PE_ENV" != "GNU" ] ; then
     echo "Error: GNU compiler required." 1>&2

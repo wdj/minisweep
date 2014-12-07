@@ -27,12 +27,14 @@ void Arguments_ctor( Arguments* args,
                      int        argc,
                      char**     argv )
 {
+  Assert( args != NULL );
   Assert( argc > 0 );
   Assert( argv != NULL );
   int i = 0;
 
   args->argc = argc;
   args->argv_unconsumed = (char**) malloc( argc * sizeof( char*) );
+  args->argstring = 0;
 
   for( i=0; i<argc; ++i )
   {
@@ -42,12 +44,55 @@ void Arguments_ctor( Arguments* args,
 } /*---Arguments_ctor---*/
 
 /*===========================================================================*/
+/* Pseudo-constructor that takes a string instead of an args array---*/
+
+void Arguments_ctor_string( Arguments* args,
+                            char*      argstring )
+{
+  Assert( args != NULL );
+  Assert( argstring != NULL );
+
+  size_t len = strlen( argstring );
+
+  args->argstring = (char*) malloc( (len+1) * sizeof( char ) );
+  memcpy( args->argstring, argstring, len+1 );
+
+  args->argv_unconsumed = (char**) malloc( len * sizeof( char* ) );
+
+  args->argv_unconsumed[0] = & args->argstring[len];
+  args->argc = 1;
+
+  /*---Parse string, convert to args---*/
+  Bool_t is_delim_prev = Bool_true;
+  int i = 0;
+  for( i=0; i<len; ++i )
+  {
+    if( args->argstring[i] == ' ' || args->argstring[i] == '\t' )
+    {
+      args->argstring[i] = 0;
+    }
+    Bool_t is_delim = args->argstring[i] == 0;
+    if( is_delim_prev && ! is_delim )
+    {
+      args->argv_unconsumed[args->argc] = & args->argstring[i];
+      args->argc++;
+    }
+    is_delim_prev = is_delim;
+  }
+} /*---Arguments_ctor_string---*/
+
+/*===========================================================================*/
 /* Pseudo-destructor for Arguments struct---*/
 
 void Arguments_dtor( Arguments* args )
 {
-  free( (void*) args->argv_unconsumed );
+  Assert( args != NULL );
 
+  free( (void*) args->argv_unconsumed );
+  if( args->argstring )
+  {
+    free( (void*) args->argstring );
+  }
 } /*---Arguments_dtor---*/
 
 /*===========================================================================*/

@@ -17,6 +17,7 @@
 
 #include "types.h"
 #include "env_assert.h"
+#include "env_declarations.h"
 #include "memory.h"
 
 #include "env_cuda_kernels.h"
@@ -24,15 +25,6 @@
 #ifdef __cplusplus
 extern "C"
 {
-#endif
-
-/*===========================================================================*/
-/*---Types---*/
-
-#ifdef __CUDACC__
-typedef cudaStream_t Stream_t;
-#else
-typedef int Stream_t;
 #endif
 
 /*===========================================================================*/

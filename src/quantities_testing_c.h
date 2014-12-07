@@ -234,13 +234,13 @@ void Quantities_init_decomp__( Quantities*       quan,
     for( proc_x=1; proc_x<Env_nproc_x( env ); ++proc_x )
     {
       Env_recv_i( & quan->ix_base_vals[ 1+proc_x ], 1,
-                  Env_proc( env, proc_x, Env_proc_y_this( env ) ), Env_tag( env ) );
+        Env_proc( env, proc_x, Env_proc_y_this( env ) ), Env_tag( env ), env );
     }
   }
   else
   {
     Env_send_i( & dims.nx, 1,
-                Env_proc( env, 0, Env_proc_y_this( env ) ), Env_tag( env ) );
+             Env_proc( env, 0, Env_proc_y_this( env ) ), Env_tag( env ), env );
   }
   Env_increment_tag( env, 1 );
 
@@ -252,13 +252,13 @@ void Quantities_init_decomp__( Quantities*       quan,
     for( proc_x=1; proc_x<Env_nproc_x( env ); ++proc_x )
     {
       Env_send_i( & quan->ix_base_vals[ 1 ], Env_nproc_x( env ),
-                  Env_proc( env, proc_x, Env_proc_y_this( env ) ), Env_tag( env ) );
+        Env_proc( env, proc_x, Env_proc_y_this( env ) ), Env_tag( env ), env );
     }
   }
   else
   {
     Env_recv_i( & quan->ix_base_vals[ 1 ], Env_nproc_x( env ),
-                Env_proc( env, 0, Env_proc_y_this( env ) ), Env_tag( env ) );
+             Env_proc( env, 0, Env_proc_y_this( env ) ), Env_tag( env ), env );
   }
   Env_increment_tag( env, 1 );
 
@@ -289,13 +289,13 @@ void Quantities_init_decomp__( Quantities*       quan,
     for( proc_y=1; proc_y<Env_nproc_y( env ); ++proc_y )
     {
       Env_recv_i( & quan->iy_base_vals[ 1+proc_y ], 1,
-                  Env_proc( env, Env_proc_x_this( env ), proc_y ), Env_tag( env ) );
+        Env_proc( env, Env_proc_x_this( env ), proc_y ), Env_tag( env ), env );
     }
   }
   else
   {
     Env_send_i( & dims.ny, 1,
-                Env_proc( env, Env_proc_x_this( env ), 0 ), Env_tag( env ) );
+             Env_proc( env, Env_proc_x_this( env ), 0 ), Env_tag( env ), env );
   }
   Env_increment_tag( env, 1 );
 
@@ -307,13 +307,13 @@ void Quantities_init_decomp__( Quantities*       quan,
     for( proc_y=1; proc_y<Env_nproc_y( env ); ++proc_y )
     {
       Env_send_i( & quan->iy_base_vals[ 1 ], Env_nproc_y( env ),
-                  Env_proc( env, Env_proc_x_this( env ), proc_y ), Env_tag( env ) );
+        Env_proc( env, Env_proc_x_this( env ), proc_y ), Env_tag( env ), env );
     }
   }
   else
   {
     Env_recv_i( & quan->iy_base_vals[ 1 ], Env_nproc_y( env ),
-                Env_proc( env, Env_proc_x_this( env ), 0 ), Env_tag( env ) );
+             Env_proc( env, Env_proc_x_this( env ), 0 ), Env_tag( env ), env );
   }
   Env_increment_tag( env, 1 );
 
