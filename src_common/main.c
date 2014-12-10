@@ -20,8 +20,41 @@
 #include "array_operations.h"
 #include "sweeper.h"
 
+#define MAX_LINE_LEN 1024
+
 /*===========================================================================*/
-/*Struct to hold run result data---*/
+/*---Input a line from standard input---*/
+
+Bool_t getline( char* line );
+Bool_t getline( char* line )
+{
+  int nchar = 0;
+  int c = 0;
+    
+  while( (c = getchar()) != EOF )
+  {
+    if( c == '\n' )
+    {
+      break;
+    }
+
+    Assert( nchar + 2 <= MAX_LINE_LEN ? "Input line too long" : 0 );
+ 
+    line[nchar] = c; 
+    ++nchar;
+  }
+
+  if( c == EOF && nchar == 0 )
+  {
+    return Bool_false;
+  }
+
+  line[nchar] = '\0';
+  return Bool_true;
+}
+
+/*===========================================================================*/
+/*---Struct to hold run result data---*/
 
 typedef struct
 {
@@ -36,7 +69,6 @@ typedef struct
 /*---Perform run---*/
 
 void run( Env* env, Arguments* args, Run_Data* run_data );
-
 void run( Env* env, Arguments* args, Run_Data* run_data )
 {
   if( ! Env_is_proc_active( env ) )
@@ -226,20 +258,41 @@ Bool_t compare_runs( Env* env, char* argstring1, char* argstring2 )
 /*---Tester---*/
 
 void test( Env* env );
-
 void test( Env* env )
 {
-  Bool_t pass = Bool_false;
-  pass = compare_runs( env, 
-     "--nx 3 --ny 5 --nz 6 --ne 2 --na 5 --nblock_z 2 --nproc_x 1",
-     "--nx 3 --ny 5 --nz 6 --ne 2 --na 5 --nblock_z 2 --nproc_x 1" );
-/*
-     "--nx 3 --ny 5 --nz 6 --ne 2 --na 5 --nblock_z 2 --nproc_x 2 --is_using_device 1" );
-*/
-  if( Env_do_output( env ) )
+  int ntest = 0;
+  int ntest_passed = 0;
+
+  Bool_t result1 = Bool_true;
+  Bool_t result2 = Bool_true;
+
+  /*---Loop over pairs of input arg strings to do runs---*/
+
+  while( Bool_true )
   {
-    printf( "%i\n", pass );
+    char argstring1[MAX_LINE_LEN];
+    char argstring2[MAX_LINE_LEN];
+
+    result1 = getline( argstring1 );
+    result2 = getline( argstring2 );
+
+    if( ! ( result1 && result2 ) )
+    {
+      break;
+    }
+
+    Bool_t pass = compare_runs( env, argstring1, argstring2 );
+
+    ++ntest;
+    if( pass )
+    {
+      ++ntest_passed;
+    }
+
   }
+
+  printf( "TESTS %i    PASSED %i    FAILED %i\n",
+          ntest, ntest_passed, ntest-ntest_passed );
 }
 
 /*===========================================================================*/

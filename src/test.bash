@@ -29,12 +29,31 @@ function perform_run
     ./sweep.x $application_args
     #assert $? = 0
   fi
+}
+#==============================================================================
 
+#==============================================================================
+# Run the executable multiple times using stdin.
+#==============================================================================
+function perform_runs
+{
+  local exec_config_args="$(echo "$1" | tr '\n' ' ')"
+  local application_args="$(echo "$2" | tr '\n' ' ')"
+
+  perform_run "$1" "$2" | tee tmp_
+
+  local ntest=$(        tail -n1 tmp_ | sed -e 's/.*TESTS *//'  -e 's/ .*//' )
+  local ntest_passed=$( tail -n1 tmp_ | sed -e 's/.*PASSED *//' -e 's/ .*//' )
+  rm -f tmp_
+
+  g_ntest=$((        $g_ntest        + $ntest ))
+  g_ntest_passed=$(( $g_ntest_passed + $ntest_passed ))
 }
 #==============================================================================
 
 #==============================================================================
 # Compare the output of two runs for match.
+# This function is DEFUNCT.
 #==============================================================================
 function compare_runs
 {
@@ -96,6 +115,124 @@ function compare_runs
 #==============================================================================
 
 #==============================================================================
+# Strings for cases to run, MPI.
+#==============================================================================
+function argstrings_mpi
+{
+  local ARGS="--nx  5 --ny  4 --nz  5 --ne 7 --na 10"
+
+  echo "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1"
+  echo "$ARGS --nproc_x 2 --nproc_y 1 --nblock_z 1"
+
+  echo "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1"
+  echo "$ARGS --nproc_x 1 --nproc_y 2 --nblock_z 1"
+
+  local ARGS="--nx  5 --ny  4 --nz  6 --ne 7 --na 10"
+
+  echo "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1"
+  echo "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
+
+  local ARGS="--nx  5 --ny  4 --nz  6 --ne 7 --na 10 --is_face_comm_async 0"
+
+  echo "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1"
+  echo "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
+
+  local ARGS="--nx 5 --ny 8 --nz 16 --ne 9 --na 12"
+
+  echo "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 1"
+  echo "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
+
+  echo "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
+  echo "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 4"
+}
+#==============================================================================
+
+#==============================================================================
+# Strings for cases to run, CUDA.
+#==============================================================================
+function argstrings_cuda
+{
+  local ARGS="--nx  2 --ny  3 --nz  4 --ne 20 --na 5 --nblock_z 2"
+
+  for nthread_octant in 1 2 4 8 ; do
+    echo "$ARGS"
+    echo ""$ARGS --is_using_device 1 --nthread_e 1 \
+                 --nthread_octant $nthread_octant"
+  done
+
+  for nthread_e in 2 10 20 ; do
+    echo "$ARGS"
+    echo "$ARGS --is_using_device 1 --nthread_e $nthread_e --nthread_octant 8"
+  done
+}
+#==============================================================================
+
+#==============================================================================
+# Strings for cases to run, MPI + CUDA.
+#==============================================================================
+function argstrings_mpi_cuda
+{
+  local ARGS="--nx 3 --ny 5 --nz 6 --ne 2 --na 5 --nblock_z 2"
+
+  for nproc_x in 1 2 ; do
+  for nproc_y in 1 2 ; do
+  for nthread_octant in 1 2 4 8 ; do
+      echo "$ARGS"
+      echo "$ARGS --is_using_device 1 --nproc_x $nproc_x --nproc_y $nproc_y \
+                  --nthread_e 3 --nthread_octant $nthread_octant"
+  done
+  done
+  done
+}
+#==============================================================================
+
+#==============================================================================
+# Strings for cases to run, OpenMP.
+#==============================================================================
+function argstrings_openmp
+{
+  local ARGS="--nx  5 --ny  4 --nz  5 --ne 200 --na 10"
+
+  echo "$ARGS --nthread_e 1"
+  echo "$ARGS --nthread_e 2"
+  echo "$ARGS --nthread_e 2"
+  echo "$ARGS --nthread_e 3"
+  echo "$ARGS --nthread_e 3"
+  echo "$ARGS --nthread_e 4"
+
+  echo "$ARGS --nthread_octant 1"
+  echo "$ARGS --nthread_octant 2"
+  echo "$ARGS --nthread_octant 2"
+  echo "$ARGS --nthread_octant 4"
+  echo "$ARGS --nthread_octant 4"
+  echo "$ARGS --nthread_octant 8"
+
+  echo "$ARGS --nthread_e 1 --nthread_octant 1"
+  echo "$ARGS --nthread_e 2 --nthread_octant 1"
+  echo "$ARGS --nthread_e 2 --nthread_octant 1"
+  echo "$ARGS --nthread_e 2 --nthread_octant 2"
+}
+#==============================================================================
+
+#==============================================================================
+# Strings for cases to run, sweeper variants.
+#==============================================================================
+function argstrings_variants
+{
+  local ARG_NBLOCK_Z_1="$1"
+  local ARG_NBLOCK_Z_5="$2"
+
+  local ARGS="--nx  5 --ny  5 --nz  5 --ne 10 --na 20"
+
+  echo "$ARGS --niterations 1 $ARG_NBLOCK_Z_1"
+  echo "$ARGS --niterations 2 $ARG_NBLOCK_Z_1"
+
+  echo "$ARGS --niterations 1 $ARG_NBLOCK_Z_1"
+  echo "$ARGS --niterations 1 $ARG_NBLOCK_Z_5"
+}
+#==============================================================================
+
+#==============================================================================
 # Initialize build/execution environment.
 #==============================================================================
 function initialize
@@ -120,6 +257,8 @@ function main
   #---args to use below:
   #---  nx ny nz ne nm na numiterations nproc_x nproc_y nblock_z 
 
+  cp /dev/null tmp_
+
   #==============================
   # MPI + CUDA.
   #==============================
@@ -132,20 +271,7 @@ function main
 
     make CUDA_OPTION=1 NM_VALUE=4
 
-    local ARGS="--nx 3 --ny 5 --nz 6 --ne 2 --na 5 --nblock_z 2"
-
-    for nproc_x in 1 2 ; do
-    for nproc_y in 1 2 ; do
-    for nthread_octant in 1 2 4 8 ; do
-      compare_runs \
-        "-n1" \
-        "$ARGS" \
-        "-n$(( $nproc_x * $nproc_y ))" \
-        "$ARGS --is_using_device 1 --nproc_x $nproc_x --nproc_y $nproc_y \
-               --nthread_e 3 --nthread_octant $nthread_octant"
-    done
-    done
-    done
+    argstrings_mpi_cuda | perform_runs "-n4" ""
 
   fi #---PBS_NP
 
@@ -161,21 +287,7 @@ function main
 
     make CUDA_OPTION=1 NM_VALUE=4
 
-    local ARGS="--nx  2 --ny  3 --nz  4 --ne 20 --na 5 --nblock_z 2"
-
-    for nthread_octant in 1 2 4 8 ; do
-      compare_runs \
-        "-n1"  "$ARGS " \
-        "-n1"  "$ARGS --is_using_device 1 --nthread_e 1 \
-                      --nthread_octant $nthread_octant"
-    done
-
-    for nthread_e in 2 10 20 ; do
-      compare_runs \
-        "-n1"  "$ARGS " \
-        "-n1"  "$ARGS --is_using_device 1 --nthread_e $nthread_e \
-                      --nthread_octant 8"
-    done
+    argstrings_cuda | perform_runs "-n1" ""
 
   fi #---PBS_NP
 
@@ -191,26 +303,7 @@ function main
 
     make NM_VALUE=4
 
-    local ARGS="--nx  5 --ny  4 --nz  5 --ne 7 --na 10"
-    compare_runs   "-n1"  "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1" \
-                   "-n2"  "$ARGS --nproc_x 2 --nproc_y 1 --nblock_z 1"
-    compare_runs   "-n1"  "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1" \
-                   "-n2"  "$ARGS --nproc_x 1 --nproc_y 2 --nblock_z 1"
-
-    local ARGS="--nx  5 --ny  4 --nz  6 --ne 7 --na 10"
-    compare_runs   "-n1"  "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1" \
-                  "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
-    local ARGS="--nx  5 --ny  4 --nz  6 --ne 7 --na 10 --is_face_comm_async 0"
-    compare_runs   "-n1"  "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1" \
-                  "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
-
-    make NM_VALUE=1
-
-    local ARGS="--nx 5 --ny 8 --nz 16 --ne 9 --na 12"
-    compare_runs  "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 1" \
-                  "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
-    compare_runs  "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2" \
-                  "-n16"  "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 4"
+    argstrings_mpi | perform_runs "-n16" ""
 
   fi #---PBS_NP
 
@@ -226,25 +319,7 @@ function main
 
     make OPENMP_OPTION=THREADS NM_VALUE=4
 
-    local ARGS="--nx  5 --ny  4 --nz  5 --ne 200 --na 10"
-    compare_runs   "-n1 -d1"  "$ARGS --nthread_e 1" \
-                   "-n1 -d2"  "$ARGS --nthread_e 2"
-    compare_runs   "-n1 -d2"  "$ARGS --nthread_e 2" \
-                   "-n1 -d3"  "$ARGS --nthread_e 3"
-    compare_runs   "-n1 -d3"  "$ARGS --nthread_e 3" \
-                   "-n1 -d4"  "$ARGS --nthread_e 4"
-
-    compare_runs   "-n1 -d1"  "$ARGS --nthread_octant 1" \
-                   "-n1 -d2"  "$ARGS --nthread_octant 2"
-    compare_runs   "-n1 -d2"  "$ARGS --nthread_octant 2" \
-                   "-n1 -d4"  "$ARGS --nthread_octant 4"
-    compare_runs   "-n1 -d4"  "$ARGS --nthread_octant 4" \
-                   "-n1 -d8"  "$ARGS --nthread_octant 8"
-
-    compare_runs   "-n1 -d1"  "$ARGS --nthread_e 1 --nthread_octant 1" \
-                   "-n1 -d2"  "$ARGS --nthread_e 2 --nthread_octant 1"
-    compare_runs   "-n1 -d2"  "$ARGS --nthread_e 2 --nthread_octant 1" \
-                   "-n1 -d4"  "$ARGS --nthread_e 2 --nthread_octant 2"
+    argstrings_openmp | perform_runs "-n1 -d8" ""
 
   fi #---PBS_NP
 
@@ -270,11 +345,8 @@ function main
       local ARG_NBLOCK_Z_5=""
     fi
 
-    local ARGS="--nx  5 --ny  5 --nz  5 --ne 10 --na 20"
-    compare_runs  "-n1" "$ARGS --niterations 1 $ARG_NBLOCK_Z_1" \
-                  "-n1" "$ARGS --niterations 2 $ARG_NBLOCK_Z_1"
-    compare_runs  "-n1" "$ARGS --niterations 1 $ARG_NBLOCK_Z_1" \
-                  "-n1" "$ARGS --niterations 1 $ARG_NBLOCK_Z_5"
+    argstrings_variants "$ARG_NBLOCK_Z_1" "$ARG_NBLOCK_Z_5" \
+      | perform_runs "-n1" ""
 
   done #---alg_options
 
@@ -282,7 +354,8 @@ function main
   # Finalize.
   #==============================
 
-  echo -n "Total tests $g_ntest"
+  echo -n "TOTAL: "
+  echo -n "TESTS $g_ntest"
   echo -n "    "
   echo -n "PASSED $g_ntest_passed"
   echo -n "    "
