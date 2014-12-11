@@ -43,11 +43,16 @@ typedef struct
 
   int              nthread_e;
   int              nthread_octant;
+  int              nthread_y;
+  int              nthread_z;
 
   int              nblock_z;
   int              nblock_octant;
   int              noctant_per_block;
   int              nsemiblock;
+  int              nsubblock_x;
+  int              nsubblock_y;
+  int              nsubblock_z;
 
   Step_Scheduler   step_scheduler;
 
@@ -117,7 +122,9 @@ static inline int Sweeper_nvilocal__( Sweeper* sweeper,
          Sweeper_nthread_m( sweeper, env ) *
          NU *
          sweeper->nthread_octant *
-         sweeper->nthread_e
+         sweeper->nthread_e *
+         sweeper->nthread_y *
+         sweeper->nthread_z
        ;
 }
 
@@ -135,7 +142,9 @@ static inline int Sweeper_nvslocal__( Sweeper* sweeper,
          Sweeper_nthread_a( sweeper, env ) *
          NU *
          sweeper->nthread_octant *
-         sweeper->nthread_e
+         sweeper->nthread_e *
+         sweeper->nthread_y *
+         sweeper->nthread_z
        ;
 }
 
@@ -153,7 +162,9 @@ static inline int Sweeper_nvolocal__( Sweeper* sweeper,
          Sweeper_nthread_m( sweeper, env ) *
          NU *
          sweeper->nthread_octant *
-         sweeper->nthread_e
+         sweeper->nthread_e *
+         sweeper->nthread_y *
+         sweeper->nthread_z
        ;
 }
 
@@ -167,8 +178,8 @@ static int Sweeper_nthreadblock( const Sweeper* sweeper,
   Assert( axis >= 0 && axis < 3 );
 
   return axis==0 ? sweeper->nthread_e :
-         axis==1 ? 1 :
-                   1;
+         axis==1 ? sweeper->nthread_y :
+                   sweeper->nthread_z;
 }
 
 /*---------------------------------------------------------------------------*/

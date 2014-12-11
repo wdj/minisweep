@@ -78,11 +78,16 @@ typedef struct
 
   int              nthread_e;
   int              nthread_octant;
+  int              nthread_y;
+  int              nthread_z;
 
   int              nblock_z;
   int              nblock_octant;
   int              noctant_per_block;
   int              nsemiblock;
+  int              nsubblock_x;
+  int              nsubblock_y;
+  int              nsubblock_z;
 } Sweeper_Lite;
 
 /*===========================================================================*/
@@ -93,8 +98,10 @@ TARGET_HD static inline int Sweeper_thread_e( const Sweeper_Lite* sweeper )
 #ifdef __CUDA_ARCH__
   return Env_cuda_threadblock( 0 );
 #else
-  Assert( sweeper->nthread_e * sweeper->nthread_octant == 1 ||
-                                                        Env_omp_in_parallel() );
+  Assert( sweeper->nthread_e *
+          sweeper->nthread_octant *
+          sweeper->nthread_y *
+          sweeper->nthread_z == 1 || Env_omp_in_parallel() );
   return Env_omp_thread() % sweeper->nthread_e;
 #endif
 }
@@ -106,9 +113,47 @@ TARGET_HD static inline int Sweeper_thread_octant( const Sweeper_Lite* sweeper )
 #ifdef __CUDA_ARCH__
   return Env_cuda_thread_in_threadblock( 1 );
 #else
-  Assert( sweeper->nthread_e * sweeper->nthread_octant == 1 ||
-                                                       Env_omp_in_parallel() );
-  return Env_omp_thread() / sweeper->nthread_e;
+  Assert( sweeper->nthread_e *
+          sweeper->nthread_octant *
+          sweeper->nthread_y *
+          sweeper->nthread_z == 1 || Env_omp_in_parallel() );
+  return ( Env_omp_thread() / sweeper->nthread_e )
+                            % sweeper->nthread_octant;
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+TARGET_HD static inline int Sweeper_thread_y( const Sweeper_Lite* sweeper )
+{
+#ifdef __CUDA_ARCH__
+  return Env_cuda_threadblock( 1 );
+#else
+  Assert( sweeper->nthread_e *
+          sweeper->nthread_octant *
+          sweeper->nthread_y *
+          sweeper->nthread_z == 1 || Env_omp_in_parallel() );
+  return ( Env_omp_thread() / ( sweeper->nthread_e *
+                                sweeper->nthread_octant )
+                            %   sweeper->nthread_y );
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+TARGET_HD static inline int Sweeper_thread_z( const Sweeper_Lite* sweeper )
+{
+#ifdef __CUDA_ARCH__
+  return Env_cuda_threadblock( 2 );
+#else
+  Assert( sweeper->nthread_e *
+          sweeper->nthread_octant *
+          sweeper->nthread_y *
+          sweeper->nthread_z == 1 || Env_omp_in_parallel() );
+  return ( Env_omp_thread() / ( sweeper->nthread_e *
+                                sweeper->nthread_octant *
+                                sweeper->nthread_y )
+                            %   sweeper->nthread_z );
 #endif
 }
 
@@ -151,7 +196,21 @@ TARGET_HD static inline int Sweeper_thread_u( const Sweeper_Lite* sweeper )
 TARGET_HD static inline void Sweeper_sync_octant_threads( Sweeper_Lite* sweeper )
 {
 #ifdef __CUDA_ARCH__
-  /*---NOTE: this is not needed if octant threads are mapped in-warp---*/
+  /*---NOTE: this may not be needed if these threads are mapped in-warp---*/
+  Env_cuda_sync_threadblock();
+#else
+#ifdef USE_OPENMP_THREADS
+#pragma omp barrier
+#endif
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+TARGET_HD static inline void Sweeper_sync_yz_threads( Sweeper_Lite* sweeper )
+{
+#ifdef __CUDA_ARCH__
+  /*---NOTE: this may not be needed if these threads are mapped in-warp---*/
   Env_cuda_sync_threadblock();
 #else
 #ifdef USE_OPENMP_THREADS

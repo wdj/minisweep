@@ -68,7 +68,7 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Require a power of 2 between 1 and 8 inclusive---*/
   Insist( sweeper->nthread_octant>0 && sweeper->nthread_octant<=NOCTANT
           && ((sweeper->nthread_octant&(sweeper->nthread_octant-1))==0)
-                                ? "Invalid octant thread count supplied" : 0 );
+                                       ? "Invalid thread count supplied" : 0 );
   /*---Don't allow threading in cases where it doesn't make sense---*/
   Insist( sweeper->nthread_octant==1 || IS_USING_OPENMP_THREADS
                                      || Env_cuda_is_using_device( env ) ?
@@ -92,15 +92,53 @@ void Sweeper_ctor( Sweeper*          sweeper,
          ? "Incomplete set of semiblock steps requires atomic vo update" : 0 );
 
   /*====================*/
+  /*---Set up number of subblocks---*/
+  /*====================*/
+
+  sweeper->nsubblock_x = Arguments_consume_int_or_default(
+                                                    args, "--nsubblock_x", 1 );
+  Insist( sweeper->nsubblock_x>0 ? "Invalid subblock count supplied" : 0 );
+
+  sweeper->nsubblock_y = Arguments_consume_int_or_default(
+                                                    args, "--nsubblock_y", 1 );
+  Insist( sweeper->nsubblock_y>0 ? "Invalid subblock count supplied" : 0 );
+
+  sweeper->nsubblock_z = Arguments_consume_int_or_default(
+                                                    args, "--nsubblock_z", 1 );
+  Insist( sweeper->nsubblock_z>0 ? "Invalid subblock count supplied" : 0 );
+
+  /*====================*/
   /*---Set up number of energy threads---*/
   /*====================*/
 
   sweeper->nthread_e
                    = Arguments_consume_int_or_default( args, "--nthread_e", 1);
 
-  Insist( sweeper->nthread_e > 0 ? "Invalid e thread count supplied." : 0 );
+  Insist( sweeper->nthread_e > 0 ? "Invalid thread count supplied." : 0 );
   /*---Don't allow threading in cases where it doesn't make sense---*/
   Insist( sweeper->nthread_e==1 || IS_USING_OPENMP_THREADS
+                                || Env_cuda_is_using_device( env ) ?
+          "Threading not allowed for this case" : 0 );
+
+  /*====================*/
+  /*---Set up number of spatial threads---*/
+  /*====================*/
+
+  sweeper->nthread_y
+                   = Arguments_consume_int_or_default( args, "--nthread_y", 1);
+
+  Insist( sweeper->nthread_y > 0 ? "Invalid thread count supplied." : 0 );
+  /*---Don't allow threading in cases where it doesn't make sense---*/
+  Insist( sweeper->nthread_y==1 || IS_USING_OPENMP_THREADS
+                                || Env_cuda_is_using_device( env ) ?
+          "Threading not allowed for this case" : 0 );
+
+  sweeper->nthread_z
+                   = Arguments_consume_int_or_default( args, "--nthread_z", 1);
+
+  Insist( sweeper->nthread_z > 0 ? "Invalid thread count supplied." : 0 );
+  /*---Don't allow threading in cases where it doesn't make sense---*/
+  Insist( sweeper->nthread_z==1 || IS_USING_OPENMP_THREADS
                                 || Env_cuda_is_using_device( env ) ?
           "Threading not allowed for this case" : 0 );
 
@@ -230,11 +268,16 @@ Sweeper_Lite Sweeper_sweeper_lite( Sweeper sweeper )
 
   sweeper_lite.nthread_e      = sweeper.nthread_e;
   sweeper_lite.nthread_octant = sweeper.nthread_octant;
+  sweeper_lite.nthread_y      = sweeper.nthread_y;
+  sweeper_lite.nthread_z      = sweeper.nthread_z;
 
   sweeper_lite.nblock_z          = sweeper.nblock_z;
   sweeper_lite.nblock_octant     = sweeper.nblock_octant;
   sweeper_lite.noctant_per_block = sweeper.noctant_per_block;
   sweeper_lite.nsemiblock        = sweeper.nsemiblock;
+  sweeper_lite.nsubblock_x       = sweeper.nsubblock_x;
+  sweeper_lite.nsubblock_y       = sweeper.nsubblock_y;
+  sweeper_lite.nsubblock_z       = sweeper.nsubblock_z;
 
   return sweeper_lite;
 }
@@ -386,7 +429,7 @@ void Sweeper_sweep_block(
   }
   else
 #ifdef USE_OPENMP_THREADS
-#pragma omp parallel num_threads( sweeper->nthread_e * sweeper->nthread_octant )
+#pragma omp parallel num_threads( sweeper->nthread_e * sweeper->nthread_octant * sweeper->nthread_y * sweeper->nthread_z )
 #endif
   {
     Sweeper_sweep_block_impl( &sweeper_lite,
