@@ -68,14 +68,9 @@ typedef struct
 /*===========================================================================*/
 /*---Perform run---*/
 
-void run( Env* env, Arguments* args, Run_Data* run_data );
-void run( Env* env, Arguments* args, Run_Data* run_data )
+void run1( Env* env, Arguments* args, Run_Data* run_data );
+void run1( Env* env, Arguments* args, Run_Data* run_data )
 {
-  if( ! Env_is_proc_active( env ) )
-  {
-    return;
-  }
-
   /*---Declarations---*/
 
   Dimensions  dims_g;       /*---dims for entire problem---*/
@@ -222,27 +217,35 @@ Bool_t compare_runs( Env* env, char* argstring1, char* argstring2 )
   Arguments_ctor_string( &args1, argstring1 );
   Env_set_values( env, &args1 );
 
-  if( Env_do_output( env ) )
+  if( Env_is_proc_master( env ) )
   {
     printf("%s // ", argstring1);
   }
-  run( env, &args1, &rd1 );
+  if( Env_is_proc_active( env ) )
+  {
+    run1( env, &args1, &rd1 );
+  }
+  Env_reset_values( env );
 
   Arguments_ctor_string( &args2, argstring2 );
   Env_set_values( env, &args2 );
 
-  if( Env_do_output( env ) )
+  if( Env_is_proc_master( env ) )
   {
     printf("%s // ", argstring2);
   }
-  run( env, &args2, &rd2 );
+  if( Env_is_proc_active( env ) )
+  {
+    run1( env, &args2, &rd2 );
+  }
+  Env_reset_values( env );
 
-  Bool_t pass = Env_do_output( env ) ?
+  Bool_t pass = Env_is_proc_master( env ) ?
                 rd1.normsqdiff == P_zero() &&
                 rd2.normsqdiff == P_zero() &&
                 rd1.normsq == rd2.normsq : Bool_false;
 
-  if( Env_do_output( env ) )
+  if( Env_is_proc_master( env ) )
   {
     printf("%e %e %e %e // %i %i %i // %s\n",
       rd1.normsqdiff, rd2.normsqdiff, rd1.normsq, rd2.normsq,
@@ -273,8 +276,15 @@ void test( Env* env )
     char argstring1[MAX_LINE_LEN];
     char argstring2[MAX_LINE_LEN];
 
-    result1 = getline( argstring1 );
-    result2 = getline( argstring2 );
+    if( Env_proc_this( env ) == 0 )
+    {
+      result1 = getline( argstring1 );
+      result2 = getline( argstring2 );
+    }
+    Env_bcast_int( env, &result1, Env_proc_this( env ) );
+    Env_bcast_int( env, &result2, Env_proc_this( env ) );
+    Env_bcast_string( env, argstring1, MAX_LINE_LEN, Env_proc_this( env ) );
+    Env_bcast_string( env, argstring2, MAX_LINE_LEN, Env_proc_this( env ) );
 
     if( ! ( result1 && result2 ) )
     {
@@ -291,8 +301,11 @@ void test( Env* env )
 
   }
 
-  printf( "TESTS %i    PASSED %i    FAILED %i\n",
-          ntest, ntest_passed, ntest-ntest_passed );
+  if( Env_is_proc_master( env ) )
+  {
+    printf( "TESTS %i    PASSED %i    FAILED %i\n",
+            ntest, ntest_passed, ntest-ntest_passed );
+  }
 }
 
 /*===========================================================================*/
@@ -321,9 +334,9 @@ int main( int argc, char** argv )
 
     /*---Perform run---*/
 
-    run( &env, &args, &run_data );
+    run1( &env, &args, &run_data );
 
-    if( Env_do_output( &env ) )
+    if( Env_is_proc_master( &env ) )
     {
       printf( "Normsq result: %.8e  diff: %.3e  %s  time: %.3f  GF/s: %.3f\n",
               (double)run_data.normsq, (double)run_data.normsqdiff,

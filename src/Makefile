@@ -164,7 +164,7 @@ ifeq ($(CUDA_OPTION),1)
   endif
 make_objects: make_objects_c
 	nvcc -c $(CUDA_SOURCES) $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS) -DUSE_CUDA $(CUDA_ARGS)
-	nvcc -c $(KERNEL_FILE).cu $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS) -DUSE_CUDA $(CUDA_ARGS)
+	#nvcc -c $(KERNEL_FILE).cu $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS) -DUSE_CUDA $(CUDA_ARGS)
 	rm -f $(KERNEL_FILE).o
 else
 make_objects: make_objects_c
@@ -182,7 +182,7 @@ make_executable: make_objects
 	rm -f *.o
 
 test:
-	./test.bash
+	time ./test.bash
 
 clean:
 	rm -f *.o

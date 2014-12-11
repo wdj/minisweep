@@ -33,8 +33,11 @@ static void Env_mpi_initialize__( Env *env, int argc, char** argv )
 #ifdef USE_MPI
   const int mpi_code = MPI_Init( &argc, &argv );
   Assert( mpi_code == MPI_SUCCESS );
-  env->active_comm__ = MPI_COMM_NULL;
+  env->nproc_x__ = 0;
+  env->nproc_y__ = 0;
   env->tag__ = 0;
+  env->active_comm__ = MPI_COMM_WORLD;
+  env->is_proc_active__ = Bool_true;
 #endif
 }
 
@@ -45,7 +48,7 @@ static void Env_mpi_finalize__( Env* env )
 {
 #ifdef USE_MPI
   int mpi_code = 0;
-  if( env->active_comm__ != MPI_COMM_NULL )
+  if( env->active_comm__ != MPI_COMM_WORLD )
   {
     mpi_code = MPI_Comm_free( &env->active_comm__ );
     Assert( mpi_code == MPI_SUCCESS );
@@ -118,7 +121,7 @@ static void Env_mpi_set_values__( Env *env, Arguments* args )
   int mpi_code = 0;
 
   env->nproc_x__ = Arguments_consume_int_or_default( args, "--nproc_x", 1 );
-  env->nproc_y__ = Arguments_consume_int_or_default( args, "--nproc_y", 1);
+  env->nproc_y__ = Arguments_consume_int_or_default( args, "--nproc_y", 1 );
   Insist( Env_nproc_x( env ) > 0 ? "Invalid nproc_x supplied." : 0 );
   Insist( Env_nproc_y( env ) > 0 ? "Invalid nproc_y supplied." : 0 );
 
@@ -133,7 +136,7 @@ static void Env_mpi_set_values__( Env *env, Arguments* args )
   mpi_code = MPI_Comm_rank( MPI_COMM_WORLD, &rank );
   Assert( mpi_code == MPI_SUCCESS );
 
-  if( env->active_comm__ != MPI_COMM_NULL )
+  if( env->active_comm__ != MPI_COMM_WORLD )
   {
     mpi_code = MPI_Comm_free( &env->active_comm__ );
     Assert( mpi_code == MPI_SUCCESS );
@@ -144,6 +147,24 @@ static void Env_mpi_set_values__( Env *env, Arguments* args )
                                                    rank, &env->active_comm__ );
   Assert( mpi_code == MPI_SUCCESS );
 
+#endif
+}
+
+/*===========================================================================*/
+/*---Reset values---*/
+
+static void Env_mpi_reset_values__( Env *env )
+{
+#ifdef USE_MPI
+  int mpi_code = 0;
+  if( env->active_comm__ != MPI_COMM_WORLD )
+  {
+    mpi_code = MPI_Comm_free( &env->active_comm__ );
+    Assert( mpi_code == MPI_SUCCESS );
+  }
+  env->tag__ = 0;
+  env->active_comm__ = MPI_COMM_WORLD;
+  env->is_proc_active__ = Bool_true;
 #endif
 }
 
@@ -256,6 +277,28 @@ static P Env_sum_P( P value, Env* env )
 {
   Static_Assert( P_IS_DOUBLE );
   return Env_sum_d( value, env );
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void Env_bcast_int( Env* env, int* data, int root )
+{
+#ifdef USE_MPI
+  const int mpi_code = MPI_Bcast( data, 1, MPI_INT, root,
+                                                Env_mpi_active_comm__( env ) );
+  Assert( mpi_code == MPI_SUCCESS );
+#endif
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void Env_bcast_string( Env* env, char* data, int len, int root )
+{
+#ifdef USE_MPI
+  const int mpi_code = MPI_Bcast( data, len, MPI_CHAR, root,
+                                                Env_mpi_active_comm__( env ) );
+  Assert( mpi_code == MPI_SUCCESS );
+#endif
 }
 
 /*===========================================================================*/

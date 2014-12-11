@@ -73,6 +73,14 @@ static void Env_set_values( Env *env, Arguments* args )
 }
 
 /*===========================================================================*/
+/*---Reset values---*/
+
+static void Env_reset_values( Env *env )
+{
+  Env_mpi_reset_values__( env );
+}
+
+/*===========================================================================*/
 /*---Finalize execution---*/
 
 static void Env_finalize( Env* env )
@@ -85,9 +93,9 @@ static void Env_finalize( Env* env )
 /*===========================================================================*/
 /*---Indicate whether to do output---*/
 
-static Bool_t Env_do_output( const Env* env )
+static Bool_t Env_is_proc_master( const Env* env )
 {
-  return ( Env_proc_this( env ) == 0 && Env_is_proc_active( env ) );
+  return ( Env_is_proc_active( env ) && Env_proc_this( env ) == 0 );
 }
 
 /*===========================================================================*/

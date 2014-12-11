@@ -218,7 +218,7 @@ TARGET_HD inline void Sweeper_sweep_cell(
   const int                      iy,
   const int                      iz,
   const Bool_t                   do_block_init_this,
-  const Bool_t                   is_cell_active )
+  const Bool_t                   is_elt_active )
 {
   enum{ NU_PER_THREAD = NU / NTHREAD_U };
 
@@ -272,7 +272,7 @@ TARGET_HD inline void Sweeper_sweep_cell(
         {
           const int im = im_base + sweeper_thread_m;
           if( ( NM % NTHREAD_M == 0 || im < NM ) &&
-              is_cell_active )
+              is_elt_active )
           {
             if( ia_base == 0 ||
                 NM*1 > NTHREAD_M*1 )
@@ -335,7 +335,7 @@ TARGET_HD inline void Sweeper_sweep_cell(
 #endif
         {
           const int ia = ia_base + sweeper_thread_a;
-          if( ia < sweeper->dims_b.na && is_cell_active )
+          if( ia < sweeper->dims_b.na && is_elt_active )
           {
             int im_in_block = 0;
             int iu = 0;
@@ -433,7 +433,7 @@ TARGET_HD inline void Sweeper_sweep_cell(
                         octant, octant_in_block,
                         sweeper->noctant_per_block,
                         sweeper->dims_b, sweeper->dims_g,
-                        is_cell_active );
+                        is_elt_active );
     }
 
     /*====================*/
@@ -486,7 +486,7 @@ TARGET_HD inline void Sweeper_sweep_cell(
           /*====================*/
 
           if( ( NM % NTHREAD_M == 0 || im < NM ) &&
-              is_cell_active )
+              is_elt_active )
           {
             int ia_in_block = 0;
 
@@ -626,7 +626,7 @@ TARGET_HD inline void Sweeper_sweep_cell(
           /*====================*/
 
           if( ( (NM*1) % (NTHREAD_M*1) == 0 || im < NM*1 ) &&
-              is_cell_active )
+              is_elt_active )
           {
             if( ia_base+NTHREAD_A >= sweeper->dims_b.na ||
                 NM*1 > NTHREAD_M*1 )
@@ -714,6 +714,85 @@ TARGET_HD inline void Sweeper_sweep_cell(
 }
 
 /*===========================================================================*/
+/*---Perform a sweep for a subblock---*/
+
+TARGET_HD inline void Sweeper_sweep_subblock(
+  Sweeper_Lite* __restrict__     sweeper,
+  P* const __restrict__          vo_this,
+  const P* const __restrict__    vi_this,
+  P* const __restrict__          vilocal,
+  P* const __restrict__          vslocal,
+  P* const __restrict__          volocal,
+  P* const __restrict__          facexy,
+  P* const __restrict__          facexz,
+  P* const __restrict__          faceyz,
+  const P* const __restrict__    a_from_m,
+  const P* const __restrict__    m_from_a,
+  const Quantities* __restrict__ quan,
+  const int                      octant,
+  const int                      iz_base,
+  const int                      octant_in_block,
+  const int                      ie,
+  const int                      ixmin,
+  const int                      ixmax,
+  const int                      iymin,
+  const int                      iymax,
+  const int                      izmin,
+  const int                      izmax,
+  const Bool_t                   do_block_init_this )
+{
+  /*---Declarations---*/
+
+  int ix = 0;
+  int iy = 0;
+  int iz = 0;
+
+  /*---Calculate spatial directions---*/
+
+  const int dir_x = Dir_x( octant );
+  const int dir_y = Dir_y( octant );
+  const int dir_z = Dir_z( octant );
+
+  const int dir_inc_x = Dir_inc(dir_x);
+  const int dir_inc_y = Dir_inc(dir_y);
+  const int dir_inc_z = Dir_inc(dir_z);
+
+  /*---Calculate loop extents---*/
+
+  const int ixbeg = dir_x==DIR_UP ? ixmin : ixmax;
+  const int iybeg = dir_y==DIR_UP ? iymin : iymax;
+  const int izbeg = dir_z==DIR_UP ? izmin : izmax;
+
+  const int ixend = dir_x==DIR_DN ? ixmin : ixmax;
+  const int iyend = dir_y==DIR_DN ? iymin : iymax;
+  const int izend = dir_z==DIR_DN ? izmin : izmax;
+
+  /*--------------------*/
+  /*---Loop over gridcells, in proper direction---*/
+  /*--------------------*/
+
+  for( iz=izbeg; iz!=izend+dir_inc_z; iz+=dir_inc_z )
+  {
+  for( iy=iybeg; iy!=iyend+dir_inc_y; iy+=dir_inc_y )
+  {
+  for( ix=ixbeg; ix!=ixend+dir_inc_x; ix+=dir_inc_x )
+  {
+    const Bool_t is_elt_active = ix < sweeper->dims_b.nx &&
+                                 iy < sweeper->dims_b.ny &&
+                                 iz < sweeper->dims_b.nz;
+    /*--------------------*/
+    /*---Sweep cell---*/
+    /*--------------------*/
+    Sweeper_sweep_cell( sweeper, vo_this, vi_this, vilocal, vslocal, volocal,
+                        facexy, facexz, faceyz, a_from_m, m_from_a, quan,
+                        octant, iz_base, octant_in_block, ie, ix, iy, iz,
+                        do_block_init_this, is_elt_active );
+  }
+  }
+  } /*---ix/iy/iz---*/
+}
+
+/*===========================================================================*/
 /*---Perform a sweep for a semiblock---*/
 
 TARGET_HD inline void Sweeper_sweep_semiblock(
@@ -741,29 +820,11 @@ TARGET_HD inline void Sweeper_sweep_semiblock(
   const int octant  = step_info.octant;
   const int iz_base = step_info.block_z * sweeper->dims_b.nz;
 
-  const int dir_x = Dir_x( octant );
-  const int dir_y = Dir_y( octant );
-  const int dir_z = Dir_z( octant );
-
-  const int dir_inc_x = Dir_inc(dir_x);
-  const int dir_inc_y = Dir_inc(dir_y);
-  const int dir_inc_z = Dir_inc(dir_z);
-
   /*---Calculate v*local part to use---*/
 
   P* __restrict__ vilocal = Sweeper_vilocal_this__( sweeper );
   P* __restrict__ vslocal = Sweeper_vslocal_this__( sweeper );
   P* __restrict__ volocal = Sweeper_volocal_this__( sweeper );
-
-  /*---Calculate loop extents---*/
-
-  const int ixbeg = dir_x==DIR_UP ? ixmin : ixmax;
-  const int iybeg = dir_y==DIR_UP ? iymin : iymax;
-  const int izbeg = dir_z==DIR_UP ? izmin : izmax;
-
-  const int ixend = dir_x==DIR_DN ? ixmin : ixmax;
-  const int iyend = dir_y==DIR_DN ? iymin : iymax;
-  const int izend = dir_z==DIR_DN ? izmin : izmax;
 
   const int ie_min = ( sweeper->dims.ne *
                        ( Sweeper_thread_e( sweeper )     ) )
@@ -780,34 +841,15 @@ TARGET_HD inline void Sweeper_sweep_semiblock(
 
   for( ie=ie_min; ie<ie_max; ++ie )
   {
-    int ix = 0;
-    int iy = 0;
-    int iz = 0;
-
     /*--------------------*/
-    /*---Loop over gridcells, in proper direction---*/
+    /*---Sweep subblock---*/
     /*--------------------*/
-
-    for( iz=izbeg; iz!=izend+dir_inc_z; iz+=dir_inc_z )
-    {
-    for( iy=iybeg; iy!=iyend+dir_inc_y; iy+=dir_inc_y )
-    {
-    for( ix=ixbeg; ix!=ixend+dir_inc_x; ix+=dir_inc_x )
-    {
-      const Bool_t is_cell_active = ix < sweeper->dims_b.nx &&
-                                    iy < sweeper->dims_b.ny &&
-                                    iz < sweeper->dims_b.nz;
-      /*--------------------*/
-      /*---Sweep cell---*/
-      /*--------------------*/
-      Sweeper_sweep_cell( sweeper, vo_this, vi_this, vilocal, vslocal, volocal,
-                          facexy, facexz, faceyz, a_from_m, m_from_a, quan,
-                          octant, iz_base, octant_in_block, ie, ix, iy, iz,
-                          do_block_init_this, is_cell_active );
-    }
-    }
-    } /*---ix/iy/iz---*/
-
+    Sweeper_sweep_subblock( sweeper, vo_this, vi_this,
+                        vilocal, vslocal, volocal,
+                        facexy, facexz, faceyz, a_from_m, m_from_a, quan,
+                        octant, iz_base, octant_in_block, ie,
+                        ixmin, ixmax, iymin, iymax, izmin, izmax,
+                        do_block_init_this );
   } /*---ie---*/
 }
 

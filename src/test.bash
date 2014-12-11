@@ -42,8 +42,8 @@ function perform_runs
 
   perform_run "$1" "$2" | tee tmp_
 
-  local ntest=$(        tail -n1 tmp_ | sed -e 's/.*TESTS *//'  -e 's/ .*//' )
-  local ntest_passed=$( tail -n1 tmp_ | sed -e 's/.*PASSED *//' -e 's/ .*//' )
+  local ntest=$(        grep TESTS tmp_ | sed -e 's/.*TESTS *//'  -e 's/ .*//' )
+  local ntest_passed=$( grep TESTS tmp_ | sed -e 's/.*PASSED *//' -e 's/ .*//' )
   rm -f tmp_
 
   g_ntest=$((        $g_ntest        + $ntest ))
@@ -156,8 +156,8 @@ function argstrings_cuda
 
   for nthread_octant in 1 2 4 8 ; do
     echo "$ARGS"
-    echo ""$ARGS --is_using_device 1 --nthread_e 1 \
-                 --nthread_octant $nthread_octant"
+    echo "$ARGS --is_using_device 1 --nthread_e 1 \
+                --nthread_octant $nthread_octant"
   done
 
   for nthread_e in 2 10 20 ; do
@@ -191,7 +191,7 @@ function argstrings_mpi_cuda
 #==============================================================================
 function argstrings_openmp
 {
-  local ARGS="--nx  5 --ny  4 --nz  5 --ne 200 --na 10"
+  local ARGS="--nx  5 --ny  4 --nz  5 --ne 17 --na 10"
 
   echo "$ARGS --nthread_e 1"
   echo "$ARGS --nthread_e 2"
@@ -222,7 +222,7 @@ function argstrings_variants
   local ARG_NBLOCK_Z_1="$1"
   local ARG_NBLOCK_Z_5="$2"
 
-  local ARGS="--nx  5 --ny  5 --nz  5 --ne 10 --na 20"
+  local ARGS="--nx  4 --ny  3 --nz  5 --ne 11 --na 7"
 
   echo "$ARGS --niterations 1 $ARG_NBLOCK_Z_1"
   echo "$ARGS --niterations 2 $ARG_NBLOCK_Z_1"
@@ -237,7 +237,7 @@ function argstrings_variants
 #==============================================================================
 function initialize
 {
-  if [ "$PE_ENV" = "PGI" ] ; then
+  if [ "$PE_ENV" != "GNU" ] ; then
     module swap PrgEnv-pgi PrgEnv-gnu
   fi
   module load cudatoolkit
@@ -263,16 +263,20 @@ function main
   # MPI + CUDA.
   #==============================
 
-  if [ "${PBS_NP:-}" != "" -a "$PBS_NP" -ge 4 ] ; then
+  if [ "${PBS_NP:-}" != "" ] ; then
+  if [ "${PBS_NP:-}" -ge 4 ] ; then
 
     echo "--------------------------------------------------------"
     echo "---MPI + CUDA tests---"
     echo "--------------------------------------------------------"
 
-    make CUDA_OPTION=1 NM_VALUE=4
+    make -j2 CUDA_OPTION=1 NM_VALUE=4
 
-    argstrings_mpi_cuda | perform_runs "-n4" ""
+    perform_runs "-n4" "" <<EOF
+$(argstrings_mpi_cuda)
+EOF
 
+  fi #---PBS_NP
   fi #---PBS_NP
 
   #==============================
@@ -285,9 +289,11 @@ function main
     echo "---CUDA tests---"
     echo "--------------------------------------------------------"
 
-    make CUDA_OPTION=1 NM_VALUE=4
+    make -j2 CUDA_OPTION=1 NM_VALUE=4
 
-    argstrings_cuda | perform_runs "-n1" ""
+    perform_runs "-n1" "" <<EOF
+$(argstrings_cuda)
+EOF
 
   fi #---PBS_NP
 
@@ -301,9 +307,11 @@ function main
     echo "---MPI tests---"
     echo "--------------------------------------------------------"
 
-    make NM_VALUE=4
+    make -j2 NM_VALUE=4
 
-    argstrings_mpi | perform_runs "-n16" ""
+    perform_runs "-n16" "" <<EOF
+$(argstrings_mpi)
+EOF
 
   fi #---PBS_NP
 
@@ -317,9 +325,11 @@ function main
     echo "---OpenMP tests---"
     echo "--------------------------------------------------------"
 
-    make OPENMP_OPTION=THREADS NM_VALUE=4
+    make -j2 OPENMP_OPTION=THREADS NM_VALUE=4
 
-    argstrings_openmp | perform_runs "-n1 -d8" ""
+    perform_runs "-n1 -d8" "" <<EOF
+$(argstrings_openmp)
+EOF
 
   fi #---PBS_NP
 
@@ -335,7 +345,7 @@ function main
 
   for alg_options in -DSWEEPER_KBA -DSWEEPER_SIMPLE -DSWEEPER_TILEOCTANTS ; do
 
-    make MPI_OPTION= ALG_OPTIONS="$alg_options" NM_VALUE=16
+    make -j2 MPI_OPTION= ALG_OPTIONS="$alg_options" NM_VALUE=16
 
     if [ $alg_options = "-DSWEEPER_KBA" ] ; then
       local ARG_NBLOCK_Z_1="--nblock_z 1"
@@ -345,8 +355,9 @@ function main
       local ARG_NBLOCK_Z_5=""
     fi
 
-    argstrings_variants "$ARG_NBLOCK_Z_1" "$ARG_NBLOCK_Z_5" \
-      | perform_runs "-n1" ""
+     perform_runs "-n1" "" <<EOF
+$(argstrings_variants "$ARG_NBLOCK_Z_1" "$ARG_NBLOCK_Z_5")
+EOF
 
   done #---alg_options
 

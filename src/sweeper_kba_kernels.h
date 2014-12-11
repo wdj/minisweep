@@ -260,6 +260,34 @@ TARGET_HD inline void Sweeper_sweep_cell(
   const Bool_t                   is_cell_active );
 
 /*===========================================================================*/
+/*---Perform a sweep for a subblock---*/
+
+TARGET_HD inline void Sweeper_sweep_subblock(
+  Sweeper_Lite* __restrict__     sweeper,
+  P* const __restrict__          vo_this,
+  const P* const __restrict__    vi_this,
+  P* const __restrict__          vilocal,
+  P* const __restrict__          vslocal,
+  P* const __restrict__          volocal,
+  P* const __restrict__          facexy,
+  P* const __restrict__          facexz,
+  P* const __restrict__          faceyz,
+  const P* const __restrict__    a_from_m,
+  const P* const __restrict__    m_from_a,
+  const Quantities* __restrict__ quan,
+  const int                      octant,
+  const int                      iz_base,
+  const int                      octant_in_block,
+  const int                      ie,
+  const int                      ixmin,
+  const int                      ixmax,
+  const int                      iymin,
+  const int                      iymax,
+  const int                      izmin,
+  const int                      izmax,
+  const Bool_t                   do_block_init_this );
+
+/*===========================================================================*/
 /*---Perform a sweep for a semiblock---*/
 
 TARGET_HD inline void Sweeper_sweep_semiblock(
