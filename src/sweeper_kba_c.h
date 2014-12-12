@@ -44,9 +44,9 @@ void Sweeper_ctor( Sweeper*          sweeper,
   Bool_t is_face_comm_async = Arguments_consume_int_or_default( args,
                                            "--is_face_comm_async", Bool_true );
 
-  Insist( dims.nx > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
-  Insist( dims.ny > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
-  Insist( dims.nz > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
+  Insist( dims.ncellx > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
+  Insist( dims.ncelly > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
+  Insist( dims.ncellz > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
 
   /*====================*/
   /*---Set up number of kba blocks---*/
@@ -55,7 +55,7 @@ void Sweeper_ctor( Sweeper*          sweeper,
   sweeper->nblock_z = Arguments_consume_int_or_default( args, "--nblock_z", 1);
 
   Insist( sweeper->nblock_z > 0 ? "Invalid z blocking factor supplied" : 0 );
-  Insist( dims.nz % sweeper->nblock_z == 0
+  Insist( dims.ncellz % sweeper->nblock_z == 0
                   ? "Currently require all blocks have same z dimension" : 0 );
 
   /*====================*/
@@ -179,27 +179,27 @@ void Sweeper_ctor( Sweeper*          sweeper,
   sweeper->dims = dims;
 
   sweeper->dims_b = sweeper->dims;
-  sweeper->dims_b.nz = sweeper->dims.nz / sweeper->nblock_z;
+  sweeper->dims_b.ncellz = sweeper->dims.ncellz / sweeper->nblock_z;
 
   sweeper->dims_g = sweeper->dims;
-  sweeper->dims_g.nx = quan->nx_g;
-  sweeper->dims_g.ny = quan->ny_g;
+  sweeper->dims_g.ncellx = quan->ncellx_g;
+  sweeper->dims_g.ncelly = quan->ncelly_g;
 
   /*====================*/
   /*---Allocate arrays---*/
   /*====================*/
 
-  sweeper->vilocal_host__ = Env_cuda_is_using_device( env ) ?
-                            ( (P*) NULL ) :
-                            malloc_host_P( Sweeper_nvilocal__( sweeper, env ) );
+  sweeper->vilocal_host_ = Env_cuda_is_using_device( env ) ?
+                           ( (P*) NULL ) :
+                           malloc_host_P( Sweeper_nvilocal_( sweeper, env ) );
 
-  sweeper->vslocal_host__ = Env_cuda_is_using_device( env ) ?
-                            ( (P*) NULL ) :
-                            malloc_host_P( Sweeper_nvslocal__( sweeper, env ) );
+  sweeper->vslocal_host_ = Env_cuda_is_using_device( env ) ?
+                           ( (P*) NULL ) :
+                           malloc_host_P( Sweeper_nvslocal_( sweeper, env ) );
 
-  sweeper->volocal_host__ = Env_cuda_is_using_device( env ) ?
-                            ( (P*) NULL ) :
-                            malloc_host_P( Sweeper_nvolocal__( sweeper, env ) );
+  sweeper->volocal_host_ = Env_cuda_is_using_device( env ) ?
+                           ( (P*) NULL ) :
+                           malloc_host_P( Sweeper_nvolocal_( sweeper, env ) );
 
   /*====================*/
   /*---Allocate faces---*/
@@ -221,21 +221,21 @@ void Sweeper_dtor( Sweeper* sweeper,
 
   if( ! Env_cuda_is_using_device( env ) )
   {
-    if( sweeper->vilocal_host__ )
+    if( sweeper->vilocal_host_ )
     {
-      free_host_P( sweeper->vilocal_host__ );
+      free_host_P( sweeper->vilocal_host_ );
     }
-    if( sweeper->vslocal_host__ )
+    if( sweeper->vslocal_host_ )
     {
-      free_host_P( sweeper->vslocal_host__ );
+      free_host_P( sweeper->vslocal_host_ );
     }
-    if( sweeper->volocal_host__ )
+    if( sweeper->volocal_host_ )
     {
-      free_host_P( sweeper->volocal_host__ );
+      free_host_P( sweeper->volocal_host_ );
     }
-    sweeper->vilocal_host__ = NULL;
-    sweeper->vslocal_host__ = NULL;
-    sweeper->volocal_host__ = NULL;
+    sweeper->vilocal_host_ = NULL;
+    sweeper->vslocal_host_ = NULL;
+    sweeper->volocal_host_ = NULL;
   }
 
   /*====================*/
@@ -258,9 +258,9 @@ SweeperLite Sweeper_sweeperlite( Sweeper sweeper )
 {
   SweeperLite sweeperlite;
 
-  sweeperlite.vilocal_host__ = sweeper.vilocal_host__;
-  sweeperlite.vslocal_host__ = sweeper.vslocal_host__;
-  sweeperlite.volocal_host__ = sweeper.volocal_host__;
+  sweeperlite.vilocal_host_ = sweeper.vilocal_host_;
+  sweeperlite.vslocal_host_ = sweeper.vslocal_host_;
+  sweeperlite.volocal_host_ = sweeper.volocal_host_;
 
   sweeperlite.dims   = sweeper.dims;
   sweeperlite.dims_b = sweeper.dims_b;
@@ -405,7 +405,7 @@ void Sweeper_sweep_block(
                      dim3( Sweeper_nthread_in_threadblock( sweeper, 0, env ),
                            Sweeper_nthread_in_threadblock( sweeper, 1, env ),
                            Sweeper_nthread_in_threadblock( sweeper, 2, env ) ),
-                     Sweeper_shared_size__( sweeper, env ),
+                     Sweeper_shared_size_( sweeper, env ),
                      Env_cuda_stream_kernel_faces( env )
                  >>>
 #endif

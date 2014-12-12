@@ -30,12 +30,12 @@ static inline Pointer Pointer_null()
 {
   Pointer p;
 
-  p.n__ = 0;
-  p.h__ = NULL;
-  p.d__ = NULL;
-  p.is_using_device__ = Bool_false;
-  p.is_pinned__       = Bool_false;
-  p.is_alias__        = Bool_false;
+  p.n_ = 0;
+  p.h_ = NULL;
+  p.d_ = NULL;
+  p.is_using_device_ = Bool_false;
+  p.is_pinned_       = Bool_false;
+  p.is_alias_        = Bool_false;
 
   return p;
 }

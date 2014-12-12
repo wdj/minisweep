@@ -57,9 +57,9 @@ extern "C"
 
 static void Env_initialize( Env *env, int argc, char** argv )
 {
-  Env_mpi_initialize__(  env, argc, argv );
-  Env_omp_initialize__(  env, argc, argv );
-  Env_cuda_initialize__( env, argc, argv );
+  Env_mpi_initialize_(  env, argc, argv );
+  Env_omp_initialize_(  env, argc, argv );
+  Env_cuda_initialize_( env, argc, argv );
 }
 
 /*===========================================================================*/
@@ -67,9 +67,9 @@ static void Env_initialize( Env *env, int argc, char** argv )
 
 static void Env_set_values( Env *env, Arguments* args )
 {
-  Env_mpi_set_values__(  env, args );
-  Env_omp_set_values__(  env, args );
-  Env_cuda_set_values__( env, args );
+  Env_mpi_set_values_(  env, args );
+  Env_omp_set_values_(  env, args );
+  Env_cuda_set_values_( env, args );
 }
 
 /*===========================================================================*/
@@ -77,7 +77,7 @@ static void Env_set_values( Env *env, Arguments* args )
 
 static void Env_reset_values( Env *env )
 {
-  Env_mpi_reset_values__( env );
+  Env_mpi_reset_values_( env );
 }
 
 /*===========================================================================*/
@@ -85,9 +85,9 @@ static void Env_reset_values( Env *env )
 
 static void Env_finalize( Env* env )
 {
-  Env_cuda_finalize__( env );
-  Env_omp_finalize__(  env );
-  Env_mpi_finalize__(  env );
+  Env_cuda_finalize_( env );
+  Env_omp_finalize_(  env );
+  Env_mpi_finalize_(  env );
 }
 
 /*===========================================================================*/

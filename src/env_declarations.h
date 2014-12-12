@@ -47,17 +47,17 @@ typedef int Stream_t;
 typedef struct
 {
 #ifdef USE_MPI
-  int    nproc_x__;    /*---Number of procs along x axis---*/
-  int    nproc_y__;    /*---Number of procs along y axis---*/
-  int    tag__;        /*---Next free message tag---*/
-  Comm_t active_comm__;
-  Bool_t is_proc_active__;
+  int    nproc_x_;    /*---Number of procs along x axis---*/
+  int    nproc_y_;    /*---Number of procs along y axis---*/
+  int    tag_;        /*---Next free message tag---*/
+  Comm_t active_comm_;
+  Bool_t is_proc_active_;
 #endif
 #ifdef __CUDACC__
-  Bool_t   is_using_device__;
-  Stream_t stream_send_block__;
-  Stream_t stream_recv_block__;
-  Stream_t stream_kernel_faces__;
+  Bool_t   is_using_device_;
+  Stream_t stream_send_block_;
+  Stream_t stream_recv_block_;
+  Stream_t stream_kernel_faces_;
 #endif
 } Env;
 

@@ -24,9 +24,9 @@ extern "C"
 
 size_t Dimensions_size_state( const Dimensions dims, int nu )
 {
-  return ( (size_t)dims.nx )
-       * ( (size_t)dims.ny )
-       * ( (size_t)dims.nz )
+  return ( (size_t)dims.ncellx )
+       * ( (size_t)dims.ncelly )
+       * ( (size_t)dims.ncellz )
        * ( (size_t)dims.ne )
        * ( (size_t)dims.nm )
        * ( (size_t)nu );
@@ -37,9 +37,9 @@ size_t Dimensions_size_state( const Dimensions dims, int nu )
 
 size_t Dimensions_size_state_angles( const Dimensions dims, int nu )
 {
-  return ( (size_t)dims.nx )
-       * ( (size_t)dims.ny )
-       * ( (size_t)dims.nz )
+  return ( (size_t)dims.ncellx )
+       * ( (size_t)dims.ncelly )
+       * ( (size_t)dims.ncellz )
        * ( (size_t)dims.ne )
        * ( (size_t)dims.na )
        * ( (size_t)nu )
@@ -53,8 +53,8 @@ size_t Dimensions_size_facexy( const Dimensions dims,
                                int nu, 
                                int num_face_octants_allocated )
 {
-  return ( (size_t)dims.nx )
-       * ( (size_t)dims.ny )
+  return ( (size_t)dims.ncellx )
+       * ( (size_t)dims.ncelly )
        * ( (size_t)dims.ne )
        * ( (size_t)dims.na )
        * ( (size_t)nu )
@@ -67,8 +67,8 @@ size_t Dimensions_size_facexz( const Dimensions dims,
                                int nu, 
                                int num_face_octants_allocated )
 {
-  return ( (size_t)dims.nx )
-       * ( (size_t)dims.nz )
+  return ( (size_t)dims.ncellx )
+       * ( (size_t)dims.ncellz )
        * ( (size_t)dims.ne )
        * ( (size_t)dims.na )
        * ( (size_t)nu )
@@ -81,8 +81,8 @@ size_t Dimensions_size_faceyz( const Dimensions dims,
                                int nu, 
                                int num_face_octants_allocated )
 {
-  return ( (size_t)dims.ny )
-       * ( (size_t)dims.nz )
+  return ( (size_t)dims.ncelly )
+       * ( (size_t)dims.ncellz )
        * ( (size_t)dims.ne )
        * ( (size_t)dims.na )
        * ( (size_t)nu )

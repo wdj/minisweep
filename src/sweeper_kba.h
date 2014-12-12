@@ -33,9 +33,9 @@ extern "C"
 
 typedef struct
 {
-  P* __restrict__  vilocal_host__;
-  P* __restrict__  vslocal_host__;
-  P* __restrict__  volocal_host__;
+  P* __restrict__  vilocal_host_;
+  P* __restrict__  vslocal_host_;
+  P* __restrict__  volocal_host_;
 
   Dimensions       dims;
   Dimensions       dims_b;
@@ -110,7 +110,7 @@ static inline int Sweeper_nthread_u( const Sweeper* sweeper,
 /*===========================================================================*/
 /*---Number of elements to allocate for v*local---*/
 
-static inline int Sweeper_nvilocal__( Sweeper* sweeper,
+static inline int Sweeper_nvilocal_( Sweeper* sweeper,
                                       Env*     env )
 {
   return Env_cuda_is_using_device( env )
@@ -130,7 +130,7 @@ static inline int Sweeper_nvilocal__( Sweeper* sweeper,
 
 /*---------------------------------------------------------------------------*/
 
-static inline int Sweeper_nvslocal__( Sweeper* sweeper,
+static inline int Sweeper_nvslocal_( Sweeper* sweeper,
                                       Env*     env )
 {
   return Env_cuda_is_using_device( env )
@@ -150,7 +150,7 @@ static inline int Sweeper_nvslocal__( Sweeper* sweeper,
 
 /*---------------------------------------------------------------------------*/
 
-static inline int Sweeper_nvolocal__( Sweeper* sweeper,
+static inline int Sweeper_nvolocal_( Sweeper* sweeper,
                                       Env*     env )
 {
   return Env_cuda_is_using_device( env )
@@ -198,12 +198,12 @@ static int Sweeper_nthread_in_threadblock( const Sweeper* sweeper,
 /*===========================================================================*/
 /*---Fof kernel launch: full size of CUDA shared memory---*/
 
-static int Sweeper_shared_size__( Sweeper* sweeper,
-                                  Env*     env )
+static int Sweeper_shared_size_( Sweeper* sweeper,
+                                 Env*     env )
 {
-  return ( Sweeper_nvilocal__( sweeper, env ) +
-           Sweeper_nvslocal__( sweeper, env ) +
-           Sweeper_nvolocal__( sweeper, env ) ) * sizeof( P );
+  return ( Sweeper_nvilocal_( sweeper, env ) +
+           Sweeper_nvslocal_( sweeper, env ) +
+           Sweeper_nvolocal_( sweeper, env ) ) * sizeof( P );
 }
 
 /*===========================================================================*/

@@ -68,9 +68,9 @@ enum{ NTHREAD_DEVICE_A = NTHREAD_DEVICE_U * NTHREAD_DEVICE_M };
 
 typedef struct
 {
-  P* __restrict__  vilocal_host__;
-  P* __restrict__  vslocal_host__;
-  P* __restrict__  volocal_host__;
+  P* __restrict__  vilocal_host_;
+  P* __restrict__  vslocal_host_;
+  P* __restrict__  volocal_host_;
 
   Dimensions       dims;
   Dimensions       dims_b;
@@ -231,7 +231,7 @@ TARGET_HD static inline void Sweeper_sync_amu_threads( SweeperLite* sweeper )
 /*===========================================================================*/
 /*---Select which part of v*local to use for current thread/block---*/
 
-TARGET_HD static inline P* __restrict__ Sweeper_vilocal_this__(
+TARGET_HD static inline P* __restrict__ Sweeper_vilocal_this_(
                                                          SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
@@ -240,7 +240,7 @@ TARGET_HD static inline P* __restrict__ Sweeper_vilocal_this__(
       Sweeper_thread_octant( sweeper )
   ;
 #else
-  return sweeper->vilocal_host__
+  return sweeper->vilocal_host_
     + NTHREAD_M * NU *
       ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant *
         Sweeper_thread_e(      sweeper ) )
@@ -250,7 +250,7 @@ TARGET_HD static inline P* __restrict__ Sweeper_vilocal_this__(
 
 /*---------------------------------------------------------------------------*/
 
-TARGET_HD static inline P* __restrict__ Sweeper_vslocal_this__(
+TARGET_HD static inline P* __restrict__ Sweeper_vslocal_this_(
                                                          SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
@@ -262,7 +262,7 @@ TARGET_HD static inline P* __restrict__ Sweeper_vslocal_this__(
       Sweeper_thread_octant( sweeper )
   ;
 #else
-  return sweeper->vslocal_host__
+  return sweeper->vslocal_host_
     + NTHREAD_A * NU *
       ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant *
         Sweeper_thread_e(      sweeper ) )
@@ -272,7 +272,7 @@ TARGET_HD static inline P* __restrict__ Sweeper_vslocal_this__(
 
 /*---------------------------------------------------------------------------*/
 
-TARGET_HD static inline P* __restrict__ Sweeper_volocal_this__(
+TARGET_HD static inline P* __restrict__ Sweeper_volocal_this_(
                                                          SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
@@ -284,7 +284,7 @@ TARGET_HD static inline P* __restrict__ Sweeper_volocal_this__(
       Sweeper_thread_octant( sweeper )
   ;
 #else
-  return sweeper->volocal_host__
+  return sweeper->volocal_host_
     + NTHREAD_M * NU *
       ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant *
         Sweeper_thread_e(      sweeper ) )

@@ -25,11 +25,11 @@ extern "C"
 
 typedef struct
 {
-  int nblock_z__;
-  int nproc_x__;
-  int nproc_y__;
-  int nblock_octant__;
-  int noctant_per_block__;
+  int nblock_z_;
+  int nproc_x_;
+  int nproc_y_;
+  int nblock_octant_;
+  int noctant_per_block_;
 } StepScheduler;
 
 /*===========================================================================*/

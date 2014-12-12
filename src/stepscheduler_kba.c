@@ -26,11 +26,11 @@ void StepScheduler_ctor( StepScheduler* stepscheduler,
                          Env*            env )
 {
   Insist( nblock_z > 0 && "Invalid z blocking factor supplied." );
-  stepscheduler->nblock_z__          = nblock_z;
-  stepscheduler->nproc_x__           = Env_nproc_x( env );
-  stepscheduler->nproc_y__           = Env_nproc_y( env );
-  stepscheduler->nblock_octant__     = nblock_octant;
-  stepscheduler->noctant_per_block__ = NOCTANT / nblock_octant;
+  stepscheduler->nblock_z_          = nblock_z;
+  stepscheduler->nproc_x_           = Env_nproc_x( env );
+  stepscheduler->nproc_y_           = Env_nproc_y( env );
+  stepscheduler->nblock_octant_     = nblock_octant;
+  stepscheduler->noctant_per_block_ = NOCTANT / nblock_octant;
 }
 
 /*===========================================================================*/
@@ -45,7 +45,7 @@ void StepScheduler_dtor( StepScheduler* stepscheduler )
 
 int StepScheduler_nblock_z( const StepScheduler* stepscheduler )
 {
-  return stepscheduler->nblock_z__;
+  return stepscheduler->nblock_z_;
 }
 
 /*===========================================================================*/
@@ -53,7 +53,7 @@ int StepScheduler_nblock_z( const StepScheduler* stepscheduler )
 
 int StepScheduler_nblock( const StepScheduler* stepscheduler )
 {
-  return stepscheduler->nblock_z__;
+  return stepscheduler->nblock_z_;
 }
 
 /*===========================================================================*/
@@ -61,7 +61,7 @@ int StepScheduler_nblock( const StepScheduler* stepscheduler )
 
 int StepScheduler_noctant_per_block( const StepScheduler* stepscheduler )
 {
-  return NOCTANT / stepscheduler->nblock_octant__;
+  return NOCTANT / stepscheduler->nblock_octant_;
 }
 
 /*===========================================================================*/
@@ -71,30 +71,30 @@ int StepScheduler_nstep( const StepScheduler* stepscheduler )
 {
   int result;
 
-  switch( stepscheduler->nblock_octant__ )
+  switch( stepscheduler->nblock_octant_ )
   {
     case 8:
       result = 8 * StepScheduler_nblock( stepscheduler )
-                                        + 2 * ( stepscheduler->nproc_x__ - 1 )
-                                        + 3 * ( stepscheduler->nproc_y__ - 1 );
+                                        + 2 * ( stepscheduler->nproc_x_ - 1 )
+                                        + 3 * ( stepscheduler->nproc_y_ - 1 );
       break;
 
     case 4:
       result = 4 * StepScheduler_nblock( stepscheduler )
-                                        + 1 * ( stepscheduler->nproc_x__ - 1 )
-                                        + 2 * ( stepscheduler->nproc_y__ - 1 );
+                                        + 1 * ( stepscheduler->nproc_x_ - 1 )
+                                        + 2 * ( stepscheduler->nproc_y_ - 1 );
       break;
 
     case 2:
       result = 2 * StepScheduler_nblock( stepscheduler )
-                                        + 1 * ( stepscheduler->nproc_x__ - 1 )
-                                        + 1 * ( stepscheduler->nproc_y__ - 1 );
+                                        + 1 * ( stepscheduler->nproc_x_ - 1 )
+                                        + 1 * ( stepscheduler->nproc_y_ - 1 );
       break;
 
     case 1:
       result = 1 * StepScheduler_nblock( stepscheduler )
-                                        + 1 * ( stepscheduler->nproc_x__ - 1 )
-                                        + 1 * ( stepscheduler->nproc_y__ - 1 );
+                                        + 1 * ( stepscheduler->nproc_x_ - 1 )
+                                        + 1 * ( stepscheduler->nproc_y_ - 1 );
       break;
 
     default:
@@ -115,14 +115,14 @@ StepInfo StepScheduler_stepinfo( const StepScheduler* stepscheduler,
                                  const int            proc_y )
 {
   Assert( octant_in_block>=0 &&
-          octant_in_block * stepscheduler->nblock_octant__ < NOCTANT );
+          octant_in_block * stepscheduler->nblock_octant_ < NOCTANT );
 
-  const int nblock_octant     = stepscheduler->nblock_octant__;
-  const int nproc_x           = stepscheduler->nproc_x__;
-  const int nproc_y           = stepscheduler->nproc_y__;
+  const int nblock_octant     = stepscheduler->nblock_octant_;
+  const int nproc_x           = stepscheduler->nproc_x_;
+  const int nproc_y           = stepscheduler->nproc_y_;
   const int nblock            = StepScheduler_nblock( stepscheduler );
   const int nstep             = StepScheduler_nstep( stepscheduler );
-  const int noctant_per_block = stepscheduler->noctant_per_block__;
+  const int noctant_per_block = stepscheduler->noctant_per_block_;
 
   int octant_key    = 0;
   int wave          = 0;

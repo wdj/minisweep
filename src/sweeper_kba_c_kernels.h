@@ -41,7 +41,7 @@ TARGET_HD static void Sweeper_set_boundary_xy(
   const int ix_base = quan->ix_base;
   const int iy_base = quan->iy_base;
   const int dir_z = Dir_z( octant );
-  const int iz_g = dir_z == DIR_UP ? -1 : sweeper->dims_g.nz;
+  const int iz_g = dir_z == DIR_UP ? -1 : sweeper->dims_g.ncellz;
 
   const int ie_min = ( sweeper->dims.ne *
                        ( Sweeper_thread_e( sweeper )     ) )
@@ -96,9 +96,9 @@ TARGET_HD static void Sweeper_set_boundary_xz(
   const int             izmax_b )
 {
   const int ix_base = quan->ix_base;
-  const int iz_base = block_z * sweeper->dims_b.nz;
+  const int iz_base = block_z * sweeper->dims_b.ncellz;
   const int dir_y = Dir_y( octant );
-  const int iy_g = dir_y == DIR_UP ? -1 : sweeper->dims_g.ny;
+  const int iy_g = dir_y == DIR_UP ? -1 : sweeper->dims_g.ncelly;
 
   const int ie_min = ( sweeper->dims.ne *
                        ( Sweeper_thread_e( sweeper )     ) )
@@ -153,9 +153,9 @@ TARGET_HD static void Sweeper_set_boundary_yz(
   const int             izmax_b )
 {
   const int iy_base = quan->iy_base;
-  const int iz_base = block_z * sweeper->dims_b.nz;
+  const int iz_base = block_z * sweeper->dims_b.ncellz;
   const int dir_x = Dir_x( octant );
-  const int ix_g = dir_x == DIR_UP ? -1 : sweeper->dims_g.nx;
+  const int ix_g = dir_x == DIR_UP ? -1 : sweeper->dims_g.ncellx;
 
   const int ie_min = ( sweeper->dims.ne *
                        ( Sweeper_thread_e( sweeper )     ) )
@@ -288,9 +288,9 @@ TARGET_HD inline void Sweeper_sweep_cell(
                   *ref_vilocal( vilocal, sweeper->dims_b, NU, NTHREAD_M,
                                             sweeper_thread_m, iu ) =
                   *const_ref_state_flat( vi_this,
-                                         sweeper->dims_b.nx,
-                                         sweeper->dims_b.ny,
-                                         sweeper->dims_b.nz,
+                                         sweeper->dims_b.ncellx,
+                                         sweeper->dims_b.ncelly,
+                                         sweeper->dims_b.ncellz,
                                          sweeper->dims_b.ne,
                                          NM,
                                          NU,
@@ -663,9 +663,9 @@ TARGET_HD inline void Sweeper_sweep_cell(
                     /*---             ix, iy, iz, ie, im, iu ) +=
                     */
                     *ref_state_flat( vo_this,
-                                     sweeper->dims_b.nx,
-                                     sweeper->dims_b.ny,
-                                     sweeper->dims_b.nz,
+                                     sweeper->dims_b.ncellx,
+                                     sweeper->dims_b.ncelly,
+                                     sweeper->dims_b.ncellz,
                                      sweeper->dims_b.ne,
                                      NM,
                                      NU,
@@ -689,9 +689,9 @@ TARGET_HD inline void Sweeper_sweep_cell(
                     /*---             ix, iy, iz, ie, im, iu ) =
                     */
                     *ref_state_flat( vo_this,
-                                     sweeper->dims_b.nx,
-                                     sweeper->dims_b.ny,
-                                     sweeper->dims_b.nz,
+                                     sweeper->dims_b.ncellx,
+                                     sweeper->dims_b.ncelly,
+                                     sweeper->dims_b.ncellz,
                                      sweeper->dims_b.ne,
                                      NM,
                                      NU,
@@ -777,9 +777,9 @@ TARGET_HD inline void Sweeper_sweep_subblock(
   {
   for( ix=ixbeg; ix!=ixend+dir_inc_x; ix+=dir_inc_x )
   {
-    const Bool_t is_elt_active = ix < sweeper->dims_b.nx &&
-                                 iy < sweeper->dims_b.ny &&
-                                 iz < sweeper->dims_b.nz;
+    const Bool_t is_elt_active = ix < sweeper->dims_b.ncellx &&
+                                 iy < sweeper->dims_b.ncelly &&
+                                 iz < sweeper->dims_b.ncellz;
     /*--------------------*/
     /*---Sweep cell---*/
     /*--------------------*/
@@ -818,13 +818,13 @@ TARGET_HD inline void Sweeper_sweep_semiblock(
   /*---Declarations---*/
 
   const int octant  = stepinfo.octant;
-  const int iz_base = stepinfo.block_z * sweeper->dims_b.nz;
+  const int iz_base = stepinfo.block_z * sweeper->dims_b.ncellz;
 
   /*---Calculate v*local part to use---*/
 
-  P* __restrict__ vilocal = Sweeper_vilocal_this__( sweeper );
-  P* __restrict__ vslocal = Sweeper_vslocal_this__( sweeper );
-  P* __restrict__ volocal = Sweeper_volocal_this__( sweeper );
+  P* __restrict__ vilocal = Sweeper_vilocal_this_( sweeper );
+  P* __restrict__ vslocal = Sweeper_vslocal_this_( sweeper );
+  P* __restrict__ volocal = Sweeper_volocal_this_( sweeper );
 
   const int ie_min = ( sweeper->dims.ne *
                        ( Sweeper_thread_e( sweeper )     ) )
@@ -960,7 +960,7 @@ TARGET_HD void Sweeper_sweep_block_impl(
 
         if( stepinfo.is_active )
         {
-          const int iz_base = stepinfo.block_z * sweeper->dims_b.nz;
+          const int iz_base = stepinfo.block_z * sweeper->dims_b.ncellz;
 
           const P* vi_this
             = const_ref_state( vi, sweeper->dims, NU, 0, 0, iz_base, 0, 0, 0 );
@@ -1002,11 +1002,13 @@ TARGET_HD void Sweeper_sweep_block_impl(
           const Bool_t has_x_hi = ( ! is_semiblock_x_lo ) || ! is_x_semiblocked;
 
           const int ixmin_b =     has_x_lo ? 0
-                                             : (sweeper->dims_b.nx+1) / 2;
-          const int ixmax_b = ( ! has_x_hi ) ? (sweeper->dims_b.nx+1) / 2 - 1
-                                             :  sweeper->dims_b.nx        - 1;
+                                             : (sweeper->dims_b.ncellx+1) / 2;
+          const int ixmax_b = ( ! has_x_hi ) ? (sweeper->dims_b.ncellx+1) / 2 - 1
+                                             :  sweeper->dims_b.ncellx        - 1;
 
-          const int ixmax_b_up2 = ( sweeper->dims_b.nx % 2 && ixmax_b==sweeper->dims_b.nx-1 ) ? ( ixmax_b + 1 ) : ixmax_b;
+          const int ixmax_b_up2 = ( sweeper->dims_b.ncellx % 2 &&
+                                    ixmax_b==sweeper->dims_b.ncellx-1 ) ?
+                                    ( ixmax_b + 1 ) : ixmax_b;
 
           /*--------------------*/
 
@@ -1018,11 +1020,13 @@ TARGET_HD void Sweeper_sweep_block_impl(
           const Bool_t has_y_hi = ( ! is_semiblock_y_lo ) || ! is_y_semiblocked;
 
           const int iymin_b =     has_y_lo ? 0
-                                             : (sweeper->dims_b.ny+1) / 2;
-          const int iymax_b = ( ! has_y_hi ) ? (sweeper->dims_b.ny+1) / 2 - 1
-                                             :  sweeper->dims_b.ny        - 1;
+                                             : (sweeper->dims_b.ncelly+1) / 2;
+          const int iymax_b = ( ! has_y_hi ) ? (sweeper->dims_b.ncelly+1) / 2 - 1
+                                             :  sweeper->dims_b.ncelly        - 1;
 
-          const int iymax_b_up2 = ( sweeper->dims_b.ny % 2 && iymax_b==sweeper->dims_b.ny-1 ) ? ( iymax_b + 1 ) : iymax_b;
+          const int iymax_b_up2 = ( sweeper->dims_b.ncelly % 2 &&
+                                    iymax_b==sweeper->dims_b.ncelly-1 ) ?
+                                    ( iymax_b + 1 ) : iymax_b;
 
           /*--------------------*/
 
@@ -1034,11 +1038,13 @@ TARGET_HD void Sweeper_sweep_block_impl(
           const Bool_t has_z_hi = ( ! is_semiblock_z_lo ) || ! is_z_semiblocked;
 
           const int izmin_b =     has_z_lo ? 0
-                                             : (sweeper->dims_b.nz+1) / 2;
-          const int izmax_b = ( ! has_z_hi ) ? (sweeper->dims_b.nz+1) / 2 - 1
-                                             :  sweeper->dims_b.nz        - 1;
+                                             : (sweeper->dims_b.ncellz+1) / 2;
+          const int izmax_b = ( ! has_z_hi ) ? (sweeper->dims_b.ncellz+1) / 2 - 1
+                                             :  sweeper->dims_b.ncellz        - 1;
 
-          const int izmax_b_up2 = ( sweeper->dims_b.nz % 2 && izmax_b==sweeper->dims_b.nz-1 ) ? ( izmax_b + 1 ) : izmax_b;
+          const int izmax_b_up2 = ( sweeper->dims_b.ncellz % 2 &&
+                                    izmax_b==sweeper->dims_b.ncellz-1 ) ?
+                                    ( izmax_b + 1 ) : izmax_b;
 
           /*--------------------*/
           /*---Set physical boundary conditions if part of semiblock---*/

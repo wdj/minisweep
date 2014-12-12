@@ -37,9 +37,9 @@ static void initialize_state( P* __restrict__    v,
   int im = 0;
   int iu = 0;
 
-  for( iz=0; iz<dims.nz; ++iz )
-  for( iy=0; iy<dims.ny; ++iy )
-  for( ix=0; ix<dims.nx; ++ix )
+  for( iz=0; iz<dims.ncellz; ++iz )
+  for( iy=0; iy<dims.ncelly; ++iy )
+  for( ix=0; ix<dims.ncellx; ++ix )
   for( ie=0; ie<dims.ne; ++ie )
   for( im=0; im<dims.nm; ++im )
   for( iu=0; iu<nu; ++iu )
@@ -89,9 +89,9 @@ static void get_state_norms( const P* __restrict__  vi,
   P normsq     = P_zero();
   P normsqdiff = P_zero();
 
-  for( iz=0; iz<dims.nz; ++iz )
-  for( iy=0; iy<dims.ny; ++iy )
-  for( ix=0; ix<dims.nx; ++ix )
+  for( iz=0; iz<dims.ncellz; ++iz )
+  for( iy=0; iy<dims.ncelly; ++iy )
+  for( ix=0; ix<dims.ncellx; ++ix )
   for( ie=0; ie<dims.ne; ++ie )
   for( im=0; im<dims.nm; ++im )
   for( iu=0; iu<nu; ++iu )

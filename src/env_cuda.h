@@ -51,14 +51,14 @@ static Bool_t Env_cuda_last_call_succeeded()
 /*===========================================================================*/
 /*---Initialize CUDA---*/
 
-static void Env_cuda_initialize__( Env *env, int argc, char** argv )
+static void Env_cuda_initialize_( Env *env, int argc, char** argv )
 {
 #ifdef __CUDACC__
-  cudaStreamCreate( & env->stream_send_block__ );
+  cudaStreamCreate( & env->stream_send_block_ );
   Assert( Env_cuda_last_call_succeeded() );
-  cudaStreamCreate( & env->stream_recv_block__ );
+  cudaStreamCreate( & env->stream_recv_block_ );
   Assert( Env_cuda_last_call_succeeded() );
-  cudaStreamCreate( & env->stream_kernel_faces__ );
+  cudaStreamCreate( & env->stream_kernel_faces_ );
   Assert( Env_cuda_last_call_succeeded() );
 #endif
 }
@@ -66,14 +66,14 @@ static void Env_cuda_initialize__( Env *env, int argc, char** argv )
 /*===========================================================================*/
 /*---Finalize CUDA---*/
 
-static void Env_cuda_finalize__( Env* env )
+static void Env_cuda_finalize_( Env* env )
 {
 #ifdef __CUDACC__
-  cudaStreamDestroy( env->stream_send_block__ );
+  cudaStreamDestroy( env->stream_send_block_ );
   Assert( Env_cuda_last_call_succeeded() );
-  cudaStreamDestroy( env->stream_recv_block__ );
+  cudaStreamDestroy( env->stream_recv_block_ );
   Assert( Env_cuda_last_call_succeeded() );
-  cudaStreamDestroy( env->stream_kernel_faces__ );
+  cudaStreamDestroy( env->stream_kernel_faces_ );
   Assert( Env_cuda_last_call_succeeded() );
 #endif
 }
@@ -81,13 +81,13 @@ static void Env_cuda_finalize__( Env* env )
 /*===========================================================================*/
 /*---Set values from args---*/
 
-static void Env_cuda_set_values__( Env *env, Arguments* args )
+static void Env_cuda_set_values_( Env *env, Arguments* args )
 {
 #ifdef __CUDACC__
-  env->is_using_device__ = Arguments_consume_int_or_default( args,
+  env->is_using_device_ = Arguments_consume_int_or_default( args,
                                              "--is_using_device", Bool_false );
-  Insist( env->is_using_device__ == 0 ||
-          env->is_using_device__ == 1 ? "Invalid is_using_device value." : 0 );
+  Insist( env->is_using_device_ == 0 ||
+          env->is_using_device_ == 1 ? "Invalid is_using_device value." : 0 );
 #endif
 }
 
@@ -97,7 +97,7 @@ static void Env_cuda_set_values__( Env *env, Arguments* args )
 static Bool_t Env_cuda_is_using_device( const Env *env )
 {
 #ifdef __CUDACC__
-  return env->is_using_device__;
+  return env->is_using_device_;
 #else
   return Bool_false;
 #endif
@@ -257,7 +257,7 @@ static void Env_cuda_copy_device_to_host_stream_P( P*       p_h,
 static Stream_t Env_cuda_stream_send_block( Env* env )
 {
 #ifdef __CUDACC__
-  return env->stream_send_block__;
+  return env->stream_send_block_;
 #else
   return 0;
 #endif
@@ -268,7 +268,7 @@ static Stream_t Env_cuda_stream_send_block( Env* env )
 static Stream_t Env_cuda_stream_recv_block( Env* env )
 {
 #ifdef __CUDACC__
-  return env->stream_recv_block__;
+  return env->stream_recv_block_;
 #else
   return 0;
 #endif
@@ -279,7 +279,7 @@ static Stream_t Env_cuda_stream_recv_block( Env* env )
 static Stream_t Env_cuda_stream_kernel_faces( Env* env )
 {
 #ifdef __CUDACC__
-  return env->stream_kernel_faces__;
+  return env->stream_kernel_faces_;
 #else
   return 0;
 #endif

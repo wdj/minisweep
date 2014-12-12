@@ -39,11 +39,11 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Allocate arrays---*/
 
   sweeper->vslocal = malloc_host_P( dims.na * NU );
-  sweeper->facexy  = malloc_host_P( dims.nx * dims.ny * dims.ne * dims.na * 
+  sweeper->facexy  = malloc_host_P( dims.ncellx * dims.ncelly * dims.ne * dims.na * 
                                     NU * Sweeper_noctant_per_block( sweeper ) );
-  sweeper->facexz  = malloc_host_P( dims.nx * dims.nz * dims.ne * dims.na * 
+  sweeper->facexz  = malloc_host_P( dims.ncellx * dims.ncellz * dims.ne * dims.na * 
                                     NU * Sweeper_noctant_per_block( sweeper ) );
-  sweeper->faceyz  = malloc_host_P( dims.ny * dims.nz * dims.ne * dims.na * 
+  sweeper->faceyz  = malloc_host_P( dims.ncelly * dims.ncellz * dims.ne * dims.na * 
                                     NU * Sweeper_noctant_per_block( sweeper ) );
 
   sweeper->dims = dims;
@@ -166,18 +166,18 @@ void Sweeper_sweep(
     ---*/
 
     const int tile_xmin = (!do_tile_octants) ? 0         :
-                          tile_x==DIR_LO     ? 0         : dims.nx/2;
+                          tile_x==DIR_LO     ? 0         : dims.ncellx/2;
     const int tile_ymin = (!do_tile_octants) ? 0         :
-                          tile_y==DIR_LO     ? 0         : dims.ny/2;
+                          tile_y==DIR_LO     ? 0         : dims.ncelly/2;
     const int tile_zmin = (!do_tile_octants) ? 0         :
-                          tile_z==DIR_LO     ? 0         : dims.nz/2;
+                          tile_z==DIR_LO     ? 0         : dims.ncellz/2;
 
-    const int tile_xmax = (!do_tile_octants) ? dims.nx   :
-                          tile_x==DIR_LO     ? dims.nx/2 : dims.nx;
-    const int tile_ymax = (!do_tile_octants) ? dims.ny   :
-                          tile_y==DIR_LO     ? dims.ny/2 : dims.ny;
-    const int tile_zmax = (!do_tile_octants) ? dims.nz   :
-                          tile_z==DIR_LO     ? dims.nz/2 : dims.nz;
+    const int tile_xmax = (!do_tile_octants) ? dims.ncellx   :
+                          tile_x==DIR_LO     ? dims.ncellx/2 : dims.ncellx;
+    const int tile_ymax = (!do_tile_octants) ? dims.ncelly   :
+                          tile_y==DIR_LO     ? dims.ncelly/2 : dims.ncelly;
+    const int tile_zmax = (!do_tile_octants) ? dims.ncellz   :
+                          tile_z==DIR_LO     ? dims.ncellz/2 : dims.ncellz;
 
     /*---Initialize faces---*/
 
@@ -189,7 +189,7 @@ void Sweeper_sweep(
          to have the flux at that gridcell.
          Thus, the face is initialized at first to have a value
          "one cell" outside of the domain, e.g., for the XY face,
-         either -1 or dims.nx.
+         either -1 or dims.ncellx.
          Note also that the face initializer functions now take
          coordinates for all three spatial dimensions --
          the third dimension is used to denote whether it is the
@@ -202,7 +202,7 @@ void Sweeper_sweep(
 
     if( tile_z != dir_z || !do_tile_octants )
     {
-      iz = dir_z==DIR_UP ? -1 : dims.nz;
+      iz = dir_z==DIR_UP ? -1 : dims.ncellz;
       for( iu=0; iu<NU; ++iu )
       for( iy=tile_ymin; iy<tile_ymax; ++iy )
       for( ix=tile_xmin; ix<tile_xmax; ++ix )
@@ -219,7 +219,7 @@ void Sweeper_sweep(
 
     if( tile_y != dir_y || !do_tile_octants )
     {
-      iy = dir_y==DIR_UP ? -1 : dims.ny;
+      iy = dir_y==DIR_UP ? -1 : dims.ncelly;
       for( iu=0; iu<NU; ++iu )
       for( iz=tile_zmin; iz<tile_zmax; ++iz )
       for( ix=tile_xmin; ix<tile_xmax; ++ix )
@@ -236,7 +236,7 @@ void Sweeper_sweep(
 
     if( tile_x != dir_x || !do_tile_octants )
     {
-      ix = dir_x==DIR_UP ? -1 : dims.nx;
+      ix = dir_x==DIR_UP ? -1 : dims.ncellx;
       for( iu=0; iu<NU; ++iu )
       for( iz=tile_zmin; iz<tile_zmax; ++iz )
       for( iy=tile_ymin; iy<tile_ymax; ++iy )

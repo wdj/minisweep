@@ -196,12 +196,12 @@ distclean: clean
 #
 #if [ $? = 0 ] ; then
 #  \cp $HOME/minisweep/src/sweep.x $TMPDIR/mic0
-#  ARGS="--nx 1 --ny 1 --nz 1 --ne 1 --na 32 --nproc_x 1 --nproc_y 1"
+#  ARGS="--ncellx 1 --ncelly 1 --ncellz 1 --ne 1 --na 32 --nproc_x 1 --nproc_y 1"
 #  micmpiexec -n 1 -wdir $TMPDIR -host ${HOSTNAME}-mic0 $TMPDIR/sweep.x $ARGS
 #fi
 #
 #run:
-#	./$(EXECUTABLE) --nx 10 --ny 10 --nz 10 --ne 30 --nm 16 --na 33
+#	./$(EXECUTABLE) --ncellx 10 --ncelly 10 --ncellz 10 --ne 30 --nm 16 --na 33
 #
 #runmany:
 #	bash -c 'for e in `seq 1 3` ; do for i in `seq 1 7` ; do for j in `seq 1 7` ; do ./$(EXECUTABLE) 10 10 10 $$e $$i $$j ; done; done; done'
@@ -210,6 +210,6 @@ distclean: clean
 #	./tester
 #
 #run_cray:
-#	aprun -n 1 $(EXECUTABLE) --nx 10 --ny 10 --nz 10 --ne 30 --nm 16 --na 64
+#	aprun -n 1 $(EXECUTABLE) --ncellx 10 --ncelly 10 --ncellz 10 --ne 30 --nm 16 --na 64
 #
 #==============================================================================

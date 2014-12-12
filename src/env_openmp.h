@@ -29,7 +29,7 @@ extern "C"
 /*===========================================================================*/
 /*---Initialize OpenMP---*/
 
-static void Env_omp_initialize__( Env *env, int argc, char** argv )
+static void Env_omp_initialize_( Env *env, int argc, char** argv )
 {
 #ifdef USE_OPENMP
 #endif
@@ -38,7 +38,7 @@ static void Env_omp_initialize__( Env *env, int argc, char** argv )
 /*===========================================================================*/
 /*---Finalize OpenMP---*/
 
-static void Env_omp_finalize__( Env* env )
+static void Env_omp_finalize_( Env* env )
 {
 #ifdef USE_OPENMP
 #endif
@@ -47,7 +47,7 @@ static void Env_omp_finalize__( Env* env )
 /*===========================================================================*/
 /*---Set values from args---*/
 
-static void Env_omp_set_values__( Env *env, Arguments* args )
+static void Env_omp_set_values_( Env *env, Arguments* args )
 {
 #ifdef USE_OPENMP
 #endif

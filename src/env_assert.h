@@ -31,10 +31,10 @@ extern "C"
 
 #ifndef Insist
 #define Insist( condition ) \
-  (void)((condition) || (insist__ (#condition, __FILE__, __LINE__),0))
+  (void)((condition) || (insist_ (#condition, __FILE__, __LINE__),0))
 #endif
 
-static void insist__( const char *condition_string, const char *file, int line )
+static void insist_( const char *condition_string, const char *file, int line )
 {
   fprintf( stderr, "Insist error: \"%s\". At file %s, line %i.\n",
                    condition_string, file, line );

@@ -98,33 +98,33 @@ void run1( Env* env, Arguments* args, RunData* rundata )
 
   /*---Define problem specs---*/
 
-  dims_g.nx   = Arguments_consume_int_or_default( args, "--nx",  5 );
-  dims_g.ny   = Arguments_consume_int_or_default( args, "--ny",  5 );
-  dims_g.nz   = Arguments_consume_int_or_default( args, "--nz",  5 );
+  dims_g.ncellx   = Arguments_consume_int_or_default( args, "--ncellx",  5 );
+  dims_g.ncelly   = Arguments_consume_int_or_default( args, "--ncelly",  5 );
+  dims_g.ncellz   = Arguments_consume_int_or_default( args, "--ncellz",  5 );
   dims_g.ne   = Arguments_consume_int_or_default( args, "--ne", 30 );
   dims_g.na   = Arguments_consume_int_or_default( args, "--na", 33 );
   niterations = Arguments_consume_int_or_default( args, "--niterations", 1 );
   dims_g.nm   = NM;
 
-  Insist( dims_g.nx > 0 ? "Invalid nx supplied." : 0 );
-  Insist( dims_g.ny > 0 ? "Invalid ny supplied." : 0 );
-  Insist( dims_g.nz > 0 ? "Invalid nz supplied." : 0 );
-  Insist( dims_g.ne > 0 ? "Invalid ne supplied." : 0 );
-  Insist( dims_g.nm > 0 ? "Invalid nm supplied." : 0 );
-  Insist( dims_g.na > 0 ? "Invalid na supplied." : 0 );
-  Insist( niterations >= 0 ? "Invalid iteration count supplied." : 0 );
+  Insist( dims_g.ncellx > 0 ? "Invalid ncellx supplied." : 0 );
+  Insist( dims_g.ncelly > 0 ? "Invalid ncelly supplied." : 0 );
+  Insist( dims_g.ncellz > 0 ? "Invalid ncellz supplied." : 0 );
+  Insist( dims_g.ne > 0     ? "Invalid ne supplied." : 0 );
+  Insist( dims_g.nm > 0     ? "Invalid nm supplied." : 0 );
+  Insist( dims_g.na > 0     ? "Invalid na supplied." : 0 );
+  Insist( niterations >= 0  ? "Invalid iteration count supplied." : 0 );
 
   /*---Initialize (local) dimensions - domain decomposition---*/
 
   dims = dims_g;
 
-  dims.nx =
-      ( ( Env_proc_x_this( env ) + 1 ) * dims_g.nx ) / Env_nproc_x( env )
-    - ( ( Env_proc_x_this( env )     ) * dims_g.nx ) / Env_nproc_x( env );
+  dims.ncellx =
+      ( ( Env_proc_x_this( env ) + 1 ) * dims_g.ncellx ) / Env_nproc_x( env )
+    - ( ( Env_proc_x_this( env )     ) * dims_g.ncellx ) / Env_nproc_x( env );
 
-  dims.ny =
-      ( ( Env_proc_y_this( env ) + 1 ) * dims_g.ny ) / Env_nproc_y( env )
-    - ( ( Env_proc_y_this( env )     ) * dims_g.ny ) / Env_nproc_y( env );
+  dims.ncelly =
+      ( ( Env_proc_y_this( env ) + 1 ) * dims_g.ncelly ) / Env_nproc_y( env )
+    - ( ( Env_proc_y_this( env )     ) * dims_g.ncelly ) / Env_nproc_y( env );
 
   /*---Initialize quantities---*/
 

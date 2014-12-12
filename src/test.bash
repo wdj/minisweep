@@ -119,7 +119,7 @@ function compare_runs
 #==============================================================================
 function argstrings_mpi
 {
-  local ARGS="--nx  5 --ny  4 --nz  5 --ne 7 --na 10"
+  local ARGS="--ncellx  5 --ncelly  4 --ncellz  5 --ne 7 --na 10"
 
   echo "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1"
   echo "$ARGS --nproc_x 2 --nproc_y 1 --nblock_z 1"
@@ -127,17 +127,17 @@ function argstrings_mpi
   echo "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1"
   echo "$ARGS --nproc_x 1 --nproc_y 2 --nblock_z 1"
 
-  local ARGS="--nx  5 --ny  4 --nz  6 --ne 7 --na 10"
+  local ARGS="--ncellx  5 --ncelly  4 --ncellz  6 --ne 7 --na 10"
 
   echo "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1"
   echo "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
 
-  local ARGS="--nx  5 --ny  4 --nz  6 --ne 7 --na 10 --is_face_comm_async 0"
+  local ARGS="--ncellx  5 --ncelly  4 --ncellz  6 --ne 7 --na 10 --is_face_comm_async 0"
 
   echo "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1"
   echo "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
 
-  local ARGS="--nx 5 --ny 8 --nz 16 --ne 9 --na 12"
+  local ARGS="--ncellx 5 --ncelly 8 --ncellz 16 --ne 9 --na 12"
 
   echo "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 1"
   echo "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
@@ -152,7 +152,7 @@ function argstrings_mpi
 #==============================================================================
 function argstrings_cuda
 {
-  local ARGS="--nx  2 --ny  3 --nz  4 --ne 20 --na 5 --nblock_z 2"
+  local ARGS="--ncellx  2 --ncelly  3 --ncellz  4 --ne 20 --na 5 --nblock_z 2"
 
   for nthread_octant in 1 2 4 8 ; do
     echo "$ARGS"
@@ -172,7 +172,7 @@ function argstrings_cuda
 #==============================================================================
 function argstrings_mpi_cuda
 {
-  local ARGS="--nx 3 --ny 5 --nz 6 --ne 2 --na 5 --nblock_z 2"
+  local ARGS="--ncellx 3 --ncelly 5 --ncellz 6 --ne 2 --na 5 --nblock_z 2"
 
   for nproc_x in 1 2 ; do
   for nproc_y in 1 2 ; do
@@ -191,7 +191,7 @@ function argstrings_mpi_cuda
 #==============================================================================
 function argstrings_openmp
 {
-  local ARGS="--nx  5 --ny  4 --nz  5 --ne 17 --na 10"
+  local ARGS="--ncellx  5 --ncelly  4 --ncellz  5 --ne 17 --na 10"
 
   echo "$ARGS --nthread_e 1"
   echo "$ARGS --nthread_e 2"
@@ -222,7 +222,7 @@ function argstrings_variants
   local ARG_NBLOCK_Z_1="$1"
   local ARG_NBLOCK_Z_5="$2"
 
-  local ARGS="--nx  4 --ny  3 --nz  5 --ne 11 --na 7"
+  local ARGS="--ncellx  4 --ncelly  3 --ncellz  5 --ne 11 --na 7"
 
   echo "$ARGS --niterations 1 $ARG_NBLOCK_Z_1"
   echo "$ARGS --niterations 2 $ARG_NBLOCK_Z_1"
@@ -255,7 +255,7 @@ function main
   initialize
 
   #---args to use below:
-  #---  nx ny nz ne nm na numiterations nproc_x nproc_y nblock_z 
+  #---  ncellx ncelly ncellz ne nm na numiterations nproc_x nproc_y nblock_z 
 
   cp /dev/null tmp_
 

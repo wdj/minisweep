@@ -30,17 +30,17 @@ void Quantities_ctor( Quantities*       quan,
                       const Dimensions  dims,
                       Env*              env )
 {
-  Quantities_init_am_matrices__( quan, dims, env );
-  Quantities_init_decomp__( quan, dims, env );
+  Quantities_init_am_matrices_( quan, dims, env );
+  Quantities_init_decomp_( quan, dims, env );
 
 } /*---Quantities_ctor---*/
 
 /*===========================================================================*/
 /*---Initialize Quantities a_from_m, m_from_a matrices---*/
 
-void Quantities_init_am_matrices__( Quantities*       quan,
-                                    const Dimensions  dims,
-                                    Env*              env )
+void Quantities_init_am_matrices_( Quantities*       quan,
+                                   const Dimensions  dims,
+                                   Env*              env )
 {
   /*---Declarations---*/
 
@@ -193,20 +193,20 @@ void Quantities_init_am_matrices__( Quantities*       quan,
     *ref_m_from_a( Pointer_h( & quan->m_from_a ), dims, im, ia, octant )
                                                                     /= NOCTANT;
     *ref_m_from_a( Pointer_h( & quan->m_from_a ), dims, im, ia, octant )
-                                 /= Quantities_scalefactor_angle__( dims, ia );
+                                 /= Quantities_scalefactor_angle_( dims, ia );
   }
 
   Pointer_update_d( & quan->a_from_m );
   Pointer_update_d( & quan->m_from_a );
 
-} /*---Quantities_init_am_matrices__---*/
+} /*---Quantities_init_am_matrices_---*/
 
 /*===========================================================================*/
 /*---Initialize Quantities subgrid decomp info---*/
 
-void Quantities_init_decomp__( Quantities*       quan,
-                               const Dimensions  dims,
-                               Env*              env )
+void Quantities_init_decomp_( Quantities*       quan,
+                              const Dimensions  dims,
+                              Env*              env )
 {
   /*---Declarations---*/
 
@@ -214,7 +214,7 @@ void Quantities_init_decomp__( Quantities*       quan,
 
   /*---Record z dimension---*/
 
-  quan->nz_g = dims.nz;
+  quan->ncellz_g = dims.ncellz;
 
   /*---Allocate arrays---*/
 
@@ -230,7 +230,7 @@ void Quantities_init_decomp__( Quantities*       quan,
   if( Env_proc_x_this( env ) == 0 )
   {
     int proc_x = 0;
-    quan->ix_base_vals[ 1+0 ] = dims.nx;
+    quan->ix_base_vals[ 1+0 ] = dims.ncellx;
     for( proc_x=1; proc_x<Env_nproc_x( env ); ++proc_x )
     {
       Env_recv_i( & quan->ix_base_vals[ 1+proc_x ], 1,
@@ -239,7 +239,7 @@ void Quantities_init_decomp__( Quantities*       quan,
   }
   else
   {
-    Env_send_i( & dims.nx, 1,
+    Env_send_i( & dims.ncellx, 1,
              Env_proc( env, 0, Env_proc_y_this( env ) ), Env_tag( env ), env );
   }
   Env_increment_tag( env, 1 );
@@ -270,11 +270,11 @@ void Quantities_init_decomp__( Quantities*       quan,
     quan->ix_base_vals[1+i] += quan->ix_base_vals[i];
   }
 
-  quan->ix_base = quan->ix_base_vals[ Env_proc_x_this( env ) ];
-  quan->nx_g    = quan->ix_base_vals[ Env_nproc_x(     env ) ];
+  quan->ix_base  = quan->ix_base_vals[ Env_proc_x_this( env ) ];
+  quan->ncellx_g = quan->ix_base_vals[ Env_nproc_x(     env ) ];
 
   Assert( quan->ix_base_vals[ Env_proc_x_this( env )+1 ] -
-          quan->ix_base_vals[ Env_proc_x_this( env )   ] == dims.nx );
+          quan->ix_base_vals[ Env_proc_x_this( env )   ] == dims.ncellx );
 
   /*---------------------------------*/
   /*---Set entries of iy_base_vals---*/
@@ -285,7 +285,7 @@ void Quantities_init_decomp__( Quantities*       quan,
   if( Env_proc_y_this( env ) == 0 )
   {
     int proc_y = 0;
-    quan->iy_base_vals[ 1+0 ] = dims.ny;
+    quan->iy_base_vals[ 1+0 ] = dims.ncelly;
     for( proc_y=1; proc_y<Env_nproc_y( env ); ++proc_y )
     {
       Env_recv_i( & quan->iy_base_vals[ 1+proc_y ], 1,
@@ -294,7 +294,7 @@ void Quantities_init_decomp__( Quantities*       quan,
   }
   else
   {
-    Env_send_i( & dims.ny, 1,
+    Env_send_i( & dims.ncelly, 1,
              Env_proc( env, Env_proc_x_this( env ), 0 ), Env_tag( env ), env );
   }
   Env_increment_tag( env, 1 );
@@ -325,13 +325,13 @@ void Quantities_init_decomp__( Quantities*       quan,
     quan->iy_base_vals[1+i] += quan->iy_base_vals[i];
   }
 
-  quan->iy_base = quan->iy_base_vals[ Env_proc_y_this( env ) ];
-  quan->ny_g    = quan->iy_base_vals[ Env_nproc_y(     env ) ];
+  quan->iy_base  = quan->iy_base_vals[ Env_proc_y_this( env ) ];
+  quan->ncelly_g = quan->iy_base_vals[ Env_nproc_y(     env ) ];
 
   Assert( quan->iy_base_vals[ Env_proc_y_this( env )+1 ] -
-          quan->iy_base_vals[ Env_proc_y_this( env )   ] == dims.ny );
+          quan->iy_base_vals[ Env_proc_y_this( env )   ] == dims.ncelly );
 
-} /*---Quantities_init_decomp__---*/
+} /*---Quantities_init_decomp_---*/
 
 /*===========================================================================*/
 /*---Pseudo-destructor for Quantities struct---*/

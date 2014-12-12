@@ -38,17 +38,17 @@ void Quantities_dtor( Quantities* quan );
 /*---Initialize Quantities a_from_m, m_from_a matrices---*/
 /*---pseudo-private member function---*/
 
-void Quantities_init_am_matrices__( Quantities*       quan,
-                                    const Dimensions  dims,
-                                    Env*              env );
+void Quantities_init_am_matrices_( Quantities*       quan,
+                                   const Dimensions  dims,
+                                   Env*              env );
 
 /*===========================================================================*/
 /*---Initialize Quantities subgrid decomp info---*/
 /*---pseudo-private member function---*/
 
-void Quantities_init_decomp__( Quantities*       quan,
-                               const Dimensions  dims,
-                               Env*              env );
+void Quantities_init_decomp_( Quantities*       quan,
+                              const Dimensions  dims,
+                              Env*              env );
 
 /*===========================================================================*/
 /*---Flops cost of solve per element---*/
@@ -68,9 +68,9 @@ static inline P Quantities_init_state(
   int                iu,
   const Dimensions   dims )
 {
-  Assert( ix >= 0 && ix < dims.nx);
-  Assert( iy >= 0 && iy < dims.ny );
-  Assert( iz >= 0 && iz < dims.nz );
+  Assert( ix >= 0 && ix < dims.ncellx);
+  Assert( iy >= 0 && iy < dims.ncelly );
+  Assert( iz >= 0 && iz < dims.ncellz );
   Assert( ie >= 0 && ie < dims.ne );
   Assert( im >= 0 && im < dims.nm );
   Assert( iu >= 0 && iu < NU );
@@ -81,12 +81,12 @@ static inline P Quantities_init_state(
   }
   else
   {
-    return   ( (P) Quantities_affinefunction__( im ) )
-           * ( (P) Quantities_scalefactor_space__( quan,
+    return   ( (P) Quantities_affinefunction_( im ) )
+           * ( (P) Quantities_scalefactor_space_( quan,
                                                    ix+quan->ix_base,
                                                    iy+quan->iy_base, iz ) )
-           * ( (P) Quantities_scalefactor_energy__( ie, dims ) )
-           * ( (P) Quantities_scalefactor_unknown__( iu ) );
+           * ( (P) Quantities_scalefactor_energy_( ie, dims ) )
+           * ( (P) Quantities_scalefactor_unknown_( iu ) );
   }
 }
 
