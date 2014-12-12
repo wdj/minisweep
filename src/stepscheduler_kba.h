@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   step_scheduler_kba.h
+ * \file   stepscheduler_kba.h
  * \author Wayne Joubert
  * \date   Tue Jan 28 16:37:41 EST 2014
  * \brief  Declarations for managing sweep step schedule.
@@ -8,12 +8,12 @@
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _step_scheduler_kba_h_
-#define _step_scheduler_kba_h_
+#ifndef _stepscheduler_kba_h_
+#define _stepscheduler_kba_h_
 
 #include "env.h"
 
-#include "step_scheduler_kba_kernels.h"
+#include "stepscheduler_kba_kernels.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -30,71 +30,71 @@ typedef struct
   int nproc_y__;
   int nblock_octant__;
   int noctant_per_block__;
-} Step_Scheduler;
+} StepScheduler;
 
 /*===========================================================================*/
-/*---Pseudo-constructor for Step_Scheduler struct---*/
+/*---Pseudo-constructor for StepScheduler struct---*/
 
-void Step_Scheduler_ctor( Step_Scheduler* step_scheduler,
-                          int             nblock_z,
-                          int             nblock_octant,
-                          Env*            env );
+void StepScheduler_ctor( StepScheduler* stepscheduler,
+                         int            nblock_z,
+                         int            nblock_octant,
+                         Env*           env );
 
 /*===========================================================================*/
-/*---Pseudo-destructor for Step_Scheduler struct---*/
+/*---Pseudo-destructor for StepScheduler struct---*/
 
-void Step_Scheduler_dtor( Step_Scheduler* step_scheduler );
+void StepScheduler_dtor( StepScheduler* stepscheduler );
 
 /*===========================================================================*/
 /*---Accessor: blocks along z axis---*/
 
-int Step_Scheduler_nblock_z( const Step_Scheduler* step_scheduler );
+int StepScheduler_nblock_z( const StepScheduler* stepscheduler );
 
 /*===========================================================================*/
 /*---Number of block steps executed for a single octant in isolation---*/
 
-int Step_Scheduler_nblock( const Step_Scheduler* step_scheduler );
+int StepScheduler_nblock( const StepScheduler* stepscheduler );
 
 /*===========================================================================*/
 /*---Number of octants per octant block---*/
 
-int Step_Scheduler_noctant_per_block( const Step_Scheduler* step_scheduler );
+int StepScheduler_noctant_per_block( const StepScheduler* stepscheduler );
 
 /*===========================================================================*/
 /*---Number of kba parallel steps---*/
 
-int Step_Scheduler_nstep( const Step_Scheduler* step_scheduler );
+int StepScheduler_nstep( const StepScheduler* stepscheduler );
 
 /*===========================================================================*/
 /*---Get information describing a sweep step---*/
 
-Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,  
-                                    const int             step,
-                                    const int             octant_in_block,
-                                    const int             proc_x,
-                                    const int             proc_y );
+StepInfo StepScheduler_stepinfo( const StepScheduler* stepscheduler,  
+                                 const int            step,
+                                 const int            octant_in_block,
+                                 const int            proc_x,
+                                 const int            proc_y );
 
 /*===========================================================================*/
 /*---Determine whether to send a face computed at step, used at step+1---*/
 
-Bool_t Step_Scheduler_must_do_send(
-  Step_Scheduler* step_scheduler,
-  int             step,
-  int             axis,
-  int             dir_ind,
-  int             octant_in_block,
-  Env*            env );
+Bool_t StepScheduler_must_do_send(
+  StepScheduler* stepscheduler,
+  int            step,
+  int            axis,
+  int            dir_ind,
+  int            octant_in_block,
+  Env*           env );
 
 /*===========================================================================*/
 /*---Determine whether to recv a face computed at step, used at step+1---*/
 
-Bool_t Step_Scheduler_must_do_recv(
-  Step_Scheduler* step_scheduler,
-  int             step,
-  int             axis,
-  int             dir_ind,
-  int             octant_in_block,
-  Env*            env );
+Bool_t StepScheduler_must_do_recv(
+  StepScheduler* stepscheduler,
+  int            step,
+  int            axis,
+  int            dir_ind,
+  int            octant_in_block,
+  Env*           env );
 
 /*===========================================================================*/
 
@@ -102,6 +102,6 @@ Bool_t Step_Scheduler_must_do_recv(
 } /*---extern "C"---*/
 #endif
 
-#endif /*---_step_scheduler_kba_h_---*/
+#endif /*---_stepscheduler_kba_h_---*/
 
 /*---------------------------------------------------------------------------*/

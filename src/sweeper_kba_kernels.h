@@ -88,12 +88,12 @@ typedef struct
   int              nsubblock_x;
   int              nsubblock_y;
   int              nsubblock_z;
-} Sweeper_Lite;
+} SweeperLite;
 
 /*===========================================================================*/
 /*---Thread indexers---*/
 
-TARGET_HD static inline int Sweeper_thread_e( const Sweeper_Lite* sweeper )
+TARGET_HD static inline int Sweeper_thread_e( const SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
   return Env_cuda_threadblock( 0 );
@@ -108,7 +108,7 @@ TARGET_HD static inline int Sweeper_thread_e( const Sweeper_Lite* sweeper )
 
 /*---------------------------------------------------------------------------*/
 
-TARGET_HD static inline int Sweeper_thread_octant( const Sweeper_Lite* sweeper )
+TARGET_HD static inline int Sweeper_thread_octant( const SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
   return Env_cuda_thread_in_threadblock( 1 );
@@ -124,7 +124,7 @@ TARGET_HD static inline int Sweeper_thread_octant( const Sweeper_Lite* sweeper )
 
 /*---------------------------------------------------------------------------*/
 
-TARGET_HD static inline int Sweeper_thread_y( const Sweeper_Lite* sweeper )
+TARGET_HD static inline int Sweeper_thread_y( const SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
   return Env_cuda_threadblock( 1 );
@@ -141,7 +141,7 @@ TARGET_HD static inline int Sweeper_thread_y( const Sweeper_Lite* sweeper )
 
 /*---------------------------------------------------------------------------*/
 
-TARGET_HD static inline int Sweeper_thread_z( const Sweeper_Lite* sweeper )
+TARGET_HD static inline int Sweeper_thread_z( const SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
   return Env_cuda_threadblock( 2 );
@@ -159,7 +159,7 @@ TARGET_HD static inline int Sweeper_thread_z( const Sweeper_Lite* sweeper )
 
 /*---------------------------------------------------------------------------*/
 
-TARGET_HD static inline int Sweeper_thread_a( const Sweeper_Lite* sweeper )
+TARGET_HD static inline int Sweeper_thread_a( const SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
   return Env_cuda_thread_in_threadblock( 0 );
@@ -170,7 +170,7 @@ TARGET_HD static inline int Sweeper_thread_a( const Sweeper_Lite* sweeper )
 
 /*---------------------------------------------------------------------------*/
 
-TARGET_HD static inline int Sweeper_thread_m( const Sweeper_Lite* sweeper )
+TARGET_HD static inline int Sweeper_thread_m( const SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
   return Env_cuda_thread_in_threadblock( 0 ) / NTHREAD_U;
@@ -181,7 +181,7 @@ TARGET_HD static inline int Sweeper_thread_m( const Sweeper_Lite* sweeper )
 
 /*---------------------------------------------------------------------------*/
 
-TARGET_HD static inline int Sweeper_thread_u( const Sweeper_Lite* sweeper )
+TARGET_HD static inline int Sweeper_thread_u( const SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
   return Env_cuda_thread_in_threadblock( 0 ) % NTHREAD_U;
@@ -193,7 +193,7 @@ TARGET_HD static inline int Sweeper_thread_u( const Sweeper_Lite* sweeper )
 /*===========================================================================*/
 /*---Thread synchronization---*/
 
-TARGET_HD static inline void Sweeper_sync_octant_threads( Sweeper_Lite* sweeper )
+TARGET_HD static inline void Sweeper_sync_octant_threads( SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
   /*---NOTE: this may not be needed if these threads are mapped in-warp---*/
@@ -207,7 +207,7 @@ TARGET_HD static inline void Sweeper_sync_octant_threads( Sweeper_Lite* sweeper 
 
 /*---------------------------------------------------------------------------*/
 
-TARGET_HD static inline void Sweeper_sync_yz_threads( Sweeper_Lite* sweeper )
+TARGET_HD static inline void Sweeper_sync_yz_threads( SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
   /*---NOTE: this may not be needed if these threads are mapped in-warp---*/
@@ -221,7 +221,7 @@ TARGET_HD static inline void Sweeper_sync_yz_threads( Sweeper_Lite* sweeper )
 
 /*---------------------------------------------------------------------------*/
 
-TARGET_HD static inline void Sweeper_sync_amu_threads( Sweeper_Lite* sweeper )
+TARGET_HD static inline void Sweeper_sync_amu_threads( SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
   Env_cuda_sync_threadblock();
@@ -232,7 +232,7 @@ TARGET_HD static inline void Sweeper_sync_amu_threads( Sweeper_Lite* sweeper )
 /*---Select which part of v*local to use for current thread/block---*/
 
 TARGET_HD static inline P* __restrict__ Sweeper_vilocal_this__(
-                                                            Sweeper_Lite* sweeper )
+                                                         SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
   return ( (P*) Env_cuda_shared_memory() )
@@ -251,7 +251,7 @@ TARGET_HD static inline P* __restrict__ Sweeper_vilocal_this__(
 /*---------------------------------------------------------------------------*/
 
 TARGET_HD static inline P* __restrict__ Sweeper_vslocal_this__(
-                                                            Sweeper_Lite* sweeper )
+                                                         SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
   return ( (P*) Env_cuda_shared_memory() )
@@ -273,7 +273,7 @@ TARGET_HD static inline P* __restrict__ Sweeper_vslocal_this__(
 /*---------------------------------------------------------------------------*/
 
 TARGET_HD static inline P* __restrict__ Sweeper_volocal_this__(
-                                                            Sweeper_Lite* sweeper )
+                                                         SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
   return ( (P*) Env_cuda_shared_memory() )
@@ -296,7 +296,7 @@ TARGET_HD static inline P* __restrict__ Sweeper_volocal_this__(
 /*---Perform a sweep for a cell---*/
 
 TARGET_HD inline void Sweeper_sweep_cell(
-  Sweeper_Lite* __restrict__     sweeper,
+  SweeperLite* __restrict__      sweeper,
   P* __restrict__                vo_this,
   const P* const __restrict__    vi_this,
   P* __restrict__                vilocal,
@@ -322,7 +322,7 @@ TARGET_HD inline void Sweeper_sweep_cell(
 /*---Perform a sweep for a subblock---*/
 
 TARGET_HD inline void Sweeper_sweep_subblock(
-  Sweeper_Lite* __restrict__     sweeper,
+  SweeperLite* __restrict__      sweeper,
   P* const __restrict__          vo_this,
   const P* const __restrict__    vi_this,
   P* const __restrict__          vilocal,
@@ -350,7 +350,7 @@ TARGET_HD inline void Sweeper_sweep_subblock(
 /*---Perform a sweep for a semiblock---*/
 
 TARGET_HD inline void Sweeper_sweep_semiblock(
-  Sweeper_Lite*          sweeper,
+  SweeperLite*           sweeper,
   P* __restrict__        vo,
   const P* __restrict__  vi,
   P* __restrict__        facexy,
@@ -359,7 +359,7 @@ TARGET_HD inline void Sweeper_sweep_semiblock(
   const P* __restrict__  a_from_m,
   const P* __restrict__  m_from_a,
   const Quantities*      quan,
-  const Step_Info        step_info,
+  const StepInfo         stepinfo,
   const int              octant_in_block,
   const int              ixmin,
   const int              ixmax,
@@ -373,7 +373,7 @@ TARGET_HD inline void Sweeper_sweep_semiblock(
 /*---Perform a sweep for a block, implementation---*/
 
 TARGET_HD void Sweeper_sweep_block_impl(
-  Sweeper_Lite*          sweeper,
+  SweeperLite*           sweeper,
   P* __restrict__        vo,
   const P* __restrict__  vi,
   P* __restrict__        facexy,
@@ -387,7 +387,7 @@ TARGET_HD void Sweeper_sweep_block_impl(
   Bool_t                 proc_x_max,
   Bool_t                 proc_y_min,
   Bool_t                 proc_y_max,
-  Step_Info_Values       step_info_values,
+  StepInfoAll            stepinfoall,
   unsigned long int      do_block_init );
 
 /*===========================================================================*/

@@ -18,7 +18,7 @@
 #include "arguments.h"
 #include "pointer.h"
 #include "quantities.h"
-#include "step_scheduler_kba.h"
+#include "stepscheduler_kba.h"
 #include "faces_kba.h"
 
 #include "sweeper_kba_kernels.h"
@@ -54,7 +54,7 @@ typedef struct
   int              nsubblock_y;
   int              nsubblock_z;
 
-  Step_Scheduler   step_scheduler;
+  StepScheduler    stepscheduler;
 
   Faces            faces;
 } Sweeper;
@@ -207,15 +207,15 @@ static int Sweeper_shared_size__( Sweeper* sweeper,
 }
 
 /*===========================================================================*/
-/*---Extract Sweeper_Lite from Sweeper---*/
+/*---Extract SweeperLite from Sweeper---*/
 
-Sweeper_Lite Sweeper_sweeper_lite( Sweeper sweeper );
+SweeperLite Sweeper_sweeperlite( Sweeper sweeper );
 
 /*===========================================================================*/
 /*---Perform a sweep for a block, implementation, global---*/
 
 TARGET_G void Sweeper_sweep_block_adapter(
-  Sweeper_Lite           sweeper,
+  SweeperLite            sweeper,
         P* __restrict__  vo,
   const P* __restrict__  vi,
         P* __restrict__  facexy,
@@ -229,7 +229,7 @@ TARGET_G void Sweeper_sweep_block_adapter(
   Bool_t                 proc_x_max,
   Bool_t                 proc_y_min,
   Bool_t                 proc_y_max,
-  Step_Info_Values       step_info_values,
+  StepInfoAll            stepinfoall,
   unsigned long int      do_block_init );
 
 /*===========================================================================*/

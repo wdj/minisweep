@@ -16,7 +16,7 @@
 #include "definitions_kernels.h"
 #include "quantities_kernels.h"
 #include "array_accessors_kernels.h"
-#include "step_scheduler_kba_kernels.h"
+#include "stepscheduler_kba_kernels.h"
 #include "sweeper_kba_kernels.h"
 
 #ifdef __cplusplus
@@ -28,7 +28,7 @@ extern "C"
 /*---Apply boundary condition: xy face---*/
 
 TARGET_HD static void Sweeper_set_boundary_xy(
-  const Sweeper_Lite*   sweeper,
+  const SweeperLite*    sweeper,
   P* const __restrict__ facexy,
   const Quantities*     quan,
   int                   octant,
@@ -84,7 +84,7 @@ TARGET_HD static void Sweeper_set_boundary_xy(
 /*---Apply boundary condition: xz face---*/
 
 TARGET_HD static void Sweeper_set_boundary_xz(
-  const Sweeper_Lite*   sweeper,
+  const SweeperLite*    sweeper,
   P* const __restrict__ facexz,
   const Quantities*     quan,
   int                   block_z,
@@ -141,7 +141,7 @@ TARGET_HD static void Sweeper_set_boundary_xz(
 /*---Apply boundary condition: yz face---*/
 
 TARGET_HD static void Sweeper_set_boundary_yz(
-  const Sweeper_Lite*   sweeper,
+  const SweeperLite*    sweeper,
   P* const __restrict__ faceyz,
   const Quantities*     quan,
   int                   block_z,
@@ -198,7 +198,7 @@ TARGET_HD static void Sweeper_set_boundary_yz(
 /*---Perform a sweep for a cell---*/
 
 TARGET_HD inline void Sweeper_sweep_cell(
-  Sweeper_Lite* __restrict__     sweeper,
+  SweeperLite* __restrict__      sweeper,
   P* const __restrict__          vo_this,
   const P* const __restrict__    vi_this,
   P* const __restrict__          vilocal,
@@ -717,7 +717,7 @@ TARGET_HD inline void Sweeper_sweep_cell(
 /*---Perform a sweep for a subblock---*/
 
 TARGET_HD inline void Sweeper_sweep_subblock(
-  Sweeper_Lite* __restrict__     sweeper,
+  SweeperLite* __restrict__      sweeper,
   P* const __restrict__          vo_this,
   const P* const __restrict__    vi_this,
   P* const __restrict__          vilocal,
@@ -796,7 +796,7 @@ TARGET_HD inline void Sweeper_sweep_subblock(
 /*---Perform a sweep for a semiblock---*/
 
 TARGET_HD inline void Sweeper_sweep_semiblock(
-  Sweeper_Lite*          sweeper,
+  SweeperLite*           sweeper,
   P* __restrict__        vo_this,
   const P* __restrict__  vi_this,
   P* __restrict__        facexy,
@@ -805,7 +805,7 @@ TARGET_HD inline void Sweeper_sweep_semiblock(
   const P* __restrict__  a_from_m,
   const P* __restrict__  m_from_a,
   const Quantities*      quan,
-  const Step_Info        step_info,
+  const StepInfo         stepinfo,
   const int              octant_in_block,
   const int              ixmin,
   const int              ixmax,
@@ -817,8 +817,8 @@ TARGET_HD inline void Sweeper_sweep_semiblock(
 {
   /*---Declarations---*/
 
-  const int octant  = step_info.octant;
-  const int iz_base = step_info.block_z * sweeper->dims_b.nz;
+  const int octant  = stepinfo.octant;
+  const int iz_base = stepinfo.block_z * sweeper->dims_b.nz;
 
   /*---Calculate v*local part to use---*/
 
@@ -857,7 +857,7 @@ TARGET_HD inline void Sweeper_sweep_semiblock(
 /*---Perform a sweep for a block, implementation---*/
 
 TARGET_HD void Sweeper_sweep_block_impl(
-  Sweeper_Lite*          sweeper,
+  SweeperLite*           sweeper,
         P* __restrict__  vo,
   const P* __restrict__  vi,
         P* __restrict__  facexy,
@@ -871,7 +871,7 @@ TARGET_HD void Sweeper_sweep_block_impl(
   Bool_t                 proc_x_max,
   Bool_t                 proc_y_min,
   Bool_t                 proc_y_max,
-  Step_Info_Values       step_info_values,
+  StepInfoAll            stepinfoall,
   unsigned long int      do_block_init )
 {
   /*---Declarations---*/
@@ -952,24 +952,24 @@ TARGET_HD void Sweeper_sweep_block_impl(
       {
         /*---Get step info---*/
 
-        const Step_Info step_info = step_info_values.step_info[octant_in_block];
+        const StepInfo stepinfo = stepinfoall.stepinfo[octant_in_block];
 
         /*--------------------*/
         /*---Begin compute section---*/
         /*--------------------*/
 
-        if( step_info.is_active )
+        if( stepinfo.is_active )
         {
-          const int iz_base = step_info.block_z * sweeper->dims_b.nz;
+          const int iz_base = stepinfo.block_z * sweeper->dims_b.nz;
 
           const P* vi_this
             = const_ref_state( vi, sweeper->dims, NU, 0, 0, iz_base, 0, 0, 0 );
           P* vo_this
                   = ref_state( vo, sweeper->dims, NU, 0, 0, iz_base, 0, 0, 0 );
 
-          const int dir_x = Dir_x( step_info.octant );
-          const int dir_y = Dir_y( step_info.octant );
-          const int dir_z = Dir_z( step_info.octant );
+          const int dir_x = Dir_x( stepinfo.octant );
+          const int dir_y = Dir_y( stepinfo.octant );
+          const int dir_z = Dir_z( stepinfo.octant );
 
           const int do_block_init_this = !! ( do_block_init &
                            ( ((unsigned long int)1) <<
@@ -1044,12 +1044,12 @@ TARGET_HD void Sweeper_sweep_block_impl(
           /*---Set physical boundary conditions if part of semiblock---*/
           /*--------------------*/
 
-          if( ( dir_z == DIR_UP && step_info.block_z == 0 && has_z_lo ) ||
-              ( dir_z == DIR_DN && step_info.block_z ==
+          if( ( dir_z == DIR_UP && stepinfo.block_z == 0 && has_z_lo ) ||
+              ( dir_z == DIR_DN && stepinfo.block_z ==
                                       sweeper->nblock_z - 1 && has_z_hi ) )
           {
             Sweeper_set_boundary_xy( sweeper, facexy, quan,
-                                     step_info.octant, octant_in_block,
+                                     stepinfo.octant, octant_in_block,
                                      ixmin_b, ixmax_b, iymin_b, iymax_b );
           }
 
@@ -1058,8 +1058,8 @@ TARGET_HD void Sweeper_sweep_block_impl(
           if( ( dir_y == DIR_UP && proc_y_min && has_y_lo ) ||
               ( dir_y == DIR_DN && proc_y_max && has_y_hi ) )
           {
-            Sweeper_set_boundary_xz( sweeper, facexz, quan, step_info.block_z,
-                                     step_info.octant, octant_in_block,
+            Sweeper_set_boundary_xz( sweeper, facexz, quan, stepinfo.block_z,
+                                     stepinfo.octant, octant_in_block,
                                      ixmin_b, ixmax_b, izmin_b, izmax_b );
           }
 
@@ -1068,8 +1068,8 @@ TARGET_HD void Sweeper_sweep_block_impl(
           if( ( dir_x == DIR_UP && proc_x_min && has_x_lo ) ||
               ( dir_x == DIR_DN && proc_x_max && has_x_hi ) )
           {
-            Sweeper_set_boundary_yz( sweeper, faceyz, quan, step_info.block_z,
-                                     step_info.octant, octant_in_block,
+            Sweeper_set_boundary_yz( sweeper, faceyz, quan, stepinfo.block_z,
+                                     stepinfo.octant, octant_in_block,
                                      iymin_b, iymax_b, izmin_b, izmax_b );
           }
 
@@ -1080,7 +1080,7 @@ TARGET_HD void Sweeper_sweep_block_impl(
           Sweeper_sweep_semiblock( sweeper, vo_this, vi_this,
                                    facexy, facexz, faceyz,
                                    a_from_m, m_from_a,
-                                   quan, step_info, octant_in_block,
+                                   quan, stepinfo, octant_in_block,
                                    ixmin_b, ixmax_b_up2,
                                    iymin_b, iymax_b_up2,
                                    izmin_b, izmax_b_up2,

@@ -16,7 +16,7 @@
 #include "definitions.h"
 #include "dimensions.h"
 #include "quantities.h"
-#include "step_scheduler_kba.h"
+#include "stepscheduler_kba.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -146,7 +146,7 @@ static Pointer* Faces_faceyz_step( Faces* faces, int step )
 
 void Faces_communicate_faces(
   Faces*          faces,
-  Step_Scheduler* step_scheduler,
+  StepScheduler*  stepscheduler,
   Dimensions      dims_b,
   int             step,
   Env*            env );
@@ -156,7 +156,7 @@ void Faces_communicate_faces(
 
 void Faces_send_faces_start(
   Faces*          faces,
-  Step_Scheduler* step_scheduler,
+  StepScheduler*  stepscheduler,
   Dimensions      dims_b,
   int             step,
   Env*            env );
@@ -166,7 +166,7 @@ void Faces_send_faces_start(
 
 void Faces_send_faces_end(
   Faces*          faces,
-  Step_Scheduler* step_scheduler,
+  StepScheduler*  stepscheduler,
   Dimensions      dims_b,
   int             step,
   Env*            env );
@@ -176,7 +176,7 @@ void Faces_send_faces_end(
 
 void Faces_recv_faces_start(
   Faces*          faces,
-  Step_Scheduler* step_scheduler,
+  StepScheduler*  stepscheduler,
   Dimensions      dims_b,
   int             step,
   Env*            env );
@@ -186,7 +186,7 @@ void Faces_recv_faces_start(
 
 void Faces_recv_faces_end(
   Faces*          faces,
-  Step_Scheduler* step_scheduler,
+  StepScheduler*  stepscheduler,
   Dimensions      dims_b,
   int             step,
   Env*            env );

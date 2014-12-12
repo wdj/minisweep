@@ -86,7 +86,7 @@ void Faces_dtor( Faces* faces )
 
 void Faces_communicate_faces(
   Faces*          faces,
-  Step_Scheduler* step_scheduler,
+  StepScheduler*  stepscheduler,
   Dimensions      dims_b,
   int             step,
   Env*            env )
@@ -146,11 +146,11 @@ void Faces_communicate_faces(
 
         /*---Determine whether to communicate---*/
 
-        Bool_t const do_send = Step_Scheduler_must_do_send(
-                   step_scheduler, step, axis, dir_ind, octant_in_block, env );
+        Bool_t const do_send = StepScheduler_must_do_send(
+                   stepscheduler, step, axis, dir_ind, octant_in_block, env );
 
-        Bool_t const do_recv = Step_Scheduler_must_do_recv(
-                   step_scheduler, step, axis, dir_ind, octant_in_block, env );
+        Bool_t const do_recv = StepScheduler_must_do_recv(
+                   stepscheduler, step, axis, dir_ind, octant_in_block, env );
 
         /*---Communicate as needed - red/black coloring to avoid deadlock---*/
 
@@ -226,7 +226,7 @@ void Faces_communicate_faces(
 
 void Faces_send_faces_start(
   Faces*          faces,
-  Step_Scheduler* step_scheduler,
+  StepScheduler*  stepscheduler,
   Dimensions      dims_b,
   int             step,
   Env*            env )
@@ -279,8 +279,8 @@ void Faces_send_faces_start(
 
         /*---Determine whether to communicate---*/
 
-        Bool_t const do_send = Step_Scheduler_must_do_send(
-                   step_scheduler, step, axis, dir_ind, octant_in_block, env );
+        Bool_t const do_send = StepScheduler_must_do_send(
+                   stepscheduler, step, axis, dir_ind, octant_in_block, env );
 
         if( do_send )
         {
@@ -301,7 +301,7 @@ void Faces_send_faces_start(
 
 void Faces_send_faces_end(
   Faces*          faces,
-  Step_Scheduler* step_scheduler,
+  StepScheduler*  stepscheduler,
   Dimensions      dims_b,
   int             step,
   Env*            env )
@@ -333,8 +333,8 @@ void Faces_send_faces_end(
 
         /*---Determine whether to communicate---*/
 
-        Bool_t const do_send = Step_Scheduler_must_do_send(
-                   step_scheduler, step, axis, dir_ind, octant_in_block, env );
+        Bool_t const do_send = StepScheduler_must_do_send(
+                   stepscheduler, step, axis, dir_ind, octant_in_block, env );
 
         if( do_send )
         {
@@ -353,7 +353,7 @@ void Faces_send_faces_end(
 
 void Faces_recv_faces_start(
   Faces*          faces,
-  Step_Scheduler* step_scheduler,
+  StepScheduler*  stepscheduler,
   Dimensions      dims_b,
   int             step,
   Env*            env )
@@ -406,8 +406,8 @@ void Faces_recv_faces_start(
 
         /*---Determine whether to communicate---*/
 
-        Bool_t const do_recv = Step_Scheduler_must_do_recv(
-                   step_scheduler, step, axis, dir_ind, octant_in_block, env );
+        Bool_t const do_recv = StepScheduler_must_do_recv(
+                   stepscheduler, step, axis, dir_ind, octant_in_block, env );
 
         if( do_recv )
         {
@@ -428,7 +428,7 @@ void Faces_recv_faces_start(
 
 void Faces_recv_faces_end(
   Faces*          faces,
-  Step_Scheduler* step_scheduler,
+  StepScheduler*  stepscheduler,
   Dimensions      dims_b,
   int             step,
   Env*            env )
@@ -464,8 +464,8 @@ void Faces_recv_faces_end(
       {
         /*---Determine whether to communicate---*/
 
-        Bool_t const do_recv = Step_Scheduler_must_do_recv(
-                   step_scheduler, step, axis, dir_ind, octant_in_block, env );
+        Bool_t const do_recv = StepScheduler_must_do_recv(
+                   stepscheduler, step, axis, dir_ind, octant_in_block, env );
 
         if( do_recv )
         {

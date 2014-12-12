@@ -1,15 +1,15 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   step_scheduler_kba_kernels.h
+ * \file   stepscheduler_kba_kernels.h
  * \author Wayne Joubert
  * \date   Tue Jan 28 16:37:41 EST 2014
- * \brief  step_scheduler_kba, code for device kernels.
+ * \brief  stepscheduler_kba, code for device kernels.
  * \note   Copyright (C) 2014 Oak Ridge National Laboratory, UT-Battelle, LLC.
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _step_scheduler_kba_kernels_h_
-#define _step_scheduler_kba_kernels_h_
+#ifndef _stepscheduler_kba_kernels_h_
+#define _stepscheduler_kba_kernels_h_
 
 #include "types_kernels.h"
 #include "definitions_kernels.h"
@@ -27,15 +27,15 @@ typedef struct
   int     block_z;
   int     octant;
   Bool_t  is_active;
-} Step_Info;
+} StepInfo;
 
 /*===========================================================================*/
 /*---8 copies of the same---*/
 
 typedef struct
 {
-  Step_Info step_info[NOCTANT];
-} Step_Info_Values;
+  StepInfo stepinfo[NOCTANT];
+} StepInfoAll;
 
 /*===========================================================================*/
 
@@ -43,6 +43,6 @@ typedef struct
 } /*---extern "C"---*/
 #endif
 
-#endif /*---_step_scheduler_kba_kernels_h_---*/
+#endif /*---_stepscheduler_kba_kernels_h_---*/
 
 /*---------------------------------------------------------------------------*/

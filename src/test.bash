@@ -365,13 +365,21 @@ EOF
   # Finalize.
   #==============================
 
+  local ntest_failed=$(( $g_ntest - $g_ntest_passed ))
+
+  echo
   echo -n "TOTAL: "
   echo -n "TESTS $g_ntest"
   echo -n "    "
   echo -n "PASSED $g_ntest_passed"
   echo -n "    "
   echo -n "FAILED $(( $g_ntest - $g_ntest_passed ))"
-  echo "."
+  echo -n "."
+  if [ $ntest_failed = 0 ] ; then
+    echo -n "          ========== SUCCESS =========="
+  fi
+  echo
+
 
 }
 #==============================================================================

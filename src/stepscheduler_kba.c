@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   step_scheduler_kba_c.h
+ * \file   stepscheduler_kba_c.h
  * \author Wayne Joubert
  * \date   Tue Jan 28 16:37:41 EST 2014
  * \brief  Definitions for managing sweep step schedule.
@@ -10,7 +10,7 @@
 
 #include "env.h"
 #include "definitions.h"
-#include "step_scheduler_kba.h"
+#include "stepscheduler_kba.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -18,83 +18,83 @@ extern "C"
 #endif
 
 /*===========================================================================*/
-/*---Pseudo-constructor for Step_Scheduler struct---*/
+/*---Pseudo-constructor for StepScheduler struct---*/
 
-void Step_Scheduler_ctor( Step_Scheduler* step_scheduler,
-                          int             nblock_z,
-                          int             nblock_octant,
-                          Env*            env )
+void StepScheduler_ctor( StepScheduler* stepscheduler,
+                         int             nblock_z,
+                         int             nblock_octant,
+                         Env*            env )
 {
   Insist( nblock_z > 0 && "Invalid z blocking factor supplied." );
-  step_scheduler->nblock_z__          = nblock_z;
-  step_scheduler->nproc_x__           = Env_nproc_x( env );
-  step_scheduler->nproc_y__           = Env_nproc_y( env );
-  step_scheduler->nblock_octant__     = nblock_octant;
-  step_scheduler->noctant_per_block__ = NOCTANT / nblock_octant;
+  stepscheduler->nblock_z__          = nblock_z;
+  stepscheduler->nproc_x__           = Env_nproc_x( env );
+  stepscheduler->nproc_y__           = Env_nproc_y( env );
+  stepscheduler->nblock_octant__     = nblock_octant;
+  stepscheduler->noctant_per_block__ = NOCTANT / nblock_octant;
 }
 
 /*===========================================================================*/
-/*---Pseudo-destructor for Step_Scheduler struct---*/
+/*---Pseudo-destructor for StepScheduler struct---*/
 
-void Step_Scheduler_dtor( Step_Scheduler* step_scheduler )
+void StepScheduler_dtor( StepScheduler* stepscheduler )
 {
 }
 
 /*===========================================================================*/
 /*---Accessor: blocks along z axis---*/
 
-int Step_Scheduler_nblock_z( const Step_Scheduler* step_scheduler )
+int StepScheduler_nblock_z( const StepScheduler* stepscheduler )
 {
-  return step_scheduler->nblock_z__;
+  return stepscheduler->nblock_z__;
 }
 
 /*===========================================================================*/
 /*---Number of block steps executed for a single octant in isolation---*/
 
-int Step_Scheduler_nblock( const Step_Scheduler* step_scheduler )
+int StepScheduler_nblock( const StepScheduler* stepscheduler )
 {
-  return step_scheduler->nblock_z__;
+  return stepscheduler->nblock_z__;
 }
 
 /*===========================================================================*/
 /*---Number of octants per octant block---*/
 
-int Step_Scheduler_noctant_per_block( const Step_Scheduler* step_scheduler )
+int StepScheduler_noctant_per_block( const StepScheduler* stepscheduler )
 {
-  return NOCTANT / step_scheduler->nblock_octant__;
+  return NOCTANT / stepscheduler->nblock_octant__;
 }
 
 /*===========================================================================*/
 /*---Number of kba parallel steps---*/
 
-int Step_Scheduler_nstep( const Step_Scheduler* step_scheduler )
+int StepScheduler_nstep( const StepScheduler* stepscheduler )
 {
   int result;
 
-  switch( step_scheduler->nblock_octant__ )
+  switch( stepscheduler->nblock_octant__ )
   {
     case 8:
-      result = 8 * Step_Scheduler_nblock( step_scheduler )
-                                       + 2 * ( step_scheduler->nproc_x__ - 1 )
-                                       + 3 * ( step_scheduler->nproc_y__ - 1 );
+      result = 8 * StepScheduler_nblock( stepscheduler )
+                                        + 2 * ( stepscheduler->nproc_x__ - 1 )
+                                        + 3 * ( stepscheduler->nproc_y__ - 1 );
       break;
 
     case 4:
-      result = 4 * Step_Scheduler_nblock( step_scheduler )
-                                       + 1 * ( step_scheduler->nproc_x__ - 1 )
-                                       + 2 * ( step_scheduler->nproc_y__ - 1 );
+      result = 4 * StepScheduler_nblock( stepscheduler )
+                                        + 1 * ( stepscheduler->nproc_x__ - 1 )
+                                        + 2 * ( stepscheduler->nproc_y__ - 1 );
       break;
 
     case 2:
-      result = 2 * Step_Scheduler_nblock( step_scheduler )
-                                       + 1 * ( step_scheduler->nproc_x__ - 1 )
-                                       + 1 * ( step_scheduler->nproc_y__ - 1 );
+      result = 2 * StepScheduler_nblock( stepscheduler )
+                                        + 1 * ( stepscheduler->nproc_x__ - 1 )
+                                        + 1 * ( stepscheduler->nproc_y__ - 1 );
       break;
 
     case 1:
-      result = 1 * Step_Scheduler_nblock( step_scheduler )
-                                       + 1 * ( step_scheduler->nproc_x__ - 1 )
-                                       + 1 * ( step_scheduler->nproc_y__ - 1 );
+      result = 1 * StepScheduler_nblock( stepscheduler )
+                                        + 1 * ( stepscheduler->nproc_x__ - 1 )
+                                        + 1 * ( stepscheduler->nproc_y__ - 1 );
       break;
 
     default:
@@ -108,21 +108,21 @@ int Step_Scheduler_nstep( const Step_Scheduler* step_scheduler )
 /*===========================================================================*/
 /*---Get information describing a sweep step---*/
 
-Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,  
-                                    const int             step,
-                                    const int             octant_in_block,
-                                    const int             proc_x,
-                                    const int             proc_y )
+StepInfo StepScheduler_stepinfo( const StepScheduler* stepscheduler,  
+                                 const int            step,
+                                 const int            octant_in_block,
+                                 const int            proc_x,
+                                 const int            proc_y )
 {
   Assert( octant_in_block>=0 &&
-          octant_in_block * step_scheduler->nblock_octant__ < NOCTANT );
+          octant_in_block * stepscheduler->nblock_octant__ < NOCTANT );
 
-  const int nblock_octant     = step_scheduler->nblock_octant__;
-  const int nproc_x           = step_scheduler->nproc_x__;
-  const int nproc_y           = step_scheduler->nproc_y__;
-  const int nblock            = Step_Scheduler_nblock( step_scheduler );
-  const int nstep             = Step_Scheduler_nstep( step_scheduler );
-  const int noctant_per_block = step_scheduler->noctant_per_block__;
+  const int nblock_octant     = stepscheduler->nblock_octant__;
+  const int nproc_x           = stepscheduler->nproc_x__;
+  const int nproc_y           = stepscheduler->nproc_y__;
+  const int nblock            = StepScheduler_nblock( stepscheduler );
+  const int nstep             = StepScheduler_nstep( stepscheduler );
+  const int noctant_per_block = stepscheduler->noctant_per_block__;
 
   int octant_key    = 0;
   int wave          = 0;
@@ -138,7 +138,7 @@ Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,
   int folded_octant = 0;
   int folded_block  = 0;
 
-  Step_Info step_info;
+  StepInfo stepinfo;
 
   const int octant_selector[NOCTANT] = { 0, 4, 2, 6, 3, 7, 1, 5 };
 
@@ -258,29 +258,29 @@ Step_Info Step_Scheduler_step_info( const Step_Scheduler* step_scheduler,
        the block in question falls within the physical domain.
   ---*/
 
-  step_info.is_active = block  >= 0 && block  < nblock &&
-                        step   >= 0 && step   < nstep &&
-                        proc_x >= 0 && proc_x < nproc_x &&
-                        proc_y >= 0 && proc_y < nproc_y;
+  stepinfo.is_active = block  >= 0 && block  < nblock &&
+                       step   >= 0 && step   < nstep &&
+                       proc_x >= 0 && proc_x < nproc_x &&
+                       proc_y >= 0 && proc_y < nproc_y;
 
   /*---Set remaining values---*/
 
-  step_info.block_z = step_info.is_active ? block  : -1;
-  step_info.octant  = step_info.is_active ? octant : -1;
+  stepinfo.block_z = stepinfo.is_active ? block  : -1;
+  stepinfo.octant  = stepinfo.is_active ? octant : -1;
 
-  return step_info;
+  return stepinfo;
 }
 
 /*===========================================================================*/
 /*---Determine whether to send a face computed at step, used at step+1---*/
 
-Bool_t Step_Scheduler_must_do_send(
-  Step_Scheduler* step_scheduler,
-  int             step,
-  int             axis,
-  int             dir_ind,
-  int             octant_in_block,
-  Env*            env )
+Bool_t StepScheduler_must_do_send(
+  StepScheduler* stepscheduler,
+  int            step,
+  int            axis,
+  int            dir_ind,
+  int            octant_in_block,
+  Env*           env )
 {
   const int proc_x = Env_proc_x_this( env );
   const int proc_y = Env_proc_y_this( env );
@@ -294,23 +294,23 @@ Bool_t Step_Scheduler_must_do_send(
 
   /*---Get step info for processors involved in communication---*/
 
-  const Step_Info step_info_send_source_step = Step_Scheduler_step_info(
-    step_scheduler, step,   octant_in_block, proc_x,       proc_y       );
+  const StepInfo stepinfo_send_source_step = StepScheduler_stepinfo(
+    stepscheduler, step,   octant_in_block, proc_x,       proc_y       );
 
-  const Step_Info step_info_send_target_step = Step_Scheduler_step_info(
-    step_scheduler, step+1, octant_in_block, proc_x+inc_x, proc_y+inc_y );
+  const StepInfo stepinfo_send_target_step = StepScheduler_stepinfo(
+    stepscheduler, step+1, octant_in_block, proc_x+inc_x, proc_y+inc_y );
 
   /*---Determine whether to communicate---*/
 
-  Bool_t const do_send = step_info_send_source_step.is_active
-                      && step_info_send_target_step.is_active
-                      && step_info_send_source_step.octant ==
-                         step_info_send_target_step.octant
-                      && step_info_send_source_step.block_z ==
-                         step_info_send_target_step.block_z
+  Bool_t const do_send = stepinfo_send_source_step.is_active
+                      && stepinfo_send_target_step.is_active
+                      && stepinfo_send_source_step.octant ==
+                         stepinfo_send_target_step.octant
+                      && stepinfo_send_source_step.block_z ==
+                         stepinfo_send_target_step.block_z
                       && ( axis_x ?
-                           Dir_x( step_info_send_target_step.octant ) :
-                           Dir_y( step_info_send_target_step.octant ) ) == dir;
+                           Dir_x( stepinfo_send_target_step.octant ) :
+                           Dir_y( stepinfo_send_target_step.octant ) ) == dir;
 
   return do_send;
 }
@@ -318,13 +318,13 @@ Bool_t Step_Scheduler_must_do_send(
 /*===========================================================================*/
 /*---Determine whether to recv a face computed at step, used at step+1---*/
 
-Bool_t Step_Scheduler_must_do_recv(
-  Step_Scheduler* step_scheduler,
-  int             step,
-  int             axis,
-  int             dir_ind,
-  int             octant_in_block,
-  Env*            env )
+Bool_t StepScheduler_must_do_recv(
+  StepScheduler* stepscheduler,
+  int            step,
+  int            axis,
+  int            dir_ind,
+  int            octant_in_block,
+  Env*           env )
 {
   const int proc_x = Env_proc_x_this( env );
   const int proc_y = Env_proc_y_this( env );
@@ -338,23 +338,23 @@ Bool_t Step_Scheduler_must_do_recv(
 
   /*---Get step info for processors involved in communication---*/
 
-  const Step_Info step_info_recv_source_step = Step_Scheduler_step_info(
-    step_scheduler, step,   octant_in_block, proc_x-inc_x, proc_y-inc_y );
+  const StepInfo stepinfo_recv_source_step = StepScheduler_stepinfo(
+    stepscheduler, step,   octant_in_block, proc_x-inc_x, proc_y-inc_y );
 
-  const Step_Info step_info_recv_target_step = Step_Scheduler_step_info(
-    step_scheduler, step+1, octant_in_block, proc_x,       proc_y       );
+  const StepInfo stepinfo_recv_target_step = StepScheduler_stepinfo(
+    stepscheduler, step+1, octant_in_block, proc_x,       proc_y       );
 
   /*---Determine whether to communicate---*/
 
-  Bool_t const do_recv = step_info_recv_source_step.is_active
-                      && step_info_recv_target_step.is_active
-                      && step_info_recv_source_step.octant ==
-                         step_info_recv_target_step.octant
-                      && step_info_recv_source_step.block_z ==
-                         step_info_recv_target_step.block_z
+  Bool_t const do_recv = stepinfo_recv_source_step.is_active
+                      && stepinfo_recv_target_step.is_active
+                      && stepinfo_recv_source_step.octant ==
+                         stepinfo_recv_target_step.octant
+                      && stepinfo_recv_source_step.block_z ==
+                         stepinfo_recv_target_step.block_z
                       && ( axis_x ?
-                           Dir_x( step_info_recv_target_step.octant ) :
-                           Dir_y( step_info_recv_target_step.octant ) ) == dir;
+                           Dir_x( stepinfo_recv_target_step.octant ) :
+                           Dir_y( stepinfo_recv_target_step.octant ) ) == dir;
 
   return do_recv;
 }

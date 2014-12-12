@@ -63,13 +63,13 @@ typedef struct
   double flops;
   double floprate;
   Timer  time;
-} Run_Data;
+} RunData;
 
 /*===========================================================================*/
 /*---Perform run---*/
 
-void run1( Env* env, Arguments* args, Run_Data* run_data );
-void run1( Env* env, Arguments* args, Run_Data* run_data )
+void run1( Env* env, Arguments* args, RunData* rundata );
+void run1( Env* env, Arguments* args, RunData* rundata )
 {
   /*---Declarations---*/
 
@@ -81,8 +81,8 @@ void run1( Env* env, Arguments* args, Run_Data* run_data )
   Pointer vi = Pointer_null();
   Pointer vo = Pointer_null();
 
-  run_data->normsq     = P_zero();
-  run_data->normsqdiff = P_zero();
+  rundata->normsq     = P_zero();
+  rundata->normsqdiff = P_zero();
 
   int iteration   = 0;
   int niterations = 0;
@@ -90,11 +90,11 @@ void run1( Env* env, Arguments* args, Run_Data* run_data )
   Timer t1             = 0;
   Timer t2             = 0;
 
-  run_data->time       = 0;
-  run_data->flops      = 0;
-  run_data->floprate   = 0;
-  run_data->normsq     = 0;
-  run_data->normsqdiff = 0;
+  rundata->time       = 0;
+  rundata->flops      = 0;
+  rundata->floprate   = 0;
+  rundata->normsq     = 0;
+  rundata->normsqdiff = 0;
 
   /*---Define problem specs---*/
 
@@ -176,23 +176,23 @@ void run1( Env* env, Arguments* args, Run_Data* run_data )
   }
 
   t2 = Env_get_synced_time( env );
-  run_data->time = t2 - t1;
+  rundata->time = t2 - t1;
 
   /*---Compute flops used---*/
 
-  run_data->flops = Env_sum_d( niterations *
+  rundata->flops = Env_sum_d( niterations *
          ( Dimensions_size_state( dims, NU ) * NOCTANT * 2. * dims.na
          + Dimensions_size_state_angles( dims, NU )
                                         * Quantities_flops_per_solve( dims )
          + Dimensions_size_state( dims, NU ) * NOCTANT * 2. * dims.na ), env );
 
-  run_data->floprate = run_data->time <= (Timer)0 ?
-                                   0 : run_data->flops / run_data->time / 1e9;
+  rundata->floprate = rundata->time <= (Timer)0 ?
+                                   0 : rundata->flops / rundata->time / 1e9;
 
   /*---Compute, print norm squared of result---*/
 
   get_state_norms( Pointer_h( &vi ), Pointer_h( &vo ),
-                     dims, NU, &run_data->normsq, &run_data->normsqdiff, env );
+                     dims, NU, &rundata->normsq, &rundata->normsqdiff, env );
 
   /*---Deallocations---*/
 
@@ -211,8 +211,8 @@ Bool_t compare_runs( Env* env, char* argstring1, char* argstring2 )
 {
   Arguments args1;
   Arguments args2;
-  Run_Data  rd1;
-  Run_Data  rd2;
+  RunData  rundata1;
+  RunData  rundata2;
 
   Arguments_ctor_string( &args1, argstring1 );
   Env_set_values( env, &args1 );
@@ -223,7 +223,7 @@ Bool_t compare_runs( Env* env, char* argstring1, char* argstring2 )
   }
   if( Env_is_proc_active( env ) )
   {
-    run1( env, &args1, &rd1 );
+    run1( env, &args1, &rundata1 );
   }
   Env_reset_values( env );
 
@@ -236,21 +236,23 @@ Bool_t compare_runs( Env* env, char* argstring1, char* argstring2 )
   }
   if( Env_is_proc_active( env ) )
   {
-    run1( env, &args2, &rd2 );
+    run1( env, &args2, &rundata2 );
   }
   Env_reset_values( env );
 
   Bool_t pass = Env_is_proc_master( env ) ?
-                rd1.normsqdiff == P_zero() &&
-                rd2.normsqdiff == P_zero() &&
-                rd1.normsq == rd2.normsq : Bool_false;
+                rundata1.normsqdiff == P_zero() &&
+                rundata2.normsqdiff == P_zero() &&
+                rundata1.normsq == rundata2.normsq : Bool_false;
 
   if( Env_is_proc_master( env ) )
   {
     printf("%e %e %e %e // %i %i %i // %s\n",
-      rd1.normsqdiff, rd2.normsqdiff, rd1.normsq, rd2.normsq,
-      rd1.normsq == rd2.normsq,
-      rd1.normsqdiff == P_zero(), rd2.normsqdiff == P_zero(),
+      rundata1.normsqdiff, rundata2.normsqdiff,
+      rundata1.normsq, rundata2.normsq,
+      rundata1.normsq == rundata2.normsq,
+      rundata1.normsqdiff == P_zero(),
+      rundata2.normsqdiff == P_zero(),
       pass ? "PASS" : "FAIL" );
   }
 
@@ -327,21 +329,21 @@ int main( int argc, char** argv )
   else
   {
     Arguments args;
-    Run_Data  run_data;
+    RunData  rundata;
 
     Arguments_ctor( &args, argc, argv );
     Env_set_values( &env, &args );
 
     /*---Perform run---*/
 
-    run1( &env, &args, &run_data );
+    run1( &env, &args, &rundata );
 
     if( Env_is_proc_master( &env ) )
     {
       printf( "Normsq result: %.8e  diff: %.3e  %s  time: %.3f  GF/s: %.3f\n",
-              (double)run_data.normsq, (double)run_data.normsqdiff,
-              run_data.normsqdiff==P_zero() ? "PASS" : "FAIL",
-              (double)run_data.time, run_data.floprate );
+              (double)rundata.normsq, (double)rundata.normsqdiff,
+              rundata.normsqdiff==P_zero() ? "PASS" : "FAIL",
+              (double)rundata.time, rundata.floprate );
     }
 
     /*---Deallocations---*/
