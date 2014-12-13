@@ -333,7 +333,7 @@ TARGET_HD static inline P Quantities_init_faceyz(
 }
 
 /*===========================================================================*/
-/*---Perform equation solve at a gridcell---*/
+/*---Perform equation solve at a cell---*/
 
 TARGET_HD static inline void Quantities_solve(
   const Quantities* const  quan,
@@ -413,9 +413,11 @@ TARGET_HD static inline void Quantities_solve(
     {
       P* const __restrict__ vslocal_this
                         = ref_vslocal( vslocal, dims_b, NU, iamax, iaind, iu );
+/*
       P* const __restrict__ facexy_this
                         = ref_facexy( facexy, dims_b, NU, noctant_per_block,
                                       ix_b, iy_b, ie, ia, iu, octant_in_block );
+*/
 
       const P result = ( *vslocal_this * scalefactor_space_r + (
           *const_ref_facexy( facexy, dims_b, NU, noctant_per_block,

@@ -50,9 +50,9 @@ typedef struct
   int              nblock_octant;
   int              noctant_per_block;
   int              nsemiblock;
-  int              nsubblock_x;
-  int              nsubblock_y;
-  int              nsubblock_z;
+  int              ncell_x_per_subblock;
+  int              ncell_y_per_subblock;
+  int              ncell_z_per_subblock;
 
   StepScheduler    stepscheduler;
 
@@ -117,7 +117,9 @@ static inline int Sweeper_nvilocal_( Sweeper* sweeper,
       ?
          Sweeper_nthread_m( sweeper, env ) *
          NU *
-         sweeper->nthread_octant
+         sweeper->nthread_octant *
+         sweeper->nthread_y *
+         sweeper->nthread_z
        :
          Sweeper_nthread_m( sweeper, env ) *
          NU *
@@ -137,7 +139,9 @@ static inline int Sweeper_nvslocal_( Sweeper* sweeper,
       ?
          Sweeper_nthread_a( sweeper, env ) *
          NU *
-         sweeper->nthread_octant
+         sweeper->nthread_octant *
+         sweeper->nthread_y *
+         sweeper->nthread_z
        :
          Sweeper_nthread_a( sweeper, env ) *
          NU *
@@ -157,7 +161,9 @@ static inline int Sweeper_nvolocal_( Sweeper* sweeper,
       ?
          Sweeper_nthread_m( sweeper, env ) *
          NU *
-         sweeper->nthread_octant
+         sweeper->nthread_octant *
+         sweeper->nthread_y *
+         sweeper->nthread_z
        :
          Sweeper_nthread_m( sweeper, env ) *
          NU *

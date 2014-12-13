@@ -85,9 +85,9 @@ typedef struct
   int              nblock_octant;
   int              noctant_per_block;
   int              nsemiblock;
-  int              nsubblock_x;
-  int              nsubblock_y;
-  int              nsubblock_z;
+  int              ncell_x_per_subblock;
+  int              ncell_y_per_subblock;
+  int              ncell_z_per_subblock;
 } SweeperLite;
 
 /*===========================================================================*/
@@ -236,14 +236,27 @@ TARGET_HD static inline P* __restrict__ Sweeper_vilocal_this_(
 {
 #ifdef __CUDA_ARCH__
   return ( (P*) Env_cuda_shared_memory() )
-    + NTHREAD_M * NU *
-      Sweeper_thread_octant( sweeper )
+    + ( NTHREAD_M *
+        NU *
+        sweeper->nthread_octant *
+        sweeper->nthread_y *
+        sweeper->nthread_z ) * 0
+    + NTHREAD_M *
+      NU *
+      ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant * (
+        Sweeper_thread_y(      sweeper ) + sweeper->nthread_y      * (
+        Sweeper_thread_z(      sweeper ) + sweeper->nthread_z      * (
+        0 ) ) ) )
   ;
 #else
   return sweeper->vilocal_host_
-    + NTHREAD_M * NU *
-      ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant *
-        Sweeper_thread_e(      sweeper ) )
+    + NTHREAD_M *
+      NU *
+      ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant * (
+        Sweeper_thread_y(      sweeper ) + sweeper->nthread_y      * (
+        Sweeper_thread_z(      sweeper ) + sweeper->nthread_z      * (
+        Sweeper_thread_e(      sweeper ) + sweeper->nthread_e      * (
+        0 ) ) ) ) )
   ;
 #endif
 }
@@ -257,15 +270,25 @@ TARGET_HD static inline P* __restrict__ Sweeper_vslocal_this_(
   return ( (P*) Env_cuda_shared_memory() )
     + ( NTHREAD_M *
         NU *
-        sweeper->nthread_octant ) * 2
-    + NTHREAD_A * NU *
-      Sweeper_thread_octant( sweeper )
+        sweeper->nthread_octant *
+        sweeper->nthread_y *
+        sweeper->nthread_z ) * 2
+    + NTHREAD_A *
+      NU *
+      ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant * (
+        Sweeper_thread_y(      sweeper ) + sweeper->nthread_y      * (
+        Sweeper_thread_z(      sweeper ) + sweeper->nthread_z      * (
+        0 ) ) ) )
   ;
 #else
   return sweeper->vslocal_host_
-    + NTHREAD_A * NU *
-      ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant *
-        Sweeper_thread_e(      sweeper ) )
+    + NTHREAD_A *
+      NU *
+      ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant * (
+        Sweeper_thread_y(      sweeper ) + sweeper->nthread_y      * (
+        Sweeper_thread_z(      sweeper ) + sweeper->nthread_z      * (
+        Sweeper_thread_e(      sweeper ) + sweeper->nthread_e      * (
+        0 ) ) ) ) )
   ;
 #endif
 }
@@ -279,15 +302,25 @@ TARGET_HD static inline P* __restrict__ Sweeper_volocal_this_(
   return ( (P*) Env_cuda_shared_memory() )
     + ( NTHREAD_M *
         NU *
-        sweeper->nthread_octant ) * 1
-    + NTHREAD_M * NU *
-      Sweeper_thread_octant( sweeper )
+        sweeper->nthread_octant *
+        sweeper->nthread_y *
+        sweeper->nthread_z ) * 1
+    + NTHREAD_M *
+      NU *
+      ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant * (
+        Sweeper_thread_y(      sweeper ) + sweeper->nthread_y      * (
+        Sweeper_thread_z(      sweeper ) + sweeper->nthread_z      * (
+        0 ) ) ) )
   ;
 #else
   return sweeper->volocal_host_
-    + NTHREAD_M * NU *
-      ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant *
-        Sweeper_thread_e(      sweeper ) )
+    + NTHREAD_M *
+      NU *
+      ( Sweeper_thread_octant( sweeper ) + sweeper->nthread_octant * (
+        Sweeper_thread_y(      sweeper ) + sweeper->nthread_y      * (
+        Sweeper_thread_z(      sweeper ) + sweeper->nthread_z      * (
+        Sweeper_thread_e(      sweeper ) + sweeper->nthread_e      * (
+        0 ) ) ) ) )
   ;
 #endif
 }
@@ -338,12 +371,25 @@ TARGET_HD inline void Sweeper_sweep_subblock(
   const int                      iz_base,
   const int                      octant_in_block,
   const int                      ie,
-  const int                      ixmin,
-  const int                      ixmax,
-  const int                      iymin,
-  const int                      iymax,
-  const int                      izmin,
-  const int                      izmax,
+  const int                      ixmin_subblock,
+  const int                      ixmax_subblock,
+  const int                      iymin_subblock,
+  const int                      iymax_subblock,
+  const int                      izmin_subblock,
+  const int                      izmax_subblock,
+  const Bool_t                   is_subblock_active,
+  const int                      ixmin_semiblock,
+  const int                      ixmax_semiblock,
+  const int                      iymin_semiblock,
+  const int                      iymax_semiblock,
+  const int                      izmin_semiblock,
+  const int                      izmax_semiblock,
+  const int                      dir_x,
+  const int                      dir_y,
+  const int                      dir_z,
+  const int                      dir_inc_x,
+  const int                      dir_inc_y,
+  const int                      dir_inc_z,
   const Bool_t                   do_block_init_this );
 
 /*===========================================================================*/

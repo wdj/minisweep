@@ -92,20 +92,23 @@ void Sweeper_ctor( Sweeper*          sweeper,
          ? "Incomplete set of semiblock steps requires atomic vo update" : 0 );
 
   /*====================*/
-  /*---Set up number of subblocks---*/
+  /*---Set up size of subblocks---*/
   /*====================*/
 
-  sweeper->nsubblock_x = Arguments_consume_int_or_default(
-                                                    args, "--nsubblock_x", 1 );
-  Insist( sweeper->nsubblock_x>0 ? "Invalid subblock count supplied" : 0 );
+  sweeper->ncell_x_per_subblock = Arguments_consume_int_or_default(
+                                 args, "--ncell_x_per_subblock", dims.ncellx );
+  Insist( sweeper->ncell_x_per_subblock>0 ?
+                                        "Invalid subblock size supplied" : 0 );
 
-  sweeper->nsubblock_y = Arguments_consume_int_or_default(
-                                                    args, "--nsubblock_y", 1 );
-  Insist( sweeper->nsubblock_y>0 ? "Invalid subblock count supplied" : 0 );
+  sweeper->ncell_y_per_subblock = Arguments_consume_int_or_default(
+                                 args, "--ncell_y_per_subblock", dims.ncelly );
+  Insist( sweeper->ncell_y_per_subblock>0 ?
+                                        "Invalid subblock size supplied" : 0 );
 
-  sweeper->nsubblock_z = Arguments_consume_int_or_default(
-                                                    args, "--nsubblock_z", 1 );
-  Insist( sweeper->nsubblock_z>0 ? "Invalid subblock count supplied" : 0 );
+  sweeper->ncell_z_per_subblock = Arguments_consume_int_or_default(
+     args, "--ncell_z_per_subblock", iceil( dims.ncellz, sweeper->nblock_z ) );
+  Insist( sweeper->ncell_z_per_subblock>0 ?
+                                        "Invalid subblock size supplied" : 0 );
 
   /*====================*/
   /*---Set up number of energy threads---*/
@@ -271,13 +274,13 @@ SweeperLite Sweeper_sweeperlite( Sweeper sweeper )
   sweeperlite.nthread_y      = sweeper.nthread_y;
   sweeperlite.nthread_z      = sweeper.nthread_z;
 
-  sweeperlite.nblock_z          = sweeper.nblock_z;
-  sweeperlite.nblock_octant     = sweeper.nblock_octant;
-  sweeperlite.noctant_per_block = sweeper.noctant_per_block;
-  sweeperlite.nsemiblock        = sweeper.nsemiblock;
-  sweeperlite.nsubblock_x       = sweeper.nsubblock_x;
-  sweeperlite.nsubblock_y       = sweeper.nsubblock_y;
-  sweeperlite.nsubblock_z       = sweeper.nsubblock_z;
+  sweeperlite.nblock_z             = sweeper.nblock_z;
+  sweeperlite.nblock_octant        = sweeper.nblock_octant;
+  sweeperlite.noctant_per_block    = sweeper.noctant_per_block;
+  sweeperlite.nsemiblock           = sweeper.nsemiblock;
+  sweeperlite.ncell_x_per_subblock = sweeper.ncell_x_per_subblock;
+  sweeperlite.ncell_y_per_subblock = sweeper.ncell_y_per_subblock;
+  sweeperlite.ncell_z_per_subblock = sweeper.ncell_z_per_subblock;
 
   return sweeperlite;
 }

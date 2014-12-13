@@ -50,6 +50,37 @@ TARGET_HD static inline int Dir_z( int octant ) { return octant & (1<<2)
 TARGET_HD static inline int Dir_inc( int dir ) { return dir; }
 
 /*===========================================================================*/
+/*---Utility functions---*/
+
+TARGET_HD static inline int imin( const int i,
+                                  const int j )
+{
+    return i < j ? i : j;
+}
+
+TARGET_HD static inline int imax( const int i,
+                                  const int j )
+{   
+    return i > j ? i : j;
+}   
+
+TARGET_HD static inline int ifloor( const int i,
+                                    const int j )
+{
+    Assert( j > 0 );
+
+    return i >= 0 ? i/j : (i-j+1)/j;
+}
+
+TARGET_HD static inline int iceil( const int i,
+                                   const int j )
+{
+    Assert( j > 0 );
+
+    return - ifloor( -i, j );
+}
+
+/*===========================================================================*/
 
 #ifdef __cplusplus
 } /*---extern "C"---*/

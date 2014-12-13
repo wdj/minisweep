@@ -190,7 +190,7 @@ void Sweeper_sweep(
       int iyend = dir_y==DIR_DN ? 0 : sweeper->dims.ncelly-1;
       int izend = dir_z==DIR_DN ? 0 : sweeper->dims.ncellz-1;
 
-      /*---Loop over gridcells, in proper direction---*/
+      /*---Loop over cells, in proper direction---*/
 
     for( iz=izbeg; iz!=izend+Dir_inc(dir_z); iz+=Dir_inc(dir_z) )
     for( iy=iybeg; iy!=iyend+Dir_inc(dir_y); iy+=Dir_inc(dir_y) )

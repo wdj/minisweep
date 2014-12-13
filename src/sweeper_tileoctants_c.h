@@ -265,7 +265,7 @@ void Sweeper_sweep(
       const int iyend = dir_y==DIR_DN ? tile_ymin : tile_ymax-1;
       const int izend = dir_z==DIR_DN ? tile_zmin : tile_zmax-1;
 
-      /*---Loop over gridcells, in proper direction---*/
+      /*---Loop over cells, in proper direction---*/
 
     for( iz=izbeg; iz!=izend+Dir_inc(dir_z); iz+=Dir_inc(dir_z) )
     for( iy=iybeg; iy!=iyend+Dir_inc(dir_y); iy+=Dir_inc(dir_y) )
