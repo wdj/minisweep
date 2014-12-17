@@ -200,7 +200,10 @@ TARGET_HD static inline void Sweeper_sync_octant_threads( SweeperLite* sweeper )
   Env_cuda_sync_threadblock();
 #else
 #ifdef USE_OPENMP_THREADS
+if( sweeper->nthread_octant != 1 )
+{
 #pragma omp barrier
+}
 #endif
 #endif
 }
@@ -214,7 +217,10 @@ TARGET_HD static inline void Sweeper_sync_yz_threads( SweeperLite* sweeper )
   Env_cuda_sync_threadblock();
 #else
 #ifdef USE_OPENMP_THREADS
+if( sweeper->nthread_y != 1 || sweeper->nthread_z != 1 )
+{
 #pragma omp barrier
+}
 #endif
 #endif
 }
@@ -225,6 +231,10 @@ TARGET_HD static inline void Sweeper_sync_amu_threads( SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
   Env_cuda_sync_threadblock();
+#else
+#ifdef USE_OPENMP_THREADS
+/*---amu axes not threaded for openmp case---*/
+#endif
 #endif
 }
 
@@ -390,7 +400,8 @@ TARGET_HD inline void Sweeper_sweep_subblock(
   const int                      dir_inc_x,
   const int                      dir_inc_y,
   const int                      dir_inc_z,
-  const Bool_t                   do_block_init_this );
+  const Bool_t                   do_block_init_this,
+  const Bool_t                   is_octant_active );
 
 /*===========================================================================*/
 /*---Perform a sweep for a semiblock---*/
@@ -413,7 +424,8 @@ TARGET_HD inline void Sweeper_sweep_semiblock(
   const int              iymax,
   const int              izmin,
   const int              izmax,
-  const Bool_t           do_block_init_this );
+  const Bool_t           do_block_init_this,
+  const Bool_t           is_octant_active );
 
 /*===========================================================================*/
 /*---Perform a sweep for a block, implementation---*/

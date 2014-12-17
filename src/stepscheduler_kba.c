@@ -265,8 +265,8 @@ StepInfo StepScheduler_stepinfo( const StepScheduler* stepscheduler,
 
   /*---Set remaining values---*/
 
-  stepinfo.block_z = stepinfo.is_active ? block  : -1;
-  stepinfo.octant  = stepinfo.is_active ? octant : -1;
+  stepinfo.block_z = stepinfo.is_active ? block : 0;
+  stepinfo.octant  = octant;
 
   return stepinfo;
 }

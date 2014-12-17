@@ -221,10 +221,10 @@ function argstrings_serial
 #==============================================================================
 function argstrings_openmp
 {
-#  local ARGS="--ncell_x 1 --ncell_y 2 --ncell_z  1 --ne 1 --na 1"
-#
-#  echo "$ARGS --ncell_x_per_subblock 1 --ncell_y_per_subblock 1 --ncell_z_per_subblock 1 --nthread_y 1"
-#  echo "$ARGS --ncell_x_per_subblock 1 --ncell_y_per_subblock 1 --ncell_z_per_subblock 1 --nthread_y 2"
+  local ARGS="--ncell_x 1 --ncell_y 2 --ncell_z  1 --ne 1 --na 1"
+
+  echo "$ARGS --ncell_x_per_subblock 1 --ncell_y_per_subblock 1 --ncell_z_per_subblock 1 --nthread_y 1"
+  echo "$ARGS --ncell_x_per_subblock 1 --ncell_y_per_subblock 1 --ncell_z_per_subblock 1 --nthread_y 2"
 
   local ARGS="--ncell_x  5 --ncell_y  4 --ncell_z  5 --ne 17 --na 10"
 
@@ -295,6 +295,20 @@ function main
   cp /dev/null tmp_
 
   #==============================
+  # OpenMP
+  #==============================
+
+  echo "--------------------------------------------------------"
+  echo "---OpenMP tests---"
+  echo "--------------------------------------------------------"
+
+  make MPI_OPTION= OPENMP_OPTION=THREADS NM_VALUE=4
+
+  perform_runs "-n1 -d8" "" <<EOF
+$(argstrings_openmp)
+EOF
+
+  #==============================
   # MPI + CUDA.
   #==============================
 
@@ -349,20 +363,6 @@ $(argstrings_mpi)
 EOF
 
   fi #---PBS_NP
-
-  #==============================
-  # OpenMP
-  #==============================
-
-  echo "--------------------------------------------------------"
-  echo "---OpenMP tests---"
-  echo "--------------------------------------------------------"
-
-  make MPI_OPTION= OPENMP_OPTION=THREADS NM_VALUE=4
-
-  perform_runs "-n1 -d8" "" <<EOF
-$(argstrings_openmp)
-EOF
 
   #==============================
   # Serial
