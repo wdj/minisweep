@@ -41,9 +41,9 @@ enum{ NM = 16 };
 typedef struct
 {
   /*---Grid spatial dimensions---*/
-  int ncellx;
-  int ncelly;
-  int ncellz;
+  int ncell_x;
+  int ncell_y;
+  int ncell_z;
 
   /*---Number of energy groups---*/
   int ne;

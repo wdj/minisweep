@@ -18,7 +18,7 @@ function perform_run
   local application_args="$(echo "$2" | tr '\n' ' ')"
 
   if [ "${PBS_NP:-}" != "" -a "${CRAY_MPICH2_ROOTDIR:-}" != "" ] ; then
-    #---If running on Cray, must cd to Lustre to make the aprun work.
+    #---If running on Cray back-end node, must cd to Lustre to do the aprun.
     local wd="$PWD"
     pushd "$MEMBERWORK" >/dev/null
     aprun $exec_config_args "$wd/sweep.x" $application_args
@@ -119,7 +119,7 @@ function compare_runs
 #==============================================================================
 function argstrings_mpi
 {
-  local ARGS="--ncellx  5 --ncelly  4 --ncellz  5 --ne 7 --na 10"
+  local ARGS="--ncell_x  5 --ncell_y  4 --ncell_z  5 --ne 7 --na 10"
 
   echo "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1"
   echo "$ARGS --nproc_x 2 --nproc_y 1 --nblock_z 1"
@@ -127,17 +127,17 @@ function argstrings_mpi
   echo "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1"
   echo "$ARGS --nproc_x 1 --nproc_y 2 --nblock_z 1"
 
-  local ARGS="--ncellx  5 --ncelly  4 --ncellz  6 --ne 7 --na 10"
+  local ARGS="--ncell_x  5 --ncell_y  4 --ncell_z  6 --ne 7 --na 10"
 
   echo "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1"
   echo "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
 
-  local ARGS="--ncellx  5 --ncelly  4 --ncellz  6 --ne 7 --na 10 --is_face_comm_async 0"
+  local ARGS="--ncell_x  5 --ncell_y  4 --ncell_z  6 --ne 7 --na 10 --is_face_comm_async 0"
 
   echo "$ARGS --nproc_x 1 --nproc_y 1 --nblock_z 1"
   echo "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
 
-  local ARGS="--ncellx 5 --ncelly 8 --ncellz 16 --ne 9 --na 12"
+  local ARGS="--ncell_x 5 --ncell_y 8 --ncell_z 16 --ne 9 --na 12"
 
   echo "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 1"
   echo "$ARGS --nproc_x 4 --nproc_y 4 --nblock_z 2"
@@ -152,7 +152,7 @@ function argstrings_mpi
 #==============================================================================
 function argstrings_cuda
 {
-  local ARGS="--ncellx  2 --ncelly  3 --ncellz  4 --ne 20 --na 5 --nblock_z 2"
+  local ARGS="--ncell_x  2 --ncell_y  3 --ncell_z  4 --ne 20 --na 5 --nblock_z 2"
 
   for nthread_octant in 1 2 4 8 ; do
     echo "$ARGS"
@@ -172,7 +172,10 @@ function argstrings_cuda
 #==============================================================================
 function argstrings_mpi_cuda
 {
-  local ARGS="--ncellx 3 --ncelly 5 --ncellz 6 --ne 2 --na 5 --nblock_z 2"
+  local ARGS="--ncell_x 3 --ncell_y 5 --ncell_z 6 --ne 2 --na 5 --nblock_z 2"
+
+  local nproc_x=""
+  local nproc_y=""
 
   for nproc_x in 1 2 ; do
   for nproc_y in 1 2 ; do
@@ -187,11 +190,43 @@ function argstrings_mpi_cuda
 #==============================================================================
 
 #==============================================================================
+# Strings for cases to run, serial case.
+#==============================================================================
+function argstrings_serial
+{
+  local key=""
+
+  for key in {0..1} ; do
+
+    local ARGS="--ncell_x $(( 2 + 3 * $key )) --ncell_y  $(( 1 + 3 * $key )) --ncell_z  $(( 2 + 3 * $key )) --ne 3 --na 7"
+
+    local ncell_x_per_subblock=""
+    local ncell_y_per_subblock=""
+    local ncell_z_per_subblock=""
+
+    for ncell_x_per_subblock in  {1..3} ; do
+    for ncell_y_per_subblock in  {1..3} ; do
+    for ncell_z_per_subblock in  {1..3} ; do
+      echo "$ARGS"
+      echo "$ARGS --ncell_x_per_subblock $ncell_x_per_subblock --ncell_y_per_subblock $ncell_y_per_subblock --ncell_z_per_subblock $ncell_z_per_subblock"
+    done
+    done
+    done
+  done
+}
+#==============================================================================
+
+#==============================================================================
 # Strings for cases to run, OpenMP.
 #==============================================================================
 function argstrings_openmp
 {
-  local ARGS="--ncellx  5 --ncelly  4 --ncellz  5 --ne 17 --na 10"
+#  local ARGS="--ncell_x 1 --ncell_y 2 --ncell_z  1 --ne 1 --na 1"
+#
+#  echo "$ARGS --ncell_x_per_subblock 1 --ncell_y_per_subblock 1 --ncell_z_per_subblock 1 --nthread_y 1"
+#  echo "$ARGS --ncell_x_per_subblock 1 --ncell_y_per_subblock 1 --ncell_z_per_subblock 1 --nthread_y 2"
+
+  local ARGS="--ncell_x  5 --ncell_y  4 --ncell_z  5 --ne 17 --na 10"
 
   echo "$ARGS --nthread_e 1"
   echo "$ARGS --nthread_e 2"
@@ -222,7 +257,7 @@ function argstrings_variants
   local ARG_NBLOCK_Z_1="$1"
   local ARG_NBLOCK_Z_5="$2"
 
-  local ARGS="--ncellx  4 --ncelly  3 --ncellz  5 --ne 11 --na 7"
+  local ARGS="--ncell_x  4 --ncell_y  3 --ncell_z  5 --ne 11 --na 7"
 
   echo "$ARGS --niterations 1 $ARG_NBLOCK_Z_1"
   echo "$ARGS --niterations 2 $ARG_NBLOCK_Z_1"
@@ -255,7 +290,7 @@ function main
   initialize
 
   #---args to use below:
-  #---  ncellx ncelly ncellz ne nm na numiterations nproc_x nproc_y nblock_z 
+  #---  ncell_x ncell_y ncell_z ne nm na numiterations nproc_x nproc_y nblock_z 
 
   cp /dev/null tmp_
 
@@ -270,7 +305,7 @@ function main
     echo "---MPI + CUDA tests---"
     echo "--------------------------------------------------------"
 
-    make -j2 CUDA_OPTION=1 NM_VALUE=4
+    make CUDA_OPTION=1 NM_VALUE=4
 
     perform_runs "-n4" "" <<EOF
 $(argstrings_mpi_cuda)
@@ -289,7 +324,7 @@ EOF
     echo "---CUDA tests---"
     echo "--------------------------------------------------------"
 
-    make -j2 CUDA_OPTION=1 NM_VALUE=4
+    make CUDA_OPTION=1 NM_VALUE=4
 
     perform_runs "-n1" "" <<EOF
 $(argstrings_cuda)
@@ -307,7 +342,7 @@ EOF
     echo "---MPI tests---"
     echo "--------------------------------------------------------"
 
-    make -j2 NM_VALUE=4
+    make NM_VALUE=4
 
     perform_runs "-n16" "" <<EOF
 $(argstrings_mpi)
@@ -319,19 +354,29 @@ EOF
   # OpenMP
   #==============================
 
-  if [ "${PBS_NP:-}" != "" ] ; then
+  echo "--------------------------------------------------------"
+  echo "---OpenMP tests---"
+  echo "--------------------------------------------------------"
 
-    echo "--------------------------------------------------------"
-    echo "---OpenMP tests---"
-    echo "--------------------------------------------------------"
+  make MPI_OPTION= OPENMP_OPTION=THREADS NM_VALUE=4
 
-    make -j2 OPENMP_OPTION=THREADS NM_VALUE=4
-
-    perform_runs "-n1 -d8" "" <<EOF
+  perform_runs "-n1 -d8" "" <<EOF
 $(argstrings_openmp)
 EOF
 
-  fi #---PBS_NP
+  #==============================
+  # Serial
+  #==============================
+
+  echo "--------------------------------------------------------"
+  echo "---Serial tests---"
+  echo "--------------------------------------------------------"
+
+  make MPI_OPTION= NM_VALUE=4
+
+  perform_runs "-n1" "" <<EOF
+$(argstrings_serial)
+EOF
 
   #==============================
   # Variants.
@@ -345,7 +390,7 @@ EOF
 
   for alg_options in -DSWEEPER_KBA -DSWEEPER_SIMPLE -DSWEEPER_TILEOCTANTS ; do
 
-    make -j2 MPI_OPTION= ALG_OPTIONS="$alg_options" NM_VALUE=16
+    make MPI_OPTION= ALG_OPTIONS="$alg_options" NM_VALUE=16
 
     if [ $alg_options = "-DSWEEPER_KBA" ] ; then
       local ARG_NBLOCK_Z_1="--nblock_z 1"

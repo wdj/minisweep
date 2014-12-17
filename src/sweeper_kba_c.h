@@ -44,9 +44,12 @@ void Sweeper_ctor( Sweeper*          sweeper,
   Bool_t is_face_comm_async = Arguments_consume_int_or_default( args,
                                            "--is_face_comm_async", Bool_true );
 
-  Insist( dims.ncellx > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
-  Insist( dims.ncelly > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
-  Insist( dims.ncellz > 0 ? "Currently requires all spatial blocks nonempty" : 0 );
+  Insist( dims.ncell_x > 0 ?
+                "Currently required that all spatial blocks be nonempty" : 0 );
+  Insist( dims.ncell_y > 0 ?
+                "Currently required that all spatial blocks be nonempty" : 0 );
+  Insist( dims.ncell_z > 0 ?
+                "Currently required that all spatial blocks be nonempty" : 0 );
 
   /*====================*/
   /*---Set up number of kba blocks---*/
@@ -55,7 +58,7 @@ void Sweeper_ctor( Sweeper*          sweeper,
   sweeper->nblock_z = Arguments_consume_int_or_default( args, "--nblock_z", 1);
 
   Insist( sweeper->nblock_z > 0 ? "Invalid z blocking factor supplied" : 0 );
-  Insist( dims.ncellz % sweeper->nblock_z == 0
+  Insist( dims.ncell_z % sweeper->nblock_z == 0
                   ? "Currently require all blocks have same z dimension" : 0 );
 
   /*====================*/
@@ -96,17 +99,17 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*====================*/
 
   sweeper->ncell_x_per_subblock = Arguments_consume_int_or_default(
-                                 args, "--ncell_x_per_subblock", dims.ncellx );
+                                args, "--ncell_x_per_subblock", dims.ncell_x );
   Insist( sweeper->ncell_x_per_subblock>0 ?
                                         "Invalid subblock size supplied" : 0 );
 
   sweeper->ncell_y_per_subblock = Arguments_consume_int_or_default(
-                                 args, "--ncell_y_per_subblock", dims.ncelly );
+                                args, "--ncell_y_per_subblock", dims.ncell_y );
   Insist( sweeper->ncell_y_per_subblock>0 ?
                                         "Invalid subblock size supplied" : 0 );
 
   sweeper->ncell_z_per_subblock = Arguments_consume_int_or_default(
-     args, "--ncell_z_per_subblock", iceil( dims.ncellz, sweeper->nblock_z ) );
+    args, "--ncell_z_per_subblock", iceil( dims.ncell_z, sweeper->nblock_z ) );
   Insist( sweeper->ncell_z_per_subblock>0 ?
                                         "Invalid subblock size supplied" : 0 );
 
@@ -182,11 +185,11 @@ void Sweeper_ctor( Sweeper*          sweeper,
   sweeper->dims = dims;
 
   sweeper->dims_b = sweeper->dims;
-  sweeper->dims_b.ncellz = sweeper->dims.ncellz / sweeper->nblock_z;
+  sweeper->dims_b.ncell_z = sweeper->dims.ncell_z / sweeper->nblock_z;
 
   sweeper->dims_g = sweeper->dims;
-  sweeper->dims_g.ncellx = quan->ncellx_g;
-  sweeper->dims_g.ncelly = quan->ncelly_g;
+  sweeper->dims_g.ncell_x = quan->ncell_x_g;
+  sweeper->dims_g.ncell_y = quan->ncell_y_g;
 
   /*====================*/
   /*---Allocate arrays---*/

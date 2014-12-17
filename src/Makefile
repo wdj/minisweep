@@ -132,6 +132,8 @@ ifeq ($(MPI_OPTION),MPI)
     CFLAGS := $(CFLAGS)
     COMMON_FLAGS := $(COMMON_FLAGS) -DUSE_MPI
   endif
+else
+  CC = gcc
 endif
 
 ifneq ($(OPENMP_OPTION),)
@@ -196,12 +198,12 @@ distclean: clean
 #
 #if [ $? = 0 ] ; then
 #  \cp $HOME/minisweep/src/sweep.x $TMPDIR/mic0
-#  ARGS="--ncellx 1 --ncelly 1 --ncellz 1 --ne 1 --na 32 --nproc_x 1 --nproc_y 1"
+#  ARGS="--ncell_x 1 --ncell_y 1 --ncell_z 1 --ne 1 --na 32 --nproc_x 1 --nproc_y 1"
 #  micmpiexec -n 1 -wdir $TMPDIR -host ${HOSTNAME}-mic0 $TMPDIR/sweep.x $ARGS
 #fi
 #
 #run:
-#	./$(EXECUTABLE) --ncellx 10 --ncelly 10 --ncellz 10 --ne 30 --nm 16 --na 33
+#	./$(EXECUTABLE) --ncell_x 10 --ncell_y 10 --ncell_z 10 --ne 30 --nm 16 --na 33
 #
 #runmany:
 #	bash -c 'for e in `seq 1 3` ; do for i in `seq 1 7` ; do for j in `seq 1 7` ; do ./$(EXECUTABLE) 10 10 10 $$e $$i $$j ; done; done; done'
@@ -210,6 +212,6 @@ distclean: clean
 #	./tester
 #
 #run_cray:
-#	aprun -n 1 $(EXECUTABLE) --ncellx 10 --ncelly 10 --ncellz 10 --ne 30 --nm 16 --na 64
+#	aprun -n 1 $(EXECUTABLE) --ncell_x 10 --ncell_y 10 --ncell_z 10 --ne 30 --nm 16 --na 64
 #
 #==============================================================================

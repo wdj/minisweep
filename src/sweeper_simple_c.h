@@ -39,12 +39,12 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Allocate arrays---*/
 
   sweeper->vslocal = malloc_host_P( dims.na * NU );
-  sweeper->facexy  = malloc_host_P( dims.ncellx * dims.ncelly * dims.ne * dims.na *
-                                    NU * Sweeper_noctant_per_block( sweeper ) );
-  sweeper->facexz  = malloc_host_P( dims.ncellx * dims.ncellz * dims.ne * dims.na *
-                                    NU * Sweeper_noctant_per_block( sweeper ) );
-  sweeper->faceyz  = malloc_host_P( dims.ncelly * dims.ncellz * dims.ne * dims.na *
-                                    NU * Sweeper_noctant_per_block( sweeper ) );
+  sweeper->facexy  = malloc_host_P( dims.ncell_x * dims.ncell_y * dims.ne *
+                         dims.na * NU * Sweeper_noctant_per_block( sweeper ) );
+  sweeper->facexz  = malloc_host_P( dims.ncell_x * dims.ncell_z * dims.ne *
+                         dims.na * NU * Sweeper_noctant_per_block( sweeper ) );
+  sweeper->faceyz  = malloc_host_P( dims.ncell_y * dims.ncell_z * dims.ne *
+                         dims.na * NU * Sweeper_noctant_per_block( sweeper ) );
 
   sweeper->dims = dims;
 }
@@ -120,7 +120,7 @@ void Sweeper_sweep(
          to have the flux at that gridcell.
          Thus, the face is initialized at first to have a value
          "one cell" outside of the domain, e.g., for the XY face,
-         either -1 or dims.ncellx.
+         either -1 or dims.ncell_x.
          Note also that the face initializer functions now take
          coordinates for all three spatial dimensions --
          the third dimension is used to denote whether it is the
@@ -129,10 +129,10 @@ void Sweeper_sweep(
     ---*/
 
     {
-      iz = dir_z == DIR_UP ? -1 : sweeper->dims.ncellz;
+      iz = dir_z == DIR_UP ? -1 : sweeper->dims.ncell_z;
       for( iu=0; iu<NU; ++iu )
-      for( iy=0; iy<sweeper->dims.ncelly; ++iy )
-      for( ix=0; ix<sweeper->dims.ncellx; ++ix )
+      for( iy=0; iy<sweeper->dims.ncell_y; ++iy )
+      for( ix=0; ix<sweeper->dims.ncell_x; ++ix )
       for( ie=0; ie<sweeper->dims.ne; ++ie )
       for( ia=0; ia<sweeper->dims.na; ++ia )
       {
@@ -145,10 +145,10 @@ void Sweeper_sweep(
     }
 
     {
-      iy = dir_y == DIR_UP ? -1 : sweeper->dims.ncelly;
+      iy = dir_y == DIR_UP ? -1 : sweeper->dims.ncell_y;
       for( iu=0; iu<NU; ++iu )
-      for( iz=0; iz<sweeper->dims.ncellz; ++iz )
-      for( ix=0; ix<sweeper->dims.ncellx; ++ix )
+      for( iz=0; iz<sweeper->dims.ncell_z; ++iz )
+      for( ix=0; ix<sweeper->dims.ncell_x; ++ix )
       for( ie=0; ie<sweeper->dims.ne; ++ie )
       for( ia=0; ia<sweeper->dims.na; ++ia )
       {
@@ -161,10 +161,10 @@ void Sweeper_sweep(
     }
 
     {
-      ix = dir_x == DIR_UP ? -1 : sweeper->dims.ncellx;
+      ix = dir_x == DIR_UP ? -1 : sweeper->dims.ncell_x;
       for( iu=0; iu<NU; ++iu )
-      for( iz=0; iz<sweeper->dims.ncellz; ++iz )
-      for( iy=0; iy<sweeper->dims.ncelly; ++iy )
+      for( iz=0; iz<sweeper->dims.ncell_z; ++iz )
+      for( iy=0; iy<sweeper->dims.ncell_y; ++iy )
       for( ie=0; ie<sweeper->dims.ne; ++ie )
       for( ia=0; ia<sweeper->dims.na; ++ia )
       {
@@ -182,13 +182,13 @@ void Sweeper_sweep(
     {
       /*---Calculate spatial loop extents---*/
 
-      int ixbeg = dir_x==DIR_UP ? 0 : sweeper->dims.ncellx-1;
-      int iybeg = dir_y==DIR_UP ? 0 : sweeper->dims.ncelly-1;
-      int izbeg = dir_z==DIR_UP ? 0 : sweeper->dims.ncellz-1;
+      int ixbeg = dir_x==DIR_UP ? 0 : sweeper->dims.ncell_x-1;
+      int iybeg = dir_y==DIR_UP ? 0 : sweeper->dims.ncell_y-1;
+      int izbeg = dir_z==DIR_UP ? 0 : sweeper->dims.ncell_z-1;
 
-      int ixend = dir_x==DIR_DN ? 0 : sweeper->dims.ncellx-1;
-      int iyend = dir_y==DIR_DN ? 0 : sweeper->dims.ncelly-1;
-      int izend = dir_z==DIR_DN ? 0 : sweeper->dims.ncellz-1;
+      int ixend = dir_x==DIR_DN ? 0 : sweeper->dims.ncell_x-1;
+      int iyend = dir_y==DIR_DN ? 0 : sweeper->dims.ncell_y-1;
+      int izend = dir_z==DIR_DN ? 0 : sweeper->dims.ncell_z-1;
 
       /*---Loop over cells, in proper direction---*/
 

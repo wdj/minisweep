@@ -214,7 +214,7 @@ void Quantities_init_decomp_( Quantities*       quan,
 
   /*---Record z dimension---*/
 
-  quan->ncellz_g = dims.ncellz;
+  quan->ncell_z_g = dims.ncell_z;
 
   /*---Allocate arrays---*/
 
@@ -230,7 +230,7 @@ void Quantities_init_decomp_( Quantities*       quan,
   if( Env_proc_x_this( env ) == 0 )
   {
     int proc_x = 0;
-    quan->ix_base_vals[ 1+0 ] = dims.ncellx;
+    quan->ix_base_vals[ 1+0 ] = dims.ncell_x;
     for( proc_x=1; proc_x<Env_nproc_x( env ); ++proc_x )
     {
       Env_recv_i( & quan->ix_base_vals[ 1+proc_x ], 1,
@@ -239,7 +239,7 @@ void Quantities_init_decomp_( Quantities*       quan,
   }
   else
   {
-    Env_send_i( & dims.ncellx, 1,
+    Env_send_i( & dims.ncell_x, 1,
              Env_proc( env, 0, Env_proc_y_this( env ) ), Env_tag( env ), env );
   }
   Env_increment_tag( env, 1 );
@@ -270,11 +270,11 @@ void Quantities_init_decomp_( Quantities*       quan,
     quan->ix_base_vals[1+i] += quan->ix_base_vals[i];
   }
 
-  quan->ix_base  = quan->ix_base_vals[ Env_proc_x_this( env ) ];
-  quan->ncellx_g = quan->ix_base_vals[ Env_nproc_x(     env ) ];
+  quan->ix_base   = quan->ix_base_vals[ Env_proc_x_this( env ) ];
+  quan->ncell_x_g = quan->ix_base_vals[ Env_nproc_x(     env ) ];
 
   Assert( quan->ix_base_vals[ Env_proc_x_this( env )+1 ] -
-          quan->ix_base_vals[ Env_proc_x_this( env )   ] == dims.ncellx );
+          quan->ix_base_vals[ Env_proc_x_this( env )   ] == dims.ncell_x );
 
   /*---------------------------------*/
   /*---Set entries of iy_base_vals---*/
@@ -285,7 +285,7 @@ void Quantities_init_decomp_( Quantities*       quan,
   if( Env_proc_y_this( env ) == 0 )
   {
     int proc_y = 0;
-    quan->iy_base_vals[ 1+0 ] = dims.ncelly;
+    quan->iy_base_vals[ 1+0 ] = dims.ncell_y;
     for( proc_y=1; proc_y<Env_nproc_y( env ); ++proc_y )
     {
       Env_recv_i( & quan->iy_base_vals[ 1+proc_y ], 1,
@@ -294,7 +294,7 @@ void Quantities_init_decomp_( Quantities*       quan,
   }
   else
   {
-    Env_send_i( & dims.ncelly, 1,
+    Env_send_i( & dims.ncell_y, 1,
              Env_proc( env, Env_proc_x_this( env ), 0 ), Env_tag( env ), env );
   }
   Env_increment_tag( env, 1 );
@@ -325,11 +325,11 @@ void Quantities_init_decomp_( Quantities*       quan,
     quan->iy_base_vals[1+i] += quan->iy_base_vals[i];
   }
 
-  quan->iy_base  = quan->iy_base_vals[ Env_proc_y_this( env ) ];
-  quan->ncelly_g = quan->iy_base_vals[ Env_nproc_y(     env ) ];
+  quan->iy_base   = quan->iy_base_vals[ Env_proc_y_this( env ) ];
+  quan->ncell_y_g = quan->iy_base_vals[ Env_nproc_y(     env ) ];
 
   Assert( quan->iy_base_vals[ Env_proc_y_this( env )+1 ] -
-          quan->iy_base_vals[ Env_proc_y_this( env )   ] == dims.ncelly );
+          quan->iy_base_vals[ Env_proc_y_this( env )   ] == dims.ncell_y );
 
 } /*---Quantities_init_decomp_---*/
 

@@ -41,9 +41,9 @@ typedef struct
   int*     iy_base_vals;
   int      ix_base;
   int      iy_base;
-  int      ncellx_g;
-  int      ncelly_g;
-  int      ncellz_g;
+  int      ncell_x_g;
+  int      ncell_y_g;
+  int      ncell_z_g;
 } Quantities;
 
 /*===========================================================================*/
@@ -103,9 +103,9 @@ TARGET_HD static inline int Quantities_scalefactor_space_(
 {
   /*---Create power of 2 based on hash of the spatial location.
   ---*/
-  Assert( ix_g >= -1 && ix_g <= quan->ncellx_g );
-  Assert( iy_g >= -1 && iy_g <= quan->ncelly_g );
-  Assert( iz_g >= -1 && iz_g <= quan->ncellz_g );
+  Assert( ix_g >= -1 && ix_g <= quan->ncell_x_g );
+  Assert( iy_g >= -1 && iy_g <= quan->ncell_y_g );
+  Assert( iz_g >= -1 && iz_g <= quan->ncell_z_g );
 
   int result = 0;
 
@@ -228,10 +228,10 @@ TARGET_HD static inline P Quantities_init_facexy(
   int                octant,
   const Dimensions   dims_g )
 {
-  Assert( ix_g >=  0 && ix_g <  dims_g.ncellx );
-  Assert( iy_g >=  0 && iy_g <  dims_g.ncelly );
-  Assert( ( iz_g == -1            && Dir_z(octant)==DIR_UP ) ||
-          ( iz_g == dims_g.ncellz && Dir_z(octant)==DIR_DN ) );
+  Assert( ix_g >=  0 && ix_g <  dims_g.ncell_x );
+  Assert( iy_g >=  0 && iy_g <  dims_g.ncell_y );
+  Assert( ( iz_g == -1             && Dir_z(octant)==DIR_UP ) ||
+          ( iz_g == dims_g.ncell_z && Dir_z(octant)==DIR_DN ) );
   Assert( ie >=  0 && ie < dims_g.ne );
   Assert( ia >=  0 && ia < dims_g.na );
   Assert( iu >=  0 && iu < NU );
@@ -270,10 +270,10 @@ TARGET_HD static inline P Quantities_init_facexz(
   int                octant,
   const Dimensions   dims_g )
 {
-  Assert( ix_g >=  0 && ix_g < dims_g.ncellx );
-  Assert( ( iy_g == -1            && Dir_y(octant)==DIR_UP ) ||
-          ( iy_g == dims_g.ncelly && Dir_y(octant)==DIR_DN ) );
-  Assert( iz_g >=  0 && iz_g < dims_g.ncellz );
+  Assert( ix_g >=  0 && ix_g < dims_g.ncell_x );
+  Assert( ( iy_g == -1             && Dir_y(octant)==DIR_UP ) ||
+          ( iy_g == dims_g.ncell_y && Dir_y(octant)==DIR_DN ) );
+  Assert( iz_g >=  0 && iz_g < dims_g.ncell_z );
   Assert( ie >=  0 && ie < dims_g.ne );
   Assert( ia >=  0 && ia < dims_g.na );
   Assert( iu >=  0 && iu < NU );
@@ -308,10 +308,10 @@ TARGET_HD static inline P Quantities_init_faceyz(
   int                octant,
   const Dimensions   dims_g )
 {
-  Assert( ( ix_g == -1            && Dir_x(octant)==DIR_UP ) ||
-          ( ix_g == dims_g.ncellx && Dir_x(octant)==DIR_DN ) );
-  Assert( iy_g >=  0 && iy_g < dims_g.ncelly );
-  Assert( iz_g >=  0 && iz_g < dims_g.ncellz );
+  Assert( ( ix_g == -1             && Dir_x(octant)==DIR_UP ) ||
+          ( ix_g == dims_g.ncell_x && Dir_x(octant)==DIR_DN ) );
+  Assert( iy_g >=  0 && iy_g < dims_g.ncell_y );
+  Assert( iz_g >=  0 && iz_g < dims_g.ncell_z );
   Assert( ie >=  0 && ie < dims_g.ne );
   Assert( ia >=  0 && ia < dims_g.na );
   Assert( iu >=  0 && iu < NU );
@@ -368,12 +368,12 @@ TARGET_HD static inline void Quantities_solve(
   Assert( facexy );
   Assert( facexz );
   Assert( faceyz );
-  Assert( ( ix_b >= 0 && ix_b < dims_b.ncellx ) || ! is_cell_active );
-  Assert( ( iy_b >= 0 && iy_b < dims_b.ncelly ) || ! is_cell_active );
-  Assert( ( iz_b >= 0 && iz_b < dims_b.ncellz ) || ! is_cell_active );
-  Assert( ( ix_g >= 0 && ix_g < dims_g.ncellx ) || ! is_cell_active );
-  Assert( ( iy_g >= 0 && iy_g < dims_g.ncelly ) || ! is_cell_active );
-  Assert( ( iz_g >= 0 && iz_g < dims_g.ncellz ) || ! is_cell_active );
+  Assert( ( ix_b >= 0 && ix_b < dims_b.ncell_x ) || ! is_cell_active );
+  Assert( ( iy_b >= 0 && iy_b < dims_b.ncell_y ) || ! is_cell_active );
+  Assert( ( iz_b >= 0 && iz_b < dims_b.ncell_z ) || ! is_cell_active );
+  Assert( ( ix_g >= 0 && ix_g < dims_g.ncell_x ) || ! is_cell_active );
+  Assert( ( iy_g >= 0 && iy_g < dims_g.ncell_y ) || ! is_cell_active );
+  Assert( ( iz_g >= 0 && iz_g < dims_g.ncell_z ) || ! is_cell_active );
   Assert( ie   >= 0 && ie   < dims_b.ne );
   Assert( octant >= 0 && octant < NOCTANT );
   Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
@@ -442,7 +442,6 @@ TARGET_HD static inline void Quantities_solve(
                    ix_b, iz_b, ie, ia, iu, octant_in_block ) = result_scaled;
       *ref_faceyz( faceyz, dims_b, NU, noctant_per_block,
                    iy_b, iz_b, ie, ia, iu, octant_in_block ) = result_scaled;
-
     } /*---for---*/
 
   }

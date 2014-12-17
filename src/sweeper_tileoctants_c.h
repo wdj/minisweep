@@ -39,12 +39,12 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Allocate arrays---*/
 
   sweeper->vslocal = malloc_host_P( dims.na * NU );
-  sweeper->facexy  = malloc_host_P( dims.ncellx * dims.ncelly * dims.ne * dims.na * 
-                                    NU * Sweeper_noctant_per_block( sweeper ) );
-  sweeper->facexz  = malloc_host_P( dims.ncellx * dims.ncellz * dims.ne * dims.na * 
-                                    NU * Sweeper_noctant_per_block( sweeper ) );
-  sweeper->faceyz  = malloc_host_P( dims.ncelly * dims.ncellz * dims.ne * dims.na * 
-                                    NU * Sweeper_noctant_per_block( sweeper ) );
+  sweeper->facexy  = malloc_host_P( dims.ncell_x * dims.ncell_y * dims.ne *
+                         dims.na * NU * Sweeper_noctant_per_block( sweeper ) );
+  sweeper->facexz  = malloc_host_P( dims.ncell_x * dims.ncell_z * dims.ne *
+                         dims.na * NU * Sweeper_noctant_per_block( sweeper ) );
+  sweeper->faceyz  = malloc_host_P( dims.ncell_y * dims.ncell_z * dims.ne *
+                         dims.na * NU * Sweeper_noctant_per_block( sweeper ) );
 
   sweeper->dims = dims;
 }
@@ -166,18 +166,18 @@ void Sweeper_sweep(
     ---*/
 
     const int tile_xmin = (!do_tile_octants) ? 0         :
-                          tile_x==DIR_LO     ? 0         : dims.ncellx/2;
+                          tile_x==DIR_LO     ? 0         : dims.ncell_x/2;
     const int tile_ymin = (!do_tile_octants) ? 0         :
-                          tile_y==DIR_LO     ? 0         : dims.ncelly/2;
+                          tile_y==DIR_LO     ? 0         : dims.ncell_y/2;
     const int tile_zmin = (!do_tile_octants) ? 0         :
-                          tile_z==DIR_LO     ? 0         : dims.ncellz/2;
+                          tile_z==DIR_LO     ? 0         : dims.ncell_z/2;
 
-    const int tile_xmax = (!do_tile_octants) ? dims.ncellx   :
-                          tile_x==DIR_LO     ? dims.ncellx/2 : dims.ncellx;
-    const int tile_ymax = (!do_tile_octants) ? dims.ncelly   :
-                          tile_y==DIR_LO     ? dims.ncelly/2 : dims.ncelly;
-    const int tile_zmax = (!do_tile_octants) ? dims.ncellz   :
-                          tile_z==DIR_LO     ? dims.ncellz/2 : dims.ncellz;
+    const int tile_xmax = (!do_tile_octants) ? dims.ncell_x   :
+                          tile_x==DIR_LO     ? dims.ncell_x/2 : dims.ncell_x;
+    const int tile_ymax = (!do_tile_octants) ? dims.ncell_y   :
+                          tile_y==DIR_LO     ? dims.ncell_y/2 : dims.ncell_y;
+    const int tile_zmax = (!do_tile_octants) ? dims.ncell_z   :
+                          tile_z==DIR_LO     ? dims.ncell_z/2 : dims.ncell_z;
 
     /*---Initialize faces---*/
 
@@ -189,7 +189,7 @@ void Sweeper_sweep(
          to have the flux at that gridcell.
          Thus, the face is initialized at first to have a value
          "one cell" outside of the domain, e.g., for the XY face,
-         either -1 or dims.ncellx.
+         either -1 or dims.ncell_x.
          Note also that the face initializer functions now take
          coordinates for all three spatial dimensions --
          the third dimension is used to denote whether it is the
@@ -202,7 +202,7 @@ void Sweeper_sweep(
 
     if( tile_z != dir_z || !do_tile_octants )
     {
-      iz = dir_z==DIR_UP ? -1 : dims.ncellz;
+      iz = dir_z==DIR_UP ? -1 : dims.ncell_z;
       for( iu=0; iu<NU; ++iu )
       for( iy=tile_ymin; iy<tile_ymax; ++iy )
       for( ix=tile_xmin; ix<tile_xmax; ++ix )
@@ -219,7 +219,7 @@ void Sweeper_sweep(
 
     if( tile_y != dir_y || !do_tile_octants )
     {
-      iy = dir_y==DIR_UP ? -1 : dims.ncelly;
+      iy = dir_y==DIR_UP ? -1 : dims.ncell_y;
       for( iu=0; iu<NU; ++iu )
       for( iz=tile_zmin; iz<tile_zmax; ++iz )
       for( ix=tile_xmin; ix<tile_xmax; ++ix )
@@ -236,7 +236,7 @@ void Sweeper_sweep(
 
     if( tile_x != dir_x || !do_tile_octants )
     {
-      ix = dir_x==DIR_UP ? -1 : dims.ncellx;
+      ix = dir_x==DIR_UP ? -1 : dims.ncell_x;
       for( iu=0; iu<NU; ++iu )
       for( iz=tile_zmin; iz<tile_zmax; ++iz )
       for( iy=tile_ymin; iy<tile_ymax; ++iy )
