@@ -1183,6 +1183,8 @@ TARGET_HD void Sweeper_sweep_block_impl(
                                    ! is_semiblock_z_lo ) ?
                                    ( izmax_sb + 1 ) : izmax_sb;
 
+        /*---TODO: make the following boundary setters threaded in yz---*/
+
         /*--------------------*/
         /*---Set physical boundary conditions if part of semiblock---*/
         /*--------------------*/

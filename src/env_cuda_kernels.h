@@ -86,6 +86,9 @@ TARGET_HD static void Env_cuda_sync_threadblock()
 {
 #ifdef __CUDA_ARCH__
   __syncthreads();
+/*
+  __threadfence_block();
+*/
 #endif
 }
 

@@ -164,6 +164,37 @@ function argstrings_cuda
     echo "$ARGS"
     echo "$ARGS --is_using_device 1 --nthread_e $nthread_e --nthread_octant 8"
   done
+
+  #====================
+
+  local ncell_x=3
+  local ncell_y=4
+  local ncell_z=2
+
+  local ARGS="--ncell_x $ncell_x --ncell_y $ncell_y --ncell_z $ncell_z --ne 2 --na 32"
+
+  local ncell_x_per_subblock=""
+  local ncell_y_per_subblock=""
+  local ncell_z_per_subblock=""
+  local nthread_y=""
+  local nthread_z=""
+
+  for ncell_x_per_subblock in $(seq 1 $(( $ncell_x + 1 )) ) ; do
+  for ncell_y_per_subblock in $(seq 1 $(( $ncell_y + 1 )) ) ; do
+  for ncell_z_per_subblock in $(seq 1 $(( $ncell_z + 1 )) ) ; do
+  for nthread_y in {1..2} ; do
+  for nthread_z in {1..2} ; do
+  for nthread_e in {1..2} ; do
+  for nthread_octant in 1 2 ; do
+    echo "$ARGS"
+    echo "$ARGS --nthread_e $nthread_e --nthread_octant $nthread_octant --ncell_x_per_subblock $ncell_x_per_subblock --ncell_y_per_subblock $ncell_y_per_subblock --ncell_z_per_subblock $ncell_z_per_subblock --nthread_y $nthread_y --nthread_z $nthread_z --is_using_device 1"
+  done
+  done
+  done
+  done
+  done
+  done
+  done
 }
 #==============================================================================
 
@@ -223,29 +254,64 @@ function argstrings_openmp
 {
   local ARGS="--ncell_x 1 --ncell_y 2 --ncell_z  1 --ne 1 --na 1"
 
-  echo "$ARGS --ncell_x_per_subblock 1 --ncell_y_per_subblock 1 --ncell_z_per_subblock 1 --nthread_y 1"
-  echo "$ARGS --ncell_x_per_subblock 1 --ncell_y_per_subblock 1 --ncell_z_per_subblock 1 --nthread_y 2"
+  local nthread_y=""
+  for nthread_y in {1..2} ; do
+    echo "$ARGS --ncell_x_per_subblock 1 --ncell_y_per_subblock 1 --ncell_z_per_subblock 1 --nthread_y $nthread_y"
+  done
+
+  #====================
 
   local ARGS="--ncell_x  5 --ncell_y  4 --ncell_z  5 --ne 17 --na 10"
 
-  echo "$ARGS --nthread_e 1"
-  echo "$ARGS --nthread_e 2"
-  echo "$ARGS --nthread_e 2"
-  echo "$ARGS --nthread_e 3"
-  echo "$ARGS --nthread_e 3"
-  echo "$ARGS --nthread_e 4"
+  local nthread_e=""
+  for nthread_e in {2..5} ; do
+    echo "$ARGS --nthread_e 1"
+    echo "$ARGS --nthread_e $nthread_e"
+  done
 
-  echo "$ARGS --nthread_octant 1"
-  echo "$ARGS --nthread_octant 2"
-  echo "$ARGS --nthread_octant 2"
-  echo "$ARGS --nthread_octant 4"
-  echo "$ARGS --nthread_octant 4"
-  echo "$ARGS --nthread_octant 8"
+  local nthread_octant=""
+  for nthread_octant in 2 4 8 ; do
+    echo "$ARGS --nthread_octant 1"
+    echo "$ARGS --nthread_octant $nthread_octant"
+  done
 
-  echo "$ARGS --nthread_e 1 --nthread_octant 1"
-  echo "$ARGS --nthread_e 2 --nthread_octant 1"
-  echo "$ARGS --nthread_e 2 --nthread_octant 1"
-  echo "$ARGS --nthread_e 2 --nthread_octant 2"
+  for nthread_e in {1..2} ; do
+  for nthread_octant in 1 2 4 8 ; do
+    echo "$ARGS --nthread_e 1 --nthread_octant 1"
+    echo "$ARGS --nthread_e $nthread_e --nthread_octant $nthread_octant"
+  done
+  done
+
+  #====================
+
+  local ncell_x=3
+  local ncell_y=4
+  local ncell_z=2
+
+  local ARGS="--ncell_x $ncell_x --ncell_y $ncell_y --ncell_z $ncell_z --ne 2 --na 1"
+
+  local ncell_x_per_subblock=""
+  local ncell_y_per_subblock=""
+  local ncell_z_per_subblock=""
+  local nthread_y=""
+  local nthread_z=""
+
+  for ncell_x_per_subblock in $(seq 1 $(( $ncell_x + 1 )) ) ; do
+  for ncell_y_per_subblock in $(seq 1 $(( $ncell_y + 1 )) ) ; do
+  for ncell_z_per_subblock in $(seq 1 $(( $ncell_z + 1 )) ) ; do
+  for nthread_y in {1..2} ; do
+  for nthread_z in {1..2} ; do
+  for nthread_e in {1..2} ; do
+  for nthread_octant in 1 2 ; do
+    echo "$ARGS"
+    echo "$ARGS --nthread_e $nthread_e --nthread_octant $nthread_octant --ncell_x_per_subblock $ncell_x_per_subblock --ncell_y_per_subblock $ncell_y_per_subblock --ncell_z_per_subblock $ncell_z_per_subblock --nthread_y $nthread_y --nthread_z $nthread_z"
+  done
+  done
+  done
+  done
+  done
+  done
+  done
 }
 #==============================================================================
 
@@ -295,6 +361,24 @@ function main
   cp /dev/null tmp_
 
   #==============================
+  # CUDA.
+  #==============================
+
+  if [ "${PBS_NP:-}" != "" ] ; then
+
+    echo "--------------------------------------------------------"
+    echo "---CUDA tests---"
+    echo "--------------------------------------------------------"
+
+    make CUDA_OPTION=1 NM_VALUE=4
+
+    perform_runs "-n1" "" <<EOF
+$(argstrings_cuda)
+EOF
+
+  fi #---PBS_NP
+
+  #==============================
   # OpenMP
   #==============================
 
@@ -304,7 +388,7 @@ function main
 
   make MPI_OPTION= OPENMP_OPTION=THREADS NM_VALUE=4
 
-  perform_runs "-n1 -d8" "" <<EOF
+  perform_runs "-n1 -d16" "" <<EOF
 $(argstrings_openmp)
 EOF
 
@@ -326,24 +410,6 @@ $(argstrings_mpi_cuda)
 EOF
 
   fi #---PBS_NP
-  fi #---PBS_NP
-
-  #==============================
-  # CUDA.
-  #==============================
-
-  if [ "${PBS_NP:-}" != "" ] ; then
-
-    echo "--------------------------------------------------------"
-    echo "---CUDA tests---"
-    echo "--------------------------------------------------------"
-
-    make CUDA_OPTION=1 NM_VALUE=4
-
-    perform_runs "-n1" "" <<EOF
-$(argstrings_cuda)
-EOF
-
   fi #---PBS_NP
 
   #==============================

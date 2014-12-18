@@ -127,7 +127,7 @@ TARGET_HD static inline int Sweeper_thread_octant( const SweeperLite* sweeper )
 TARGET_HD static inline int Sweeper_thread_y( const SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
-  return Env_cuda_threadblock( 1 );
+  return Env_cuda_thread_in_threadblock( 2 ) % sweeper->nthread_y ;
 #else
   Assert( sweeper->nthread_e *
           sweeper->nthread_octant *
@@ -144,7 +144,7 @@ TARGET_HD static inline int Sweeper_thread_y( const SweeperLite* sweeper )
 TARGET_HD static inline int Sweeper_thread_z( const SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
-  return Env_cuda_threadblock( 2 );
+  return Env_cuda_thread_in_threadblock( 2 ) / sweeper->nthread_y;
 #else
   Assert( sweeper->nthread_e *
           sweeper->nthread_octant *
@@ -230,6 +230,7 @@ if( sweeper->nthread_y != 1 || sweeper->nthread_z != 1 )
 TARGET_HD static inline void Sweeper_sync_amu_threads( SweeperLite* sweeper )
 {
 #ifdef __CUDA_ARCH__
+  /*---NOTE: this may not be needed if these threads are mapped in-warp---*/
   Env_cuda_sync_threadblock();
 #else
 #ifdef USE_OPENMP_THREADS

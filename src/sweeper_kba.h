@@ -184,8 +184,7 @@ static int Sweeper_nthreadblock( const Sweeper* sweeper,
   Assert( axis >= 0 && axis < 3 );
 
   return axis==0 ? sweeper->nthread_e :
-         axis==1 ? sweeper->nthread_y :
-                   sweeper->nthread_z;
+                   1;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -198,7 +197,8 @@ static int Sweeper_nthread_in_threadblock( const Sweeper* sweeper,
 
   return axis==0 ? Sweeper_nthread_a( sweeper, env ) :
          axis==1 ? sweeper->nthread_octant :
-                   1;
+                   sweeper->nthread_y *
+                   sweeper->nthread_z;
 }
 
 /*===========================================================================*/
