@@ -40,13 +40,9 @@ MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR := $(notdir $(patsubst %/,%,$(dir $(MAKEFILE_PATH))))
 PACKAGE_DIR := $(MAKEFILE_DIR)/..
 
-KERNEL_FILE = ../sn/sweeper_kernels
-
 INCLUDES = -I. -I../base -I../sn_base
-SOURCES      = $(filter-out $(KERNEL_FILE).c, $(wildcard \
-                      ../base/*.c  ../sn_base/*.c  ../sn/*.c  ../driver/*.c ) )
-CUDA_SOURCES = $(filter-out $(KERNEL_FILE).cu, $(wildcard \
-                      ../base/*.cu ../sn_base/*.cu ../sn/*.cu ../driver/*.cu) )
+SOURCES      =$(wildcard ../base/*.c  ../sn_base/*.c  ../sn/*.c  ../driver/*.c )
+CUDA_SOURCES =$(wildcard ../base/*.cu ../sn_base/*.cu ../sn/*.cu ../driver/*.cu)
 EXECUTABLE = sweep.x
 
 CC :=
@@ -166,8 +162,6 @@ ifeq ($(CUDA_OPTION),1)
   endif
 make_objects: make_objects_c
 	nvcc -c $(CUDA_SOURCES) $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS) -DUSE_CUDA $(CUDA_ARGS)
-	nvcc -c $(KERNEL_FILE).cu $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS) -DUSE_CUDA $(CUDA_ARGS)
-	#rm -f $(KERNEL_FILE).o
 else
 make_objects: make_objects_c
 endif
@@ -177,7 +171,7 @@ endif
 #==============================================================================
 
 make_objects_c:
-	$(CC) -c $(SOURCES) $(KERNEL_FILE).c $(COMMON_FLAGS) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
+	$(CC) -c $(SOURCES) $(COMMON_FLAGS) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
 
 make_executable: make_objects
 	$(CC) -o $(EXECUTABLE) *.o $(COMMON_FLAGS) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)

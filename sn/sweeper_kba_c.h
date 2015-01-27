@@ -289,33 +289,6 @@ SweeperLite Sweeper_sweeperlite( Sweeper sweeper )
 }
 
 /*===========================================================================*/
-/*---Perform a sweep for a block, implementation, global---*/
-
-TARGET_G void Sweeper_sweep_block_adapter(
-  SweeperLite            sweeper,
-        P* __restrict__  vo,
-  const P* __restrict__  vi,
-        P* __restrict__  facexy,
-        P* __restrict__  facexz,
-        P* __restrict__  faceyz,
-  const P* __restrict__  a_from_m,
-  const P* __restrict__  m_from_a,
-  int                    step,
-  const Quantities       quan,
-  Bool_t                 proc_x_min,
-  Bool_t                 proc_x_max,
-  Bool_t                 proc_y_min,
-  Bool_t                 proc_y_max,
-  StepInfoAll            stepinfoall,
-  unsigned long int      do_block_init )
-{
-    Sweeper_sweep_block_impl( &sweeper, vo, vi, facexy, facexz, faceyz,
-                              a_from_m, m_from_a, step, &quan,
-                              proc_x_min, proc_x_max, proc_y_min, proc_y_max,
-                              stepinfoall, do_block_init );
-}
-
-/*===========================================================================*/
 /*---Perform a sweep for a block---*/
 
 void Sweeper_sweep_block(

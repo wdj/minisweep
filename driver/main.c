@@ -25,8 +25,8 @@
 /*===========================================================================*/
 /*---Input a line from standard input---*/
 
-Bool_t getline( char* line );
-Bool_t getline( char* line )
+Bool_t get_line( char* line );
+Bool_t get_line( char* line )
 {
   int nchar = 0;
   int c = 0;
@@ -280,8 +280,8 @@ void test( Env* env )
 
     if( Env_proc_this( env ) == 0 )
     {
-      result1 = getline( argstring1 );
-      result2 = getline( argstring2 );
+      result1 = get_line( argstring1 );
+      result2 = get_line( argstring2 );
     }
     Env_bcast_int( env, &result1, Env_proc_this( env ) );
     Env_bcast_int( env, &result2, Env_proc_this( env ) );

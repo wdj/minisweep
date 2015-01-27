@@ -450,6 +450,27 @@ TARGET_HD void Sweeper_sweep_block_impl(
   unsigned long int      do_block_init );
 
 /*===========================================================================*/
+/*---Perform a sweep for a block, implementation, global---*/
+
+TARGET_G void Sweeper_sweep_block_adapter(
+  SweeperLite            sweeper,
+        P* __restrict__  vo,
+  const P* __restrict__  vi,
+        P* __restrict__  facexy,
+        P* __restrict__  facexz,
+        P* __restrict__  faceyz,
+  const P* __restrict__  a_from_m,
+  const P* __restrict__  m_from_a,
+  int                    step,
+  const Quantities       quan,
+  Bool_t                 proc_x_min,
+  Bool_t                 proc_x_max,
+  Bool_t                 proc_y_min,
+  Bool_t                 proc_y_max,
+  StepInfoAll            stepinfoall,
+  unsigned long int      do_block_init );
+
+/*===========================================================================*/
 
 #ifdef __cplusplus
 } /*---extern "C"---*/

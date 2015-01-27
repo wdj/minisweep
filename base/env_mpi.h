@@ -48,6 +48,8 @@ static void Env_mpi_finalize_( Env* env )
 {
 #ifdef USE_MPI
   int mpi_code = 0;
+  if( mpi_code ) {} /*---Remove unused var warning---*/
+
   if( env->active_comm_ != MPI_COMM_WORLD )
   {
     mpi_code = MPI_Comm_free( &env->active_comm_ );
@@ -119,6 +121,7 @@ static void Env_mpi_set_values_( Env *env, Arguments* args )
 {
 #ifdef USE_MPI
   int mpi_code = 0;
+  if( mpi_code ) {} /*---Remove unused var warning---*/
 
   env->nproc_x_ = Arguments_consume_int_or_default( args, "--nproc_x", 1 );
   env->nproc_y_ = Arguments_consume_int_or_default( args, "--nproc_y", 1 );
@@ -146,7 +149,6 @@ static void Env_mpi_set_values_( Env *env, Arguments* args )
   mpi_code = MPI_Comm_split( MPI_COMM_WORLD, env->is_proc_active_,
                                                    rank, &env->active_comm_ );
   Assert( mpi_code == MPI_SUCCESS );
-
 #endif
 }
 
@@ -157,6 +159,8 @@ static void Env_mpi_reset_values_( Env *env )
 {
 #ifdef USE_MPI
   int mpi_code = 0;
+  if( mpi_code ) {} /*---Remove unused var warning---*/
+
   if( env->active_comm_ != MPI_COMM_WORLD )
   {
     mpi_code = MPI_Comm_free( &env->active_comm_ );
