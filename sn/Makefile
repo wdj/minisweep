@@ -37,12 +37,18 @@ endif
 #==============================================================================
 
 MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-MAKEFILE_DIR := $(notdir $(patsubst %/,%,$(dir $(MAKEFILE_PATH))))
+MAKEFILE_DIR := $(patsubst %/,%,$(dir $(MAKEFILE_PATH)))
 PACKAGE_DIR := $(MAKEFILE_DIR)/..
 
-INCLUDES = -I. -I../base -I../sn_base
-SOURCES      =$(wildcard ../base/*.c  ../sn_base/*.c  ../sn/*.c  ../driver/*.c )
-CUDA_SOURCES =$(wildcard ../base/*.cu ../sn_base/*.cu ../sn/*.cu ../driver/*.cu)
+INCLUDES = -I$(PACKAGE_DIR)/base -I$(PACKAGE_DIR)/sn_base -I$(PACKAGE_DIR)/sn
+SOURCES      = $(wildcard $(PACKAGE_DIR)/base/*.c \
+                          $(PACKAGE_DIR)/sn_base/*.c \
+                          $(PACKAGE_DIR)/sn/*.c \
+                          $(PACKAGE_DIR)/driver/*.c )
+CUDA_SOURCES = $(wildcard $(PACKAGE_DIR)/base/*.cu \
+                          $(PACKAGE_DIR)/sn_base/*.cu \
+                          $(PACKAGE_DIR)/sn/*.cu \
+                          $(PACKAGE_DIR)/driver/*.cu)
 EXECUTABLE = sweep.x
 
 CC :=
