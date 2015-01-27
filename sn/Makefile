@@ -36,17 +36,17 @@ endif
 # General settings.
 #==============================================================================
 
-# MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
-# MAKEFILE_DIR := $(notdir $(patsubst %/,%,$(dir $(MAKEFILE_PATH))))
-# PROJECT_DIR := $(MAKEFILE_DIR)/..
+MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
+MAKEFILE_DIR := $(notdir $(patsubst %/,%,$(dir $(MAKEFILE_PATH))))
+PACKAGE_DIR := $(MAKEFILE_DIR)/..
 
 KERNEL_FILE = sweeper_kernels
 
-INCLUDES = -I. -I../src_common
+INCLUDES = -I. -I../sn_base
 SOURCES      = $(filter-out $(KERNEL_FILE).c, \
-                            $(wildcard *.c  ../src_common/*.c  ) )
+                            $(wildcard *.c  ../sn_base/*.c  ../driver/*.c ) )
 CUDA_SOURCES = $(filter-out $(KERNEL_FILE).cu, \
-                            $(wildcard *.cu ../src_common/*.cu ) )
+                            $(wildcard *.cu ../sn_base/*.cu ../driver/*.cu) )
 EXECUTABLE = sweep.x
 
 CC :=
