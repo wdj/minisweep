@@ -21,7 +21,7 @@
 #include "stepscheduler_kba.h"
 #include "sweeper_kba.h"
 
-#include "sweeper_kba_c_kernels.h"
+#include "sweeper_kba_kernels.h"
 
 #ifdef __cplusplus
 extern "C"

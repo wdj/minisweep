@@ -42,11 +42,11 @@ PACKAGE_DIR := $(MAKEFILE_DIR)/..
 
 KERNEL_FILE = sweeper_kernels
 
-INCLUDES = -I. -I../sn_base
-SOURCES      = $(filter-out $(KERNEL_FILE).c, \
-                            $(wildcard *.c  ../sn_base/*.c  ../driver/*.c ) )
-CUDA_SOURCES = $(filter-out $(KERNEL_FILE).cu, \
-                            $(wildcard *.cu ../sn_base/*.cu ../driver/*.cu) )
+INCLUDES = -I. -I../base -I../sn_base
+SOURCES      = $(filter-out $(KERNEL_FILE).c, $(wildcard \
+                      ../base/*.c  ../sn_base/*.c  ../sn/*.c  ../driver/*.c ) )
+CUDA_SOURCES = $(filter-out $(KERNEL_FILE).cu, $(wildcard \
+                      ../base/*.cu ../sn_base/*.cu ../sn/*.cu ../driver/*.cu) )
 EXECUTABLE = sweep.x
 
 CC :=

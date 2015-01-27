@@ -45,7 +45,7 @@ TARGET_HD static char* Env_cuda_shared_memory()
 #ifdef __CUDA_ARCH__
   return cuda_shared_memory;
 #else
-  return (char*) NULL;
+  return (char*)0;
 #endif
 }
 
