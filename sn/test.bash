@@ -427,7 +427,7 @@ EOF
     make NM_VALUE=4
 
     perform_runs "-n16" "" <<EOF
-$(argstrings_mpi)
+$(argstrings_mpi > /dev/null )
 EOF
 
   fi #---PBS_NP

@@ -55,6 +55,77 @@ static Bool_t get_line( char* line )
 }
 
 /*===========================================================================*/
+
+static void compare_runs_helper( Env* env, int* ntest,
+    int* ntest_passed, char* string_common, char* string1, char* string2 )
+{
+  char argstring1[MAX_LINE_LEN];
+  char argstring2[MAX_LINE_LEN];
+
+  sprintf( argstring1, "%s %s", string_common, string1 );
+  sprintf( argstring2, "%s %s", string_common, string2 );
+
+  const Bool_t result = compare_runs( env, argstring1, argstring2 );
+
+  *ntest += 1;
+  *ntest_passed += result ? 1 : 0;
+}
+
+/*===========================================================================*/
+/*---Tester: MPI---*/
+
+static void test_mpi( Env* env, int* ntest, int* ntest_passed )
+{
+#ifdef USE_MPI
+#ifndef USE_CUDA
+  const Bool_t do_tests = Bool_true;
+#else
+  const Bool_t do_tests = Bool_false;
+#endif
+#else
+  const Bool_t do_tests = Bool_false;
+#endif
+
+  if( do_tests )
+  {
+    char* string_common = 0;
+
+    string_common = "--ncell_x  5 --ncell_y  4 --ncell_z  5 --ne 7 --na 10";
+
+    compare_runs_helper( env, ntest, ntest_passed, string_common,
+        "--nproc_x 1 --nproc_y 1 --nblock_z 1",
+        "--nproc_x 2 --nproc_y 1 --nblock_z 1" );
+
+    compare_runs_helper( env, ntest, ntest_passed, string_common,
+        "--nproc_x 1 --nproc_y 1 --nblock_z 1",
+        "--nproc_x 1 --nproc_y 2 --nblock_z 1" );
+
+    string_common = "--ncell_x  5 --ncell_y  4 --ncell_z  6 --ne 7 --na 10";
+
+    compare_runs_helper( env, ntest, ntest_passed, string_common,
+        "--nproc_x 1 --nproc_y 1 --nblock_z 1",
+        "--nproc_x 4 --nproc_y 4 --nblock_z 2" );
+
+    string_common = "--ncell_x  5 --ncell_y  4 --ncell_z  6 --ne 7 --na 10 "
+                  " --is_face_comm_async 0";
+
+    compare_runs_helper( env, ntest, ntest_passed, string_common,
+        "--nproc_x 1 --nproc_y 1 --nblock_z 1",
+        "--nproc_x 4 --nproc_y 4 --nblock_z 2" );
+
+    string_common = "--ncell_x 5 --ncell_y 8 --ncell_z 16 --ne 9 --na 12";
+
+    compare_runs_helper( env, ntest, ntest_passed, string_common,
+        "--nproc_x 4 --nproc_y 4 --nblock_z 1",
+        "--nproc_x 4 --nproc_y 4 --nblock_z 2" );
+
+    compare_runs_helper( env, ntest, ntest_passed, string_common,
+        "--nproc_x 4 --nproc_y 4 --nblock_z 2",
+        "--nproc_x 4 --nproc_y 4 --nblock_z 4" );
+  }
+}
+
+/*===========================================================================*/
 /*---Tester---*/
 
 static void tester( Env* env )
@@ -62,13 +133,17 @@ static void tester( Env* env )
   int ntest = 0;
   int ntest_passed = 0;
 
-  Bool_t result1 = Bool_true;
-  Bool_t result2 = Bool_true;
+  test_mpi( env, &ntest, &ntest_passed );
+
+
 
   /*---Loop over pairs of input arg strings to do runs---*/
 
   while( Bool_true )
   {
+    Bool_t result1 = Bool_true;
+    Bool_t result2 = Bool_true;
+
     char argstring1[MAX_LINE_LEN];
     char argstring2[MAX_LINE_LEN];
 
