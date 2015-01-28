@@ -195,7 +195,7 @@ make_executables: make_objects
 	rm -f *.o
 
 test:
-	time ./test.bash
+	time ../scripts/test.bash
 
 clean:
 	rm -f *.o
