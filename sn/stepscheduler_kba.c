@@ -25,7 +25,7 @@ void StepScheduler_ctor( StepScheduler* stepscheduler,
                          int             nblock_octant,
                          Env*            env )
 {
-  Insist( nblock_z > 0 && "Invalid z blocking factor supplied." );
+  Insist( nblock_z > 0 ? "Invalid z blocking factor supplied." : 0 );
   stepscheduler->nblock_z_          = nblock_z;
   stepscheduler->nproc_x_           = Env_nproc_x( env );
   stepscheduler->nproc_y_           = Env_nproc_y( env );
@@ -288,7 +288,7 @@ Bool_t StepScheduler_must_do_send(
   const Bool_t axis_x = axis==0;
   const Bool_t axis_y = axis==1;
 
-  const int dir = dir_ind==0 ? DIR_UP : DIR_DN;
+  const int dir = dir_ind==0 ? (int)DIR_UP : (int)DIR_DN;
   const int inc_x = axis_x ? Dir_inc( dir ) : 0;
   const int inc_y = axis_y ? Dir_inc( dir ) : 0;
 
@@ -332,7 +332,7 @@ Bool_t StepScheduler_must_do_recv(
   const Bool_t axis_x = axis==0;
   const Bool_t axis_y = axis==1;
 
-  const int dir = dir_ind==0 ? DIR_UP : DIR_DN;
+  const int dir = dir_ind==0 ? (int)DIR_UP : (int)DIR_DN;
   const int inc_x = axis_x ? Dir_inc( dir ) : 0;
   const int inc_y = axis_y ? Dir_inc( dir ) : 0;
 

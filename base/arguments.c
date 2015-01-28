@@ -38,7 +38,7 @@ void Arguments_ctor( Arguments* args,
 
   for( i=0; i<argc; ++i )
   {
-    Assert( argv[i] != NULL && "Null command line argument encountered" );
+    Assert( argv[i] != NULL ? "Null command line argument encountered" : 0);
     args->argv_unconsumed[i] = argv[i];
   }
 } /*---Arguments_ctor---*/
@@ -143,7 +143,7 @@ int Arguments_consume_int( Arguments*  args,
     }
   }
 
-  Insist( found && "Invalid use of argument." );
+  Insist( found ? "Invalid use of argument." : 0 );
   return result;
 }
 

@@ -40,16 +40,24 @@ MAKEFILE_PATH := $(abspath $(lastword $(MAKEFILE_LIST)))
 MAKEFILE_DIR := $(patsubst %/,%,$(dir $(MAKEFILE_PATH)))
 PACKAGE_DIR := $(MAKEFILE_DIR)/..
 
-INCLUDES = -I$(PACKAGE_DIR)/base -I$(PACKAGE_DIR)/sn_base -I$(PACKAGE_DIR)/sn
-SOURCES      = $(wildcard $(PACKAGE_DIR)/base/*.c \
-                          $(PACKAGE_DIR)/sn_base/*.c \
-                          $(PACKAGE_DIR)/sn/*.c ) \
-                          $(PACKAGE_DIR)/driver/run_tools.c
-CUDA_SOURCES = $(wildcard $(PACKAGE_DIR)/base/*.cu \
-                          $(PACKAGE_DIR)/sn_base/*.cu \
-                          $(PACKAGE_DIR)/sn/*.cu )
 MAIN_STUB1 = sweep
 MAIN_STUB2 = tester
+
+INCLUDES = -I$(PACKAGE_DIR)/base -I$(PACKAGE_DIR)/sn_base -I$(PACKAGE_DIR)/sn
+
+SOURCES          = $(wildcard $(PACKAGE_DIR)/base/*.c \
+                              $(PACKAGE_DIR)/sn_base/*.c \
+                              $(PACKAGE_DIR)/sn/*.c ) \
+                              $(PACKAGE_DIR)/driver/run_tools.c
+SOURCES_ALL      = $(wildcard $(PACKAGE_DIR)/base/*.c \
+                              $(PACKAGE_DIR)/sn_base/*.c \
+                              $(PACKAGE_DIR)/sn/*.c \
+                              $(PACKAGE_DIR)/driver/*.c )
+CUDA_SOURCES_ALL = $(wildcard $(PACKAGE_DIR)/base/*.cu \
+                              $(PACKAGE_DIR)/sn_base/*.cu \
+                              $(PACKAGE_DIR)/sn/*.cu \
+                              $(PACKAGE_DIR)/driver/*.cu )
+OBJECTS = $(foreach file,$(patsubst %.c,%.o,$(SOURCES)),$(notdir $(file)))
 
 CC :=
 CFLAGS :=
@@ -167,7 +175,7 @@ ifeq ($(CUDA_OPTION),1)
     $(error "CUDA requires GNU compiler to be used.")
   endif
 make_objects: make_objects_c
-	nvcc -c $(CUDA_SOURCES) $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS) -DUSE_CUDA $(CUDA_ARGS)
+	nvcc -c $(CUDA_SOURCES_ALL) $(COMMON_FLAGS) $(INCLUDES) $(ALG_OPTIONS) -DUSE_CUDA $(CUDA_ARGS)
 else
 make_objects: make_objects_c
 endif
@@ -177,12 +185,12 @@ endif
 #==============================================================================
 
 make_objects_c:
-	$(CC) -c $(SOURCES) $(COMMON_FLAGS) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
+	$(CC) -c $(SOURCES_ALL) $(COMMON_FLAGS) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
 
 make_executables: make_objects
-	$(CC) -o $(MAIN_STUB1) *.o $(PACKAGE_DIR)/driver/$(MAIN_STUB1).c \
+	$(CC) -o $(MAIN_STUB1) $(OBJECTS) $(MAIN_STUB1).o \
               $(COMMON_FLAGS) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
-	$(CC) -o $(MAIN_STUB2) *.o $(PACKAGE_DIR)/driver/$(MAIN_STUB2).c \
+	$(CC) -o $(MAIN_STUB2) $(OBJECTS) $(MAIN_STUB2).o \
               $(COMMON_FLAGS) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
 	rm -f *.o
 
