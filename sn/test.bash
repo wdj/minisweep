@@ -21,12 +21,12 @@ function perform_run
     #---If running on Cray back-end node, must cd to Lustre to do the aprun.
     local wd="$PWD"
     pushd "$MEMBERWORK" >/dev/null
-    aprun $exec_config_args "$wd/sweep.x" $application_args
+    aprun $exec_config_args "$wd/tester" $application_args
     #assert $? = 0
     popd >/dev/null
   else
     #assert $exec_config_args = "-n1"
-    ./sweep.x $application_args
+    ./tester $application_args
     #assert $? = 0
   fi
 }

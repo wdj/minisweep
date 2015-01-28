@@ -2,7 +2,7 @@
 # Makefile for minisweep.
 #==============================================================================
 
-default: make_executable
+default: make_executables
 
 #==============================================================================
 # Default build options.
@@ -43,13 +43,13 @@ PACKAGE_DIR := $(MAKEFILE_DIR)/..
 INCLUDES = -I$(PACKAGE_DIR)/base -I$(PACKAGE_DIR)/sn_base -I$(PACKAGE_DIR)/sn
 SOURCES      = $(wildcard $(PACKAGE_DIR)/base/*.c \
                           $(PACKAGE_DIR)/sn_base/*.c \
-                          $(PACKAGE_DIR)/sn/*.c \
-                          $(PACKAGE_DIR)/driver/*.c )
+                          $(PACKAGE_DIR)/sn/*.c ) \
+                          $(PACKAGE_DIR)/driver/run_tools.c
 CUDA_SOURCES = $(wildcard $(PACKAGE_DIR)/base/*.cu \
                           $(PACKAGE_DIR)/sn_base/*.cu \
-                          $(PACKAGE_DIR)/sn/*.cu \
-                          $(PACKAGE_DIR)/driver/*.cu)
-EXECUTABLE = sweep.x
+                          $(PACKAGE_DIR)/sn/*.cu )
+MAIN_STUB1 = sweep
+MAIN_STUB2 = tester
 
 CC :=
 CFLAGS :=
@@ -179,8 +179,11 @@ endif
 make_objects_c:
 	$(CC) -c $(SOURCES) $(COMMON_FLAGS) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
 
-make_executable: make_objects
-	$(CC) -o $(EXECUTABLE) *.o $(COMMON_FLAGS) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
+make_executables: make_objects
+	$(CC) -o $(MAIN_STUB1) *.o $(PACKAGE_DIR)/driver/$(MAIN_STUB1).c \
+              $(COMMON_FLAGS) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
+	$(CC) -o $(MAIN_STUB2) *.o $(PACKAGE_DIR)/driver/$(MAIN_STUB2).c \
+              $(COMMON_FLAGS) $(INCLUDES) $(CFLAGS) $(ALG_OPTIONS)
 	rm -f *.o
 
 test:
@@ -190,16 +193,16 @@ clean:
 	rm -f *.o
 
 distclean: clean
-	rm -f $(EXECUTABLE)
+	rm -f $(MAIN_STUB1) $(MAIN_STUB2)
 
 #==============================================================================
 #
 #make COMPILER_OPTION=INTELMIC NM_VALUE=16 RELEASE_OPTION=
 #
 #if [ $? = 0 ] ; then
-#  \cp $HOME/minisweep/src/sweep.x $TMPDIR/mic0
+#  \cp $HOME/minisweep/src/sweep $TMPDIR/mic0
 #  ARGS="--ncell_x 1 --ncell_y 1 --ncell_z 1 --ne 1 --na 32 --nproc_x 1 --nproc_y 1"
-#  micmpiexec -n 1 -wdir $TMPDIR -host ${HOSTNAME}-mic0 $TMPDIR/sweep.x $ARGS
+#  micmpiexec -n 1 -wdir $TMPDIR -host ${HOSTNAME}-mic0 $TMPDIR/sweep $ARGS
 #fi
 #
 #run:

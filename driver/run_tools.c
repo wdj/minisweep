@@ -1,9 +1,9 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   main.c
+ * \file   run_tools.c
  * \author Wayne Joubert
- * \date   Wed May 22 11:22:14 EDT 2013
- * \brief  Main driver for KBA sweep miniapp.
+ * \date   Wed Jan 28 10:11:10 EST 2015
+ * \brief  Definitions for tools to perform runs of sweeper.
  * \note   Copyright (C) 2013 Oak Ridge National Laboratory, UT-Battelle, LLC.
  */
 /*---------------------------------------------------------------------------*/
@@ -20,56 +20,12 @@
 #include "array_operations.h"
 #include "sweeper.h"
 
-#define MAX_LINE_LEN 1024
-
-/*===========================================================================*/
-/*---Input a line from standard input---*/
-
-Bool_t get_line( char* line );
-Bool_t get_line( char* line )
-{
-  int nchar = 0;
-  int c = 0;
-    
-  while( (c = getchar()) != EOF )
-  {
-    if( c == '\n' )
-    {
-      break;
-    }
-
-    Assert( nchar + 2 <= MAX_LINE_LEN ? "Input line too long" : 0 );
- 
-    line[nchar] = c; 
-    ++nchar;
-  }
-
-  if( c == EOF && nchar == 0 )
-  {
-    return Bool_false;
-  }
-
-  line[nchar] = '\0';
-  return Bool_true;
-}
-
-/*===========================================================================*/
-/*---Struct to hold run result data---*/
-
-typedef struct
-{
-  P      normsq;
-  P      normsqdiff;
-  double flops;
-  double floprate;
-  Timer  time;
-} RunData;
+#include "run_tools.h"
 
 /*===========================================================================*/
 /*---Perform run---*/
 
-void run1( Env* env, Arguments* args, RunData* rundata );
-void run1( Env* env, Arguments* args, RunData* rundata )
+void run_case( Env* env, Arguments* args, RunData* rundata )
 {
   /*---Declarations---*/
 
@@ -195,7 +151,6 @@ void run1( Env* env, Arguments* args, RunData* rundata )
                      dims, NU, &rundata->normsq, &rundata->normsqdiff, env );
 
   /*---Deallocations---*/
-
   Pointer_dtor( &vi );
   Pointer_dtor( &vo );
 
@@ -206,7 +161,6 @@ void run1( Env* env, Arguments* args, RunData* rundata )
 /*===========================================================================*/
 /*---Perform two runs, compare results---*/
 
-Bool_t compare_runs( Env* env, char* argstring1, char* argstring2 );
 Bool_t compare_runs( Env* env, char* argstring1, char* argstring2 )
 {
   Arguments args1;
@@ -223,7 +177,7 @@ Bool_t compare_runs( Env* env, char* argstring1, char* argstring2 )
   }
   if( Env_is_proc_active( env ) )
   {
-    run1( env, &args1, &rundata1 );
+    run_case( env, &args1, &rundata1 );
   }
   Env_reset_values( env );
 
@@ -236,7 +190,7 @@ Bool_t compare_runs( Env* env, char* argstring1, char* argstring2 )
   }
   if( Env_is_proc_active( env ) )
   {
-    run1( env, &args2, &rundata2 );
+    run_case( env, &args2, &rundata2 );
   }
   Env_reset_values( env );
 
@@ -258,104 +212,5 @@ Bool_t compare_runs( Env* env, char* argstring1, char* argstring2 )
 
   return pass;
 }
-
-/*===========================================================================*/
-/*---Tester---*/
-
-void test( Env* env );
-void test( Env* env )
-{
-  int ntest = 0;
-  int ntest_passed = 0;
-
-  Bool_t result1 = Bool_true;
-  Bool_t result2 = Bool_true;
-
-  /*---Loop over pairs of input arg strings to do runs---*/
-
-  while( Bool_true )
-  {
-    char argstring1[MAX_LINE_LEN];
-    char argstring2[MAX_LINE_LEN];
-
-    if( Env_proc_this( env ) == 0 )
-    {
-      result1 = get_line( argstring1 );
-      result2 = get_line( argstring2 );
-    }
-    Env_bcast_int( env, &result1, Env_proc_this( env ) );
-    Env_bcast_int( env, &result2, Env_proc_this( env ) );
-    Env_bcast_string( env, argstring1, MAX_LINE_LEN, Env_proc_this( env ) );
-    Env_bcast_string( env, argstring2, MAX_LINE_LEN, Env_proc_this( env ) );
-
-    if( ! ( result1 && result2 ) )
-    {
-      break;
-    }
-
-    Bool_t pass = compare_runs( env, argstring1, argstring2 );
-
-    ++ntest;
-    if( pass )
-    {
-      ++ntest_passed;
-    }
-
-  }
-
-  if( Env_is_proc_master( env ) )
-  {
-    printf( "TESTS %i    PASSED %i    FAILED %i\n",
-            ntest, ntest_passed, ntest-ntest_passed );
-  }
-}
-
-/*===========================================================================*/
-/*---Main---*/
-
-int main( int argc, char** argv )
-{
-  /*---Declarations---*/
-  Env env;
-
-  /*---Initialize for execution---*/
-
-  Env_initialize( &env, argc, argv );
-
-  if( argc == 1 )
-  {
-    test( &env );
-  }
-  else
-  {
-    Arguments args;
-    RunData  rundata;
-
-    Arguments_ctor( &args, argc, argv );
-    Env_set_values( &env, &args );
-
-    /*---Perform run---*/
-
-    run1( &env, &args, &rundata );
-
-    if( Env_is_proc_master( &env ) )
-    {
-      printf( "Normsq result: %.8e  diff: %.3e  %s  time: %.3f  GF/s: %.3f\n",
-              (double)rundata.normsq, (double)rundata.normsqdiff,
-              rundata.normsqdiff==P_zero() ? "PASS" : "FAIL",
-              (double)rundata.time, rundata.floprate );
-    }
-
-    /*---Deallocations---*/
-
-    Arguments_dtor( &args );
-
-  }
-
-  /*---Finalize execution---*/
-
-  Env_finalize( &env );
-
-} /*---main---*/
 
 /*---------------------------------------------------------------------------*/
