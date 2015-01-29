@@ -1,3 +1,3 @@
 
-Project code directory for KBA miniapp under LDRD project.
+Project code directory.
 
