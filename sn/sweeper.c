@@ -8,6 +8,8 @@
  */
 /*---------------------------------------------------------------------------*/
 
+#include "sweeper.h"
+
 #ifdef SWEEPER_SIMPLE
 #include "sweeper_simple_c.h"
 #endif

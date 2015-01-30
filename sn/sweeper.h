@@ -11,6 +11,12 @@
 #ifndef _sweep_h_
 #define _sweep_h_
 
+#ifndef SWEEPER_SIMPLE
+#ifndef SWEEPER_TILEOCTANTS
+#define SWEEPER_KBA
+#endif
+#endif
+
 #ifdef SWEEPER_SIMPLE
 #include "sweeper_simple.h"
 #endif

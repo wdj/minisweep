@@ -117,7 +117,9 @@ StepInfo StepScheduler_stepinfo( const StepScheduler* stepscheduler,
   Assert( octant_in_block>=0 &&
           octant_in_block * stepscheduler->nblock_octant_ < NOCTANT );
 
+  /*
   const int nblock_octant     = stepscheduler->nblock_octant_;
+  */
   const int nproc_x           = stepscheduler->nproc_x_;
   const int nproc_y           = stepscheduler->nproc_y_;
   const int nblock            = StepScheduler_nblock( stepscheduler );
