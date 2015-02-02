@@ -5,10 +5,10 @@ cmake_minimum_required(VERSION 2.8)
 project("minisweep")
 
 SET(INCLUDE_DIRS
-  driver
-  base
-  sn_base
-  sn
+  ${CMAKE_SOURCE_DIR}/driver
+  ${CMAKE_SOURCE_DIR}/base
+  ${CMAKE_SOURCE_DIR}/sn_base
+  ${CMAKE_SOURCE_DIR}/sn
   )
 
 SET(SOURCES
@@ -40,13 +40,22 @@ IF(USE_CUDA)
   STRING(REPLACE " " ";" CMAKE_C_FLAGS_ADJUSTED ${CMAKE_C_FLAGS})
   SET(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS};${CMAKE_C_FLAGS_ADJUSTED}")
   CUDA_INCLUDE_DIRECTORIES(${INCLUDE_DIRS})
-  CUDA_ADD_EXECUTABLE(sweep driver/sweep.cu ${CUDA_SOURCES})
+  CUDA_ADD_LIBRARY(sweeper STATIC ${CUDA_SOURCES})
+  CUDA_ADD_EXECUTABLE(sweep driver/sweep.cu)
+  TARGET_LINK_LIBRARIES(sweep sweeper)
+  CUDA_ADD_EXECUTABLE(tester driver/tester.cu)
+  TARGET_LINK_LIBRARIES(tester sweeper)
 ELSE()
   INCLUDE_DIRECTORIES(${INCLUDE_DIRS})
-  ADD_EXECUTABLE(sweep driver/sweep.c ${SOURCES})
+  ADD_LIBRARY(sweeper STATIC ${SOURCES})
+  ADD_EXECUTABLE(sweep driver/sweep.c)
+  TARGET_LINK_LIBRARIES(sweep sweeper)
+  ADD_EXECUTABLE(tester driver/tester.c)
+  TARGET_LINK_LIBRARIES(tester sweeper)
 ENDIF()
 
 install(TARGETS sweep DESTINATION bin)
+#install(TARGETS tester DESTINATION bin)
 
 SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS)
 
