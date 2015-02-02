@@ -265,7 +265,11 @@ TARGET_HD inline void Sweeper_sweep_cell(
         for( sweeper_thread_u=0; sweeper_thread_u<NTHREAD_U;
                                                           ++sweeper_thread_u )
 #pragma ivdep
+/*
 #pragma simd assert, vectorlengthfor( P )
+TODO: fix vectorization for this loop.
+*/
+#pragma simd vectorlengthfor( P )
         for( sweeper_thread_m=0; sweeper_thread_m<NTHREAD_M;
                                                           ++sweeper_thread_m )
 #endif

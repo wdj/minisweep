@@ -26,6 +26,10 @@ function perform_run
     aprun $exec_config_args "$wd/tester" $application_args
     #assert $? = 0
     popd >/dev/null
+  elif [ "${IMICROOT:-}" != "" ] ; then
+    cp tester $TMPDIR/mic0
+    micmpiexec -n 1 -wdir $TMPDIR -host ${HOSTNAME}-mic0 $TMPDIR/tester $application_arg
+    rm tester $TMPDIR/mic0
   else
     #assert $exec_config_args = "-n1"
     ./tester $application_args
