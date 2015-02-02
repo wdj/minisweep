@@ -64,8 +64,10 @@ IF(CMAKE_C_COMPILER_ID STREQUAL "GNU")
 ENDIF()
 
 IF(CMAKE_C_COMPILER_ID STREQUAL "Intel")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dinline=__forceinline -D__restrict__=restrict")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dinline=__forceinline -D__restrict__=restrict -restrict")
 ENDIF()
+
+MESSAGE("Compiler ID: ${CMAKE_C_COMPILER_ID}")
 
 # enable_testing()
 # add_test(test1 tester)
