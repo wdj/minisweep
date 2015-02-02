@@ -16,6 +16,10 @@ INSTALL=../install
 BUILD=Debug
 #BUILD=Release
 
+if [ "$NM_VALUE" = "" ] ; then
+  NM_VALUE=4
+fi
+
 #------------------------------------------------------------------------------
 
 cmake \
@@ -23,7 +27,7 @@ cmake \
   -DCMAKE_INSTALL_PREFIX:PATH="$INSTALL" \
   -DCMAKE_C_COMPILER:STRING=${ASYNCPE_DIR}/bin/cc \
   -DMPI_C_COMPILER="${ASYNCPE_DIR}/bin/cc" \
-  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=4" \
+  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE" \
   -DCMAKE_C_FLAGS_DEBUG:STRING="-g" \
   -DCMAKE_C_FLAGS_RELEASE:STRING="-O3 -fomit-frame-pointer -funroll-loops -finline-limit=10000000" \
  \

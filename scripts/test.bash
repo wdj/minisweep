@@ -22,8 +22,8 @@ function perform_run
     local wd="$PWD"
     pushd "$MEMBERWORK" >/dev/null
     pwd
-    echo aprun $exec_config_args "$wd/tester" $application_args
-    aprun $exec_config_args "$wd/tester" $application_args
+    echo aprun $exec_config_args "$wd/tester"
+    aprun $exec_config_args "$wd/tester"
     #assert $? = 0
     popd >/dev/null
   elif [ "${IMICROOT:-}" != "" ] ; then
@@ -32,7 +32,7 @@ function perform_run
     rm tester $TMPDIR/mic0
   else
     #assert $exec_config_args = "-n1"
-    ./tester $application_args
+    ./tester
     #assert $? = 0
   fi
 }
@@ -67,6 +67,7 @@ function initialize
       module swap PrgEnv-pgi PrgEnv-gnu
     fi
     module load cudatoolkit
+    module load cmake
 
     if [ "${PE_ENV:-}" != "GNU" ] ; then
       echo "Error: GNU compiler required." 1>&2
@@ -84,6 +85,9 @@ function main
   #---args to use below:
   #---  ncell_x ncell_y ncell_z ne nm na numiterations nproc_x nproc_y nblock_z 
 
+  BUILD_DIR=../../build_test
+  SCRIPTS_DIR=$PWD/../scripts
+
   cp /dev/null tmp_
 
   #==============================
@@ -94,10 +98,19 @@ function main
   echo "---Serial tests---"
   echo "--------------------------------------------------------"
 
-  make MPI_OPTION= NM_VALUE=4
+  #make MPI_OPTION= NM_VALUE=4
 
-  perform_runs "-n1" "" <<EOF
-EOF
+  rm -rf $BUILD_DIR
+  mkdir $BUILD_DIR
+  pushd $BUILD_DIR
+
+  env NM_VALUE=4 $SCRIPTS_DIR/cmake_serial.sh
+  make VERBOSE=1
+
+  perform_runs "-n1" ""
+
+  popd
+  rm -rf $BUILD_DIR
 
   #==============================
   # OpenMP
@@ -107,10 +120,19 @@ EOF
   echo "---OpenMP tests---"
   echo "--------------------------------------------------------"
 
-  make MPI_OPTION= OPENMP_OPTION=THREADS NM_VALUE=4
+  #make MPI_OPTION= OPENMP_OPTION=THREADS NM_VALUE=4
 
-  perform_runs "-n1 -d16" "" <<EOF
-EOF
+  rm -rf $BUILD_DIR
+  mkdir $BUILD_DIR
+  pushd $BUILD_DIR
+
+  env NM_VALUE=4 $SCRIPTS_DIR/cmake_openmp.sh
+  make VERBOSE=1
+
+  perform_runs "-n1 -d16" ""
+
+  popd
+  rm -rf $BUILD_DIR
 
   #==============================
   # MPI.
@@ -122,10 +144,19 @@ EOF
     echo "---MPI tests---"
     echo "--------------------------------------------------------"
 
-    make NM_VALUE=4
+    #make NM_VALUE=4
 
-    perform_runs "-n16" "" <<EOF
-EOF
+    rm -rf $BUILD_DIR
+    mkdir $BUILD_DIR
+    pushd $BUILD_DIR
+
+    env NM_VALUE=4 $SCRIPTS_DIR/cmake_cray_xk7.sh
+    make VERBOSE=1
+
+    perform_runs "-n16" ""
+
+    popd
+    rm -rf $BUILD_DIR
 
   fi #---PBS_NP
 
@@ -140,10 +171,19 @@ EOF
     echo "---MPI + CUDA tests---"
     echo "--------------------------------------------------------"
 
-    make CUDA_OPTION=1 NM_VALUE=4
+    #make CUDA_OPTION=1 NM_VALUE=4
 
-    perform_runs "-n4" "" <<EOF
-EOF
+    rm -rf $BUILD_DIR
+    mkdir $BUILD_DIR
+    pushd $BUILD_DIR
+
+    env NM_VALUE=4 $SCRIPTS_DIR/cmake_cray_xk7_cuda.sh
+    make VERBOSE=1
+
+    perform_runs "-n4" ""
+
+    popd
+    rm -rf $BUILD_DIR
 
   fi #---PBS_NP
   fi #---PBS_NP
@@ -160,10 +200,19 @@ EOF
 
   for alg_options in -DSWEEPER_SIMPLE -DSWEEPER_TILEOCTANTS ; do
 
-    make MPI_OPTION= ALG_OPTIONS="$alg_options" NM_VALUE=16
+    #make MPI_OPTION= ALG_OPTIONS="$alg_options" NM_VALUE=16
 
-     perform_runs "-n1" "" <<EOF
-EOF
+    rm -rf $BUILD_DIR
+    mkdir $BUILD_DIR
+    pushd $BUILD_DIR
+
+    env NM_VALUE=16 ALG_OPTIONS=$alg_options $SCRIPTS_DIR/cmake_serial.sh
+    make VERBOSE=1
+
+    perform_runs "-n1" ""
+
+    popd
+    rm -rf $BUILD_DIR
 
   done #---alg_options
 

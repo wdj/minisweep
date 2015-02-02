@@ -29,7 +29,8 @@ ifndef CUDA_OPTION
 endif
 
 ifndef ALG_OPTIONS
-  ALG_OPTIONS = -DSWEEPER_KBA
+  #ALG_OPTIONS = -DSWEEPER_KBA
+  ALG_OPTIONS =
 endif
 
 #==============================================================================
