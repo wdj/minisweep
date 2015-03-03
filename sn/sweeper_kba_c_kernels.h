@@ -978,6 +978,7 @@ TARGET_HD inline void Sweeper_sweep_semiblock(
 
     for( ie=iemin; ie<iemax; ++ie )
     {
+#if 0
 /*---Later: remove the omp single, put an omp for above loop, so that all
      threads can participate in launching the tasks. Can be dynamic schedule
      thus more flexible than above static schedule---*/
@@ -994,7 +995,7 @@ TARGET_HD inline void Sweeper_sweep_semiblock(
 /*---Believe all variables are read-only, so firstprivate is ok - might make
      shared for speed, no need to copy context vars multiple times---*/
 /*---Warning: previously calculated omp thread id may be invalid now---*/
-*/
+#endif
       /*--------------------*/
       /*---Perform sweep on subblock---*/
       /*--------------------*/
@@ -1015,10 +1016,9 @@ TARGET_HD inline void Sweeper_sweep_semiblock(
                               is_octant_active );
     } /*---ie---*/
 
-/*
+#if 0
 } /*---end of omp single, thus implicit sync point---*/
-
-*/
+#endif
 
     if( subblockwave != nsubblockwave-1 )
     {
