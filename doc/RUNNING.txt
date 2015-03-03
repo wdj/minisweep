@@ -1,7 +1,7 @@
 
 Usage example on ORNL Titan susyem, CPU only:
 
-qsub -I -Astf006 -lnodes=4 -lwalltime=2:0:0
+qsub -I -Astf006 -lnodes=1 -lwalltime=2:0:0
 cd $MEMBERWORK/stf006
 mkdir minisweep_work
 cd minisweep_work
