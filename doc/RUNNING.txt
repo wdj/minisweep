@@ -1,0 +1,26 @@
+
+Usage example on ORNL Titan susyem, CPU only:
+
+qsub -I -Astf006 -lnodes=4 -lwalltime=2:0:0
+cd $MEMBERWORK/stf006
+mkdir minisweep_work
+cd minisweep_work
+module load git
+git clone https://github.com/wdj/minisweep.git
+mkdir build
+cd build
+module swap PrgEnv-pgi PrgEnv-gnu
+module load cmake
+env BUILD=Release ../minisweep/scripts/cmake_cray_xk7.sh
+make
+
+for nproc_x in {1..2} ; do
+for nproc_y in {1..2} ; do
+  aprun -n$(( $nproc_x * $nproc_y )) ./sweep \
+    --ncell_x  $(( 4 * $nproc_x )) --ncell_y $(( 8 * $nproc_y )) \
+    --ncell_z 64 \
+    --ne 16 --na 32 --nproc_x $nproc_x --nproc_y $nproc_y --nblock_z 64
+done
+done
+
+

@@ -9,11 +9,17 @@ rm -rf CMakeFiles
 SOURCE=../minisweep
 INSTALL=../install
 
-BUILD=Debug
-#BUILD=Release
+# SOURCE AND INSTALL
+if [ "$SOURCE" = "" ] ; then
+  SOURCE=../minisweep
+fi
+if [ "$INSTALL" = "" ] ; then
+  INSTALL=../install
+fi
 
-if [ "$NM_VALUE" = "" ] ; then
-  NM_VALUE=4
+if [ "$BUILD" = "" ] ; then
+  BUILD=Debug
+  #BUILD=Release
 fi
 
 OPT_ARGS="-mmic -vec-report1 -ip -prec-div -O3 -align -ansi-alias -fargument-noalias -fno-alias -fargument-noalias"

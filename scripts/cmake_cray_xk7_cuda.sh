@@ -11,11 +11,17 @@ rm -rf CMakeCache.txt
 rm -rf CMakeFiles
 
 # SOURCE AND INSTALL
-SOURCE=../minisweep
-INSTALL=../install
+if [ "$SOURCE" = "" ] ; then
+  SOURCE=../minisweep
+fi
+if [ "$INSTALL" = "" ] ; then
+  INSTALL=../install
+fi
 
-BUILD=Debug
-#BUILD=Release
+if [ "$BUILD" = "" ] ; then
+  BUILD=Debug
+  #BUILD=Release
+fi
 
 if [ "$NM_VALUE" = "" ] ; then
   NM_VALUE=4
