@@ -1,5 +1,136 @@
 
-Usage example on ORNL Titan susyem, CPU only:
+Running the sweep miniapp
+-------------------------
+
+Usage
+-----
+
+./sweepx [ --<setting_name> <setting_value> ] ...
+
+aprun [ <aprun_arg> ] ... sweepx [ --<setting_name> <setting_value> ] ...
+
+Settings
+--------
+
+--ncell_x
+
+  The global number of gridcells along the X dimension.
+
+--ncell_y
+
+  The global number of gridcells along the Y dimension.
+
+--ncell_z
+
+  The global number of gridcells along the Z dimension.
+
+--ne
+
+  The total number of energy groups.  For realistic simulations may
+  range from 1 (small) to 44 (normal) to hundreds (not typical).
+
+--na
+
+  The number of angles for each octant direction.  For realistic simulations
+  a typical number would be up to 32 or more.
+
+  NOTE: the number of moments is specified as a compile-time value, NM.
+  Typical values are 1, 4, 16 and 36.
+
+  NOTE: for CUDA builds, the angle and moment axes are always fully threaded.
+
+--niterations
+
+  The number of sweep iterations to perform.  A setting of 1 iteration
+  is sufficient to demonstrate the performance characteristics of the
+  code.
+
+--nproc_x
+
+  Available for MPI builds. The number of MPI ranks used to decompose
+  along the X dimension.
+
+--nproc_y
+
+  Available for MPI builds. The number of MPI ranks used to decompose
+  along the Y dimension.
+
+--nblock_z
+
+  The number of sweep blocks used to tile the Z dimension.  Currently must
+  divide ncell_z exactly.  Blocks along the Z dimension are kept on
+  the same MPI rank.
+  The algorithm is a wavefront algorithm, where every block is
+  considered as a node of the grid for the wavefront calculation.
+
+--is_using_device
+
+  Available for CUDA builds.  Set to 1 to use the GPU, 0 for
+  CPU-only (default).
+
+--is_face_comm_async
+
+  For MPI builds, 1 to use asynchronous communication (default),
+  0 for synchronous only.
+
+--nthread_octant
+
+  For OpenMP or CUDA builds, the number of threads deployed to octants.
+  The total number of threads equals the product of all thread counts
+  along problem axes.
+  Can be 1, 2, 4 or 8.
+  For OpenMP or CUDA builds, should be set to 8.  Otherwise should be
+  set to 1 (default).
+  Currently uses a semiblock tiling method for threading octants,
+  different from the production code.
+
+--nsemiblock
+
+  An experimental tuning parameter.  By default equals nthread_octant.
+
+--nthread_e
+
+  For OpenMP or CUDA builds, the number of threads deployed to energy groups
+  (default 1).
+  The total number of threads equals the product of all thread counts
+  along problem axes.
+
+--nthread_y
+
+  For OpenMP or CUDA builds, the number of threads deployed to the Y axis
+  within a sweep block (default 1).
+  The total number of threads equals the product of all thread counts
+  along problem axes.
+  For CUDA builds, can be set to a small integer between 1 and 4.
+  Not advised for OpenMP builds, as the parallelism is too fine-grained.
+
+--nthread_z
+
+  For OpenMP or CUDA builds, the number of threads deployed to the Z axis
+  within a sweep block (default 1).
+  The total number of threads equals the product of all thread counts
+  along problem axes.
+  Since the sweep block thickness in Z commonly equals 1, nthread_z should
+  generally be set to 1.
+  Not advised for OpenMP builds, as the parallelism is too fine-grained.
+
+--ncell_x_per_subblock
+
+  For OpenMP or CUDA builds, a blocking factor for blocking the sweep block
+  to deploy Y/Z threading.  By default equals the number of cells along the
+  X dimension for the given MPI rank.
+
+--ncell_y_per_subblock
+
+  For OpenMP or CUDA builds, a blocking factor for blocking the sweep block
+  to deploy Y/Z threading.  By default equals the number of cells along the
+  Y dimension for the given MPI rank.
+
+Example
+-------
+
+Usage example on ORNL Titan system, CPU only, for executing a weak scaling
+study:
 
 qsub -I -Astf006 -lnodes=1 -lwalltime=2:0:0
 cd $MEMBERWORK/stf006
@@ -22,5 +153,14 @@ for nproc_y in {1..2} ; do
     --ne 16 --na 32 --nproc_x $nproc_x --nproc_y $nproc_y --nblock_z 64
 done
 done
+
+References
+----------
+
+Baker, C.; Davidson, G.; Evans, T.M.; Hamilton, S.; Jarrell, J.; Joubert, W.,
+High performance radiation transport simulations: Preparing for TITAN,
+in: High Performance Computing, Networking, Storage and Analysis (SC),
+2012 International Conference for, Issue Date: 10-16 Nov. 2012,
+http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=6468508&tag=1
 
 
