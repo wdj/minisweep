@@ -126,8 +126,8 @@ Settings
   to deploy Y/Z threading.  By default equals the number of cells along the
   Y dimension for the given MPI rank.
 
-Example
--------
+Example 1
+---------
 
 Usage example on ORNL Titan system, CPU only, for executing a weak scaling
 study:
@@ -151,6 +151,36 @@ for nproc_y in {1..2} ; do
     --ncell_x  $(( 4 * $nproc_x )) --ncell_y $(( 8 * $nproc_y )) \
     --ncell_z 64 \
     --ne 16 --na 32 --nproc_x $nproc_x --nproc_y $nproc_y --nblock_z 64
+done
+done
+
+Example 2
+---------
+
+Usage example on ORNL Titan system, using GPUs, for executing a weak scaling
+study:
+
+qsub -I -Astf006 -lnodes=4 -lwalltime=2:0:0 -lfeature=gpudefault
+cd $MEMBERWORK/stf006
+mkdir minisweep_work
+cd minisweep_work
+module load git
+git clone https://github.com/wdj/minisweep.git
+mkdir build
+cd build
+module swap PrgEnv-pgi PrgEnv-gnu
+module load cmake
+module load cudatoolkit
+env BUILD=Release ../minisweep/scripts/cmake_cray_xk7_cuda.sh
+make
+
+for nnode_x in {1..2} ; do
+for nnode_y in {1..2} ; do
+  aprun -n$(( $nnode_x * $nnode_y )) -N1 ./sweep \
+    --ncell_x  $(( 16 * $nnode_x )) --ncell_y $(( 32 * $nnode_y )) \
+    --ncell_z 64 \
+    --ne 16 --na 32 --nproc_x $nnode_x --nproc_y $nnode_y --nblock_z 64 \
+    --is_using_device 1 --nthread_octant 8 --nthread_e 16
 done
 done
 
