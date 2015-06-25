@@ -25,6 +25,10 @@ extern "C"
 /*---Number of physical dimensions---*/
 enum{ NDIM = 3 };
 
+enum{ DIM_X = 0 };
+enum{ DIM_Y = 1 };
+enum{ DIM_Z = 2 };
+
 /*---Number of octant directions---*/
 enum{ NOCTANT = 8 };
 

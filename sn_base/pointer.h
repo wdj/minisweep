@@ -41,6 +41,24 @@ static inline Pointer Pointer_null()
 }
 
 /*===========================================================================*/
+/*---Conditional host or device pointer---*/
+
+static inline P* __restrict__ Pointer_active( Pointer* p )
+{
+  Assert( p );
+  return p->is_using_device_ ? p->d_ : p->h_;
+}
+
+/*===========================================================================*/
+/*---Conditional host or device pointer---*/
+
+static inline P* __restrict__ Pointer_const_active( const Pointer* p )
+{
+  Assert( p );
+  return p->is_using_device_ ? p->d_ : p->h_;
+}
+
+/*===========================================================================*/
 /*---Pseudo-constructors---*/
 
 void Pointer_ctor( Pointer* p,

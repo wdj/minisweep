@@ -13,6 +13,7 @@
 
 #include "function_attributes.h"
 #include "env.h"
+#include "pointer.h"
 #include "definitions.h"
 #include "quantities.h"
 #include "array_accessors.h"
@@ -386,13 +387,13 @@ void Sweeper_sweep_block(
                  >>>
 #endif
                             ( sweeperlite,
-                              Pointer_d( vo ),
-                              Pointer_d( vi ),
-                              Pointer_d( facexy ),
-                              Pointer_d( facexz ),
-                              Pointer_d( faceyz ),
-                              Pointer_const_d( a_from_m ),
-                              Pointer_const_d( m_from_a ),
+                              Pointer_active( vo ),
+                              Pointer_active( vi ),
+                              Pointer_active( facexy ),
+                              Pointer_active( facexz ),
+                              Pointer_active( faceyz ),
+                              Pointer_const_active( a_from_m ),
+                              Pointer_const_active( m_from_a ),
                               step, *quan,
                               proc_x==0,
                               proc_x==Env_nproc_x( env )-1,
@@ -404,18 +405,19 @@ void Sweeper_sweep_block(
   }
   else
 #ifdef USE_OPENMP_THREADS
-#pragma omp parallel num_threads( sweeper->nthread_e * sweeper->nthread_octant * sweeper->nthread_y * sweeper->nthread_z )
+#pragma omp parallel num_threads( sweeper->nthread_e * sweeper->nthread_octant \
+                                * sweeper->nthread_y * sweeper->nthread_z )
 #endif
   {
-    Sweeper_sweep_block_impl( &sweeperlite,
-                              Pointer_h( vo ),
-                              Pointer_h( vi ),
-                              Pointer_h( facexy ),
-                              Pointer_h( facexz ),
-                              Pointer_h( faceyz ),
-                              Pointer_const_h( a_from_m ),
-                              Pointer_const_h( m_from_a ),
-                              step, quan,
+    Sweeper_sweep_block_impl( sweeperlite,
+                              Pointer_active( vo ),
+                              Pointer_active( vi ),
+                              Pointer_active( facexy ),
+                              Pointer_active( facexz ),
+                              Pointer_active( faceyz ),
+                              Pointer_const_active( a_from_m ),
+                              Pointer_const_active( m_from_a ),
+                              step, *quan,
                               proc_x==0,
                               proc_x==Env_nproc_x( env )-1,
                               proc_y==0,

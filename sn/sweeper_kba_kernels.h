@@ -337,102 +337,10 @@ TARGET_HD static inline P* __restrict__ Sweeper_volocal_this_(
 }
 
 /*===========================================================================*/
-/*---Perform a sweep for a cell---*/
-
-TARGET_HD inline void Sweeper_sweep_cell(
-  SweeperLite* __restrict__      sweeper,
-  P* __restrict__                vo_this,
-  const P* const __restrict__    vi_this,
-  P* __restrict__                vilocal,
-  P* __restrict__                vslocal,
-  P* __restrict__                volocal,
-  P* __restrict__                facexy,
-  P* __restrict__                facexz,
-  P* __restrict__                faceyz,
-  const P* const __restrict__    a_from_m,
-  const P* const __restrict__    m_from_a,
-  const Quantities* __restrict__ quan,
-  const int                      octant,
-  const int                      iz_base,
-  const int                      octant_in_block,
-  const int                      ie,
-  const int                      ix,
-  const int                      iy,
-  const int                      iz,
-  const Bool_t                   do_block_init_this,
-  const Bool_t                   is_cell_active );
-
-/*===========================================================================*/
-/*---Perform a sweep for a subblock---*/
-
-TARGET_HD inline void Sweeper_sweep_subblock(
-  SweeperLite* __restrict__      sweeper,
-  P* const __restrict__          vo_this,
-  const P* const __restrict__    vi_this,
-  P* const __restrict__          vilocal,
-  P* const __restrict__          vslocal,
-  P* const __restrict__          volocal,
-  P* const __restrict__          facexy,
-  P* const __restrict__          facexz,
-  P* const __restrict__          faceyz,
-  const P* const __restrict__    a_from_m,
-  const P* const __restrict__    m_from_a,
-  const Quantities* __restrict__ quan,
-  const int                      octant,
-  const int                      iz_base,
-  const int                      octant_in_block,
-  const int                      ie,
-  const int                      ixmin_subblock,
-  const int                      ixmax_subblock,
-  const int                      iymin_subblock,
-  const int                      iymax_subblock,
-  const int                      izmin_subblock,
-  const int                      izmax_subblock,
-  const Bool_t                   is_subblock_active,
-  const int                      ixmin_semiblock,
-  const int                      ixmax_semiblock,
-  const int                      iymin_semiblock,
-  const int                      iymax_semiblock,
-  const int                      izmin_semiblock,
-  const int                      izmax_semiblock,
-  const int                      dir_x,
-  const int                      dir_y,
-  const int                      dir_z,
-  const int                      dir_inc_x,
-  const int                      dir_inc_y,
-  const int                      dir_inc_z,
-  const Bool_t                   do_block_init_this,
-  const Bool_t                   is_octant_active );
-
-/*===========================================================================*/
-/*---Perform a sweep for a semiblock---*/
-
-TARGET_HD inline void Sweeper_sweep_semiblock(
-  SweeperLite*           sweeper,
-  P* __restrict__        vo,
-  const P* __restrict__  vi,
-  P* __restrict__        facexy,
-  P* __restrict__        facexz,
-  P* __restrict__        faceyz,
-  const P* __restrict__  a_from_m,
-  const P* __restrict__  m_from_a,
-  const Quantities*      quan,
-  const StepInfo         stepinfo,
-  const int              octant_in_block,
-  const int              ixmin,
-  const int              ixmax,
-  const int              iymin,
-  const int              iymax,
-  const int              izmin,
-  const int              izmax,
-  const Bool_t           do_block_init_this,
-  const Bool_t           is_octant_active );
-
-/*===========================================================================*/
 /*---Perform a sweep for a block, implementation---*/
 
 TARGET_HD void Sweeper_sweep_block_impl(
-  SweeperLite*           sweeper,
+  SweeperLite            sweeper,
   P* __restrict__        vo,
   const P* __restrict__  vi,
   P* __restrict__        facexy,
@@ -441,7 +349,7 @@ TARGET_HD void Sweeper_sweep_block_impl(
   const P* __restrict__  a_from_m,
   const P* __restrict__  m_from_a,
   int                    step,
-  const Quantities*      quan,
+  const Quantities       quan,
   Bool_t                 proc_x_min,
   Bool_t                 proc_x_max,
   Bool_t                 proc_y_min,
