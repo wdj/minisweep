@@ -41,7 +41,7 @@ void run_case( Env* env, Arguments* args, RunData* rundata );
 /*===========================================================================*/
 /*---Perform two runs, compare results---*/
 
-Bool_t compare_runs( Env* env, char* argstring1, char* argstring2 );
+Bool_t compare_runs( Env* env, const char* argstring1, const char* argstring2 );
 
 /*===========================================================================*/
 

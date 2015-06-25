@@ -40,8 +40,8 @@ void Arguments_ctor( Arguments* args,
 /*===========================================================================*/
 /* Pseudo-constructor that takes a string instead of an args array---*/
 
-void Arguments_ctor_string( Arguments* args,
-                            char*      argstring );
+void Arguments_ctor_string( Arguments*  args,
+                            const char* argstring );
 
 /*===========================================================================*/
 /* Pseudo-destructor for Arguments struct---*/

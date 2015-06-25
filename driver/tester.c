@@ -27,7 +27,7 @@
 /*===========================================================================*/
 
 static void compare_runs_helper( Env* env, int* ntest,
-    int* ntest_passed, char* string_common, char* string1, char* string2 )
+    int* ntest_passed, const char* string_common, const char* string1, const char* string2 )
 {
   char argstring1[MAX_LINE_LEN];
   char argstring2[MAX_LINE_LEN];
@@ -342,38 +342,39 @@ static void test_mpi( Env* env, int* ntest, int* ntest_passed )
 
   if( do_tests )
   {
-    char* string_common = 0;
+    const char* string_common_1 = "--ncell_x  5 --ncell_y  4 --ncell_z  5"
+                                  " --ne 7 --na 10";
 
-    string_common = "--ncell_x  5 --ncell_y  4 --ncell_z  5 --ne 7 --na 10";
-
-    compare_runs_helper( env, ntest, ntest_passed, string_common,
+    compare_runs_helper( env, ntest, ntest_passed, string_common_1,
         "--nproc_x 1 --nproc_y 1 --nblock_z 1",
         "--nproc_x 2 --nproc_y 1 --nblock_z 1" );
 
-    compare_runs_helper( env, ntest, ntest_passed, string_common,
+    compare_runs_helper( env, ntest, ntest_passed, string_common_1,
         "--nproc_x 1 --nproc_y 1 --nblock_z 1",
         "--nproc_x 1 --nproc_y 2 --nblock_z 1" );
 
-    string_common = "--ncell_x  5 --ncell_y  4 --ncell_z  6 --ne 7 --na 10";
+    const char* string_common_2 = "--ncell_x  5 --ncell_y  4 --ncell_z  6"
+                                  " --ne 7 --na 10";
 
-    compare_runs_helper( env, ntest, ntest_passed, string_common,
+    compare_runs_helper( env, ntest, ntest_passed, string_common_2,
         "--nproc_x 1 --nproc_y 1 --nblock_z 1",
         "--nproc_x 4 --nproc_y 4 --nblock_z 2" );
 
-    string_common = "--ncell_x  5 --ncell_y  4 --ncell_z  6 --ne 7 --na 10 "
-                  " --is_face_comm_async 0";
+    const char* string_common_3 = "--ncell_x  5 --ncell_y  4 --ncell_z  6"
+                                  " --ne 7 --na 10 --is_face_comm_async 0";
 
-    compare_runs_helper( env, ntest, ntest_passed, string_common,
+    compare_runs_helper( env, ntest, ntest_passed, string_common_3,
         "--nproc_x 1 --nproc_y 1 --nblock_z 1",
         "--nproc_x 4 --nproc_y 4 --nblock_z 2" );
 
-    string_common = "--ncell_x 5 --ncell_y 8 --ncell_z 16 --ne 9 --na 12";
+    const char* string_common_4 = "--ncell_x 5 --ncell_y 8 --ncell_z 16"
+                                  " --ne 9 --na 12";
 
-    compare_runs_helper( env, ntest, ntest_passed, string_common,
+    compare_runs_helper( env, ntest, ntest_passed, string_common_4,
         "--nproc_x 4 --nproc_y 4 --nblock_z 1",
         "--nproc_x 4 --nproc_y 4 --nblock_z 2" );
 
-    compare_runs_helper( env, ntest, ntest_passed, string_common,
+    compare_runs_helper( env, ntest, ntest_passed, string_common_4,
         "--nproc_x 4 --nproc_y 4 --nblock_z 2",
         "--nproc_x 4 --nproc_y 4 --nblock_z 4" );
   }
