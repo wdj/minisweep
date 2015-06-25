@@ -34,7 +34,7 @@ cmake \
  \
   -DCMAKE_C_COMPILER:STRING="$(which cc)" \
   -DMPI_C_COMPILER="$(which cc)" \
-  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE" \
+  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE -DUSE_OPENMP -DUSE_OPENMP_THREADS -fopenmp" \
   -DCMAKE_C_FLAGS_DEBUG:STRING="-g" \
   -DCMAKE_C_FLAGS_RELEASE:STRING="-O3 -fomit-frame-pointer -funroll-loops -finline-limit=10000000" \
  \

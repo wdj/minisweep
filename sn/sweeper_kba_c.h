@@ -341,20 +341,17 @@ void Sweeper_sweep_block(
       const StepInfo stepinfo = stepinfoall.stepinfo[octant_in_block];
       if( stepinfo.is_active )
       {
-        const int dir_x = Dir_x( stepinfo.octant );
-        const int dir_y = Dir_y( stepinfo.octant );
-        const int dir_z = Dir_z( stepinfo.octant );
         const Bool_t is_x_semiblocked = sweeper->nsemiblock > (1<<0);
         const Bool_t is_semiblock_x_lo = ( ( semiblock & (1<<0) ) == 0 ) ==
-                                         ( dir_x == DIR_UP );
+                                         ( Dir_x( stepinfo.octant ) == DIR_UP );
         const Bool_t has_x_lo =     is_semiblock_x_lo   || ! is_x_semiblocked;
         const Bool_t is_y_semiblocked = sweeper->nsemiblock > (1<<1);
         const Bool_t is_semiblock_y_lo = ( ( semiblock & (1<<1) ) == 0 ) ==
-                                         ( dir_y == DIR_UP );
+                                         ( Dir_y( stepinfo.octant ) == DIR_UP );
         const Bool_t has_y_lo =     is_semiblock_y_lo   || ! is_y_semiblocked;
         const Bool_t is_z_semiblocked = sweeper->nsemiblock > (1<<2);
         const Bool_t is_semiblock_z_lo = ( ( semiblock & (1<<2) ) == 0 ) ==
-                                         ( dir_z == DIR_UP );
+                                         ( Dir_z( stepinfo.octant ) == DIR_UP );
         const Bool_t has_z_lo =     is_semiblock_z_lo   || ! is_z_semiblocked;
         const int semiblock_num = ( has_x_lo ? 0 : 1 ) + 2 * (
                                   ( has_y_lo ? 0 : 1 ) + 2 * (

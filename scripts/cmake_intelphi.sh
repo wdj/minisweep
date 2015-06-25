@@ -29,6 +29,7 @@ OPT_ARGS="-mmic -vec-report1 -ip -prec-div -O3 -align -ansi-alias -fargument-noa
 cmake \
   -DCMAKE_BUILD_TYPE:STRING="$BUILD" \
   -DCMAKE_INSTALL_PREFIX:PATH="$INSTALL" \
+ \
   -DCMAKE_C_COMPILER:STRING=mpiicc \
   -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE -DUSE_OPENMP -DUSE_OPENMP_THREADS -openmp -DUSE_MPI" \
   -DCMAKE_C_FLAGS_DEBUG:STRING="-mmic -g $OPT_ARGS" \

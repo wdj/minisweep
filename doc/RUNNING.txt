@@ -166,8 +166,8 @@ mkdir minisweep_work
 cd minisweep_work
 module load git
 git clone https://github.com/wdj/minisweep.git
-mkdir build
-cd build
+mkdir build_cuda
+cd build_cuda
 module swap PrgEnv-pgi PrgEnv-gnu
 module load cmake
 module load cudatoolkit
@@ -183,6 +183,32 @@ for nnode_y in {1..2} ; do
     --is_using_device 1 --nthread_octant 8 --nthread_e 16
 done
 done
+
+Example 3
+---------
+
+Usage example on ORNL Titan system, CPU only, for executing a weak scaling
+study for cores on a node using OpenMP:
+
+qsub -I -Astf006 -lnodes=1 -lwalltime=2:0:0
+cd $MEMBERWORK/stf006
+mkdir minisweep_work
+cd minisweep_work
+module load git
+git clone https://github.com/wdj/minisweep.git
+mkdir build_openmp
+cd build_openmp
+module swap PrgEnv-pgi PrgEnv-gnu
+module load cmake
+env BUILD=Release ../minisweep/scripts/cmake_cray_xk7_openmp.sh
+make
+
+for nthread_e in {1..8} ; do
+  aprun -n1 -d$nthread_e ./sweep \
+    --ncell_x  8 --ncell_y 16 --ncell_z 32 \
+    --ne 64 --na 32 --nproc_x 1 --nproc_y 1 --nblock_z 32 --nthread_e $nthread_e
+done
+
 
 References
 ----------
