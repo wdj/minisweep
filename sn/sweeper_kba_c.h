@@ -75,6 +75,7 @@ void Sweeper_ctor( Sweeper*          sweeper,
                                        ? "Invalid thread count supplied" : 0 );
   /*---Don't allow threading in cases where it doesn't make sense---*/
   Insist( sweeper->nthread_octant==1 || IS_USING_OPENMP_THREADS
+                                     || IS_USING_OPENMP_TASKS
                                      || Env_cuda_is_using_device( env ) ?
           "Threading not allowed for this case" : 0 );
 
@@ -124,6 +125,7 @@ void Sweeper_ctor( Sweeper*          sweeper,
   Insist( sweeper->nthread_e > 0 ? "Invalid thread count supplied." : 0 );
   /*---Don't allow threading in cases where it doesn't make sense---*/
   Insist( sweeper->nthread_e==1 || IS_USING_OPENMP_THREADS
+                                || IS_USING_OPENMP_TASKS
                                 || Env_cuda_is_using_device( env ) ?
           "Threading not allowed for this case" : 0 );
 
@@ -131,14 +133,24 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Set up number of spatial threads---*/
   /*====================*/
 
+/*
+FIX
+*/
+
+
+  sweeper->nthread_x = 1;
+
   sweeper->nthread_y
                    = Arguments_consume_int_or_default( args, "--nthread_y", 1);
 
   Insist( sweeper->nthread_y > 0 ? "Invalid thread count supplied." : 0 );
   /*---Don't allow threading in cases where it doesn't make sense---*/
   Insist( sweeper->nthread_y==1 || IS_USING_OPENMP_THREADS
+                                || IS_USING_OPENMP_TASKS
                                 || Env_cuda_is_using_device( env ) ?
           "Threading not allowed for this case" : 0 );
+  Insist( sweeper->nthread_y==1 || ! IS_USING_OPENMP_TASKS ?
+          "Spatial threading must be defined via subblock sizes." : 0 );
 
   sweeper->nthread_z
                    = Arguments_consume_int_or_default( args, "--nthread_z", 1);
@@ -146,8 +158,11 @@ void Sweeper_ctor( Sweeper*          sweeper,
   Insist( sweeper->nthread_z > 0 ? "Invalid thread count supplied." : 0 );
   /*---Don't allow threading in cases where it doesn't make sense---*/
   Insist( sweeper->nthread_z==1 || IS_USING_OPENMP_THREADS
+                                || IS_USING_OPENMP_TASKS
                                 || Env_cuda_is_using_device( env ) ?
           "Threading not allowed for this case" : 0 );
+  Insist( sweeper->nthread_z==1 || ! IS_USING_OPENMP_TASKS ?
+          "Spatial threading must be defined via subblock sizes." : 0 );
 
   /*====================*/
   /*---Set up step scheduler---*/
@@ -261,32 +276,150 @@ void Sweeper_dtor( Sweeper* sweeper,
 /*===========================================================================*/
 /*---Extract SweeperLite from Sweeper---*/
 
-SweeperLite Sweeper_sweeperlite( Sweeper sweeper )
+SweeperLite Sweeper_sweeperlite( Sweeper* sweeper )
 {
   SweeperLite sweeperlite;
 
-  sweeperlite.vilocal_host_ = sweeper.vilocal_host_;
-  sweeperlite.vslocal_host_ = sweeper.vslocal_host_;
-  sweeperlite.volocal_host_ = sweeper.volocal_host_;
+  sweeperlite.vilocal_host_ = sweeper->vilocal_host_;
+  sweeperlite.vslocal_host_ = sweeper->vslocal_host_;
+  sweeperlite.volocal_host_ = sweeper->volocal_host_;
 
-  sweeperlite.dims   = sweeper.dims;
-  sweeperlite.dims_b = sweeper.dims_b;
-  sweeperlite.dims_g = sweeper.dims_g;
+  sweeperlite.dims   = sweeper->dims;
+  sweeperlite.dims_b = sweeper->dims_b;
+  sweeperlite.dims_g = sweeper->dims_g;
 
-  sweeperlite.nthread_e      = sweeper.nthread_e;
-  sweeperlite.nthread_octant = sweeper.nthread_octant;
-  sweeperlite.nthread_y      = sweeper.nthread_y;
-  sweeperlite.nthread_z      = sweeper.nthread_z;
+  sweeperlite.nthread_e      = sweeper->nthread_e;
+  sweeperlite.nthread_octant = sweeper->nthread_octant;
+  sweeperlite.nthread_x      = sweeper->nthread_x;
+  sweeperlite.nthread_y      = sweeper->nthread_y;
+  sweeperlite.nthread_z      = sweeper->nthread_z;
 
-  sweeperlite.nblock_z             = sweeper.nblock_z;
-  sweeperlite.nblock_octant        = sweeper.nblock_octant;
-  sweeperlite.noctant_per_block    = sweeper.noctant_per_block;
-  sweeperlite.nsemiblock           = sweeper.nsemiblock;
-  sweeperlite.ncell_x_per_subblock = sweeper.ncell_x_per_subblock;
-  sweeperlite.ncell_y_per_subblock = sweeper.ncell_y_per_subblock;
-  sweeperlite.ncell_z_per_subblock = sweeper.ncell_z_per_subblock;
+  sweeperlite.nblock_z             = sweeper->nblock_z;
+  sweeperlite.nblock_octant        = sweeper->nblock_octant;
+  sweeperlite.noctant_per_block    = sweeper->noctant_per_block;
+  sweeperlite.nsemiblock           = sweeper->nsemiblock;
+  sweeperlite.ncell_x_per_subblock = sweeper->ncell_x_per_subblock;
+  sweeperlite.ncell_y_per_subblock = sweeper->ncell_y_per_subblock;
+  sweeperlite.ncell_z_per_subblock = sweeper->ncell_z_per_subblock;
+
+#ifdef USE_OPENMP_TASKS
+  thread_e = 0;
+  thread_octant = 0;
+  thread_x = 0;
+  thread_y = 0;
+  thread_z = 0;
+  #---(Arbitraily) point to the base of the current sweeper struct.
+  #---NOTE: will break if sweeperlite is used after sweeper destroyed.
+  sweeperlite.task_dependencies = (char*)sweeper;
+#endif
 
   return sweeperlite;
+}
+
+/*===========================================================================*/
+/*---Adapter function to launch the sweep block kernel---*/
+
+static void Sweeper_sweep_block_adapter(
+  Sweeper*               sweeper,
+        P* __restrict__  vo,
+  const P* __restrict__  vi,
+        P* __restrict__  facexy,
+        P* __restrict__  facexz,
+        P* __restrict__  faceyz,
+  const P* __restrict__  a_from_m,
+  const P* __restrict__  m_from_a,
+  int                    step,
+  const Quantities*      quan,
+  Bool_t                 proc_x_min,
+  Bool_t                 proc_x_max,
+  Bool_t                 proc_y_min,
+  Bool_t                 proc_y_max,
+  StepInfoAll            stepinfoall,
+  unsigned long int      do_block_init,
+  Env*                   env )
+{
+  /*---Call sweep block implementation function---*/
+
+  SweeperLite sweeperlite = Sweeper_sweeperlite( sweeper );
+
+  if( Env_cuda_is_using_device( env ) )
+  {
+    Sweeper_sweep_block_impl_global
+#ifdef __CUDACC__
+                 <<< dim3( Sweeper_nthreadblock( sweeper, 0, env ),
+                           Sweeper_nthreadblock( sweeper, 1, env ),
+                           Sweeper_nthreadblock( sweeper, 2, env ) ),
+                     dim3( Sweeper_nthread_in_threadblock( sweeper, 0, env ),
+                           Sweeper_nthread_in_threadblock( sweeper, 1, env ),
+                           Sweeper_nthread_in_threadblock( sweeper, 2, env ) ),
+                     Sweeper_shared_size_( sweeper, env ),
+                     Env_cuda_stream_kernel_faces( env )
+                 >>>
+#endif
+                            ( sweeperlite,
+                              vo,
+                              vi,
+                              facexy,
+                              facexz,
+                              faceyz,
+                              a_from_m,
+                              m_from_a,
+                              step,
+                              *quan,
+                              proc_x_min,
+                              proc_x_max,
+                              proc_y_min,
+                              proc_y_max,
+                              stepinfoall,
+                              do_block_init );
+    Assert( Env_cuda_last_call_succeeded() );
+  }
+  else
+  {
+#ifdef USE_OPENMP_THREADS
+#pragma omp parallel num_threads( sweeper->nthread_e * sweeper->nthread_octant \
+                                * sweeper->nthread_y * sweeper->nthread_z )
+  {
+#endif
+#ifdef USE_OPENMP_TASKS
+/*---Later: maybe: remove the omp single, put an omp for above loop, so that all
+     threads can participate in launching the tasks. Can be dynamic schedule
+     thus more flexible than above static schedule---*/
+#pragma omp private(sweeperlite)
+#pragma omp single
+  {
+    int thread_e = 0;
+    for( thread_e=0; thread_e<sweeperlite->nthread_e; ++thread_e)
+    {
+
+      sweeperlite->thread_e = thread_e;
+
+#endif
+    Sweeper_sweep_block_impl( sweeperlite,
+                              vo,
+                              vi,
+                              facexy,
+                              facexz,
+                              faceyz,
+                              a_from_m,
+                              m_from_a,
+                              step,
+                              *quan,
+                              proc_x_min,
+                              proc_x_max,
+                              proc_y_min,
+                              proc_y_max,
+                              stepinfoall,
+                              do_block_init );
+
+#ifdef USE_OPENMP_THREADS
+  } /*---OPENMP---*/
+#endif
+#ifdef USE_OPENMP_TASKS
+    }
+  } /*---OPENMP---*/
+#endif
+  } /*---if else---*/
 }
 
 /*===========================================================================*/
@@ -368,13 +501,35 @@ void Sweeper_sweep_block(
     } /*---octant_in_block---*/
   } /*---semiblock---*/
 
+  /*---Call kernel adapter---*/
+
+#if 0
+  Sweeper_sweep_block_adapter( sweeper,
+                               Pointer_active( vo ),
+                               Pointer_active( vi ),
+                               Pointer_active( facexy ),
+                               Pointer_active( facexz ),
+                               Pointer_active( faceyz ),
+                               Pointer_const_active( a_from_m ),
+                               Pointer_const_active( m_from_a ),
+                               step,
+                               quan,
+                               proc_x==0,
+                               proc_x==Env_nproc_x( env )-1,
+                               proc_y==0,
+                               proc_y==Env_nproc_y( env )-1,
+                               stepinfoall,
+                               do_block_init,
+                               env);
+#endif
+
   /*---Call sweep block implementation function---*/
 
-  SweeperLite sweeperlite = Sweeper_sweeperlite( *sweeper );
+  SweeperLite sweeperlite = Sweeper_sweeperlite( sweeper );
 
   if( Env_cuda_is_using_device( env ) )
   {
-    Sweeper_sweep_block_adapter
+    Sweeper_sweep_block_impl_global
 #ifdef __CUDACC__
                  <<< dim3( Sweeper_nthreadblock( sweeper, 0, env ),
                            Sweeper_nthreadblock( sweeper, 1, env ),
@@ -394,7 +549,8 @@ void Sweeper_sweep_block(
                               Pointer_active( faceyz ),
                               Pointer_const_active( a_from_m ),
                               Pointer_const_active( m_from_a ),
-                              step, *quan,
+                              step,
+                              *quan,
                               proc_x==0,
                               proc_x==Env_nproc_x( env )-1,
                               proc_y==0,
@@ -404,9 +560,11 @@ void Sweeper_sweep_block(
     Assert( Env_cuda_last_call_succeeded() );
   }
   else
+  {
 #ifdef USE_OPENMP_THREADS
 #pragma omp parallel num_threads( sweeper->nthread_e * sweeper->nthread_octant \
                                 * sweeper->nthread_y * sweeper->nthread_z )
+  {
 #endif
 #ifdef USE_OPENMP_TASKS
 /*---Later: maybe: remove the omp single, put an omp for above loop, so that all
@@ -414,8 +572,14 @@ void Sweeper_sweep_block(
      thus more flexible than above static schedule---*/
 #pragma omp private(sweeperlite)
 #pragma omp single
-#endif
   {
+    int thread_e = 0;
+    for( thread_e=0; thread_e<sweeperlite->nthread_e; ++thread_e)
+    {
+
+      sweeperlite->thread_e = thread_e;
+
+#endif
     Sweeper_sweep_block_impl( sweeperlite,
                               Pointer_active( vo ),
                               Pointer_active( vi ),
@@ -424,7 +588,8 @@ void Sweeper_sweep_block(
                               Pointer_active( faceyz ),
                               Pointer_const_active( a_from_m ),
                               Pointer_const_active( m_from_a ),
-                              step, *quan,
+                              step,
+                              *quan,
                               proc_x==0,
                               proc_x==Env_nproc_x( env )-1,
                               proc_y==0,
@@ -432,7 +597,14 @@ void Sweeper_sweep_block(
                               stepinfoall,
                               do_block_init );
 
+#ifdef USE_OPENMP_THREADS
   } /*---OPENMP---*/
+#endif
+#ifdef USE_OPENMP_TASKS
+    }
+  } /*---OPENMP---*/
+#endif
+  } /*---if else---*/
 }
 
 /*===========================================================================*/

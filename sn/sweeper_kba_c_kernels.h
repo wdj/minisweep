@@ -856,6 +856,10 @@ TARGET_HD static inline void Sweeper_sweep_semiblock(
   const int dir_inc_y = Dir_inc(dir_y);
   const int dir_inc_z = Dir_inc(dir_z);
 
+#ifdef USE_OPENMP_TASKS
+...
+#endif
+
   /*---Number of subblocks---*/
 
   const int nsubblock_x = iceil( ixmax_semiblock-ixmin_semiblock+1,
@@ -1279,7 +1283,7 @@ TARGET_HD void Sweeper_sweep_block_impl(
 /*===========================================================================*/
 /*---Perform a sweep for a block, implementation, global---*/
 
-TARGET_G void Sweeper_sweep_block_adapter(
+TARGET_G void Sweeper_sweep_block_impl_global(
   SweeperLite            sweeper,
         P* __restrict__  vo,
   const P* __restrict__  vi,
