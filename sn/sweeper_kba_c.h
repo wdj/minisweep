@@ -408,6 +408,13 @@ void Sweeper_sweep_block(
 #pragma omp parallel num_threads( sweeper->nthread_e * sweeper->nthread_octant \
                                 * sweeper->nthread_y * sweeper->nthread_z )
 #endif
+#ifdef USE_OPENMP_TASKS
+/*---Later: maybe: remove the omp single, put an omp for above loop, so that all
+     threads can participate in launching the tasks. Can be dynamic schedule
+     thus more flexible than above static schedule---*/
+#pragma omp private(sweeperlite)
+#pragma omp single
+#endif
   {
     Sweeper_sweep_block_impl( sweeperlite,
                               Pointer_active( vo ),
