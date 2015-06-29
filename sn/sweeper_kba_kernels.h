@@ -152,7 +152,7 @@ TARGET_HD static inline int Sweeper_thread_x( const SweeperLite* sweeper )
 #ifdef USE_OPENMP_TASKS
   return sweeper->thread_x;
 #else
-  return 1;
+  return 0;
 #endif
 }
 
