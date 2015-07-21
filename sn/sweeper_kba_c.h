@@ -116,6 +116,19 @@ void Sweeper_ctor( Sweeper*          sweeper,
                                         "Invalid subblock size supplied" : 0 );
 
   /*====================*/
+  /*---Set up dims structs---*/
+  /*====================*/
+
+  sweeper->dims = dims;
+
+  sweeper->dims_b = sweeper->dims;
+  sweeper->dims_b.ncell_z = sweeper->dims.ncell_z / sweeper->nblock_z;
+
+  sweeper->dims_g = sweeper->dims;
+  sweeper->dims_g.ncell_x = quan->ncell_x_g;
+  sweeper->dims_g.ncell_y = quan->ncell_y_g;
+
+  /*====================*/
   /*---Set up number of energy threads---*/
   /*====================*/
 
@@ -143,14 +156,14 @@ void Sweeper_ctor( Sweeper*          sweeper,
     const Bool_t is_semiblocked_z = sweeper->nsemiblock > (1<<2);
 
     const int ncell_x_semiblock_up2 = is_semiblocked_x ?
-                                      ( dims.ncell_x + 1 ) / 2 :
-                                        dims.ncell_x;
+                                      ( sweeper->dims_b.ncell_x + 1 ) / 2 :
+                                        sweeper->dims_b.ncell_x;
     const int ncell_y_semiblock_up2 = is_semiblocked_y ?
-                                      ( dims.ncell_y + 1 ) / 2 :
-                                        dims.ncell_y;
+                                      ( sweeper->dims_b.ncell_y + 1 ) / 2 :
+                                        sweeper->dims_b.ncell_y;
     const int ncell_z_semiblock_up2 = is_semiblocked_z ?
-                                      ( dims.ncell_z + 1 ) / 2 :
-                                        dims.ncell_z;
+                                      ( sweeper->dims_b.ncell_z + 1 ) / 2 :
+                                        sweeper->dims_b.ncell_z;
 
     sweeper->nthread_x = iceil(ncell_x_semiblock_up2,
                                sweeper->ncell_x_per_subblock);
@@ -217,19 +230,6 @@ void Sweeper_ctor( Sweeper*          sweeper,
          may mean some padding---*/
     Insist( dims.na % VEC_LEN == 0 );
   }
-
-  /*====================*/
-  /*---Set up dims structs---*/
-  /*====================*/
-
-  sweeper->dims = dims;
-
-  sweeper->dims_b = sweeper->dims;
-  sweeper->dims_b.ncell_z = sweeper->dims.ncell_z / sweeper->nblock_z;
-
-  sweeper->dims_g = sweeper->dims;
-  sweeper->dims_g.ncell_x = quan->ncell_x_g;
-  sweeper->dims_g.ncell_y = quan->ncell_y_g;
 
   /*====================*/
   /*---Allocate arrays---*/
@@ -327,15 +327,15 @@ SweeperLite Sweeper_sweeperlite( Sweeper* sweeper )
   sweeperlite.ncell_z_per_subblock = sweeper->ncell_z_per_subblock;
 
 #ifdef USE_OPENMP_TASKS
-  #---Mark these as not yet properly initialized.
-  thread_e = -1;
-  thread_octant = -1;
-  thread_x = -1;
-  thread_y = -1;
-  thread_z = -1;
-  #---(Arbitraily) point to the base of the current sweeper struct.
-  #---NOTE: will break if sweeperlite is used after sweeper destroyed.
-  sweeperlite.task_dependencies = (char*)sweeper;
+  /*---Mark these as not yet properly initialized---*/
+  sweeperlite.thread_e = -1;
+  sweeperlite.thread_octant = -1;
+  sweeperlite.thread_x = -1;
+  sweeperlite.thread_y = -1;
+  sweeperlite.thread_z = -1;
+  /*---(Arbitrarily) point to the base of the current sweeper struct---*/
+  /*---NOTE: will break if sweeperlite is used after sweeper destroyed---*/
+  sweeperlite.task_dependency = (char*)sweeper;
 #endif
 
   return sweeperlite;
@@ -406,6 +406,7 @@ static void Sweeper_sweep_block_adapter(
                                 * sweeper->nthread_y * sweeper->nthread_z )
   {
 #endif
+
     Sweeper_sweep_block_impl( sweeperlite,
                               vo,
                               vi,

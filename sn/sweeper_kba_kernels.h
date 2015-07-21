@@ -101,7 +101,7 @@ typedef struct
   int              thread_x;
   int              thread_y;
   int              thread_z;
-  char*            task_dependencies;
+  char*            task_dependency;
 #endif
 } SweeperLite;
 
@@ -429,11 +429,11 @@ static inline char* Sweeper_task_dependency( SweeperLite* sweeperlite,
   int thread_x, int thread_y, int thread_z, int thread_e, int thread_octant )
 {
   return &( sweeperlite->task_dependency[
-    thread_x      + sweeperlite->nthread_x      * (
-    thread_y      + sweeperlite->nthread_y      * (
-    thread_z      + sweeperlite->nthread_z      * (
-    thread_e      + sweeperlite->nthread_e      * (
-    thread_octant + sweeperlite->nthread_octant * ( 0 ))))) ] );
+    1 + thread_x      + (1+sweeperlite->nthread_x)      * (
+    1 + thread_y      + (1+sweeperlite->nthread_y)      * (
+    1 + thread_z      + (1+sweeperlite->nthread_z)      * (
+    1 + thread_e      + (1+sweeperlite->nthread_e)      * (
+    1 + thread_octant + (1+sweeperlite->nthread_octant) * ( 0 ))))) ] );
 }
 #endif
 

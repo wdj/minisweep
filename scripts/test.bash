@@ -86,6 +86,7 @@ function main
   #---  ncell_x ncell_y ncell_z ne nm na numiterations nproc_x nproc_y nblock_z 
 
   BUILD_DIR=../../build_test
+  #BUILD_DIR=/ccs/home/$(whoami)/atlas/minisweep_work/build_test
   SCRIPTS_DIR=$PWD/../scripts
 
   cp /dev/null tmp_
