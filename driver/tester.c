@@ -510,6 +510,8 @@ int main( int argc, char** argv )
 
   /*---Initialize for execution---*/
 
+  /*---NOTE: env is only partially initialized by this---*/
+
   Env_initialize( &env, argc, argv );
 
   /*---Do testing---*/

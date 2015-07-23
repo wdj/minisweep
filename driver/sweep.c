@@ -42,7 +42,10 @@ int main( int argc, char** argv )
 
   /*---Perform run---*/
 
-  run_case( &env, &args, &rundata );
+  if( Env_is_proc_active( &env ) )
+  {
+    run_case( &env, &args, &rundata );
+  }
 
   if( Env_is_proc_master( &env ) )
   {
