@@ -1,6 +1,27 @@
 #!/bin/bash -l
 #==============================================================================
-# Run tests on the code.
+cat <<EOF >/dev/null
+===============================================================================
+
+Run tests on sweep miniapp.
+
+This script builds multiple versions of the executable and executes
+a battery of tests on each one.
+
+Usage:
+
+cd minisweep/scripts
+bash ./test.bash
+
+Environment variables:
+
+VERBOSE - set to 1 for verbose build output.
+
+NOTE: to run properly on Titan, this must be executed in a PBS job and
+must be run from Lustre.
+
+===============================================================================
+EOF
 #==============================================================================
 
 set -eu
@@ -85,11 +106,19 @@ function main
   #---args to use below:
   #---  ncell_x ncell_y ncell_z ne nm na numiterations nproc_x nproc_y nblock_z 
 
-  BUILD_DIR=../../build_test
-  #BUILD_DIR=/ccs/home/$(whoami)/atlas/minisweep_work/build_test
+  if [ "${VERBOSE:-}" != "" ] ; then
+    VERBOSE_ARG="VERBOSE=$VERBOSE"
+  else
+    VERBOSE_ARG=""
+  fi
+
+  #BUILD_DIR=../../build_test
+  BUILD_DIR=/ccs/home/$(whoami)/atlas/minisweep_work/build_test
   SCRIPTS_DIR=$PWD/../scripts
 
   cp /dev/null tmp_
+
+if [0 = 1 ] ; then
 
   #==============================
   # Serial
@@ -106,7 +135,7 @@ function main
   pushd $BUILD_DIR
 
   env NM_VALUE=4 $SCRIPTS_DIR/cmake_serial.sh
-  make VERBOSE=1
+  make $VERBOSE_ARG
 
   perform_runs "-n1" ""
 
@@ -128,7 +157,7 @@ function main
   pushd $BUILD_DIR
 
   env NM_VALUE=4 $SCRIPTS_DIR/cmake_openmp.sh
-  make VERBOSE=1
+  make $VERBOSE_ARG
 
   perform_runs "-n1 -d16" ""
 
@@ -152,7 +181,7 @@ function main
     pushd $BUILD_DIR
 
     env NM_VALUE=4 $SCRIPTS_DIR/cmake_cray_xk7.sh
-    make VERBOSE=1
+    make $VERBOSE_ARG
 
     perform_runs "-n16" ""
 
@@ -160,6 +189,8 @@ function main
     rm -rf $BUILD_DIR
 
   fi #---PBS_NP
+
+fi
 
   #==============================
   # MPI + CUDA.
@@ -179,7 +210,7 @@ function main
     pushd $BUILD_DIR
 
     env NM_VALUE=4 $SCRIPTS_DIR/cmake_cray_xk7_cuda.sh
-    make VERBOSE=1
+    make $VERBOSE_ARG
 
     perform_runs "-n4" ""
 
@@ -208,7 +239,7 @@ function main
     pushd $BUILD_DIR
 
     env NM_VALUE=16 ALG_OPTIONS=$alg_options $SCRIPTS_DIR/cmake_serial.sh
-    make VERBOSE=1
+    make $VERBOSE_ARG
 
     perform_runs "-n1" ""
 
