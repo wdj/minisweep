@@ -22,8 +22,8 @@ function perform_run
     local wd="$PWD"
     pushd "$MEMBERWORK" >/dev/null
     pwd
-    echo aprun $exec_config_args "$wd/tester"
-    aprun $exec_config_args "$wd/tester"
+    echo env CRAY_CUDA_MPS=1 aprun $exec_config_args "$wd/tester"
+    env CRAY_CUDA_MPS=1 aprun $exec_config_args "$wd/tester"
     #assert $? = 0
     popd >/dev/null
   elif [ "${IMICROOT:-}" != "" ] ; then
@@ -234,8 +234,6 @@ function main
     echo -n "          ========== SUCCESS =========="
   fi
   echo
-
-
 }
 #==============================================================================
 
