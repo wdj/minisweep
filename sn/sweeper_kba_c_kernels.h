@@ -1286,31 +1286,24 @@ TARGET_HD void Sweeper_sweep_block_impl(
     {
 #ifdef USE_OPENMP_TASKS
       /*--------------------*/
-      /*---Enter parallel region to prepare for tasks launch---*/
+      /*---Enter parallel region where tasks will be launched---*/
       /*--------------------*/
 
-      /*---Later: maybe: remove the omp single, put an omp for above loop,
-           so that all threads can participate in launching the tasks.
-           Can be dynamic schedule thus more flexible than
-           static schedule---*/
-#pragma omp parallel firstprivate(sweeper)
-#pragma omp single
+      int thread_octant = 0;
+      int thread_e = 0;
+
+#pragma omp parallel for firstprivate(sweeper) collapse(2)
+      for( thread_octant=0; thread_octant<sweeper.nthread_octant;
+                                                             ++thread_octant)
       {
+      for( thread_e=0; thread_e<sweeper.nthread_e; ++thread_e)
+      {
+        sweeper.thread_octant = thread_octant;
+        sweeper.thread_e = thread_e;
 
       /*--------------------*/
       /*---Loop over the space of all tasks to be launched---*/
       /*--------------------*/
-
-      int thread_octant = 0;
-      for( thread_octant=0; thread_octant<sweeper.nthread_octant;
-                                                             ++thread_octant)
-      {
-        sweeper.thread_octant = thread_octant;
-
-      int thread_e = 0;
-      for( thread_e=0; thread_e<sweeper.nthread_e; ++thread_e)
-      {
-        sweeper.thread_e = thread_e;
 
       int thread_z = 0;
       for( thread_z=0; thread_z<sweeper.nthread_z; ++thread_z)
@@ -1344,9 +1337,10 @@ TARGET_HD void Sweeper_sweep_block_impl(
                 thread_x,   thread_y,   thread_z,   thread_e, thread_octant );
 
       /*
-      printf("%i %i Submitting %i %i %i %i %i   %i %i\n", step, semiblock_step,
-              thread_x, thread_y, thread_z, thread_e, thread_octant,
-             omp_get_thread_num(), omp_get_num_threads());
+        printf("%i %i Submitting task %i %i %i %i %i   %i %i\n",
+               step, semiblock_step,
+               thread_x, thread_y, thread_z, thread_e, thread_octant,
+               omp_get_thread_num(), omp_get_num_threads());
       */
 
 #pragma omp task \
@@ -1356,7 +1350,7 @@ TARGET_HD void Sweeper_sweep_block_impl(
       depend(out: dep_out[0])
       {
       /*
-      printf("%i %i                        Commencing %i %i %i %i %i   %i\n",
+        printf("%i %i                   Commencing task %i %i %i %i %i   %i\n",
              step, semiblock_step,
              thread_x, thread_y, thread_z, thread_e, thread_octant,
              omp_get_thread_num());
@@ -1421,60 +1415,6 @@ TARGET_HD void Sweeper_sweep_block_impl(
           &izmin_semiblock, &izmax_semiblock, &izmax_semiblock_up2,
           sweeper.dims_b.ncell_z, DIM_Z, dir_z, semiblock_step, nsemiblock);
 
-#if 0
-        /*--------------------*/
-        /*---Set physical boundary conditions if part of semiblock---*/
-        /*--------------------*/
-
-        /*---TODO: make the following boundary setters threaded in x/y/z---*/
-
-        const Bool_t compute_boundary_xy_this_semiblock = is_octant_active && (
-          ( dir_z == DIR_UP && stepinfo.block_z == 0 && is_semiblock_min_z ) ||
-          ( dir_z == DIR_DN && stepinfo.block_z == sweeper.nblock_z - 1
-                                                     && is_semiblock_max_z ) ) ;
-
-        if( compute_boundary_xy_this_semiblock )
-        {
-          Sweeper_set_boundary_xy( &sweeper, facexy, &quan,
-                                   stepinfo.octant, octant_in_block,
-                                   ixmin_semiblock, ixmax_semiblock,
-                                   iymin_semiblock, iymax_semiblock );
-        }
-
-        /*--------------------*/
-
-        const Bool_t compute_boundary_xz_this_semiblock =
-            is_octant_active && (
-                ( dir_y == DIR_UP && proc_y_min && is_semiblock_min_y ) ||
-                ( dir_y == DIR_DN && proc_y_max && is_semiblock_max_y ) );
-
-        if( compute_boundary_xz_this_semiblock )
-        {
-          Sweeper_set_boundary_xz( &sweeper, facexz, &quan, stepinfo.block_z,
-                                   stepinfo.octant, octant_in_block,
-                                   ixmin_semiblock, ixmax_semiblock,
-                                   izmin_semiblock, izmax_semiblock );
-        }
-
-        /*--------------------*/
-
-        const Bool_t compute_boundary_yz_this_semiblock =
-            is_octant_active && (
-                ( dir_x == DIR_UP && proc_x_min && is_semiblock_min_x ) ||
-                ( dir_x == DIR_DN && proc_x_max && is_semiblock_max_x ) );
-
-        if( compute_boundary_yz_this_semiblock )
-        {
-          Sweeper_set_boundary_yz( &sweeper, faceyz, &quan, stepinfo.block_z,
-                                   stepinfo.octant, octant_in_block,
-                                   iymin_semiblock, iymax_semiblock,
-                                   izmin_semiblock, izmax_semiblock );
-        }
-
-        /*---Ensure that initializations of boundaries complete---*/
-        Sweeper_sync_yz_threads( &sweeper );
-#endif
-
         /*--------------------*/
         /*---Perform sweep on semiblock---*/
         /*--------------------*/
@@ -1505,11 +1445,11 @@ TARGET_HD void Sweeper_sweep_block_impl(
 
 #ifdef USE_OPENMP_TASKS
       /*
-      printf("%i %i                        "
-             "                              Completed %i %i %i %i %i   %i\n",
-             step, semiblock_step,
-             thread_x, thread_y, thread_z, thread_e, thread_octant,
-             omp_get_thread_num());
+        printf("%i %i                        "
+               "                         Completing task %i %i %i %i %i   %i\n",
+               step, semiblock_step,
+               thread_x, thread_y, thread_z, thread_e, thread_octant,
+               omp_get_thread_num());
       */
 
       } /*---omp task---*/
@@ -1517,8 +1457,7 @@ TARGET_HD void Sweeper_sweep_block_impl(
       }
       }
       }
-      }
-      } /*---omp parallel---*/ /*---NOTE: implicit sync here---*/
+      } /*---omp parallel for---*/ /*---NOTE: implicit sync here---*/
 #else
       /*---Sync between semiblock steps---*/
       Sweeper_sync_octant_threads( &sweeper );
