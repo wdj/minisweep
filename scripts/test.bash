@@ -33,27 +33,33 @@ declare g_verbose=1
 #==============================================================================
 # Run the executable once.
 #==============================================================================
-function perform_run
+function perform_runs_imp
 {
   local exec_config_args="$(echo "$1" | tr '\n' ' ')"
   local application_args="$(echo "$2" | tr '\n' ' ')"
+  local environment="${3:-}"
+  if [ "$environment" = "" ] ; then
+    local env_environment=""
+  else
+    local env_environment="env $environment"
+  fi
 
   if [ "${PBS_NP:-}" != "" -a "${CRAY_MPICH2_ROOTDIR:-}" != "" ] ; then
     #---If running on Cray back-end node, must cd to Lustre to do the aprun.
     local wd="$PWD"
     pushd "$MEMBERWORK" >/dev/null
     pwd
-    echo aprun $exec_config_args "$wd/tester"
-    aprun $exec_config_args "$wd/tester"
+    echo $env_environment aprun $exec_config_args "$wd/tester"
+    $env_environment aprun $exec_config_args "$wd/tester"
     #assert $? = 0
     popd >/dev/null
   elif [ "${IMICROOT:-}" != "" ] ; then
     cp tester $TMPDIR/mic0
-    micmpiexec -n 1 -wdir $TMPDIR -host ${HOSTNAME}-mic0 $TMPDIR/tester $application_arg
+    $env_environment micmpiexec -n 1 -wdir $TMPDIR -host ${HOSTNAME}-mic0 $TMPDIR/tester $application_arg
     rm tester $TMPDIR/mic0
   else
     #assert $exec_config_args = "-n1"
-    ./tester
+    $env_environment ./tester
     #assert $? = 0
   fi
 }
@@ -64,10 +70,7 @@ function perform_run
 #==============================================================================
 function perform_runs
 {
-  local exec_config_args="$(echo "$1" | tr '\n' ' ')"
-  local application_args="$(echo "$2" | tr '\n' ' ')"
-
-  perform_run "$1" "$2" | tee tmp_
+  perform_runs_imp "$1" "$2" "${3:-}" | tee tmp_
 
   local ntest=$(        grep TESTS tmp_ | sed -e 's/.*TESTS *//'  -e 's/ .*//' )
   local ntest_passed=$( grep TESTS tmp_ | sed -e 's/.*PASSED *//' -e 's/ .*//' )
@@ -87,7 +90,6 @@ function initialize
     if [ "${PE_ENV:-}" != "GNU" ] ; then
       module swap PrgEnv-pgi PrgEnv-gnu
     fi
-    module load cudatoolkit
     module load cmake
 
     if [ "${PE_ENV:-}" != "GNU" ] ; then
@@ -116,9 +118,13 @@ function main
   BUILD_DIR=/ccs/home/$(whoami)/atlas/minisweep_work/build_test
   SCRIPTS_DIR=$PWD/../scripts
 
-  cp /dev/null tmp_
+  if [ "${CRAY_MPICH2_ROOTDIR:-}" != "" ] ; then
+    local IS_TITAN=1
+  else
+    local IS_TITAN=0
+  fi
 
-if [0 = 1 ] ; then
+  cp /dev/null tmp_
 
   #==============================
   # Serial
@@ -165,6 +171,35 @@ if [0 = 1 ] ; then
   rm -rf $BUILD_DIR
 
   #==============================
+  # OpenMP/tasks
+  #==============================
+
+  echo "--------------------------------------------------------"
+  echo "---OpenMP/tasks tests---"
+  echo "--------------------------------------------------------"
+
+  module swap gcc gcc/4.9.2
+
+  #make MPI_OPTION= OPENMP_OPTION=THREADS NM_VALUE=4
+
+  rm -rf $BUILD_DIR
+  mkdir $BUILD_DIR
+  pushd $BUILD_DIR
+
+  env NM_VALUE=4 $SCRIPTS_DIR/cmake_openmp_tasks.sh
+  make $VERBOSE_ARG
+
+  local num_threads
+  for num_threads in 1 2 4 8 16 32 ; do
+    perform_runs "-n1 -d16" "" "OMP_NUM_THREADS=$num_threads"
+  done
+
+  popd
+  rm -rf $BUILD_DIR
+
+  module swap gcc/4.9.2 gcc
+
+  #==============================
   # MPI.
   #==============================
 
@@ -190,11 +225,13 @@ if [0 = 1 ] ; then
 
   fi #---PBS_NP
 
-fi
-
   #==============================
   # MPI + CUDA.
   #==============================
+
+  if [ $IS_TITAN = 1 ] ; then
+    module load cudatoolkit
+  fi
 
   if [ "${PBS_NP:-}" != "" ] ; then
   if [ "${PBS_NP:-}" -ge 4 ] ; then
@@ -212,13 +249,17 @@ fi
     env NM_VALUE=4 $SCRIPTS_DIR/cmake_cray_xk7_cuda.sh
     make $VERBOSE_ARG
 
-    perform_runs "-n4" ""
+    perform_runs "-n4" "" "CRAY_CUDA_MPS=1"
 
     popd
     rm -rf $BUILD_DIR
 
   fi #---PBS_NP
   fi #---PBS_NP
+
+  if [ $IS_TITAN = 1 ] ; then
+    module unload cudatoolkit
+  fi
 
   #==============================
   # Variants.
@@ -266,8 +307,6 @@ fi
     echo -n "          ========== SUCCESS =========="
   fi
   echo
-
-
 }
 #==============================================================================
 
