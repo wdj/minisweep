@@ -106,7 +106,7 @@ static void test_openmp( Env* env, int* ntest, int* ntest_passed )
 {
 #ifdef SWEEPER_KBA
 #ifndef USE_MPI
-#ifdef USE_OPENMP
+#ifdef USE_OPENMP_THREADS
 #ifndef USE_CUDA
   const Bool_t do_tests = Bool_true;
 #else
@@ -204,6 +204,79 @@ static void test_openmp( Env* env, int* ntest, int* ntest_passed )
         string1, string2 );
     }
     }
+    }
+    }
+    }
+    }
+    }
+  }
+}
+
+/*===========================================================================*/
+/*---Tester: OpenMP tasks`---*/
+
+static void test_openmp_tasks( Env* env, int* ntest, int* ntest_passed )
+{
+#ifdef SWEEPER_KBA
+#ifndef USE_MPI
+#ifdef USE_OPENMP_TASKS
+#ifndef USE_CUDA
+  const Bool_t do_tests = Bool_true;
+#else
+  const Bool_t do_tests = Bool_false;
+#endif
+#else
+  const Bool_t do_tests = Bool_false;
+#endif
+#else
+  const Bool_t do_tests = Bool_false;
+#endif
+#else
+  const Bool_t do_tests = Bool_false;
+#endif
+
+  if( do_tests )
+  {
+    char string1[] = "--ncell_x 9 --ncell_y 13 --ncell_z 3 "
+                     "--ne 5 --na 4 --nblock_z 1";
+
+    int nthread_e = 0;
+    int nthread_octant_key = 0;
+    int ncell_x_per_subblock_key = 0;
+    int ncell_y_per_subblock_key = 0;
+    int ncell_z_per_subblock_key = 0;
+
+    for( nthread_e=1; nthread_e<=2; ++nthread_e )
+    {
+
+    for( nthread_octant_key=0; nthread_octant_key<=3; ++nthread_octant_key )
+    {
+      const int nthread_octant = 1 << nthread_octant_key;
+
+    for(   ncell_x_per_subblock_key=0; ncell_x_per_subblock_key<2;
+         ++ncell_x_per_subblock_key )
+    {
+      const int ncell_x_per_subblock = ncell_x_per_subblock_key==0 ? 1 : 3;
+
+    for(   ncell_y_per_subblock_key=0; ncell_y_per_subblock_key<2;
+         ++ncell_y_per_subblock_key )
+    {
+      const int ncell_y_per_subblock = ncell_y_per_subblock_key==0 ? 1 : 5;
+
+    for(   ncell_z_per_subblock_key=0; ncell_z_per_subblock_key<2;
+         ++ncell_z_per_subblock_key )
+    {
+      const int ncell_z_per_subblock = ncell_z_per_subblock_key==0 ? 1 : 2;
+
+      char string2[MAX_LINE_LEN];
+      sprintf( string2, "%s --nthread_e %i "
+                           "--nthread_octant %i "
+                           "--ncell_x_per_subblock %i "
+                           "--ncell_y_per_subblock %i "
+                           "--ncell_z_per_subblock %i ",
+               string1, nthread_e, nthread_octant, ncell_x_per_subblock,
+               ncell_y_per_subblock, ncell_z_per_subblock );
+      compare_runs_helper( env, ntest, ntest_passed, "", string1, string2 );
     }
     }
     }
@@ -484,6 +557,8 @@ static void tester( Env* env )
   test_serial( env, &ntest, &ntest_passed );
 
   test_openmp( env, &ntest, &ntest_passed );
+
+  test_openmp_tasks( env, &ntest, &ntest_passed );
 
   test_mpi( env, &ntest, &ntest_passed );
 

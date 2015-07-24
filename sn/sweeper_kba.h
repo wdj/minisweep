@@ -43,6 +43,7 @@ typedef struct
 
   int              nthread_e;
   int              nthread_octant;
+  int              nthread_x;
   int              nthread_y;
   int              nthread_z;
 
@@ -118,6 +119,7 @@ static inline int Sweeper_nvilocal_( Sweeper* sweeper,
          Sweeper_nthread_m( sweeper, env ) *
          NU *
          sweeper->nthread_octant *
+         sweeper->nthread_x *
          sweeper->nthread_y *
          sweeper->nthread_z
        :
@@ -125,6 +127,7 @@ static inline int Sweeper_nvilocal_( Sweeper* sweeper,
          NU *
          sweeper->nthread_octant *
          sweeper->nthread_e *
+         sweeper->nthread_x *
          sweeper->nthread_y *
          sweeper->nthread_z
        ;
@@ -140,6 +143,7 @@ static inline int Sweeper_nvslocal_( Sweeper* sweeper,
          Sweeper_nthread_a( sweeper, env ) *
          NU *
          sweeper->nthread_octant *
+         sweeper->nthread_x *
          sweeper->nthread_y *
          sweeper->nthread_z
        :
@@ -147,6 +151,7 @@ static inline int Sweeper_nvslocal_( Sweeper* sweeper,
          NU *
          sweeper->nthread_octant *
          sweeper->nthread_e *
+         sweeper->nthread_x *
          sweeper->nthread_y *
          sweeper->nthread_z
        ;
@@ -162,6 +167,7 @@ static inline int Sweeper_nvolocal_( Sweeper* sweeper,
          Sweeper_nthread_m( sweeper, env ) *
          NU *
          sweeper->nthread_octant *
+         sweeper->nthread_x *
          sweeper->nthread_y *
          sweeper->nthread_z
        :
@@ -169,6 +175,7 @@ static inline int Sweeper_nvolocal_( Sweeper* sweeper,
          NU *
          sweeper->nthread_octant *
          sweeper->nthread_e *
+         sweeper->nthread_x *
          sweeper->nthread_y *
          sweeper->nthread_z
        ;
@@ -215,7 +222,7 @@ static int Sweeper_shared_size_( Sweeper* sweeper,
 /*===========================================================================*/
 /*---Extract SweeperLite from Sweeper---*/
 
-SweeperLite Sweeper_sweeperlite( Sweeper sweeper );
+SweeperLite Sweeper_sweeperlite( Sweeper* sweeper );
 
 /*===========================================================================*/
 /*---Perform a sweep for a block---*/

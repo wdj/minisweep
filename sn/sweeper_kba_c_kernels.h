@@ -24,6 +24,7 @@ extern "C"
 {
 #endif
 
+#if 0
 /*===========================================================================*/
 /*---Apply boundary condition: xy face---*/
 
@@ -193,6 +194,7 @@ TARGET_HD static void Sweeper_set_boundary_yz(
   }
   }
 }
+#endif
 
 /*===========================================================================*/
 /*---Perform a sweep for a cell---*/
@@ -736,7 +738,6 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
   const int                      octant,
   const int                      iz_base,
   const int                      octant_in_block,
-  const int                      ie,
   const int                      ixmin_subblock,
   const int                      ixmax_subblock,
   const int                      iymin_subblock,
@@ -759,60 +760,167 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
   const Bool_t                   do_block_init_this,
   const Bool_t                   is_octant_active )
 {
-  /*---Prepare to loop over cells---*/
+  /*---Prepare to loop over energy groups in thread---*/
 
-  const int ixbeg = dir_x==DIR_UP ? ixmin_subblock : ixmax_subblock;
-  const int iybeg = dir_y==DIR_UP ? iymin_subblock : iymax_subblock;
-  const int izbeg = dir_z==DIR_UP ? izmin_subblock : izmax_subblock;
+  const int iemin = (   sweeper->dims.ne *
+                      ( Sweeper_thread_e( sweeper )     ) )
+                  /     sweeper->nthread_e;
+  const int iemax = (   sweeper->dims.ne *
+                      ( Sweeper_thread_e( sweeper ) + 1 ) )
+                  /     sweeper->nthread_e;
 
-  const int ixend = dir_x==DIR_DN ? ixmin_subblock : ixmax_subblock;
-  const int iyend = dir_y==DIR_DN ? iymin_subblock : iymax_subblock;
-  const int izend = dir_z==DIR_DN ? izmin_subblock : izmax_subblock;
-
-  int ix = 0, iy = 0, iz = 0;
+  int ie = 0;
 
   /*--------------------*/
-  /*---Loop over cells, in proper direction---*/
+  /*---Loop over energy groups---*/
   /*--------------------*/
 
-  for( iz=izbeg; iz!=izend+dir_inc_z; iz+=dir_inc_z )
+  for( ie=iemin; ie<iemax; ++ie )
   {
-  for( iy=iybeg; iy!=iyend+dir_inc_y; iy+=dir_inc_y )
-  {
-  for( ix=ixbeg; ix!=ixend+dir_inc_x; ix+=dir_inc_x )
-  {
-    /*---Truncate loop region to block, semiblock and subblock---*/
-    const Bool_t is_cell_active = ix <  sweeper->dims_b.ncell_x &&
-                                  iy <  sweeper->dims_b.ncell_y &&
-                                  iz <  sweeper->dims_b.ncell_z &&
-                                  ix <= ixmax_semiblock &&
-                                  iy <= iymax_semiblock &&
-                                  iz <= izmax_semiblock &&
-                                  is_subblock_active;
-                               /* ix >= 0 &&
-                                  iy >= 0 &&
-                                  iz >= 0 &&
-                                  ix >= ixmin_semiblock &&
-                                  iy >= iymin_semiblock &&
-                                  iz >= izmin_semiblock &&
-                                  ix >= ixmin_subblock &&
-                                  iy >= iymin_subblock &&
-                                  iz >= izmin_subblock &&
-                                  ix <= ixmax_subblock &&
-                                  iy <= iymax_subblock &&
-                                  iz <= izmax_subblock && (guaranteed) */
+    /*--------------------*/
+    /*---Prepare to loop over cells---*/
+    /*--------------------*/
+
+    const int ixbeg = dir_x==DIR_UP ? ixmin_subblock : ixmax_subblock;
+    const int iybeg = dir_y==DIR_UP ? iymin_subblock : iymax_subblock;
+    const int izbeg = dir_z==DIR_UP ? izmin_subblock : izmax_subblock;
+
+    const int ixend = dir_x==DIR_DN ? ixmin_subblock : ixmax_subblock;
+    const int iyend = dir_y==DIR_DN ? iymin_subblock : iymax_subblock;
+    const int izend = dir_z==DIR_DN ? izmin_subblock : izmax_subblock;
+
+    int ix = 0, iy = 0, iz = 0;
 
     /*--------------------*/
-    /*---Perform sweep on cell---*/
+    /*---Sweep subblock: loop over cells, in proper direction---*/
     /*--------------------*/
-    Sweeper_sweep_cell( sweeper, vo_this, vi_this, vilocal, vslocal, volocal,
-                        facexy, facexz, faceyz, a_from_m, m_from_a, quan,
-                        octant, iz_base, octant_in_block, ie, ix, iy, iz,
-                        do_block_init_this,
-                        is_octant_active && is_cell_active );
-  }
-  }
-  } /*---ix/iy/iz---*/
+
+    for( iz=izbeg; iz!=izend+dir_inc_z; iz+=dir_inc_z )
+    {
+    for( iy=iybeg; iy!=iyend+dir_inc_y; iy+=dir_inc_y )
+    {
+    for( ix=ixbeg; ix!=ixend+dir_inc_x; ix+=dir_inc_x )
+    {
+      /*---Truncate loop region to block, semiblock and subblock---*/
+      const Bool_t is_cell_active = ix <  sweeper->dims_b.ncell_x &&
+                                    iy <  sweeper->dims_b.ncell_y &&
+                                    iz <  sweeper->dims_b.ncell_z &&
+                                    ix <= ixmax_semiblock &&
+                                    iy <= iymax_semiblock &&
+                                    iz <= izmax_semiblock &&
+                                    is_subblock_active;
+                                 /* ix >= 0 &&
+                                    iy >= 0 &&
+                                    iz >= 0 &&
+                                    ix >= ixmin_semiblock &&
+                                    iy >= iymin_semiblock &&
+                                    iz >= izmin_semiblock &&
+                                    ix >= ixmin_subblock &&
+                                    iy >= iymin_subblock &&
+                                    iz >= izmin_subblock &&
+                                    ix <= ixmax_subblock &&
+                                    iy <= iymax_subblock &&
+                                    iz <= izmax_subblock && (guaranteed) */
+
+      /*--------------------*/
+      /*---Set boundary condition: xy---*/
+      /*--------------------*/
+
+      const int iz_g = iz + iz_base;
+      if( ( iz_g == 0                         && dir_z == DIR_UP ) ||
+          ( iz_g == sweeper->dims_g.ncell_z-1 && dir_z == DIR_DN ) )
+      {
+      if( is_octant_active && is_cell_active )
+      {
+        const int ix_g = ix + quan->ix_base;
+        const int iy_g = iy + quan->iy_base;
+        /*---TODO: thread/vectorize in u, a---*/
+        int iu = 0;
+        for( iu=0; iu<NU; ++iu )
+        {
+          int ia = 0;
+        for( ia=0; ia<sweeper->dims_b.na; ++ia )
+        {
+          *ref_facexy( facexy, sweeper->dims_b, NU,  
+                       sweeper->noctant_per_block,
+                       ix, iy, ie, ia, iu, octant_in_block )     
+             = Quantities_init_facexy( quan, ix_g, iy_g, iz_g-dir_inc_z,
+                                       ie, ia, iu, octant, sweeper->dims_g );
+        }
+        }
+      }
+      }
+
+      /*--------------------*/
+      /*---Set boundary condition: xz---*/
+      /*--------------------*/
+
+      const int iy_g = iy + quan->iy_base;
+      if( ( iy_g == 0                         && dir_y == DIR_UP ) ||
+          ( iy_g == sweeper->dims_g.ncell_y-1 && dir_y == DIR_DN ) )
+      {
+      if( is_octant_active && is_cell_active )
+      {
+        const int ix_g = ix + quan->ix_base;
+        const int iz_g = iz +       iz_base;
+        /*---TODO: thread/vectorize in u, a---*/
+        int iu = 0;
+        for( iu=0; iu<NU; ++iu )
+        {
+          int ia = 0;
+        for( ia=0; ia<sweeper->dims_b.na; ++ia )
+        {
+          *ref_facexz( facexz, sweeper->dims_b, NU,  
+                       sweeper->noctant_per_block,
+                       ix, iz, ie, ia, iu, octant_in_block )     
+             = Quantities_init_facexz( quan, ix_g, iy_g-dir_inc_y, iz_g,
+                                       ie, ia, iu, octant, sweeper->dims_g );
+        }
+        }
+      }
+      }
+
+      /*--------------------*/
+      /*---Set boundary condition: yz---*/
+      /*--------------------*/
+
+      const int ix_g = ix + quan->ix_base;
+      if( ( ix_g == 0                         && dir_x == DIR_UP ) ||
+          ( ix_g == sweeper->dims_g.ncell_x-1 && dir_x == DIR_DN ) )
+      {
+      if( is_octant_active && is_cell_active )
+      {
+        const int iy_g = iy + quan->iy_base;
+        const int iz_g = iz +       iz_base;
+        /*---TODO: thread/vectorize in u, a---*/
+        int iu = 0;
+        for( iu=0; iu<NU; ++iu )
+        {
+          int ia = 0;
+        for( ia=0; ia<sweeper->dims_b.na; ++ia )
+        {
+          *ref_faceyz( faceyz, sweeper->dims_b, NU,  
+                       sweeper->noctant_per_block,
+                       iy, iz, ie, ia, iu, octant_in_block )     
+             = Quantities_init_faceyz( quan, ix_g-dir_inc_x, iy_g, iz_g,
+                                       ie, ia, iu, octant, sweeper->dims_g );
+        }
+        }
+      }
+      }
+
+      /*--------------------*/
+      /*---Perform sweep on cell---*/
+      /*--------------------*/
+      Sweeper_sweep_cell( sweeper, vo_this, vi_this, vilocal, vslocal, volocal,
+                          facexy, facexz, faceyz, a_from_m, m_from_a, quan,
+                          octant, iz_base, octant_in_block, ie, ix, iy, iz,
+                          do_block_init_this,
+                          is_octant_active && is_cell_active );
+    }
+    }
+    } /*---ix/iy/iz---*/
+  } /*---ie---*/
 }
 
 /*===========================================================================*/
@@ -865,84 +973,27 @@ TARGET_HD static inline void Sweeper_sweep_semiblock(
   const int nsubblock_z = iceil( izmax_semiblock-izmin_semiblock+1,
                                                sweeper->ncell_z_per_subblock );
 
-  /*---Size of chunk, measured in subblocks---*/
-
-  const int nsubblock_x_per_chunk = nsubblock_x;
-  const int nsubblock_y_per_chunk = sweeper->nthread_y;
-  const int nsubblock_z_per_chunk = sweeper->nthread_z;
-
-  /*---Number of chunks, rounded up as needed---*/
-
-  const int nchunk_x = iceil( nsubblock_x, nsubblock_x_per_chunk );
-  const int nchunk_y = iceil( nsubblock_y, nsubblock_y_per_chunk );
-  const int nchunk_z = iceil( nsubblock_z, nsubblock_z_per_chunk );
-
-  /*---Upsize to insure dependencies satisfied---*/
-
-  const int nsubblock_x_per_chunk_up
-      = imax( nsubblock_x_per_chunk,
-        imax( nsubblock_y_per_chunk,
-             iceil( nsubblock_z_per_chunk, nchunk_y ) ) );
-
-  /*---Calculate info for stacked domain---*/
-
-  const int nchunk_yz = nchunk_y * nchunk_z;
-
-  const int nsubblock_x_stacked = nsubblock_x_per_chunk_up * nchunk_yz;
-
-  const int nsubblockwave = nsubblock_x_stacked
-                          + nsubblock_y_per_chunk
-                          + nsubblock_z_per_chunk - 2;
-
-
-  int subblockwave = 0;
-
-  /*--------------------*/
-  /*---Loop over subblock wavefronts---*/
-  /*--------------------*/
-
-  for( subblockwave=0; subblockwave<nsubblockwave; ++subblockwave )
+  if( IS_USING_OPENMP_TASKS )
   {
-    /*---Get coordinates of subblock in stacked domain---*/
+    /*--------------------*/
+    /*---CASE: Tasking---*/
+    /*--------------------*/
 
-    const int subblock_y_stacked = Sweeper_thread_y( sweeper );
-    const int subblock_z_stacked = Sweeper_thread_z( sweeper );
-    const int subblock_x_stacked = subblockwave
-                                 - subblock_y_stacked
-                                 - subblock_z_stacked;
+    /*---Determine which subblock to sweep---*/
 
-    /*---x subblock coordinate in unstacked domain---*/
+    const int subblock_x = dir_x == DIR_UP ?
+                                             Sweeper_thread_x( sweeper ) :
+                           nsubblock_x - 1 - Sweeper_thread_x( sweeper );
 
-    const int subblock_x = ( dir_x==DIR_UP ?  subblock_x_stacked :
-                       (nsubblock_x_stacked-1-subblock_x_stacked) )
-                  % nsubblock_x_per_chunk_up;
+    const int subblock_y = dir_y == DIR_UP ?
+                                             Sweeper_thread_y( sweeper ) :
+                           nsubblock_y - 1 - Sweeper_thread_y( sweeper );
 
-    /*---y, z chunk coordinates in unstacked domain---*/
+    const int subblock_z = dir_z == DIR_UP ?
+                                             Sweeper_thread_z( sweeper ) :
+                           nsubblock_z - 1 - Sweeper_thread_z( sweeper );
 
-    const int chunk_yz_stacked = subblock_x_stacked
-                               / nsubblock_x_per_chunk_up;
-
-    const int chunk_z = dir_z==DIR_UP ? chunk_yz_stacked  / nchunk_y :
-                           (nchunk_yz-1-chunk_yz_stacked) / nchunk_y;
-
-    const int chunk_y = dir_y==DIR_UP ? chunk_yz_stacked  % nchunk_y :
-                           (nchunk_yz-1-chunk_yz_stacked) % nchunk_y;
-
-    /*---y, z subblock coordinate in unstacked domain---*/
-
-    const int subblock_y = chunk_y * nsubblock_y_per_chunk +
-                        (dir_y==DIR_UP ? subblock_y_stacked :
-             nsubblock_y_per_chunk - 1 - subblock_y_stacked);
-
-    const int subblock_z = chunk_z * nsubblock_z_per_chunk +
-                        (dir_z==DIR_UP ? subblock_z_stacked :
-             nsubblock_z_per_chunk - 1 - subblock_z_stacked);
-
-    const Bool_t is_subblock_active =
-        subblock_x_stacked >= 0 && subblock_x_stacked < nsubblock_x_stacked &&
-        subblock_z         >= 0 && subblock_z         < nsubblock_z &&
-        subblock_y         >= 0 && subblock_y         < nsubblock_y &&
-        subblock_x         >= 0 && subblock_x         < nsubblock_x;
+    const Bool_t is_subblock_active = Bool_true;
 
     /*---Compute subblock bounds, inclusive of endpoints---*/
 
@@ -959,40 +1010,133 @@ TARGET_HD static inline void Sweeper_sweep_semiblock(
     const int izmax_subblock = izmin_semiblock +
                             sweeper->ncell_z_per_subblock * (subblock_z+1) - 1;
 
-    /*---Prepare to loop over energy groups in thread---*/
-
-    const int iemin = (   sweeper->dims.ne *
-                        ( Sweeper_thread_e( sweeper )     ) )
-                    /     sweeper->nthread_e;
-    const int iemax = (   sweeper->dims.ne *
-                        ( Sweeper_thread_e( sweeper ) + 1 ) )
-                    /     sweeper->nthread_e;
-
-    int ie = 0;
-
     /*--------------------*/
-    /*---Loop over energy groups---*/
+    /*---Perform sweep on subblock---*/
     /*--------------------*/
 
-    for( ie=iemin; ie<iemax; ++ie )
+    Sweeper_sweep_subblock( sweeper, vo_this, vi_this,
+                            vilocal, vslocal, volocal,
+                            facexy, facexz, faceyz, a_from_m, m_from_a, quan,
+                            octant, iz_base, octant_in_block,
+                            ixmin_subblock, ixmax_subblock,
+                            iymin_subblock, iymax_subblock,
+                            izmin_subblock, izmax_subblock,
+                            is_subblock_active,
+                            ixmin_semiblock, ixmax_semiblock,
+                            iymin_semiblock, iymax_semiblock,
+                            izmin_semiblock, izmax_semiblock,
+                            dir_x, dir_y, dir_z,
+                            dir_inc_x, dir_inc_y, dir_inc_z,
+                            do_block_init_this,
+                            is_octant_active );
+  }
+  else /*---if tasking---*/
+  {
+    /*--------------------*/
+    /*---CASE: Threading---*/
+    /*--------------------*/
+
+    /*---Size of chunk, measured in subblocks---*/
+
+    const int nsubblock_x_per_chunk = nsubblock_x;
+    const int nsubblock_y_per_chunk = sweeper->nthread_y;
+    const int nsubblock_z_per_chunk = sweeper->nthread_z;
+
+    /*---Number of chunks, rounded up as needed---*/
+
+    const int nchunk_x = iceil( nsubblock_x, nsubblock_x_per_chunk );
+    const int nchunk_y = iceil( nsubblock_y, nsubblock_y_per_chunk );
+    const int nchunk_z = iceil( nsubblock_z, nsubblock_z_per_chunk );
+
+    /*---Upsize to insure dependencies satisfied---*/
+
+    const int nsubblock_x_per_chunk_up
+        = imax( nsubblock_x_per_chunk,
+          imax( nsubblock_y_per_chunk,
+               iceil( nsubblock_z_per_chunk, nchunk_y ) ) );
+
+    /*---Calculate info for stacked domain---*/
+
+    const int nchunk_yz = nchunk_y * nchunk_z;
+
+    const int nsubblock_x_stacked = nsubblock_x_per_chunk_up * nchunk_yz;
+
+    const int nsubblockwave = nsubblock_x_stacked
+                            + nsubblock_y_per_chunk
+                            + nsubblock_z_per_chunk - 2;
+
+
+    int subblockwave = 0;
+
+    /*--------------------*/
+    /*---Loop over subblock wavefronts---*/
+    /*--------------------*/
+
+    for( subblockwave=0; subblockwave<nsubblockwave; ++subblockwave )
     {
-#if 0
-    for( ie=0; ie<sweeper->dims.ne; ++ie )
-    {
-#endif
-#ifdef USE_OPENMP_TASKS
-#pragma omp task  depend(...) ...
-/*---Believe all variables are read-only, so firstprivate is ok - might make
-     shared for speed, no need to copy context vars multiple times---*/
-/*---Warning: previously calculated omp thread id may be invalid now---*/
-#endif
+      /*---Get coordinates of subblock in stacked domain---*/
+
+      const int subblock_y_stacked = Sweeper_thread_y( sweeper );
+      const int subblock_z_stacked = Sweeper_thread_z( sweeper );
+      const int subblock_x_stacked = subblockwave
+                                   - subblock_y_stacked
+                                   - subblock_z_stacked;
+
+      /*---x subblock coordinate in unstacked domain---*/
+
+      const int subblock_x = ( dir_x==DIR_UP ?  subblock_x_stacked :
+                         (nsubblock_x_stacked-1-subblock_x_stacked) )
+                    % nsubblock_x_per_chunk_up;
+
+      /*---y, z chunk coordinates in unstacked domain---*/
+
+      const int chunk_yz_stacked = subblock_x_stacked
+                                 / nsubblock_x_per_chunk_up;
+
+      const int chunk_z = dir_z==DIR_UP ? chunk_yz_stacked  / nchunk_y :
+                             (nchunk_yz-1-chunk_yz_stacked) / nchunk_y;
+
+      const int chunk_y = dir_y==DIR_UP ? chunk_yz_stacked  % nchunk_y :
+                             (nchunk_yz-1-chunk_yz_stacked) % nchunk_y;
+
+      /*---y, z subblock coordinate in unstacked domain---*/
+
+      const int subblock_y = chunk_y * nsubblock_y_per_chunk +
+                          (dir_y==DIR_UP ? subblock_y_stacked :
+               nsubblock_y_per_chunk - 1 - subblock_y_stacked);
+
+      const int subblock_z = chunk_z * nsubblock_z_per_chunk +
+                          (dir_z==DIR_UP ? subblock_z_stacked :
+               nsubblock_z_per_chunk - 1 - subblock_z_stacked);
+
+      const Bool_t is_subblock_active =
+          subblock_x_stacked >= 0 && subblock_x_stacked < nsubblock_x_stacked &&
+          subblock_z         >= 0 && subblock_z         < nsubblock_z &&
+          subblock_y         >= 0 && subblock_y         < nsubblock_y &&
+          subblock_x         >= 0 && subblock_x         < nsubblock_x;
+
+      /*---Compute subblock bounds, inclusive of endpoints---*/
+
+      const int ixmin_subblock = ixmin_semiblock +
+                            sweeper->ncell_x_per_subblock *  subblock_x;
+      const int ixmax_subblock = ixmin_semiblock +
+                            sweeper->ncell_x_per_subblock * (subblock_x+1) - 1;
+      const int iymin_subblock = iymin_semiblock +
+                            sweeper->ncell_y_per_subblock *  subblock_y;
+      const int iymax_subblock = iymin_semiblock +
+                            sweeper->ncell_y_per_subblock * (subblock_y+1) - 1;
+      const int izmin_subblock = izmin_semiblock +
+                            sweeper->ncell_z_per_subblock *  subblock_z;
+      const int izmax_subblock = izmin_semiblock +
+                            sweeper->ncell_z_per_subblock * (subblock_z+1) - 1;
+
       /*--------------------*/
       /*---Perform sweep on subblock---*/
       /*--------------------*/
       Sweeper_sweep_subblock( sweeper, vo_this, vi_this,
                               vilocal, vslocal, volocal,
                               facexy, facexz, faceyz, a_from_m, m_from_a, quan,
-                              octant, iz_base, octant_in_block, ie,
+                              octant, iz_base, octant_in_block,
                               ixmin_subblock, ixmax_subblock,
                               iymin_subblock, iymax_subblock,
                               izmin_subblock, izmax_subblock,
@@ -1004,16 +1148,13 @@ TARGET_HD static inline void Sweeper_sweep_semiblock(
                               dir_inc_x, dir_inc_y, dir_inc_z,
                               do_block_init_this,
                               is_octant_active );
-    } /*---ie---*/
 
-    if( subblockwave != nsubblockwave-1 )
-    {
-#ifndef USE_OPENMP_TASKS
-      Sweeper_sync_yz_threads( sweeper );
-#endif
-    }
-
-  } /*---subblockwave---*/
+      if( subblockwave != nsubblockwave-1 )
+      {
+        Sweeper_sync_yz_threads( sweeper );
+      }
+    } /*---subblockwave---*/
+  } /*---if tasking---*/
 }
 
 /*===========================================================================*/
@@ -1028,7 +1169,7 @@ TARGET_HD static inline void Sweeper_get_semiblock_bounds(
   int ncell,
   int dim,
   int dir,
-  int semiblock,
+  int semiblock_step,
   int nsemiblock
   )
 {
@@ -1050,22 +1191,20 @@ TARGET_HD static inline void Sweeper_get_semiblock_bounds(
   =      added cells so no real work is done.
   ===================================================================*/
 
-  const Bool_t is_semiblocked = nsemiblock > (1<<dim);
-  const Bool_t is_semiblock_lo = ( ( semiblock & (1<<dim) ) == 0 ) ==
-                                 ( dir == DIR_UP );
+  const Bool_t is_semiblocked = is_axis_semiblocked(nsemiblock, dim);
+  const Bool_t is_semiblock_lo = is_semiblock_min_when_semiblocked(
+            nsemiblock, semiblock_step, dim, dir );
 
   *has_lo =     is_semiblock_lo   || ! is_semiblocked;
   *has_hi = ( ! is_semiblock_lo ) || ! is_semiblocked;
 
-  *imin =    *has_lo  ? 0
-                      : (ncell+1) / 2;
-  *imax = (! *has_hi) ? (ncell+1) / 2 - 1
-                      :  ncell        - 1;
+  *imin =     *has_lo   ? 0 : ( (ncell+1) / 2 );
+  *imax = ( ! *has_hi ) ?     ( (ncell+1) / 2 - 1 ) : ( ncell - 1 );
 
   *imax_up2 = ( is_semiblocked &&
-                ncell % 2 &&
-                ! is_semiblock_lo ) ?
-                ( *imax + 1 ) : *imax;
+                ( ncell % 2 ) &&
+                ( ! is_semiblock_lo ) )
+              ?  ( *imax + 1 ) : *imax;
 }                  
 
 /*===========================================================================*/
@@ -1090,10 +1229,11 @@ TARGET_HD void Sweeper_sweep_block_impl(
   unsigned long int      do_block_init )
 {
   /*---Declarations---*/
-
     const int noctant_per_block = sweeper.noctant_per_block;
 
-    int semiblock = 0;
+    const int nsemiblock = sweeper.nsemiblock;
+
+    int semiblock_step = 0;
 
     /*=========================================================================
     =    OpenMP-parallelizing octants leads to the problem that for the same
@@ -1142,10 +1282,84 @@ TARGET_HD void Sweeper_sweep_block_impl(
     /*---Loop over semiblocks---*/
     /*--------------------*/
 
-    for( semiblock=0; semiblock<sweeper.nsemiblock; ++semiblock )
+    for( semiblock_step=0; semiblock_step<nsemiblock; ++semiblock_step )
     {
+#ifdef USE_OPENMP_TASKS
+      /*--------------------*/
+      /*---Enter parallel region where tasks will be launched---*/
+      /*--------------------*/
+
+      int thread_octant = 0;
+      int thread_e = 0;
+
+#pragma omp parallel for firstprivate(sweeper) collapse(2)
+      for( thread_octant=0; thread_octant<sweeper.nthread_octant;
+                                                             ++thread_octant)
+      {
+      for( thread_e=0; thread_e<sweeper.nthread_e; ++thread_e)
+      {
+        sweeper.thread_octant = thread_octant;
+        sweeper.thread_e = thread_e;
+
+      /*--------------------*/
+      /*---Loop over the space of all tasks to be launched---*/
+      /*--------------------*/
+
+      int thread_z = 0;
+      for( thread_z=0; thread_z<sweeper.nthread_z; ++thread_z)
+      {
+        sweeper.thread_z = thread_z;
+
+      int thread_y = 0;
+      for( thread_y=0; thread_y<sweeper.nthread_y; ++thread_y)
+      {
+        sweeper.thread_y = thread_y;
+
+      int thread_x = 0;
+      for( thread_x=0; thread_x<sweeper.nthread_x; ++thread_x)
+      {
+        sweeper.thread_x = thread_x;
+
+      /*--------------------*/
+      /*---Launch this task---*/
+      /*--------------------*/
+
+      const char* __restrict__ dep_in_x = Sweeper_task_dependency( &sweeper,
+                thread_x-1, thread_y,   thread_z,   thread_e, thread_octant );
+
+      const char* __restrict__ dep_in_y = Sweeper_task_dependency( &sweeper,
+                thread_x,   thread_y-1, thread_z,   thread_e, thread_octant );
+
+      const char* __restrict__ dep_in_z = Sweeper_task_dependency( &sweeper,
+                thread_x,   thread_y,   thread_z-1, thread_e, thread_octant );
+
+      const char* __restrict__ dep_out = Sweeper_task_dependency( &sweeper,
+                thread_x,   thread_y,   thread_z,   thread_e, thread_octant );
+
+      /*
+        printf("%i %i Submitting task %i %i %i %i %i   %i %i\n",
+               step, semiblock_step,
+               thread_x, thread_y, thread_z, thread_e, thread_octant,
+               omp_get_thread_num(), omp_get_num_threads());
+      */
+
+#pragma omp task \
+      depend(in:  dep_in_x[0]) \
+      depend(in:  dep_in_y[0]) \
+      depend(in:  dep_in_z[0]) \
+      depend(out: dep_out[0])
+      {
+      /*
+        printf("%i %i                   Commencing task %i %i %i %i %i   %i\n",
+             step, semiblock_step,
+             thread_x, thread_y, thread_z, thread_e, thread_octant,
+             omp_get_thread_num());
+      */
+#endif
+
       /*--------------------*/
       /*---Loop over octants in octant block---*/
+      /*---That is, octants that are computed for this semiblock step---*/
       /*--------------------*/
 
         const int octant_in_block_min =
@@ -1176,70 +1390,30 @@ TARGET_HD void Sweeper_sweep_block_impl(
         /*---Compute semiblock bounds---*/
         /*--------------------*/
 
-        Bool_t has_x_lo = 0, has_x_hi = 0;
-        int    ixmin_sb = 0, ixmax_sb = 0, ixmax_sb_up2 = 0;
+        Bool_t is_semiblock_min_x = 0, is_semiblock_max_x = 0;
+        int ixmin_semiblock = 0, ixmax_semiblock = 0, ixmax_semiblock_up2 = 0;
 
-        Sweeper_get_semiblock_bounds(&has_x_lo, &has_x_hi,
-          &ixmin_sb, &ixmax_sb, &ixmax_sb_up2,
-          sweeper.dims_b.ncell_x, DIM_X, dir_x, semiblock, sweeper.nsemiblock);
-
-        /*--------------------*/
-
-        Bool_t has_y_lo = 0, has_y_hi = 0;
-        int    iymin_sb = 0, iymax_sb = 0, iymax_sb_up2 = 0;
-
-        Sweeper_get_semiblock_bounds(&has_y_lo, &has_y_hi,
-          &iymin_sb, &iymax_sb, &iymax_sb_up2,
-          sweeper.dims_b.ncell_y, DIM_Y, dir_y, semiblock, sweeper.nsemiblock);
+        Sweeper_get_semiblock_bounds(&is_semiblock_min_x, &is_semiblock_max_x,
+          &ixmin_semiblock, &ixmax_semiblock, &ixmax_semiblock_up2,
+          sweeper.dims_b.ncell_x, DIM_X, dir_x, semiblock_step, nsemiblock);
 
         /*--------------------*/
 
-        Bool_t has_z_lo = 0, has_z_hi = 0;
-        int    izmin_sb = 0, izmax_sb = 0, izmax_sb_up2 = 0;
+        Bool_t is_semiblock_min_y = 0, is_semiblock_max_y = 0;
+        int iymin_semiblock = 0, iymax_semiblock = 0, iymax_semiblock_up2 = 0;
 
-        Sweeper_get_semiblock_bounds(&has_z_lo, &has_z_hi,
-          &izmin_sb, &izmax_sb, &izmax_sb_up2,
-          sweeper.dims_b.ncell_z, DIM_Z, dir_z, semiblock, sweeper.nsemiblock);
-
-        /*--------------------*/
-        /*---Set physical boundary conditions if part of semiblock---*/
-        /*--------------------*/
-
-        /*---TODO: make the following boundary setters threaded in yz---*/
-
-        if( is_octant_active && (
-            ( dir_z == DIR_UP && stepinfo.block_z == 0 && has_z_lo ) ||
-            ( dir_z == DIR_DN && stepinfo.block_z ==
-                                 sweeper.nblock_z - 1 && has_z_hi ) ) )
-        {
-          Sweeper_set_boundary_xy( &sweeper, facexy, &quan,
-                                   stepinfo.octant, octant_in_block,
-                                   ixmin_sb, ixmax_sb, iymin_sb, iymax_sb );
-        }
+        Sweeper_get_semiblock_bounds(&is_semiblock_min_y, &is_semiblock_max_y,
+          &iymin_semiblock, &iymax_semiblock, &iymax_semiblock_up2,
+          sweeper.dims_b.ncell_y, DIM_Y, dir_y, semiblock_step, nsemiblock);
 
         /*--------------------*/
 
-        if( is_octant_active && (
-            ( dir_y == DIR_UP && proc_y_min && has_y_lo ) ||
-            ( dir_y == DIR_DN && proc_y_max && has_y_hi ) ) )
-        {
-          Sweeper_set_boundary_xz( &sweeper, facexz, &quan, stepinfo.block_z,
-                                   stepinfo.octant, octant_in_block,
-                                   ixmin_sb, ixmax_sb, izmin_sb, izmax_sb );
-        }
+        Bool_t is_semiblock_min_z = 0, is_semiblock_max_z = 0;
+        int izmin_semiblock = 0, izmax_semiblock = 0, izmax_semiblock_up2 = 0;
 
-        /*--------------------*/
-
-        if( is_octant_active && (
-            ( dir_x == DIR_UP && proc_x_min && has_x_lo ) ||
-            ( dir_x == DIR_DN && proc_x_max && has_x_hi ) ) )
-        {
-          Sweeper_set_boundary_yz( &sweeper, faceyz, &quan, stepinfo.block_z,
-                                   stepinfo.octant, octant_in_block,
-                                   iymin_sb, iymax_sb, izmin_sb, izmax_sb );
-        }
-
-        Sweeper_sync_yz_threads( &sweeper );
+        Sweeper_get_semiblock_bounds(&is_semiblock_min_z, &is_semiblock_max_z,
+          &izmin_semiblock, &izmax_semiblock, &izmax_semiblock_up2,
+          sweeper.dims_b.ncell_z, DIM_Z, dir_z, semiblock_step, nsemiblock);
 
         /*--------------------*/
         /*---Perform sweep on semiblock---*/
@@ -1255,23 +1429,39 @@ TARGET_HD void Sweeper_sweep_block_impl(
         const int do_block_init_this = !! ( do_block_init &
                          ( ((unsigned long int)1) <<
                            ( octant_in_block + noctant_per_block *
-                             semiblock ) ) );
+                             semiblock_step ) ) );
 
         Sweeper_sweep_semiblock( &sweeper, vo_this, vi_this,
                                  facexy, facexz, faceyz,
                                  a_from_m, m_from_a,
                                  &quan, stepinfo, octant_in_block,
-                                 ixmin_sb, ixmax_sb_up2,
-                                 iymin_sb, iymax_sb_up2,
-                                 izmin_sb, izmax_sb_up2,
+                                 ixmin_semiblock, ixmax_semiblock_up2,
+                                 iymin_semiblock, iymax_semiblock_up2,
+                                 izmin_semiblock, izmax_semiblock_up2,
                                  do_block_init_this,
                                  is_octant_active );
 
       } /*---octant_in_block---*/
 
-      /*---Sync between semiblock steps---*/
+#ifdef USE_OPENMP_TASKS
+      /*
+        printf("%i %i                        "
+               "                         Completing task %i %i %i %i %i   %i\n",
+               step, semiblock_step,
+               thread_x, thread_y, thread_z, thread_e, thread_octant,
+               omp_get_thread_num());
+      */
 
+      } /*---omp task---*/
+      }
+      }
+      }
+      }
+      } /*---omp parallel for---*/ /*---NOTE: implicit sync here---*/
+#else
+      /*---Sync between semiblock steps---*/
       Sweeper_sync_octant_threads( &sweeper );
+#endif
 
     } /*---semiblock---*/
 }
@@ -1279,7 +1469,7 @@ TARGET_HD void Sweeper_sweep_block_impl(
 /*===========================================================================*/
 /*---Perform a sweep for a block, implementation, global---*/
 
-TARGET_G void Sweeper_sweep_block_adapter(
+TARGET_G void Sweeper_sweep_block_impl_global(
   SweeperLite            sweeper,
         P* __restrict__  vo,
   const P* __restrict__  vi,
