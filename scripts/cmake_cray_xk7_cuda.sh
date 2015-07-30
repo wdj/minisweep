@@ -29,6 +29,8 @@ fi
 
 #------------------------------------------------------------------------------
 
+#  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE -O3 -fomit-frame-pointer -funroll-loops -finline-limit=100000000" \
+
 cmake \
   -DCMAKE_BUILD_TYPE:STRING="$BUILD" \
   -DCMAKE_INSTALL_PREFIX:PATH="$INSTALL" \
@@ -40,7 +42,7 @@ cmake \
   -DUSE_MPI:BOOL=ON \
  \
   -DUSE_CUDA:BOOL=ON \
-  -DCUDA_NVCC_FLAGS:STRING="-I$MPICH_DIR/include;-arch=sm_35;-O3;-use_fast_math;--maxrregcount;128;-DNDEBUG" \
+  -DCUDA_NVCC_FLAGS:STRING="-I$MPICH_DIR/include;-arch=sm_35;-O3;-use_fast_math;--maxrregcount;128;-DNDEBUG;-Xcompiler;-fstrict-aliasing;-Xcompiler;-fargument-noalias-global" \
   -DCUDA_HOST_COMPILER:STRING=/usr/bin/gcc \
   -DCUDA_PROPAGATE_HOST_FLAGS:BOOL=ON \
  \
