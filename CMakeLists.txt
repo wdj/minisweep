@@ -5,23 +5,23 @@ cmake_minimum_required(VERSION 2.8)
 project("minisweep")
 
 SET(INCLUDE_DIRS
-  ${CMAKE_SOURCE_DIR}/driver
-  ${CMAKE_SOURCE_DIR}/base
-  ${CMAKE_SOURCE_DIR}/sn_base
-  ${CMAKE_SOURCE_DIR}/sn
+  ${CMAKE_SOURCE_DIR}/src_driver
+  ${CMAKE_SOURCE_DIR}/src_base
+  ${CMAKE_SOURCE_DIR}/src_sweeper_base
+  ${CMAKE_SOURCE_DIR}/src_sweeper
   )
 
 SET(SOURCES
-  driver/run_tools.c
-  base/arguments.c
-  base/memory.c
-  sn_base/dimensions.c
-  sn_base/pointer.c
-  sn/faces_kba.c
-  sn/quantities.c
-  sn/stepscheduler_kba.c
-  sn/sweeper.c
-  sn/sweeper_kernels.c
+  src_driver/run_tools.c
+  src_base/arguments.c
+  src_base/memory.c
+  src_sweeper_base/dimensions.c
+  src_sweeper_base/pointer.c
+  src_sweeper/faces_kba.c
+  src_sweeper/quantities.c
+  src_sweeper/stepscheduler_kba.c
+  src_sweeper/sweeper.c
+  src_sweeper/sweeper_kernels.c
   )
 
 SET(CUDA_SOURCES)

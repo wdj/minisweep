@@ -209,6 +209,26 @@ for nthread_e in {1..8} ; do
     --ne 64 --na 32 --nproc_x 1 --nproc_y 1 --nblock_z 32 --nthread_e $nthread_e
 done
 
+Example 4
+---------
+
+Usage example on ORNL Crest system (Power8, NVIDIA K40m).
+
+bsub -Is -n 1 -T 1 -W 100 -q interactive bash
+mkdir minisweep_work
+cd minisweep_work
+#git clone https://github.com/wdj/minisweep.git
+mkdir build_openmp
+cd build_openmp
+module load cmake3
+module load cuda
+env BUILD=RELEASE ../minisweep/scripts/cmake_cuda.sh
+make
+
+poe sweep --ncell_x 16 --ncell_y 32 --ncell_z 64 \
+  --ne 32 --na 32 --nblock_z 64 \
+  --is_using_device 1 --nthread_octant 8 --nthread_e 32
+
 
 References
 ----------
