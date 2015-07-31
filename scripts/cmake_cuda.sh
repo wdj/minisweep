@@ -35,7 +35,7 @@ cmake \
   -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE" \
  \
   -DUSE_CUDA:BOOL=ON \
-  -DCUDA_NVCC_FLAGS:STRING="-I$MPICH_DIR/include;-arch=sm_35;-O3;-use_fast_math;--maxrregcount;128;-DNDEBUG" \
+  -DCUDA_NVCC_FLAGS:STRING="-I$MPICH_DIR/include;-arch=sm_35;-O3;-use_fast_math;-DNDEBUG;--maxrregcount;128;-Xcompiler;-fstrict-aliasing;-Xcompiler;-fargument-noalias-global;-Xcompiler;-O3;-Xcompiler;-fomit-frame-pointer;-Xcompiler;-funroll-loops;-Xcompiler;-finline-limit=100000000;-Xptxas=-v" \
   -DCUDA_HOST_COMPILER:STRING=/usr/bin/gcc \
   -DCUDA_PROPAGATE_HOST_FLAGS:BOOL=ON \
  \
