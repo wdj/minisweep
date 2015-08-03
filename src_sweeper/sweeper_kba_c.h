@@ -62,6 +62,8 @@ void Sweeper_ctor( Sweeper*          sweeper,
   Insist( dims.ncell_z % sweeper->nblock_z == 0
                   ? "Currently require all blocks have same z dimension" : 0 );
 
+  const int dims_b_ncell_z = dims.ncell_z / sweeper->nblock_z;
+
   /*====================*/
   /*---Set up number of octant threads---*/
   /*====================*/
@@ -86,13 +88,21 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Set up number of semiblock steps---*/
   /*====================*/
 
+  /*---Note special case in which not necessary to semiblock in z---*/
+
+  const int nsemiblock_default = sweeper->nthread_octant==8 &&
+                                 sweeper->nblock_z % 2 == 0 ?
+                                 4 : sweeper->nthread_octant;
+
   sweeper->nsemiblock = Arguments_consume_int_or_default(
-                               args, "--nsemiblock", sweeper->nthread_octant );
+                                    args, "--nsemiblock", nsemiblock_default );
 
   Insist( sweeper->nsemiblock>0 && sweeper->nsemiblock<=NOCTANT
           && ((sweeper->nsemiblock&(sweeper->nsemiblock-1))==0)
                                 ? "Invalid semiblock count supplied" : 0 );
   Insist( ( sweeper->nsemiblock >= sweeper->nthread_octant ||
+            (sweeper->nthread_octant==8 && sweeper->nblock_z % 2 == 0
+                                        && sweeper->nsemiblock==4) ||
             IS_USING_OPENMP_VO_ATOMIC )
          ? "Incomplete set of semiblock steps requires atomic vo update" : 0 );
 
@@ -108,6 +118,10 @@ void Sweeper_ctor( Sweeper*          sweeper,
                                            (dims.ncell_y+1) / 2 :
                                             dims.ncell_y;
 
+  const int ncell_z_per_subblock_default = sweeper->nsemiblock >= 8 ?
+                                           (dims_b_ncell_z+1) / 2 :
+                                            dims_b_ncell_z;
+
   sweeper->ncell_x_per_subblock = Arguments_consume_int_or_default(
                args, "--ncell_x_per_subblock", ncell_x_per_subblock_default );
   Insist( sweeper->ncell_x_per_subblock>0 ?
@@ -119,7 +133,7 @@ void Sweeper_ctor( Sweeper*          sweeper,
                                         "Invalid subblock size supplied" : 0 );
 
   sweeper->ncell_z_per_subblock = Arguments_consume_int_or_default(
-    args, "--ncell_z_per_subblock", iceil( dims.ncell_z, sweeper->nblock_z ) );
+               args, "--ncell_z_per_subblock", ncell_z_per_subblock_default );
   Insist( sweeper->ncell_z_per_subblock>0 ?
                                         "Invalid subblock size supplied" : 0 );
 
@@ -130,7 +144,7 @@ void Sweeper_ctor( Sweeper*          sweeper,
   sweeper->dims = dims;
 
   sweeper->dims_b = sweeper->dims;
-  sweeper->dims_b.ncell_z = sweeper->dims.ncell_z / sweeper->nblock_z;
+  sweeper->dims_b.ncell_z = dims_b_ncell_z;
 
   sweeper->dims_g = sweeper->dims;
   sweeper->dims_g.ncell_x = quan->ncell_x_g;
@@ -588,11 +602,10 @@ void Sweeper_sweep(
 
   /*---Initialize result array to zero if needed---*/
 
-  if( sweeper->nsemiblock < sweeper->nthread_octant )
-  {
-    initialize_state_zero( Pointer_h( vo ), sweeper->dims, NU );
-    Pointer_update_d_stream( vo, Env_cuda_stream_kernel_faces( env ) );
-  }
+#ifdef USE_OPENMP_VO_ATOMIC
+  initialize_state_zero( Pointer_h( vo ), sweeper->dims, NU );
+  Pointer_update_d_stream( vo, Env_cuda_stream_kernel_faces( env ) );
+#endif
 
   /*--------------------*/
   /*---Loop over kba parallel steps---*/
@@ -705,14 +718,13 @@ void Sweeper_sweep(
 
         /*---Initialize result array to zero if needed---*/
         /*---NOTE: this is not performance-optimal---*/
-        if( sweeper->nsemiblock < sweeper->nthread_octant )
-        {
-          Pointer_ctor_alias(    &vo_b, vi, size_state_block * block_to_send[i],
-                                            size_state_block );
-          initialize_state_zero( Pointer_h( &vo_b ), sweeper->dims, NU );
-          Pointer_update_d_stream( &vo_b, Env_cuda_stream_send_block( env ) );
-          Pointer_dtor(            &vo_b );
-        }
+#ifdef USE_OPENMP_VO_ATOMIC
+        Pointer_ctor_alias(    &vo_b, vi, size_state_block * block_to_send[i],
+                                          size_state_block );
+        initialize_state_zero( Pointer_h( &vo_b ), sweeper->dims, NU );
+        Pointer_update_d_stream( &vo_b, Env_cuda_stream_send_block( env ) );
+        Pointer_dtor(            &vo_b );
+#endif
       }
     }
 

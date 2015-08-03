@@ -646,92 +646,87 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
                                    iy <= iymax_subblock &&
                                    iz <= izmax_subblock && (guaranteed) */
 
-      /*--------------------*/
-      /*---Set boundary condition: xy---*/
-      /*--------------------*/
-
-      const int iz_g = iz + iz_base;
-      if( ( iz_g == 0                         && dir_z == DIR_UP ) ||
-          ( iz_g == sweeper->dims_g.ncell_z-1 && dir_z == DIR_DN ) )
-      {
       if( is_elt_active )
       {
-        const int ix_g = ix + quan->ix_base;
+        /*--------------------*/
+        /*---Set boundary condition: xy---*/
+        /*--------------------*/
+
+        const int iz_g = iz + iz_base;
+        if( ( iz_g == 0                         && dir_z == DIR_UP ) ||
+            ( iz_g == sweeper->dims_g.ncell_z-1 && dir_z == DIR_DN ) )
+        {
+          const int ix_g = ix + quan->ix_base;
+          const int iy_g = iy + quan->iy_base;
+          /*---TODO: thread/vectorize in u, a---*/
+          int iu = 0;
+          for( iu=0; iu<NU; ++iu )
+          {
+            int ia = 0;
+          for( ia=0; ia<sweeper->dims_b.na; ++ia )
+          {
+            *ref_facexy( facexy, sweeper->dims_b, NU,  
+                         sweeper->noctant_per_block,
+                         ix, iy, ie, ia, iu, octant_in_block )     
+               = Quantities_init_facexy( quan, ix_g, iy_g, iz_g-dir_inc_z,
+                                         ie, ia, iu, octant, sweeper->dims_g );
+          }
+          }
+        }
+
+        /*--------------------*/
+        /*---Set boundary condition: xz---*/
+        /*--------------------*/
+
         const int iy_g = iy + quan->iy_base;
-        /*---TODO: thread/vectorize in u, a---*/
-        int iu = 0;
-        for( iu=0; iu<NU; ++iu )
+        if( ( iy_g == 0                         && dir_y == DIR_UP ) ||
+            ( iy_g == sweeper->dims_g.ncell_y-1 && dir_y == DIR_DN ) )
         {
-          int ia = 0;
-        for( ia=0; ia<sweeper->dims_b.na; ++ia )
-        {
-          *ref_facexy( facexy, sweeper->dims_b, NU,  
-                       sweeper->noctant_per_block,
-                       ix, iy, ie, ia, iu, octant_in_block )     
-             = Quantities_init_facexy( quan, ix_g, iy_g, iz_g-dir_inc_z,
-                                       ie, ia, iu, octant, sweeper->dims_g );
+          const int ix_g = ix + quan->ix_base;
+          const int iz_g = iz +       iz_base;
+          /*---TODO: thread/vectorize in u, a---*/
+          int iu = 0;
+          for( iu=0; iu<NU; ++iu )
+          {
+            int ia = 0;
+          for( ia=0; ia<sweeper->dims_b.na; ++ia )
+          {
+            *ref_facexz( facexz, sweeper->dims_b, NU,  
+                         sweeper->noctant_per_block,
+                         ix, iz, ie, ia, iu, octant_in_block )     
+               = Quantities_init_facexz( quan, ix_g, iy_g-dir_inc_y, iz_g,
+                                         ie, ia, iu, octant, sweeper->dims_g );
+          }
+          }
         }
-        }
-      }
-      }
 
-      /*--------------------*/
-      /*---Set boundary condition: xz---*/
-      /*--------------------*/
+        /*--------------------*/
+        /*---Set boundary condition: yz---*/
+        /*--------------------*/
 
-      const int iy_g = iy + quan->iy_base;
-      if( ( iy_g == 0                         && dir_y == DIR_UP ) ||
-          ( iy_g == sweeper->dims_g.ncell_y-1 && dir_y == DIR_DN ) )
-      {
-      if( is_elt_active )
-      {
         const int ix_g = ix + quan->ix_base;
-        const int iz_g = iz +       iz_base;
-        /*---TODO: thread/vectorize in u, a---*/
-        int iu = 0;
-        for( iu=0; iu<NU; ++iu )
+        if( ( ix_g == 0                         && dir_x == DIR_UP ) ||
+            ( ix_g == sweeper->dims_g.ncell_x-1 && dir_x == DIR_DN ) )
         {
-          int ia = 0;
-        for( ia=0; ia<sweeper->dims_b.na; ++ia )
-        {
-          *ref_facexz( facexz, sweeper->dims_b, NU,  
-                       sweeper->noctant_per_block,
-                       ix, iz, ie, ia, iu, octant_in_block )     
-             = Quantities_init_facexz( quan, ix_g, iy_g-dir_inc_y, iz_g,
-                                       ie, ia, iu, octant, sweeper->dims_g );
+          const int iy_g = iy + quan->iy_base;
+          const int iz_g = iz +       iz_base;
+          /*---TODO: thread/vectorize in u, a---*/
+          int iu = 0;
+          for( iu=0; iu<NU; ++iu )
+          {
+            int ia = 0;
+          for( ia=0; ia<sweeper->dims_b.na; ++ia )
+          {
+            *ref_faceyz( faceyz, sweeper->dims_b, NU,  
+                         sweeper->noctant_per_block,
+                         iy, iz, ie, ia, iu, octant_in_block )     
+               = Quantities_init_faceyz( quan, ix_g-dir_inc_x, iy_g, iz_g,
+                                         ie, ia, iu, octant, sweeper->dims_g );
+          }
+          }
         }
-        }
-      }
-      }
 
-      /*--------------------*/
-      /*---Set boundary condition: yz---*/
-      /*--------------------*/
-
-      const int ix_g = ix + quan->ix_base;
-      if( ( ix_g == 0                         && dir_x == DIR_UP ) ||
-          ( ix_g == sweeper->dims_g.ncell_x-1 && dir_x == DIR_DN ) )
-      {
-      if( is_elt_active )
-      {
-        const int iy_g = iy + quan->iy_base;
-        const int iz_g = iz +       iz_base;
-        /*---TODO: thread/vectorize in u, a---*/
-        int iu = 0;
-        for( iu=0; iu<NU; ++iu )
-        {
-          int ia = 0;
-        for( ia=0; ia<sweeper->dims_b.na; ++ia )
-        {
-          *ref_faceyz( faceyz, sweeper->dims_b, NU,  
-                       sweeper->noctant_per_block,
-                       iy, iz, ie, ia, iu, octant_in_block )     
-             = Quantities_init_faceyz( quan, ix_g-dir_inc_x, iy_g, iz_g,
-                                       ie, ia, iu, octant, sweeper->dims_g );
-        }
-        }
-      }
-      }
+      } /*---is_elt_active---*/
 
       /*--------------------*/
       /*---Perform sweep on cell---*/
