@@ -614,10 +614,6 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
 
   for( ie=iemin; ie<iemax; ++ie )
   {
-    /*--------------------*/
-    /*---Sweep subblock: loop over cells, in proper direction---*/
-    /*--------------------*/
-
     for( iz=izbeg; iz!=izend+dir_inc_z; iz+=dir_inc_z )
     {
     for( iy=iybeg; iy!=iyend+dir_inc_y; iy+=dir_inc_y )
@@ -727,6 +723,50 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
         }
 
       } /*---is_elt_active---*/
+
+    }
+    }
+    } /*---ix/iy/iz---*/
+
+  } /*---ie---*/
+
+  /*--------------------*/
+  /*---Loop over energy groups---*/
+  /*--------------------*/
+
+  for( ie=iemin; ie<iemax; ++ie )
+  {
+    /*--------------------*/
+    /*---Sweep subblock: loop over cells, in proper direction---*/
+    /*--------------------*/
+
+    for( iz=izbeg; iz!=izend+dir_inc_z; iz+=dir_inc_z )
+    {
+    for( iy=iybeg; iy!=iyend+dir_inc_y; iy+=dir_inc_y )
+    {
+    for( ix=ixbeg; ix!=ixend+dir_inc_x; ix+=dir_inc_x )
+    {
+      /*---Truncate loop region to block, semiblock and subblock---*/
+      const Bool_t is_elt_active = ix <  sweeper->dims_b.ncell_x &&
+                                   iy <  sweeper->dims_b.ncell_y &&
+                                   iz <  sweeper->dims_b.ncell_z &&
+                                   ix <= ixmax_semiblock &&
+                                   iy <= iymax_semiblock &&
+                                   iz <= izmax_semiblock &&
+                                   is_subblock_active &&
+                                   is_octant_active;
+                                /* ix >= 0 &&
+                                   iy >= 0 &&
+                                   iz >= 0 &&
+                                   ix >= ixmin_semiblock &&
+                                   iy >= iymin_semiblock &&
+                                   iz >= izmin_semiblock &&
+                                   ix >= ixmin_subblock &&
+                                   iy >= iymin_subblock &&
+                                   iz >= izmin_subblock &&
+                                   ix <= ixmax_subblock &&
+                                   iy <= iymax_subblock &&
+                                   iz <= izmax_subblock && (guaranteed) */
 
       /*--------------------*/
       /*---Perform sweep on cell---*/
