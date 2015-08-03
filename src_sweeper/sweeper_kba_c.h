@@ -100,13 +100,21 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Set up size of subblocks---*/
   /*====================*/
 
+  const int ncell_x_per_subblock_default = sweeper->nsemiblock >= 2 ?
+                                           (dims.ncell_x+1) / 2 :
+                                            dims.ncell_x;
+
+  const int ncell_y_per_subblock_default = sweeper->nsemiblock >= 4 ?
+                                           (dims.ncell_y+1) / 2 :
+                                            dims.ncell_y;
+
   sweeper->ncell_x_per_subblock = Arguments_consume_int_or_default(
-                                args, "--ncell_x_per_subblock", dims.ncell_x );
+               args, "--ncell_x_per_subblock", ncell_x_per_subblock_default );
   Insist( sweeper->ncell_x_per_subblock>0 ?
                                         "Invalid subblock size supplied" : 0 );
 
   sweeper->ncell_y_per_subblock = Arguments_consume_int_or_default(
-                                args, "--ncell_y_per_subblock", dims.ncell_y );
+               args, "--ncell_y_per_subblock", ncell_y_per_subblock_default );
   Insist( sweeper->ncell_y_per_subblock>0 ?
                                         "Invalid subblock size supplied" : 0 );
 

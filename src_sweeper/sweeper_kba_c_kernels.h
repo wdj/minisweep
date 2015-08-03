@@ -203,7 +203,6 @@ TODO: fix vectorization for this loop.
                   v[iu] += a_from_m_this
                     * *const_ref_vilocal( vilocal, sweeper->dims_b,
                                         NU, NTHREAD_M, im_in_block, iu );
-
                 }
               }
             } /*---for im_in_block---*/
@@ -588,7 +587,7 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
   const Bool_t                   do_block_init_this,
   const Bool_t                   is_octant_active )
 {
-  /*---Prepare to loop over energy groups in thread---*/
+  /*---Initializations---*/
 
   const int iemin = (   sweeper->dims.ne *
                       ( Sweeper_thread_e( sweeper )     ) )
@@ -599,26 +598,22 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
 
   int ie = 0;
 
+  const int ixbeg = dir_x==DIR_UP ? ixmin_subblock : ixmax_subblock;
+  const int iybeg = dir_y==DIR_UP ? iymin_subblock : iymax_subblock;
+  const int izbeg = dir_z==DIR_UP ? izmin_subblock : izmax_subblock;
+
+  const int ixend = dir_x==DIR_DN ? ixmin_subblock : ixmax_subblock;
+  const int iyend = dir_y==DIR_DN ? iymin_subblock : iymax_subblock;
+  const int izend = dir_z==DIR_DN ? izmin_subblock : izmax_subblock;
+
+  int ix = 0, iy = 0, iz = 0;
+
   /*--------------------*/
   /*---Loop over energy groups---*/
   /*--------------------*/
 
   for( ie=iemin; ie<iemax; ++ie )
   {
-    /*--------------------*/
-    /*---Prepare to loop over cells---*/
-    /*--------------------*/
-
-    const int ixbeg = dir_x==DIR_UP ? ixmin_subblock : ixmax_subblock;
-    const int iybeg = dir_y==DIR_UP ? iymin_subblock : iymax_subblock;
-    const int izbeg = dir_z==DIR_UP ? izmin_subblock : izmax_subblock;
-
-    const int ixend = dir_x==DIR_DN ? ixmin_subblock : ixmax_subblock;
-    const int iyend = dir_y==DIR_DN ? iymin_subblock : iymax_subblock;
-    const int izend = dir_z==DIR_DN ? izmin_subblock : izmax_subblock;
-
-    int ix = 0, iy = 0, iz = 0;
-
     /*--------------------*/
     /*---Sweep subblock: loop over cells, in proper direction---*/
     /*--------------------*/
@@ -630,25 +625,26 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
     for( ix=ixbeg; ix!=ixend+dir_inc_x; ix+=dir_inc_x )
     {
       /*---Truncate loop region to block, semiblock and subblock---*/
-      const Bool_t is_cell_active = ix <  sweeper->dims_b.ncell_x &&
-                                    iy <  sweeper->dims_b.ncell_y &&
-                                    iz <  sweeper->dims_b.ncell_z &&
-                                    ix <= ixmax_semiblock &&
-                                    iy <= iymax_semiblock &&
-                                    iz <= izmax_semiblock &&
-                                    is_subblock_active;
-                                 /* ix >= 0 &&
-                                    iy >= 0 &&
-                                    iz >= 0 &&
-                                    ix >= ixmin_semiblock &&
-                                    iy >= iymin_semiblock &&
-                                    iz >= izmin_semiblock &&
-                                    ix >= ixmin_subblock &&
-                                    iy >= iymin_subblock &&
-                                    iz >= izmin_subblock &&
-                                    ix <= ixmax_subblock &&
-                                    iy <= iymax_subblock &&
-                                    iz <= izmax_subblock && (guaranteed) */
+      const Bool_t is_elt_active = ix <  sweeper->dims_b.ncell_x &&
+                                   iy <  sweeper->dims_b.ncell_y &&
+                                   iz <  sweeper->dims_b.ncell_z &&
+                                   ix <= ixmax_semiblock &&
+                                   iy <= iymax_semiblock &&
+                                   iz <= izmax_semiblock &&
+                                   is_subblock_active &&
+                                   is_octant_active;
+                                /* ix >= 0 &&
+                                   iy >= 0 &&
+                                   iz >= 0 &&
+                                   ix >= ixmin_semiblock &&
+                                   iy >= iymin_semiblock &&
+                                   iz >= izmin_semiblock &&
+                                   ix >= ixmin_subblock &&
+                                   iy >= iymin_subblock &&
+                                   iz >= izmin_subblock &&
+                                   ix <= ixmax_subblock &&
+                                   iy <= iymax_subblock &&
+                                   iz <= izmax_subblock && (guaranteed) */
 
       /*--------------------*/
       /*---Set boundary condition: xy---*/
@@ -658,7 +654,7 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
       if( ( iz_g == 0                         && dir_z == DIR_UP ) ||
           ( iz_g == sweeper->dims_g.ncell_z-1 && dir_z == DIR_DN ) )
       {
-      if( is_octant_active && is_cell_active )
+      if( is_elt_active )
       {
         const int ix_g = ix + quan->ix_base;
         const int iy_g = iy + quan->iy_base;
@@ -687,7 +683,7 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
       if( ( iy_g == 0                         && dir_y == DIR_UP ) ||
           ( iy_g == sweeper->dims_g.ncell_y-1 && dir_y == DIR_DN ) )
       {
-      if( is_octant_active && is_cell_active )
+      if( is_elt_active )
       {
         const int ix_g = ix + quan->ix_base;
         const int iz_g = iz +       iz_base;
@@ -716,7 +712,7 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
       if( ( ix_g == 0                         && dir_x == DIR_UP ) ||
           ( ix_g == sweeper->dims_g.ncell_x-1 && dir_x == DIR_DN ) )
       {
-      if( is_octant_active && is_cell_active )
+      if( is_elt_active )
       {
         const int iy_g = iy + quan->iy_base;
         const int iz_g = iz +       iz_base;
@@ -744,7 +740,7 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
                           facexy, facexz, faceyz, a_from_m, m_from_a, quan,
                           octant, iz_base, octant_in_block, ie, ix, iy, iz,
                           do_block_init_this,
-                          is_octant_active && is_cell_active );
+                          is_elt_active );
     }
     }
     } /*---ix/iy/iz---*/
@@ -893,7 +889,6 @@ TARGET_HD static inline void Sweeper_sweep_semiblock(
                             + nsubblock_y_per_chunk
                             + nsubblock_z_per_chunk - 2;
 
-
     int subblockwave = 0;
 
     /*--------------------*/
@@ -1025,6 +1020,8 @@ TARGET_HD static inline void Sweeper_get_semiblock_bounds(
 
   *has_lo =     is_semiblock_lo   || ! is_semiblocked;
   *has_hi = ( ! is_semiblock_lo ) || ! is_semiblocked;
+
+  /*---Get semiblock bounds, inclusive of endpoints---*/
 
   *imin =     *has_lo   ? 0 : ( (ncell+1) / 2 );
   *imax = ( ! *has_hi ) ?     ( (ncell+1) / 2 - 1 ) : ( ncell - 1 );
