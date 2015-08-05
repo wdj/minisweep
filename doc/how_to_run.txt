@@ -5,9 +5,9 @@ Running the sweep miniapp
 Usage
 -----
 
-./sweepx [ --<setting_name> <setting_value> ] ...
+./sweep [ --<setting_name> <setting_value> ] ...
 
-aprun [ <aprun_arg> ] ... sweepx [ --<setting_name> <setting_value> ] ...
+aprun [ <aprun_arg> ] ... sweep [ --<setting_name> <setting_value> ] ...
 
 Settings
 --------
@@ -61,7 +61,10 @@ Settings
   divide ncell_z exactly.  Blocks along the Z dimension are kept on
   the same MPI rank.
   The algorithm is a wavefront algorithm, where every block is
-  considered as a node of the grid for the wavefront calculation.
+  considered as a node of the wavefront grid for the wavefront calculation.
+
+  NOTE: when nthread_octant==8, setting nblock_z such that nblock_z % 2 == 0
+  can considerably increase performance.
 
 --is_using_device
 
@@ -102,7 +105,8 @@ Settings
   The total number of threads equals the product of all thread counts
   along problem axes.
   For CUDA builds, can be set to a small integer between 1 and 4.
-  Not advised for OpenMP builds, as the parallelism is too fine-grained.
+  Not advised for OpenMP builds, as the parallelism is generally too
+  fine-grained to give good performance.
 
 --nthread_z
 
@@ -110,27 +114,40 @@ Settings
   within a sweep block (default 1).
   The total number of threads equals the product of all thread counts
   along problem axes.
-  Since the sweep block thickness in Z commonly equals 1, nthread_z should
-  generally be set to 1.
-  Not advised for OpenMP builds, as the parallelism is too fine-grained.
+  Since the sweep block thickness in Z (ncell_z/nblock_z) commonly equals 1,
+  this setting should generally be set to 1.
+  Not advised for OpenMP builds, as the parallelism is generally too
+  fine-grained to give good performance.
 
 --ncell_x_per_subblock
 
   For OpenMP or CUDA builds, a blocking factor for blocking the sweep block
   to deploy Y/Z threading.  By default equals the number of cells along the
-  X dimension for the given MPI rank.
+  X dimension for the given MPI rank, or half this amount if the axis
+  is semiblocked due to octant threading.
 
 --ncell_y_per_subblock
 
   For OpenMP or CUDA builds, a blocking factor for blocking the sweep block
   to deploy Y/Z threading.  By default equals the number of cells along the
-  Y dimension for the given MPI rank.
+  Y dimension for the given MPI rank, or half this amount if the axis
+  is semiblocked due to octant threading.
+
+--ncell_z_per_subblock
+
+  For OpenMP or CUDA builds, a blocking factor for blocking the sweep block
+  to deploy Y/Z threading.  By default equals the number of cells along the
+  Z dimension for the given MPI rank, or half this amount if the axis
+  is semiblocked due to octant threading.
+  Since the sweep block thickness in Z (ncell_z/nblock_z) commonly equals 1,
+  this setting should generally be set to 1.
 
 Example 1
 ---------
 
 Usage example on ORNL Titan system, CPU only, for executing a weak scaling
 study:
+(NOTE: the example shown below has recently changed.)
 
 qsub -I -Astf006 -lnodes=1 -lwalltime=2:0:0
 cd $MEMBERWORK/stf006
@@ -142,7 +159,7 @@ mkdir build
 cd build
 module swap PrgEnv-pgi PrgEnv-gnu
 module load cmake
-env BUILD=Release ../minisweep/scripts/cmake_cray_xk7.sh
+env BUILD=Release NM_VALUE=16 ../minisweep/scripts/cmake_cray_xk7.sh
 make
 
 for nproc_x in {1..2} ; do
@@ -159,6 +176,7 @@ Example 2
 
 Usage example on ORNL Titan system, using GPUs, for executing a weak scaling
 study:
+(NOTE: the example shown below has recently changed.)
 
 qsub -I -Astf006 -lnodes=4 -lwalltime=2:0:0 -lfeature=gpudefault
 cd $MEMBERWORK/stf006
@@ -171,7 +189,7 @@ cd build_cuda
 module swap PrgEnv-pgi PrgEnv-gnu
 module load cmake
 module load cudatoolkit
-env BUILD=Release ../minisweep/scripts/cmake_cray_xk7_cuda.sh
+env BUILD=Release NM_VALUE=16 ../minisweep/scripts/cmake_cray_xk7_cuda.sh
 make
 
 for nnode_x in {1..2} ; do
@@ -212,7 +230,7 @@ done
 Example 4
 ---------
 
-Usage example on ORNL Crest system (Power8, NVIDIA K40m).
+Usage example on ORNL Crest system (IBM Power8, NVIDIA K40m).
 
 bsub -Is -n 1 -T 1 -W 100 -q interactive bash
 mkdir minisweep_work
@@ -222,12 +240,12 @@ mkdir build_openmp
 cd build_openmp
 module load cmake3
 module load cuda
-env BUILD=RELEASE ../minisweep/scripts/cmake_cuda.sh
+env BUILD=RELEASE NM_VALUE=16 ../minisweep/scripts/cmake_cuda.sh
 make
 
 poe sweep --ncell_x 16 --ncell_y 32 --ncell_z 64 \
-  --ne 32 --na 32 --nblock_z 64 \
-  --is_using_device 1 --nthread_octant 8 --nthread_e 32
+  --ne 16 --na 32 --nblock_z 64 \
+  --is_using_device 1 --nthread_octant 8 --nthread_e 16
 
 
 References
@@ -239,4 +257,10 @@ in: High Performance Computing, Networking, Storage and Analysis (SC),
 2012 International Conference for, Issue Date: 10-16 Nov. 2012,
 http://ieeexplore.ieee.org/xpl/articleDetails.jsp?arnumber=6468508&tag=1
 
+Evans, Thomas M., Joubert, Wayne, Hamilton, Steven P., Johnson, Seth R.,
+Turner, John A., Davidson, Gregory G., Pandya, Tara M.,
+"Three-Dimensional Discrete Ordinates Reactor Assembly Calculations on GPUs,"
+ANS M&C 2015 - Joint International Conference on Mathematics and Computation
+(M&C), Supercomputing in Nuclear Applications (SNA) and the Monte Carlo (MC)
+Method, Nashville, TN, April 19-23 2015.
 

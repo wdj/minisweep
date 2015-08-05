@@ -124,7 +124,7 @@ function main
     local IS_TITAN=0
   fi
 
-  cp /dev/null tmp_
+  rm -f tmp_
 
   #==============================
   # Serial

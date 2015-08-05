@@ -8,6 +8,15 @@
  */
 /*---------------------------------------------------------------------------*/
 
+/*=============================================================================
+
+The Arguments struct serves as a mechanism for specifying package-wide
+execution options.  It acts as a lightweight internal options database.
+It is internally based on the standard argc/argv specification of
+command line arguments.
+
+=============================================================================*/
+
 #ifndef _arguments_h_
 #define _arguments_h_
 

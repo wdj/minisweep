@@ -17,7 +17,7 @@
 
 #include "types.h"
 #include "env_assert.h"
-#include "env_declarations.h"
+#include "env_data.h"
 #include "memory.h"
 
 #include "env_cuda_kernels.h"
@@ -34,7 +34,7 @@ static Bool_t Env_cuda_last_call_succeeded()
 {
   Bool_t result = Bool_true;
 
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   /*---NOTE: this read of the last error is a destructive read---*/
   cudaError_t error = cudaGetLastError();
 
@@ -53,7 +53,7 @@ static Bool_t Env_cuda_last_call_succeeded()
 
 static void Env_cuda_initialize_( Env *env, int argc, char** argv )
 {
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   cudaStreamCreate( & env->stream_send_block_ );
   Assert( Env_cuda_last_call_succeeded() );
   cudaStreamCreate( & env->stream_recv_block_ );
@@ -68,7 +68,7 @@ static void Env_cuda_initialize_( Env *env, int argc, char** argv )
 
 static void Env_cuda_finalize_( Env* env )
 {
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   cudaStreamDestroy( env->stream_send_block_ );
   Assert( Env_cuda_last_call_succeeded() );
   cudaStreamDestroy( env->stream_recv_block_ );
@@ -83,7 +83,7 @@ static void Env_cuda_finalize_( Env* env )
 
 static void Env_cuda_set_values_( Env *env, Arguments* args )
 {
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   env->is_using_device_ = Arguments_consume_int_or_default( args,
                                              "--is_using_device", Bool_false );
   Insist( env->is_using_device_ == 0 ||
@@ -96,7 +96,7 @@ static void Env_cuda_set_values_( Env *env, Arguments* args )
 
 static Bool_t Env_cuda_is_using_device( const Env *env )
 {
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   return env->is_using_device_;
 #else
   return Bool_false;
@@ -124,7 +124,7 @@ static P* malloc_host_pinned_P( size_t n )
 
   P* result = NULL;
 
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   cudaMallocHost( &result, n==0 ? ((size_t)1) : n*sizeof(P) );
   Assert( Env_cuda_last_call_succeeded() );
 #else
@@ -143,7 +143,7 @@ static P* malloc_device_P( size_t n )
 
   P* result = NULL;
 
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   cudaMalloc( &result, n==0 ? ((size_t)1) : n*sizeof(P) );
   Assert( Env_cuda_last_call_succeeded() );
   Assert( result );
@@ -165,7 +165,7 @@ static void free_host_P( P* p )
 static void free_host_pinned_P( P* p )
 {
   Assert( p );
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   cudaFreeHost( p );
   Assert( Env_cuda_last_call_succeeded() );
 #else
@@ -177,7 +177,7 @@ static void free_host_pinned_P( P* p )
 
 static void free_device_P( P* p )
 {
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   cudaFree( p );
   Assert( Env_cuda_last_call_succeeded() );
 #endif
@@ -191,7 +191,7 @@ static void Env_cuda_copy_host_to_device_P( P*     p_d,
                                             P*     p_h,
                                             size_t n )
 {
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   Assert( p_d );
   Assert( p_h );
   Assert( n+1 >= 1 );
@@ -207,7 +207,7 @@ static void Env_cuda_copy_device_to_host_P( P*     p_h,
                                             P*     p_d,
                                             size_t n )
 {
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   Assert( p_h );
   Assert( p_d );
   Assert( n+1 >= 1 );
@@ -224,7 +224,7 @@ static void Env_cuda_copy_host_to_device_stream_P( P*       p_d,
                                                    size_t   n,
                                                    Stream_t stream )
 {
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   Assert( p_d );
   Assert( p_h );
   Assert( n+1 >= 1 );
@@ -241,7 +241,7 @@ static void Env_cuda_copy_device_to_host_stream_P( P*       p_h,
                                                    size_t   n,
                                                    Stream_t stream )
 {
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   Assert( p_h );
   Assert( p_d );
   Assert( n+1 >= 1 );
@@ -256,7 +256,7 @@ static void Env_cuda_copy_device_to_host_stream_P( P*       p_h,
 
 static Stream_t Env_cuda_stream_send_block( Env* env )
 {
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   return env->stream_send_block_;
 #else
   return 0;
@@ -267,7 +267,7 @@ static Stream_t Env_cuda_stream_send_block( Env* env )
 
 static Stream_t Env_cuda_stream_recv_block( Env* env )
 {
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   return env->stream_recv_block_;
 #else
   return 0;
@@ -278,7 +278,7 @@ static Stream_t Env_cuda_stream_recv_block( Env* env )
 
 static Stream_t Env_cuda_stream_kernel_faces( Env* env )
 {
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   return env->stream_kernel_faces_;
 #else
   return 0;
@@ -289,7 +289,7 @@ static Stream_t Env_cuda_stream_kernel_faces( Env* env )
 
 static void Env_cuda_stream_wait( Stream_t stream )
 {
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   cudaStreamSynchronize( stream );
   Assert( Env_cuda_last_call_succeeded() );
 #endif
@@ -299,7 +299,7 @@ static void Env_cuda_stream_wait( Stream_t stream )
 
 static void Env_cuda_stream_wait_all()
 {
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   cudaThreadSynchronize();
   Assert( Env_cuda_last_call_succeeded() );
 #endif

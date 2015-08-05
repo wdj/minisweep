@@ -392,7 +392,7 @@ static void Sweeper_sweep_block_adapter(
   if( Env_cuda_is_using_device( env ) )
   {
     Sweeper_sweep_block_impl_global
-#ifdef __CUDACC__
+#ifdef USE_CUDA
                  <<< dim3( Sweeper_nthreadblock( sweeper, 0, env ),
                            Sweeper_nthreadblock( sweeper, 1, env ),
                            Sweeper_nthreadblock( sweeper, 2, env ) ),

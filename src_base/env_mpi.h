@@ -14,7 +14,7 @@
 #include "types.h"
 #include "arguments.h"
 #include "env_assert.h"
-#include "env_declarations.h"
+#include "env_data.h"
 
 #ifdef USE_MPI
 #include "mpi.h"

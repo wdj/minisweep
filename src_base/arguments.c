@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   arguments.h
+ * \file   arguments.c
  * \author Wayne Joubert
  * \date   Wed Mar 12 14:19:26 EDT 2014
  * \brief  Definitions for Arguments struct.

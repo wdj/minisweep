@@ -13,7 +13,7 @@
 
 /*===========================================================================*/
 
-#ifdef __CUDACC__
+#ifdef USE_CUDA
 
 #define TARGET_G  __global__
 #define TARGET_HD __host__ __device__

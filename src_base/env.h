@@ -8,6 +8,14 @@
  */
 /*---------------------------------------------------------------------------*/
 
+/*=============================================================================
+
+This is the main header file providing access to the specific parallel
+environemnt being used.  Other header files are included for the candidate APIs
+which are activated if being used.
+
+=============================================================================*/
+
 #ifndef _env_h_
 #define _env_h_
 
@@ -21,9 +29,9 @@
 #include "env_assert.h"
 
 /*===========================================================================*/
-/*---Declarations relevant to environment---*/
+/*---Data structure declarations relevant to environment---*/
 
-#include "env_declarations.h"
+#include "env_data.h"
 
 /*===========================================================================*/
 /*---MPI wrapper function definitions---*/

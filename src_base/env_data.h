@@ -1,15 +1,22 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   env_declarations.h
+ * \file   env_data.h
  * \author Wayne Joubert
  * \date   Wed Jan 15 16:06:28 EST 2014
- * \brief  Declarations relevant to programming API being used.
+ * \brief  Data structure declarations relevant to parallel environment.
  * \note   Copyright (C) 2014 Oak Ridge National Laboratory, UT-Battelle, LLC.
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _env_declarations_h_
-#define _env_declarations_h_
+/*=============================================================================
+
+This file has cross-cutting dpendencies across multiple parallel APIs
+since these are tightly coupled to the data structure.
+
+=============================================================================*/
+
+#ifndef _env_data_h_
+#define _env_data_h_
 
 #ifdef USE_MPI
 #include "mpi.h"
@@ -35,14 +42,14 @@ typedef int Comm_t;
 typedef int Request_t;
 #endif
 
-#ifdef __CUDACC__
+#ifdef USE_CUDA
 typedef cudaStream_t Stream_t;
 #else
 typedef int Stream_t;
 #endif
 
 /*===========================================================================*/
-/*---Struct with environment information---*/
+/*---Struct containing environment information---*/
 
 typedef struct
 {
@@ -53,7 +60,7 @@ typedef struct
   Comm_t active_comm_;
   Bool_t is_proc_active_;
 #endif
-#ifdef __CUDACC__
+#ifdef USE_CUDA
   Bool_t   is_using_device_;
   Stream_t stream_send_block_;
   Stream_t stream_recv_block_;
@@ -67,6 +74,6 @@ typedef struct
 } /*---extern "C"---*/
 #endif
 
-#endif /*---_env_declarations_h_---*/
+#endif /*---_env_data_h_---*/
 
 /*---------------------------------------------------------------------------*/
