@@ -1197,7 +1197,8 @@ TARGET_HD void Sweeper_sweep_block_impl(
                 thread_x,   thread_y,   thread_z,   thread_e, thread_octant );
 
       /*
-        printf("%i %i Submitting task %i %i %i %i %i   %i %i\n",
+        printf("%i %i "
+               "Submitting task %i %i %i %i %i  thread %i numthreads %i\n",
                step, semiblock_step,
                thread_x, thread_y, thread_z, thread_e, thread_octant,
                omp_get_thread_num(), omp_get_num_threads());
@@ -1210,10 +1211,11 @@ TARGET_HD void Sweeper_sweep_block_impl(
       depend(out: dep_out[0])
       {
       /*
-        printf("%i %i                   Commencing task %i %i %i %i %i   %i\n",
-             step, semiblock_step,
-             thread_x, thread_y, thread_z, thread_e, thread_octant,
-             omp_get_thread_num());
+        printf("%i %i                   "
+               "Commencing task %i %i %i %i %i  thread %i\n",
+               step, semiblock_step,
+               thread_x, thread_y, thread_z, thread_e, thread_octant,
+               omp_get_thread_num());
       */
 #endif
 
@@ -1305,8 +1307,8 @@ TARGET_HD void Sweeper_sweep_block_impl(
 
 #ifdef USE_OPENMP_TASKS
       /*
-        printf("%i %i                        "
-               "                         Completing task %i %i %i %i %i   %i\n",
+        printf("%i %i                                                 "
+               "Completing task %i %i %i %i %i  thread %i\n",
                step, semiblock_step,
                thread_x, thread_y, thread_z, thread_e, thread_octant,
                omp_get_thread_num());

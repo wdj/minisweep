@@ -26,17 +26,28 @@ if [ "$NM_VALUE" = "" ] ; then
   NM_VALUE=4
 fi
 
+if [ $PE_ENV = GNU ] ; then
+  OMP_ARGS="-fopenmp"
+  OPT_ARGS="-O3 -fomit-frame-pointer -funroll-loops -finline-limit=10000000"
+fi
+
+if [ $PE_ENV = INTEL ] ; then
+  OMP_ARGS="-qopenmp"
+  OPT_ARGS="-ip -prec-div -O3 -align -ansi-alias -fargument-noalias -fno-alias -fargument-noalias"
+fi
+
 #------------------------------------------------------------------------------
 
 cmake \
   -DCMAKE_BUILD_TYPE:STRING="$BUILD" \
   -DCMAKE_INSTALL_PREFIX:PATH="$INSTALL" \
+  -DCMAKE_SYSTEM_NAME:STRING="Catamount" \
  \
   -DCMAKE_C_COMPILER:STRING="$(which cc)" \
   -DMPI_C_COMPILER="$(which cc)" \
-  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE -DUSE_OPENMP -DUSE_OPENMP_THREADS -fopenmp" \
+  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE -DUSE_OPENMP -DUSE_OPENMP_THREADS $OMP_ARGS" \
   -DCMAKE_C_FLAGS_DEBUG:STRING="-g" \
-  -DCMAKE_C_FLAGS_RELEASE:STRING="-O3 -fomit-frame-pointer -funroll-loops -finline-limit=10000000" \
+  -DCMAKE_C_FLAGS_RELEASE:STRING="OPT_ARGS" \
  \
   -DUSE_MPI:BOOL=ON \
  \
