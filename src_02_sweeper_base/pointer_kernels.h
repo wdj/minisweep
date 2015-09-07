@@ -15,10 +15,6 @@
 
 #include "types_kernels.h"
 
-#ifndef Assert
-#define Assert(v)
-#endif
-
 #ifdef __cplusplus
 extern "C"
 {

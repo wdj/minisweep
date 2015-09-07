@@ -11,19 +11,10 @@
 #ifndef _env_kernels_h_
 #define _env_kernels_h_
 
-/*===========================================================================*/
-/*---OpenMP wrapper function definitions---*/
+/*---Definitions relevant to specific parallel APIs---*/
 
 #include "env_openmp_kernels.h"
-
-/*===========================================================================*/
-/*---CUDA wrapper function definitions---*/
-
 #include "env_cuda_kernels.h"
-
-/*===========================================================================*/
-/*---Intel MIC definitions---*/
-
 #include "env_mic_kernels.h"
 
 #endif /*---_env_kernels_h_---*/

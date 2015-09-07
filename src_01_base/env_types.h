@@ -15,8 +15,8 @@ since these are tightly coupled to the data structure.
 
 =============================================================================*/
 
-#ifndef _env_data_h_
-#define _env_data_h_
+#ifndef _env_types_h_
+#define _env_types_h_
 
 #ifdef USE_MPI
 #include "mpi.h"
@@ -74,6 +74,6 @@ typedef struct
 } /*---extern "C"---*/
 #endif
 
-#endif /*---_env_data_h_---*/
+#endif /*---_env_types_h_---*/
 
 /*---------------------------------------------------------------------------*/

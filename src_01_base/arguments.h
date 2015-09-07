@@ -11,9 +11,10 @@
 /*=============================================================================
 
 The Arguments struct serves as a mechanism for specifying package-wide
-execution options.  It acts as a lightweight internal options database.
+execution options.
 It is internally based on the standard argc/argv specification of
 command line arguments.
+Its entries are "read-once": when an entry is read, it is deleted.
 
 =============================================================================*/
 

@@ -23,34 +23,16 @@ which are activated if being used.
 
 #include "arguments.h"
 
-/*===========================================================================*/
 /*---Header file for assertions---*/
-
 #include "env_assert.h"
 
-/*===========================================================================*/
-/*---Data structure declarations relevant to environment---*/
+/*---Data structure declarations relevant to env---*/
+#include "env_types.h"
 
-#include "env_data.h"
-
-/*===========================================================================*/
-/*---MPI wrapper function definitions---*/
-
+/*---Definitions relevant to specific parallel APIs---*/
 #include "env_mpi.h"
-
-/*===========================================================================*/
-/*---OpenMP wrapper function definitions---*/
-
 #include "env_openmp.h"
-
-/*===========================================================================*/
-/*---CUDA wrapper function definitions---*/
-
 #include "env_cuda.h"
-
-/*===========================================================================*/
-/*---Intel MIC definitions---*/
-
 #include "env_mic.h"
 
 /*===========================================================================*/
@@ -66,26 +48,7 @@ extern "C"
 static void Env_initialize( Env *env, int argc, char** argv )
 {
   Env_mpi_initialize_(  env, argc, argv );
-  Env_omp_initialize_(  env, argc, argv );
   Env_cuda_initialize_( env, argc, argv );
-}
-
-/*===========================================================================*/
-/*---Set values from args---*/
-
-static void Env_set_values( Env *env, Arguments* args )
-{
-  Env_mpi_set_values_(  env, args );
-  Env_omp_set_values_(  env, args );
-  Env_cuda_set_values_( env, args );
-}
-
-/*===========================================================================*/
-/*---Reset values---*/
-
-static void Env_reset_values( Env *env )
-{
-  Env_mpi_reset_values_( env );
 }
 
 /*===========================================================================*/
@@ -94,8 +57,16 @@ static void Env_reset_values( Env *env )
 static void Env_finalize( Env* env )
 {
   Env_cuda_finalize_( env );
-  Env_omp_finalize_(  env );
   Env_mpi_finalize_(  env );
+}
+
+/*===========================================================================*/
+/*---Set values from args---*/
+
+static void Env_set_values( Env *env, Arguments* args )
+{
+  Env_mpi_set_values_(  env, args );
+  Env_cuda_set_values_( env, args );
 }
 
 /*===========================================================================*/

@@ -11,6 +11,8 @@
 #ifndef _env_assert_h_
 #define _env_assert_h_
 
+#ifndef __CUDA_ARCH__
+
 #include <stdlib.h>
 #include <assert.h>
 #include <stdio.h>
@@ -23,11 +25,7 @@ extern "C"
 /*===========================================================================*/
 /*---Assertions---*/
 
-#ifdef USE_CUDA
 #define Assert(v) assert(v)
-#else
-#define Assert(v) assert(v)
-#endif
 
 #ifndef Insist
 #define Insist( condition ) \
@@ -41,16 +39,28 @@ static void insist_( const char *condition_string, const char *file, int line )
   exit( EXIT_FAILURE );
 }
 
-#ifndef NDEBUG
-#define Static_Assert( condition ) { int a[ ( condition ) ? 1 : -1 ]; (void)a; }
-#else
-#define Static_Assert( condition )
-#endif
-
 /*===========================================================================*/
 
 #ifdef __cplusplus
 } /*---extern "C"---*/
+#endif
+
+#else /*---__CUDA_ARCH__---*/
+
+/*---Ignore on device.---*/
+
+#define Assert(v)
+#define Insist(v)
+
+#endif /*---__CUDA_ARCH__---*/
+
+/*===========================================================================*/
+/*---Static assertions---*/
+
+#ifndef NDEBUG
+#define Static_Assert( condition ) { int a[ ( condition ) ? 1 : -1 ]; (void)a; }
+#else
+#define Static_Assert( condition )
 #endif
 
 #endif /*---_env_assert_h_---*/

@@ -178,7 +178,6 @@ Bool_t compare_runs( Env* env, const char* argstring1, const char* argstring2 )
   {
     run_case( env, &args1, &rundata1 );
   }
-  Env_reset_values( env );
 
   Arguments_ctor_string( &args2, argstring2 );
   Env_set_values( env, &args2 );
@@ -191,7 +190,6 @@ Bool_t compare_runs( Env* env, const char* argstring1, const char* argstring2 )
   {
     run_case( env, &args2, &rundata2 );
   }
-  Env_reset_values( env );
 
   Bool_t pass = Env_is_proc_master( env ) ?
                 rundata1.normsqdiff == P_zero() &&

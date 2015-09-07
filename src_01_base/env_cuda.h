@@ -19,8 +19,6 @@
 
 #include "types.h"
 #include "env_assert.h"
-#include "env_data.h"
-
 #include "env_cuda_kernels.h"
 
 #ifdef __cplusplus
@@ -57,8 +55,10 @@ static void Env_cuda_initialize_( Env *env, int argc, char** argv )
 #ifdef USE_CUDA
   cudaStreamCreate( & env->stream_send_block_ );
   Assert( Env_cuda_last_call_succeeded() );
+
   cudaStreamCreate( & env->stream_recv_block_ );
   Assert( Env_cuda_last_call_succeeded() );
+
   cudaStreamCreate( & env->stream_kernel_faces_ );
   Assert( Env_cuda_last_call_succeeded() );
 #endif
@@ -72,8 +72,10 @@ static void Env_cuda_finalize_( Env* env )
 #ifdef USE_CUDA
   cudaStreamDestroy( env->stream_send_block_ );
   Assert( Env_cuda_last_call_succeeded() );
+
   cudaStreamDestroy( env->stream_recv_block_ );
   Assert( Env_cuda_last_call_succeeded() );
+
   cudaStreamDestroy( env->stream_kernel_faces_ );
   Assert( Env_cuda_last_call_succeeded() );
 #endif
@@ -105,7 +107,7 @@ static Bool_t Env_cuda_is_using_device( const Env *env )
 }
 
 /*===========================================================================*/
-/*---Memory management---*/
+/*---Memory management, for CUDA and all platforms ex. MIC---*/
 
 #ifndef __MIC__
 

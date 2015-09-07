@@ -19,8 +19,7 @@ extern "C"
 #endif
 
 /*===========================================================================*/
-
-/*---Initializations---*/
+/*---Basic initializations---*/
 
 /*---Number of physical dimensions---*/
 enum{ NDIM = 3 };
@@ -33,7 +32,7 @@ enum{ DIM_Z = 2 };
 enum{ NOCTANT = 8 };
 
 /*===========================================================================*/
-/*---Functions to manipulate sweep directions---*/
+/*---Enums, functions to manipulate sweep directions---*/
 
 enum{ DIR_UP = +1 };
 enum{ DIR_DN = -1 };
@@ -54,7 +53,7 @@ TARGET_HD static inline int Dir_z( int octant ) { return octant & (1<<2)
 TARGET_HD static inline int Dir_inc( int dir ) { return dir; }
 
 /*===========================================================================*/
-/*---Utility functions---*/
+/*---Misc utility functions---*/
 
 TARGET_HD static inline int imin( const int i,
                                   const int j )

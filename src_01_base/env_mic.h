@@ -14,7 +14,6 @@
 #include <stddef.h>
 
 #include "types.h"
-
 #include "env_mic_kernels.h"
 
 /*===========================================================================*/

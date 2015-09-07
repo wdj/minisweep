@@ -12,6 +12,7 @@
 #define _env_mic_kernel_h_
 
 #include "types_kernels.h"
+#include "env_assert.h"
 
 /*===========================================================================*/
 /*---Enums---*/

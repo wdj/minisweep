@@ -15,7 +15,6 @@
 
 #include "env.h"
 #include "types.h"
-
 #include "dimensions_kernels.h"
 
 #ifdef __cplusplus

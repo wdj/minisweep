@@ -15,49 +15,7 @@
 #include "omp.h"
 #endif
 
-#include "types.h"
-#include "env_assert.h"
-#include "arguments.h"
-
 #include "env_openmp_kernels.h"
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-/*===========================================================================*/
-/*---Initialize OpenMP---*/
-
-static void Env_omp_initialize_( Env *env, int argc, char** argv )
-{
-#ifdef USE_OPENMP
-#endif
-}
-
-/*===========================================================================*/
-/*---Finalize OpenMP---*/
-
-static void Env_omp_finalize_( Env* env )
-{
-#ifdef USE_OPENMP
-#endif
-}
-
-/*===========================================================================*/
-/*---Set values from args---*/
-
-static void Env_omp_set_values_( Env *env, Arguments* args )
-{
-#ifdef USE_OPENMP
-#endif
-}
-
-/*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_env_openmp_h_---*/
 
