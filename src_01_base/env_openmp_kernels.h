@@ -15,7 +15,6 @@
 #include "omp.h"
 #endif
 
-#include "function_attributes.h"
 #include "types_kernels.h"
 
 #ifndef Assert

@@ -11,7 +11,6 @@
 #ifndef _quantities_testing_kernels_h_
 #define _quantities_testing_kernels_h_
 
-#include "function_attributes.h"
 #include "types_kernels.h"
 #include "dimensions_kernels.h"
 #include "array_accessors_kernels.h"

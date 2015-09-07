@@ -11,7 +11,6 @@
 #ifndef _quantities_testing_h_
 #define _quantities_testing_h_
 
-#include "function_attributes.h"
 #include "types.h"
 #include "dimensions.h"
 

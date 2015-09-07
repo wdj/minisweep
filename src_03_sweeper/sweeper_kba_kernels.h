@@ -11,7 +11,7 @@
 #ifndef _sweeper_kba_kernels_h_
 #define _sweeper_kba_kernels_h_
 
-#include "function_attributes.h"
+#include "types_kernels.h"
 #include "env_kernels.h"
 #include "definitions_kernels.h"
 #include "dimensions_kernels.h"

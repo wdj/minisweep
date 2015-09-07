@@ -11,7 +11,7 @@
 #ifndef _definitions_kernels_h_
 #define _definitions_kernels_h_
 
-#include "function_attributes.h"
+#include "types_kernels.h"
 
 #ifdef __cplusplus
 extern "C"

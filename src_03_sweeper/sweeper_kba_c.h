@@ -11,7 +11,7 @@
 #ifndef _sweeper_kba_c_h_
 #define _sweeper_kba_c_h_
 
-#include "function_attributes.h"
+#include "types.h"
 #include "env.h"
 #include "pointer.h"
 #include "definitions.h"

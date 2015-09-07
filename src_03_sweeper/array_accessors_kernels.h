@@ -13,7 +13,6 @@
 
 #include <stddef.h>
 
-#include "function_attributes.h"
 #include "types_kernels.h"
 #include "definitions_kernels.h"
 #include "dimensions_kernels.h"

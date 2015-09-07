@@ -11,7 +11,7 @@
 #ifndef _sweeper_kba_h_
 #define _sweeper_kba_h_
 
-#include "function_attributes.h"
+#include "types.h"
 #include "env.h"
 #include "definitions.h"
 #include "dimensions.h"

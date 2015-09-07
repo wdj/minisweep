@@ -11,11 +11,24 @@
 #ifndef _types_kernels_h_
 #define _types_kernels_h_
 
-#include "function_attributes.h"
-
 #ifdef __cplusplus
 extern "C"
 {
+#endif
+
+/*===========================================================================*/
+/*---Function attributes---*/
+
+#ifdef USE_CUDA
+
+#define TARGET_G  __global__
+#define TARGET_HD __host__ __device__
+
+#else
+
+#define TARGET_G
+#define TARGET_HD
+
 #endif
 
 /*===========================================================================*/
