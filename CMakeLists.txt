@@ -5,23 +5,23 @@ cmake_minimum_required(VERSION 2.8)
 project("minisweep")
 
 SET(INCLUDE_DIRS
-  ${CMAKE_SOURCE_DIR}/src_driver
-  ${CMAKE_SOURCE_DIR}/src_base
-  ${CMAKE_SOURCE_DIR}/src_sweeper_base
-  ${CMAKE_SOURCE_DIR}/src_sweeper
+  ${CMAKE_SOURCE_DIR}/src_01_base
+  ${CMAKE_SOURCE_DIR}/src_02_sweeper_base
+  ${CMAKE_SOURCE_DIR}/src_03_sweeper
+  ${CMAKE_SOURCE_DIR}/src_04_driver
   )
 
 SET(SOURCES
-  src_driver/run_tools.c
-  src_base/arguments.c
-  src_base/memory.c
-  src_sweeper_base/dimensions.c
-  src_sweeper_base/pointer.c
-  src_sweeper/faces_kba.c
-  src_sweeper/quantities.c
-  src_sweeper/stepscheduler_kba.c
-  src_sweeper/sweeper.c
-  src_sweeper/sweeper_kernels.c
+  src_01_base/arguments.c
+  src_01_base/memory.c
+  src_02_sweeper_base/dimensions.c
+  src_02_sweeper_base/pointer.c
+  src_03_sweeper/faces_kba.c
+  src_03_sweeper/quantities.c
+  src_03_sweeper/stepscheduler_kba.c
+  src_03_sweeper/sweeper.c
+  src_03_sweeper/sweeper_kernels.c
+  src_04_driver/run_tools.c
   )
 
 SET(CUDA_SOURCES)
@@ -45,16 +45,16 @@ IF(USE_CUDA)
 #  SET(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}${NM_VALUE_DEF};-DUSE_CUDA")
   CUDA_INCLUDE_DIRECTORIES(${INCLUDE_DIRS})
   CUDA_ADD_LIBRARY(sweeper STATIC ${CUDA_SOURCES})
-  CUDA_ADD_EXECUTABLE(sweep src_driver/sweep.cu)
+  CUDA_ADD_EXECUTABLE(sweep src_04_driver/sweep.cu)
   TARGET_LINK_LIBRARIES(sweep sweeper)
-  CUDA_ADD_EXECUTABLE(tester src_driver/tester.cu)
+  CUDA_ADD_EXECUTABLE(tester src_04_driver/tester.cu)
   TARGET_LINK_LIBRARIES(tester sweeper)
 ELSE()
   INCLUDE_DIRECTORIES(${INCLUDE_DIRS})
   ADD_LIBRARY(sweeper STATIC ${SOURCES})
-  ADD_EXECUTABLE(sweep src_driver/sweep.c)
+  ADD_EXECUTABLE(sweep src_04_driver/sweep.c)
   TARGET_LINK_LIBRARIES(sweep sweeper)
-  ADD_EXECUTABLE(tester src_driver/tester.c)
+  ADD_EXECUTABLE(tester src_04_driver/tester.c)
   TARGET_LINK_LIBRARIES(tester sweeper)
 ENDIF()
 
