@@ -14,6 +14,7 @@
 #include <stddef.h>
 
 #include "types_kernels.h"
+#include "env_assert.h"
 
 #ifdef __cplusplus
 extern "C"

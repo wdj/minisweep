@@ -41,7 +41,6 @@ void Faces_ctor( Faces*      faces,
   Pointer_set_pinned( Faces_facexy( faces, 0 ), Bool_true );
   Pointer_create(     Faces_facexy( faces, 0 ) );
 
-
   for( i = 0; i < ( Faces_is_face_comm_async( faces ) ? NDIM : 1 ); ++i )
   {
     Pointer_ctor(       Faces_facexz( faces, i ),
