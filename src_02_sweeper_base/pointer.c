@@ -10,10 +10,9 @@
 
 #include <stddef.h>
 
+#include "types.h"
 #include "env.h"
 #include "pointer.h"
-#include "types.h"
-#include "memory.h"
 
 #ifdef __cplusplus
 extern "C"

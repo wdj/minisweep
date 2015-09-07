@@ -16,7 +16,6 @@
 #include "quantities.h"
 #include "array_accessors.h"
 #include "array_operations.h"
-#include "memory.h"
 #include "sweeper_tileoctants.h"
 
 #ifdef __cplusplus

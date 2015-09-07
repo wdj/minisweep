@@ -13,7 +13,6 @@
 
 #include "env.h"
 #include "dimensions.h"
-#include "memory.h"
 #include "array_accessors.h"
 #include "pointer.h"
 #include "quantities_testing.h"
@@ -218,8 +217,8 @@ void Quantities_init_decomp_( Quantities*       quan,
 
   /*---Allocate arrays---*/
 
-  quan->ix_base_vals = malloc_i( Env_nproc_x( env ) + 1 );
-  quan->iy_base_vals = malloc_i( Env_nproc_y( env ) + 1 );
+  quan->ix_base_vals = malloc_host_int( Env_nproc_x( env ) + 1 );
+  quan->iy_base_vals = malloc_host_int( Env_nproc_y( env ) + 1 );
 
   /*---------------------------------*/
   /*---Set entries of ix_base_vals---*/
@@ -343,8 +342,8 @@ void Quantities_dtor( Quantities* quan )
   Pointer_dtor( & quan->a_from_m );
   Pointer_dtor( & quan->m_from_a );
 
-  free_i( quan->ix_base_vals );
-  free_i( quan->iy_base_vals );
+  free_host_int( quan->ix_base_vals );
+  free_host_int( quan->iy_base_vals );
 
   quan->ix_base_vals = NULL;
   quan->iy_base_vals = NULL;

@@ -11,6 +11,8 @@
 #ifndef _env_cuda_h_
 #define _env_cuda_h_
 
+#include <stddef.h>
+
 #ifdef USE_CUDA
 #include "cuda.h"
 #endif
@@ -18,7 +20,6 @@
 #include "types.h"
 #include "env_assert.h"
 #include "env_data.h"
-#include "memory.h"
 
 #include "env_cuda_kernels.h"
 
@@ -108,10 +109,20 @@ static Bool_t Env_cuda_is_using_device( const Env *env )
 
 #ifndef __MIC__
 
+static int* malloc_host_int( size_t n )
+{
+  Assert( n+1 >= 1 );
+  int* result = (int*)malloc( n * sizeof(int) );
+  Assert( result );
+  return result;
+}
+
+/*---------------------------------------------------------------------------*/
+
 static P* malloc_host_P( size_t n )
 {
   Assert( n+1 >= 1 );
-  P* result = malloc_P( n );
+  P* result = (P*)malloc( n * sizeof(P) );
   Assert( result );
   return result;
 }
@@ -128,7 +139,7 @@ static P* malloc_host_pinned_P( size_t n )
   cudaMallocHost( &result, n==0 ? ((size_t)1) : n*sizeof(P) );
   Assert( Env_cuda_last_call_succeeded() );
 #else
-  result = malloc_P( n );
+  result = (P*)malloc( n * sizeof(P) );
 #endif
   Assert( result );
 
@@ -154,10 +165,18 @@ static P* malloc_device_P( size_t n )
 
 /*---------------------------------------------------------------------------*/
 
+static void free_host_int( int* p )
+{
+  Assert( p );
+  free( (void*) p );
+}
+
+/*---------------------------------------------------------------------------*/
+
 static void free_host_P( P* p )
 {
   Assert( p );
-  free_P( p );
+  free( (void*) p );
 }
 
 /*---------------------------------------------------------------------------*/
@@ -169,7 +188,7 @@ static void free_host_pinned_P( P* p )
   cudaFreeHost( p );
   Assert( Env_cuda_last_call_succeeded() );
 #else
-  free_P( p );
+  free( (void*) p );
 #endif
 }
 

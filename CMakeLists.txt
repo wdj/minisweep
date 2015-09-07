@@ -13,7 +13,6 @@ SET(INCLUDE_DIRS
 
 SET(SOURCES
   src_01_base/arguments.c
-  src_01_base/memory.c
   src_02_sweeper_base/dimensions.c
   src_02_sweeper_base/pointer.c
   src_03_sweeper/faces_kba.c

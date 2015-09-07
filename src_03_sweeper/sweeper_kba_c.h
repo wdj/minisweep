@@ -18,7 +18,6 @@
 #include "quantities.h"
 #include "array_accessors.h"
 #include "array_operations.h"
-#include "memory.h"
 #include "stepscheduler_kba.h"
 #include "sweeper_kba.h"
 

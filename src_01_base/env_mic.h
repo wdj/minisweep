@@ -11,6 +11,8 @@
 #ifndef _env_mic_h_
 #define _env_mic_h_
 
+#include <stddef.h>
+
 #include "types.h"
 
 #include "env_mic_kernels.h"
@@ -19,6 +21,16 @@
 /*---Memory management---*/
 
 #ifdef __MIC__
+
+static int* malloc_host_int( size_t n )
+{
+  Assert( n+1 >= 1 );
+  int* result = (int*)malloc( n * sizeof(int) );
+  Assert( result );
+  return result;
+}
+
+/*---------------------------------------------------------------------------*/
 
 static P* malloc_host_P( size_t n )
 {
@@ -45,6 +57,14 @@ static P* malloc_device_P( size_t n )
   Assert( n+1 >= 1 );
   P* result = NULL;
   return result;
+}
+
+/*---------------------------------------------------------------------------*/
+
+static void free_host_int( int* p )
+{
+  Assert( p );
+  free( (void*) p );
 }
 
 /*---------------------------------------------------------------------------*/

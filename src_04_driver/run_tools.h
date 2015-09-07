@@ -14,7 +14,6 @@
 #include "arguments.h"
 #include "env.h"
 #include "definitions.h"
-#include "memory.h"
 
 #ifdef __cplusplus
 extern "C"
