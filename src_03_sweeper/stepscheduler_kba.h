@@ -35,15 +35,15 @@ typedef struct
 /*===========================================================================*/
 /*---Pseudo-constructor for StepScheduler struct---*/
 
-void StepScheduler_ctor( StepScheduler* stepscheduler,
-                         int            nblock_z,
-                         int            nblock_octant,
-                         Env*           env );
+void StepScheduler_create( StepScheduler* stepscheduler,
+                           int            nblock_z,
+                           int            nblock_octant,
+                           Env*           env );
 
 /*===========================================================================*/
 /*---Pseudo-destructor for StepScheduler struct---*/
 
-void StepScheduler_dtor( StepScheduler* stepscheduler );
+void StepScheduler_destroy( StepScheduler* stepscheduler );
 
 /*===========================================================================*/
 /*---Accessor: blocks along z axis---*/

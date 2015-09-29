@@ -38,11 +38,11 @@ typedef struct
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
 
-void Sweeper_ctor( Sweeper*          sweeper,
-                   Dimensions        dims,
-                   const Quantities* quan,
-                   Env*              env,
-                   Arguments*        args );
+void Sweeper_create( Sweeper*          sweeper,
+                     Dimensions        dims,
+                     const Quantities* quan,
+                     Env*              env,
+                     Arguments*        args );
 
 /*===========================================================================*/
 /*---Specify whether to tile octants---*/
@@ -63,8 +63,8 @@ static int Sweeper_noctant_per_block( const Sweeper* sweeper )
 /*===========================================================================*/
 /*---Pseudo-destructor for Sweeper struct---*/
 
-void Sweeper_dtor( Sweeper* sweeper,
-                   Env*     env );
+void Sweeper_destroy( Sweeper* sweeper,
+                      Env*     env );
 
 /*===========================================================================*/
 /*---Perform a sweep---*/

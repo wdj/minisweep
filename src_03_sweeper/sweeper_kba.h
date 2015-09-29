@@ -63,17 +63,17 @@ typedef struct
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
 
-void Sweeper_ctor( Sweeper*          sweeper,
-                   Dimensions        dims,
-                   const Quantities* quan,
-                   Env*              env,
-                   Arguments*        args );
+void Sweeper_create( Sweeper*          sweeper,
+                     Dimensions        dims,
+                     const Quantities* quan,
+                     Env*              env,
+                     Arguments*        args );
 
 /*===========================================================================*/
 /*---Pseudo-destructor for Sweeper struct---*/
 
-void Sweeper_dtor( Sweeper* sweeper,
-                   Env*     env );
+void Sweeper_destroy( Sweeper* sweeper,
+                      Env*     env );
 
 /*===========================================================================*/
 /*---Number of octants in an octant block---*/

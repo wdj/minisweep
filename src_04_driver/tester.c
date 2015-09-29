@@ -580,7 +580,7 @@ static void tester( Env* env )
 int main( int argc, char** argv )
 {
   /*---Declarations---*/
-  Env env;
+  Env env = Env_null();
 
   /*---Initialize for execution---*/
 

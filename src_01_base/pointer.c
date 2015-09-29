@@ -9,6 +9,7 @@
 /*---------------------------------------------------------------------------*/
 
 #include <stddef.h>
+#include <string.h>
 
 #include "types.h"
 #include "env.h"
@@ -20,11 +21,21 @@ extern "C"
 #endif
 
 /*===========================================================================*/
-/*---Pseudo-constructors---*/
+/*---Null object---*/
 
-void Pointer_ctor( Pointer* p,
-                   size_t   n,
-                   Bool_t   is_using_device )
+Pointer Pointer_null()
+{
+  Pointer result;
+  memset( (void*)&result, 0, sizeof(Pointer) );
+  return result;
+}
+
+/*===========================================================================*/
+/*---Pseudo-constructors etc.---*/
+
+void Pointer_create( Pointer* p,
+                     size_t   n,
+                     Bool_t   is_using_device )
 {
   Assert( p );
   Assert( n+1 >= 1 );
@@ -39,10 +50,10 @@ void Pointer_ctor( Pointer* p,
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_ctor_alias( Pointer* p,
-                         Pointer* source,
-                         size_t   base,
-                         size_t   n )
+void Pointer_create_alias( Pointer* p,
+                           Pointer* source,
+                           size_t   base,
+                           size_t   n )
 {
   Assert( p );
   Assert( source );
@@ -84,7 +95,7 @@ void Pointer_set_pinned( Pointer* p,
 /*===========================================================================*/
 /*---Pseudo-destructor---*/
 
-void Pointer_dtor( Pointer* p )
+void Pointer_destroy( Pointer* p )
 {
   Assert( p );
 
@@ -115,7 +126,7 @@ void Pointer_dtor( Pointer* p )
 /*===========================================================================*/
 /*---De/allocate memory---*/
 
-void Pointer_create_h( Pointer* p )
+void Pointer_allocate_h( Pointer* p )
 {
   Assert( p );
   Assert( ! p->is_alias_ );
@@ -134,7 +145,7 @@ void Pointer_create_h( Pointer* p )
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_create_d( Pointer* p )
+void Pointer_allocate_d( Pointer* p )
 {
   Assert( p );
   Assert( ! p->is_alias_ );
@@ -150,18 +161,18 @@ void Pointer_create_d( Pointer* p )
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_create( Pointer* p )
+void Pointer_allocate( Pointer* p )
 {
   Assert( p );
   Assert( ! p->is_alias_ );
 
-  Pointer_create_h( p );
-  Pointer_create_d( p );
+  Pointer_allocate_h( p );
+  Pointer_allocate_d( p );
 }
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_delete_h( Pointer* p )
+void Pointer_deallocate_h( Pointer* p )
 {
   Assert( p );
   Assert( ! p->is_alias_ );
@@ -180,7 +191,7 @@ void Pointer_delete_h( Pointer* p )
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_delete_d( Pointer* p )
+void Pointer_deallocate_d( Pointer* p )
 {
   Assert( p );
   Assert( ! p->is_alias_ );
@@ -197,13 +208,13 @@ void Pointer_delete_d( Pointer* p )
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_delete( Pointer* p )
+void Pointer_deallocate( Pointer* p )
 {
   Assert( p );
   Assert( ! p->is_alias_ );
 
-  Pointer_delete_h( p );
-  Pointer_delete_d( p );
+  Pointer_deallocate_h( p );
+  Pointer_deallocate_d( p );
 }
 
 /*===========================================================================*/

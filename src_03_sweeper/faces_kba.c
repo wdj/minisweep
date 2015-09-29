@@ -20,11 +20,11 @@ extern "C"
 /*===========================================================================*/
 /*---Pseudo-constructor for Faces struct---*/
 
-void Faces_ctor( Faces*      faces,
-                 Dimensions  dims_b,
-                 int         noctant_per_block,
-                 Bool_t      is_face_comm_async,
-                 Env*        env )
+void Faces_create( Faces*      faces,
+                   Dimensions  dims_b,
+                   int         noctant_per_block,
+                   Bool_t      is_face_comm_async,
+                   Env*        env )
 {
   int i = 0;
 
@@ -35,20 +35,20 @@ void Faces_ctor( Faces*      faces,
   /*---Allocate faces---*/
   /*====================*/
 
-  Pointer_ctor(       Faces_facexy( faces, 0 ),
+  Pointer_create(       Faces_facexy( faces, 0 ),
     Dimensions_size_facexy( dims_b, NU, noctant_per_block ),
     Env_cuda_is_using_device( env ) );
   Pointer_set_pinned( Faces_facexy( faces, 0 ), Bool_true );
-  Pointer_create(     Faces_facexy( faces, 0 ) );
+  Pointer_allocate(     Faces_facexy( faces, 0 ) );
 
   for( i = 0; i < ( Faces_is_face_comm_async( faces ) ? NDIM : 1 ); ++i )
   {
-    Pointer_ctor(       Faces_facexz( faces, i ),
+    Pointer_create(       Faces_facexz( faces, i ),
       Dimensions_size_facexz( dims_b, NU, noctant_per_block ),
       Env_cuda_is_using_device( env ) );
     Pointer_set_pinned( Faces_facexz( faces, i ), Bool_true );
 
-    Pointer_ctor(       Faces_faceyz( faces, i ),
+    Pointer_create(       Faces_faceyz( faces, i ),
       Dimensions_size_faceyz( dims_b, NU, noctant_per_block ),
       Env_cuda_is_using_device( env ) );
     Pointer_set_pinned( Faces_faceyz( faces, i ), Bool_true );
@@ -56,15 +56,15 @@ void Faces_ctor( Faces*      faces,
 
   for( i = 0; i < ( Faces_is_face_comm_async( faces ) ? NDIM : 1 ); ++i )
   {
-    Pointer_create( Faces_facexz( faces, i ) );
-    Pointer_create( Faces_faceyz( faces, i ) );
+    Pointer_allocate( Faces_facexz( faces, i ) );
+    Pointer_allocate( Faces_faceyz( faces, i ) );
   }
 }
 
 /*===========================================================================*/
 /*---Pseudo-destructor for Faces struct---*/
 
-void Faces_dtor( Faces* faces )
+void Faces_destroy( Faces* faces )
 {
   int i = 0;
 
@@ -72,12 +72,12 @@ void Faces_dtor( Faces* faces )
   /*---Deallocate faces---*/
   /*====================*/
 
-  Pointer_dtor( Faces_facexy( faces, 0 ) );
+  Pointer_destroy( Faces_facexy( faces, 0 ) );
 
   for( i = 0; i < ( Faces_is_face_comm_async( faces ) ? NDIM : 1 ); ++i )
   {
-    Pointer_dtor( Faces_facexz( faces, i ) );
-    Pointer_dtor( Faces_faceyz( faces, i ) );
+    Pointer_destroy( Faces_facexz( faces, i ) );
+    Pointer_destroy( Faces_faceyz( faces, i ) );
   }
 }
 /*===========================================================================*/
@@ -167,8 +167,8 @@ void Faces_communicate_faces(
               {
                 const int proc_other
                                  = Env_proc( env, proc_x+inc_x, proc_y+inc_y );
-                Env_send_P( face_per_octant, size_face_per_octant,
-                            proc_other, Env_tag( env )+octant_in_block, env );
+                Env_send_P( env, face_per_octant, size_face_per_octant,
+                            proc_other, Env_tag( env )+octant_in_block );
               }
             }
             else
@@ -180,8 +180,8 @@ void Faces_communicate_faces(
                 /*---save copy else color 0 recv will destroy color 1 send---*/
                 copy_vector( buf, face_per_octant, size_face_per_octant );
                 use_buf = Bool_true;
-                Env_recv_P( face_per_octant, size_face_per_octant,
-                            proc_other, Env_tag( env )+octant_in_block, env );
+                Env_recv_P( env, face_per_octant, size_face_per_octant,
+                            proc_other, Env_tag( env )+octant_in_block );
               }
             }
           }
@@ -193,8 +193,8 @@ void Faces_communicate_faces(
               {
                 const int proc_other
                                  = Env_proc( env, proc_x-inc_x, proc_y-inc_y );
-                Env_recv_P( face_per_octant, size_face_per_octant,
-                            proc_other, Env_tag( env )+octant_in_block, env );
+                Env_recv_P( env, face_per_octant, size_face_per_octant,
+                            proc_other, Env_tag( env )+octant_in_block );
               }
             }
             else
@@ -203,9 +203,9 @@ void Faces_communicate_faces(
               {
                 const int proc_other
                                  = Env_proc( env, proc_x+inc_x, proc_y+inc_y );
-                Env_send_P( use_buf ? buf : face_per_octant,
+                Env_send_P( env, use_buf ? buf : face_per_octant,
                   size_face_per_octant, proc_other,
-                  Env_tag( env )+octant_in_block, env );
+                  Env_tag( env )+octant_in_block );
               }
             }
           } /*---if color---*/
@@ -287,8 +287,8 @@ void Faces_send_faces_start(
           Request_t* request = axis_x ?
                                    & faces->request_send_xz[octant_in_block]
                                  : & faces->request_send_yz[octant_in_block];
-          Env_asend_P( face_per_octant, size_face_per_octant,
-                    proc_other, Env_tag( env )+octant_in_block, request, env );
+          Env_asend_P( env, face_per_octant, size_face_per_octant,
+                    proc_other, Env_tag( env )+octant_in_block, request );
         }
       } /*---dir_ind---*/
     } /*---axis---*/
@@ -340,7 +340,7 @@ void Faces_send_faces_end(
           Request_t* request = axis_x ?
                                    & faces->request_send_xz[octant_in_block]
                                  : & faces->request_send_yz[octant_in_block];
-          Env_wait( request );
+          Env_wait( env, request );
         }
       } /*---dir_ind---*/
     } /*---axis---*/
@@ -414,8 +414,8 @@ void Faces_recv_faces_start(
           Request_t* request = axis_x ?
                                    & faces->request_recv_xz[octant_in_block]
                                  : & faces->request_recv_yz[octant_in_block];
-          Env_arecv_P( face_per_octant, size_face_per_octant,
-                    proc_other, Env_tag( env )+octant_in_block, request, env );
+          Env_arecv_P( env, face_per_octant, size_face_per_octant,
+                    proc_other, Env_tag( env )+octant_in_block, request );
         }
       } /*---dir_ind---*/
     } /*---axis---*/
@@ -471,7 +471,7 @@ void Faces_recv_faces_end(
           Request_t* request = axis_x ?
                                    & faces->request_recv_xz[octant_in_block]
                                  : & faces->request_recv_yz[octant_in_block];
-          Env_wait( request );
+          Env_wait( env, request );
         }
       } /*---dir_ind---*/
     } /*---axis---*/

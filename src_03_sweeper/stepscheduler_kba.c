@@ -20,10 +20,10 @@ extern "C"
 /*===========================================================================*/
 /*---Pseudo-constructor for StepScheduler struct---*/
 
-void StepScheduler_ctor( StepScheduler* stepscheduler,
-                         int             nblock_z,
-                         int             nblock_octant,
-                         Env*            env )
+void StepScheduler_create( StepScheduler* stepscheduler,
+                           int             nblock_z,
+                           int             nblock_octant,
+                           Env*            env )
 {
   Insist( nblock_z > 0 ? "Invalid z blocking factor supplied." : 0 );
   stepscheduler->nblock_z_          = nblock_z;
@@ -36,7 +36,7 @@ void StepScheduler_ctor( StepScheduler* stepscheduler,
 /*===========================================================================*/
 /*---Pseudo-destructor for StepScheduler struct---*/
 
-void StepScheduler_dtor( StepScheduler* stepscheduler )
+void StepScheduler_destroy( StepScheduler* stepscheduler )
 {
 }
 

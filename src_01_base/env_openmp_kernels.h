@@ -24,6 +24,15 @@ extern "C"
 #endif
 
 /*===========================================================================*/
+/*---Enums---*/
+
+#ifdef USE_OPENMP
+enum{ IS_USING_OPENMP = Bool_true };
+#else
+enum{ IS_USING_OPENMP = Bool_false };
+#endif 
+
+/*===========================================================================*/
 /*---Get openmp current thread number---*/
 
 TARGET_HD static inline int Env_omp_thread()
@@ -31,18 +40,6 @@ TARGET_HD static inline int Env_omp_thread()
   int result = 0;
 #ifdef USE_OPENMP
   result = omp_get_thread_num();  
-#endif
-  return result;
-}
-
-/*===========================================================================*/
-/*---Get openmp number of threads---*/
-
-TARGET_HD static inline int Env_omp_nthread()
-{
-  int result = 1;
-#ifdef USE_OPENMP
-  result = omp_get_num_threads();  
 #endif
   return result;
 }

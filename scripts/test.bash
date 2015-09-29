@@ -127,6 +127,42 @@ function main
   rm -f tmp_
 
   #==============================
+  # MPI + CUDA.
+  #==============================
+
+  if [ $IS_TITAN = 1 ] ; then
+    module load cudatoolkit
+  fi
+
+  if [ "${PBS_NP:-}" != "" ] ; then
+  if [ "${PBS_NP:-}" -ge 4 ] ; then
+
+    echo "--------------------------------------------------------"
+    echo "---MPI + CUDA tests---"
+    echo "--------------------------------------------------------"
+
+    #make CUDA_OPTION=1 NM_VALUE=4
+
+    rm -rf $BUILD_DIR
+    mkdir $BUILD_DIR
+    pushd $BUILD_DIR
+
+    env NM_VALUE=4 $SCRIPTS_DIR/cmake_cray_xk7_cuda.sh
+    make $VERBOSE_ARG
+
+    perform_runs "-n4" "" "CRAY_CUDA_MPS=1"
+
+    popd
+    rm -rf $BUILD_DIR
+
+  fi #---PBS_NP
+  fi #---PBS_NP
+
+  if [ $IS_TITAN = 1 ] ; then
+    module unload cudatoolkit
+  fi
+
+  #==============================
   # Serial
   #==============================
 
@@ -224,42 +260,6 @@ function main
     rm -rf $BUILD_DIR
 
   fi #---PBS_NP
-
-  #==============================
-  # MPI + CUDA.
-  #==============================
-
-  if [ $IS_TITAN = 1 ] ; then
-    module load cudatoolkit
-  fi
-
-  if [ "${PBS_NP:-}" != "" ] ; then
-  if [ "${PBS_NP:-}" -ge 4 ] ; then
-
-    echo "--------------------------------------------------------"
-    echo "---MPI + CUDA tests---"
-    echo "--------------------------------------------------------"
-
-    #make CUDA_OPTION=1 NM_VALUE=4
-
-    rm -rf $BUILD_DIR
-    mkdir $BUILD_DIR
-    pushd $BUILD_DIR
-
-    env NM_VALUE=4 $SCRIPTS_DIR/cmake_cray_xk7_cuda.sh
-    make $VERBOSE_ARG
-
-    perform_runs "-n4" "" "CRAY_CUDA_MPS=1"
-
-    popd
-    rm -rf $BUILD_DIR
-
-  fi #---PBS_NP
-  fi #---PBS_NP
-
-  if [ $IS_TITAN = 1 ] ; then
-    module unload cudatoolkit
-  fi
 
   #==============================
   # Variants.

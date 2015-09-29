@@ -21,16 +21,17 @@ aStandard lexicographical ordering applied to the grid unknowns.
 
 =============================================================================*/
 
+#include "sys/time.h"
+#include "unistd.h"
+#include "omp.h>"
+
 #include <assert.h>
-#include <omp.h> 
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
-#include <sys/time.h>
 #include <string.h>
 
 int opcount[16 * 24]; //Padding to avoid false cache sharing

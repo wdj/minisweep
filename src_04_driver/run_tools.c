@@ -83,19 +83,19 @@ void run_case( Env* env, Arguments* args, RunData* rundata )
 
   /*---Initialize quantities---*/
 
-  Quantities_ctor( &quan, dims, env );
+  Quantities_create( &quan, dims, env );
 
   /*---Allocate arrays---*/
 
-  Pointer_ctor( &vi, Dimensions_size_state( dims, NU ),
+  Pointer_create( &vi, Dimensions_size_state( dims, NU ),
                                             Env_cuda_is_using_device( env ) );
   Pointer_set_pinned( &vi, Bool_true );
-  Pointer_create( &vi );
+  Pointer_allocate( &vi );
 
-  Pointer_ctor( &vo, Dimensions_size_state( dims, NU ),
+  Pointer_create( &vo, Dimensions_size_state( dims, NU ),
                                             Env_cuda_is_using_device( env ) );
   Pointer_set_pinned( &vo, Bool_true );
-  Pointer_create( &vo );
+  Pointer_allocate( &vo );
 
   /*---Initialize input state array---*/
 
@@ -110,7 +110,7 @@ void run_case( Env* env, Arguments* args, RunData* rundata )
 
   /*---Initialize sweeper---*/
 
-  Sweeper_ctor( &sweeper, dims, &quan, env, args );
+  Sweeper_create( &sweeper, dims, &quan, env, args );
 
   /*---Check that all command line args used---*/
 
@@ -135,11 +135,11 @@ void run_case( Env* env, Arguments* args, RunData* rundata )
 
   /*---Compute flops used---*/
 
-  rundata->flops = Env_sum_d( niterations *
+  rundata->flops = Env_sum_d( env, niterations *
          ( Dimensions_size_state( dims, NU ) * NOCTANT * 2. * dims.na
          + Dimensions_size_state_angles( dims, NU )
                                         * Quantities_flops_per_solve( dims )
-         + Dimensions_size_state( dims, NU ) * NOCTANT * 2. * dims.na ), env );
+         + Dimensions_size_state( dims, NU ) * NOCTANT * 2. * dims.na ) );
 
   rundata->floprate = rundata->time <= (Timer)0 ?
                                    0 : rundata->flops / rundata->time / 1e9;
@@ -150,11 +150,11 @@ void run_case( Env* env, Arguments* args, RunData* rundata )
                      dims, NU, &rundata->normsq, &rundata->normsqdiff, env );
 
   /*---Deallocations---*/
-  Pointer_dtor( &vi );
-  Pointer_dtor( &vo );
+  Pointer_destroy( &vi );
+  Pointer_destroy( &vo );
 
-  Sweeper_dtor( &sweeper, env );
-  Quantities_dtor( &quan );
+  Sweeper_destroy( &sweeper, env );
+  Quantities_destroy( &quan );
 }
 
 /*===========================================================================*/
@@ -167,7 +167,7 @@ Bool_t compare_runs( Env* env, const char* argstring1, const char* argstring2 )
   RunData  rundata1;
   RunData  rundata2;
 
-  Arguments_ctor_string( &args1, argstring1 );
+  Arguments_create_from_string( &args1, argstring1 );
   Env_set_values( env, &args1 );
 
   if( Env_is_proc_master( env ) )
@@ -179,7 +179,7 @@ Bool_t compare_runs( Env* env, const char* argstring1, const char* argstring2 )
     run_case( env, &args1, &rundata1 );
   }
 
-  Arguments_ctor_string( &args2, argstring2 );
+  Arguments_create_from_string( &args2, argstring2 );
   Env_set_values( env, &args2 );
 
   if( Env_is_proc_master( env ) )

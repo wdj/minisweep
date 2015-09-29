@@ -43,20 +43,20 @@ typedef struct
 /*===========================================================================*/
 /* Pseudo-constructor for Arguments struct---*/
 
-void Arguments_ctor( Arguments* args,
-                     int        argc,
-                     char**     argv );
+void Arguments_create( Arguments* args,
+                       int        argc,
+                       char**     argv );
 
 /*===========================================================================*/
 /* Pseudo-constructor that takes a string instead of an args array---*/
 
-void Arguments_ctor_string( Arguments*  args,
-                            const char* argstring );
+void Arguments_create_from_string( Arguments*  args,
+                                   const char* argstring );
 
 /*===========================================================================*/
 /* Pseudo-destructor for Arguments struct---*/
 
-void Arguments_dtor( Arguments* args );
+void Arguments_destroy( Arguments* args );
 
 /*===========================================================================*/
 /* Determine whether an argument with a given name exists---*/
@@ -67,8 +67,8 @@ Bool_t Arguments_exists( Arguments*  args,
 /*===========================================================================*/
 /* Process an argument of type int, remove from list---*/
 
-int Arguments_consume_int( Arguments*  args,
-                           const char* arg_name );
+int Arguments_consume_int_( Arguments*  args,
+                            const char* arg_name );
 
 /*===========================================================================*/
 /* Consume an argument of type int, if not present then set to a default---*/

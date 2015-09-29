@@ -24,14 +24,14 @@ extern "C"
 /*===========================================================================*/
 /*---Pseudo-constructor for Quantities struct---*/
 
-void Quantities_ctor( Quantities*       quan,
-                      const Dimensions  dims,
-                      Env*              env );
+void Quantities_create( Quantities*       quan,
+                        const Dimensions  dims,
+                        Env*              env );
 
 /*===========================================================================*/
 /*---Pseudo-destructor for Quantities struct---*/
 
-void Quantities_dtor( Quantities* quan );
+void Quantities_destroy( Quantities* quan );
 
 /*===========================================================================*/
 /*---Initialize Quantities a_from_m, m_from_a matrices---*/

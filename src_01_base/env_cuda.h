@@ -97,7 +97,7 @@ static void Env_cuda_set_values_( Env *env, Arguments* args )
 /*===========================================================================*/
 /*---Determine whether using device---*/
 
-static Bool_t Env_cuda_is_using_device( const Env *env )
+static Bool_t Env_cuda_is_using_device( const Env * env )
 {
 #ifdef USE_CUDA
   return env->is_using_device_;

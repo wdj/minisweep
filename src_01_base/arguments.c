@@ -23,9 +23,9 @@ extern "C"
 /*===========================================================================*/
 /* Pseudo-constructor for Arguments struct---*/
 
-void Arguments_ctor( Arguments* args,
-                     int        argc,
-                     char**     argv )
+void Arguments_create( Arguments* args,
+                       int        argc,
+                       char**     argv )
 {
   Assert( args != NULL );
   Assert( argc > 0 );
@@ -41,13 +41,13 @@ void Arguments_ctor( Arguments* args,
     Assert( argv[i] != NULL ? "Null command line argument encountered" : 0);
     args->argv_unconsumed[i] = argv[i];
   }
-} /*---Arguments_ctor---*/
+} /*---Arguments_create---*/
 
 /*===========================================================================*/
 /* Pseudo-constructor that takes a string instead of an args array---*/
 
-void Arguments_ctor_string( Arguments*  args,
-                            const char* argstring )
+void Arguments_create_from_string( Arguments*  args,
+                                   const char* argstring )
 {
   Assert( args != NULL );
   Assert( argstring != NULL );
@@ -79,12 +79,12 @@ void Arguments_ctor_string( Arguments*  args,
     }
     is_delim_prev = is_delim;
   }
-} /*---Arguments_ctor_string---*/
+} /*---Arguments_create_from_string---*/
 
 /*===========================================================================*/
 /* Pseudo-destructor for Arguments struct---*/
 
-void Arguments_dtor( Arguments* args )
+void Arguments_destroy( Arguments* args )
 {
   Assert( args != NULL );
 
@@ -93,7 +93,7 @@ void Arguments_dtor( Arguments* args )
   {
     free( (void*) args->argstring );
   }
-} /*---Arguments_dtor---*/
+} /*---Arguments_destroy---*/
 
 /*===========================================================================*/
 /* Determine whether an argument with a given name exists---*/
@@ -101,6 +101,9 @@ void Arguments_dtor( Arguments* args )
 Bool_t Arguments_exists( Arguments*  args,
                          const char* arg_name )
 {
+  Assert( args != NULL );
+  Assert( arg_name != NULL );
+
   Bool_t result = Bool_false;
   int    i      = 0;
 
@@ -119,9 +122,12 @@ Bool_t Arguments_exists( Arguments*  args,
 /*===========================================================================*/
 /* Process an argument of type int, remove from list---*/
 
-int Arguments_consume_int( Arguments*  args,
-                           const char* arg_name )
+int Arguments_consume_int_( Arguments*  args,
+                            const char* arg_name )
 {
+  Assert( args != NULL );
+  Assert( arg_name != NULL );
+
   int    result = 0;
   Bool_t found  = Bool_false;
   int    i      = 0;
@@ -154,8 +160,11 @@ int Arguments_consume_int_or_default( Arguments*  args,
                                       const char* arg_name,
                                       int         default_value )
 {
+  Assert( args != NULL );
+  Assert( arg_name != NULL );
+
   return Arguments_exists( args, arg_name ) ?
-                      Arguments_consume_int( args, arg_name ) : default_value;
+                     Arguments_consume_int_( args, arg_name ) : default_value;
 }
 
 /*===========================================================================*/
@@ -163,6 +172,8 @@ int Arguments_consume_int_or_default( Arguments*  args,
 
 Bool_t Arguments_are_all_consumed( Arguments* args )
 {
+  Assert( args != NULL );
+
   Bool_t result = Bool_true;
   int    i      = 0;
 

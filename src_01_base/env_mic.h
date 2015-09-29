@@ -43,10 +43,7 @@ static P* malloc_host_P( size_t n )
 
 static P* malloc_host_pinned_P( size_t n )
 {
-  Assert( n+1 >= 1 );
-  P* result = _mm_malloc( n * sizeof(P), VEC_LEN * sizeof(P) );
-  Assert( result );
-  return result;
+  return malloc_host_P( n );
 }
 
 /*---------------------------------------------------------------------------*/
@@ -78,8 +75,7 @@ static void free_host_P( P* p )
 
 static void free_host_pinned_P( P* p )
 {
-  Assert( p );
-  _mm_free( p );
+  free_host_P( p );
 }
 
 /*---------------------------------------------------------------------------*/

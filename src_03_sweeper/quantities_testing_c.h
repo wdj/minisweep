@@ -25,14 +25,14 @@ extern "C"
 /*===========================================================================*/
 /*---Pseudo-constructor for Quantities struct---*/
 
-void Quantities_ctor( Quantities*       quan,
-                      const Dimensions  dims,
-                      Env*              env )
+void Quantities_create( Quantities*       quan,
+                        const Dimensions  dims,
+                        Env*              env )
 {
   Quantities_init_am_matrices_( quan, dims, env );
   Quantities_init_decomp_( quan, dims, env );
 
-} /*---Quantities_ctor---*/
+} /*---Quantities_create---*/
 
 /*===========================================================================*/
 /*---Initialize Quantities a_from_m, m_from_a matrices---*/
@@ -50,13 +50,13 @@ void Quantities_init_am_matrices_( Quantities*       quan,
 
   /*---Allocate arrays---*/
 
-  Pointer_ctor( & quan->a_from_m, dims.nm * dims.na * NOCTANT,
+  Pointer_create( & quan->a_from_m, dims.nm * dims.na * NOCTANT,
                                              Env_cuda_is_using_device( env ) );
-  Pointer_ctor( & quan->m_from_a, dims.nm * dims.na * NOCTANT,
+  Pointer_create( & quan->m_from_a, dims.nm * dims.na * NOCTANT,
                                              Env_cuda_is_using_device( env ) );
 
-  Pointer_create( & quan->a_from_m );
-  Pointer_create( & quan->m_from_a );
+  Pointer_allocate( & quan->a_from_m );
+  Pointer_allocate( & quan->m_from_a );
 
   /*-----------------------------*/
   /*---Set entries of a_from_m---*/
@@ -232,14 +232,14 @@ void Quantities_init_decomp_( Quantities*       quan,
     quan->ix_base_vals[ 1+0 ] = dims.ncell_x;
     for( proc_x=1; proc_x<Env_nproc_x( env ); ++proc_x )
     {
-      Env_recv_i( & quan->ix_base_vals[ 1+proc_x ], 1,
-        Env_proc( env, proc_x, Env_proc_y_this( env ) ), Env_tag( env ), env );
+      Env_recv_i( env, & quan->ix_base_vals[ 1+proc_x ], 1,
+        Env_proc( env, proc_x, Env_proc_y_this( env ) ), Env_tag( env ) );
     }
   }
   else
   {
-    Env_send_i( & dims.ncell_x, 1,
-             Env_proc( env, 0, Env_proc_y_this( env ) ), Env_tag( env ), env );
+    Env_send_i( env, & dims.ncell_x, 1,
+             Env_proc( env, 0, Env_proc_y_this( env ) ), Env_tag( env ) );
   }
   Env_increment_tag( env, 1 );
 
@@ -250,14 +250,14 @@ void Quantities_init_decomp_( Quantities*       quan,
     int proc_x = 0;
     for( proc_x=1; proc_x<Env_nproc_x( env ); ++proc_x )
     {
-      Env_send_i( & quan->ix_base_vals[ 1 ], Env_nproc_x( env ),
-        Env_proc( env, proc_x, Env_proc_y_this( env ) ), Env_tag( env ), env );
+      Env_send_i( env, & quan->ix_base_vals[ 1 ], Env_nproc_x( env ),
+        Env_proc( env, proc_x, Env_proc_y_this( env ) ), Env_tag( env ) );
     }
   }
   else
   {
-    Env_recv_i( & quan->ix_base_vals[ 1 ], Env_nproc_x( env ),
-             Env_proc( env, 0, Env_proc_y_this( env ) ), Env_tag( env ), env );
+    Env_recv_i( env, & quan->ix_base_vals[ 1 ], Env_nproc_x( env ),
+             Env_proc( env, 0, Env_proc_y_this( env ) ), Env_tag( env ) );
   }
   Env_increment_tag( env, 1 );
 
@@ -287,14 +287,14 @@ void Quantities_init_decomp_( Quantities*       quan,
     quan->iy_base_vals[ 1+0 ] = dims.ncell_y;
     for( proc_y=1; proc_y<Env_nproc_y( env ); ++proc_y )
     {
-      Env_recv_i( & quan->iy_base_vals[ 1+proc_y ], 1,
-        Env_proc( env, Env_proc_x_this( env ), proc_y ), Env_tag( env ), env );
+      Env_recv_i( env, & quan->iy_base_vals[ 1+proc_y ], 1,
+        Env_proc( env, Env_proc_x_this( env ), proc_y ), Env_tag( env ) );
     }
   }
   else
   {
-    Env_send_i( & dims.ncell_y, 1,
-             Env_proc( env, Env_proc_x_this( env ), 0 ), Env_tag( env ), env );
+    Env_send_i( env, & dims.ncell_y, 1,
+             Env_proc( env, Env_proc_x_this( env ), 0 ), Env_tag( env ) );
   }
   Env_increment_tag( env, 1 );
 
@@ -305,14 +305,14 @@ void Quantities_init_decomp_( Quantities*       quan,
     int proc_y = 0;
     for( proc_y=1; proc_y<Env_nproc_y( env ); ++proc_y )
     {
-      Env_send_i( & quan->iy_base_vals[ 1 ], Env_nproc_y( env ),
-        Env_proc( env, Env_proc_x_this( env ), proc_y ), Env_tag( env ), env );
+      Env_send_i( env, & quan->iy_base_vals[ 1 ], Env_nproc_y( env ),
+        Env_proc( env, Env_proc_x_this( env ), proc_y ), Env_tag( env ) );
     }
   }
   else
   {
-    Env_recv_i( & quan->iy_base_vals[ 1 ], Env_nproc_y( env ),
-             Env_proc( env, Env_proc_x_this( env ), 0 ), Env_tag( env ), env );
+    Env_recv_i( env, & quan->iy_base_vals[ 1 ], Env_nproc_y( env ),
+             Env_proc( env, Env_proc_x_this( env ), 0 ), Env_tag( env ) );
   }
   Env_increment_tag( env, 1 );
 
@@ -335,12 +335,12 @@ void Quantities_init_decomp_( Quantities*       quan,
 /*===========================================================================*/
 /*---Pseudo-destructor for Quantities struct---*/
 
-void Quantities_dtor( Quantities* quan )
+void Quantities_destroy( Quantities* quan )
 {
   /*---Deallocate arrays---*/
 
-  Pointer_dtor( & quan->a_from_m );
-  Pointer_dtor( & quan->m_from_a );
+  Pointer_destroy( & quan->a_from_m );
+  Pointer_destroy( & quan->m_from_a );
 
   free_host_int( quan->ix_base_vals );
   free_host_int( quan->iy_base_vals );
@@ -348,7 +348,7 @@ void Quantities_dtor( Quantities* quan )
   quan->ix_base_vals = NULL;
   quan->iy_base_vals = NULL;
 
-} /*---Quantities_dtor---*/
+} /*---Quantities_destroy---*/
 
 /*===========================================================================*/
 /*---Flops cost of solve per element---*/

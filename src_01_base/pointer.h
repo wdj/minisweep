@@ -24,25 +24,13 @@ extern "C"
 
 /*===========================================================================*/
 /*---Null object---*/
-
-static inline Pointer Pointer_null()
-{
-  Pointer p;
-
-  p.n_ = 0;
-  p.h_ = NULL;
-  p.d_ = NULL;
-  p.is_using_device_ = Bool_false;
-  p.is_pinned_       = Bool_false;
-  p.is_alias_        = Bool_false;
-
-  return p;
-}
-
+  
+Pointer Pointer_null(void);
+  
 /*===========================================================================*/
 /*---Conditional host or device pointer---*/
 
-static inline P* __restrict__ Pointer_active( Pointer* p )
+static P* __restrict__ Pointer_active( Pointer* p )
 {
   Assert( p );
   return p->is_using_device_ ? p->d_ : p->h_;
@@ -51,7 +39,7 @@ static inline P* __restrict__ Pointer_active( Pointer* p )
 /*===========================================================================*/
 /*---Conditional host or device pointer---*/
 
-static inline P* __restrict__ Pointer_const_active( const Pointer* p )
+static P* __restrict__ Pointer_const_active( const Pointer* p )
 {
   Assert( p );
   return p->is_using_device_ ? p->d_ : p->h_;
@@ -60,16 +48,16 @@ static inline P* __restrict__ Pointer_const_active( const Pointer* p )
 /*===========================================================================*/
 /*---Pseudo-constructors---*/
 
-void Pointer_ctor( Pointer* p,
-                   size_t   n,
-                   Bool_t   is_using_device );
+void Pointer_create( Pointer* p,
+                     size_t   n,
+                     Bool_t   is_using_device );
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_ctor_alias( Pointer* p,
-                         Pointer* source,
-                         size_t   base,
-                         size_t   n );
+void Pointer_create_alias( Pointer* p,
+                           Pointer* source,
+                           size_t   base,
+                           size_t   n );
 
 /*---------------------------------------------------------------------------*/
 
@@ -79,32 +67,32 @@ void Pointer_set_pinned( Pointer* p,
 /*===========================================================================*/
 /*---Pseudo-destructor---*/
 
-void Pointer_dtor( Pointer* p );
+void Pointer_destroy( Pointer* p );
 
 /*===========================================================================*/
 /*---De/allocate memory---*/
 
-void Pointer_create_h( Pointer* p );
+void Pointer_allocate_h( Pointer* p );
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_create_d( Pointer* p );
+void Pointer_allocate_d( Pointer* p );
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_create( Pointer* p );
+void Pointer_allocate( Pointer* p );
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_delete_h( Pointer* p );
+void Pointer_deallocate_h( Pointer* p );
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_delete_d( Pointer* p );
+void Pointer_deallocate_d( Pointer* p );
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_delete( Pointer* p );
+void Pointer_deallocate( Pointer* p );
 
 /*===========================================================================*/
 /*---Copy memory---*/

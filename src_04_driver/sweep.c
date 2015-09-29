@@ -27,7 +27,7 @@
 int main( int argc, char** argv )
 {
   /*---Declarations---*/
-  Env env;
+  Env env = Env_null();
 
   /*---Initialize for execution---*/
 
@@ -36,7 +36,7 @@ int main( int argc, char** argv )
   Arguments args;
   RunData  rundata;
 
-  Arguments_ctor( &args, argc, argv );
+  Arguments_create( &args, argc, argv );
   Env_set_values( &env, &args );
 
   /*---Perform run---*/
@@ -56,7 +56,7 @@ int main( int argc, char** argv )
 
   /*---Deallocations---*/
 
-  Arguments_dtor( &args );
+  Arguments_destroy( &args );
 
   /*---Finalize execution---*/
 

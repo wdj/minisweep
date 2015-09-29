@@ -31,11 +31,11 @@ extern "C"
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
 
-void Sweeper_ctor( Sweeper*          sweeper,
-                   Dimensions        dims,
-                   const Quantities* quan,
-                   Env*              env,
-                   Arguments*        args )
+void Sweeper_create( Sweeper*          sweeper,
+                     Dimensions        dims,
+                     const Quantities* quan,
+                     Env*              env,
+                     Arguments*        args )
 {
   /*====================*/
   /*---Declarations---*/
@@ -226,7 +226,7 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Set up step scheduler---*/
   /*====================*/
 
-  StepScheduler_ctor( &(sweeper->stepscheduler),
+  StepScheduler_create( &(sweeper->stepscheduler),
                               sweeper->nblock_z, sweeper->nblock_octant, env );
 
   /*====================*/
@@ -272,15 +272,15 @@ void Sweeper_ctor( Sweeper*          sweeper,
   /*---Allocate faces---*/
   /*====================*/
 
-  Faces_ctor( &(sweeper->faces), sweeper->dims_b,
+  Faces_create( &(sweeper->faces), sweeper->dims_b,
                 sweeper->noctant_per_block, is_face_comm_async, env );
 }
 
 /*===========================================================================*/
 /*---Pseudo-destructor for Sweeper struct---*/
 
-void Sweeper_dtor( Sweeper* sweeper,
-                   Env*     env )
+void Sweeper_destroy( Sweeper* sweeper,
+                      Env*     env )
 {
   /*====================*/
   /*---Deallocate arrays---*/
@@ -309,13 +309,13 @@ void Sweeper_dtor( Sweeper* sweeper,
   /*---Deallocate faces---*/
   /*====================*/
 
-  Faces_dtor( &(sweeper->faces) );
+  Faces_destroy( &(sweeper->faces) );
 
   /*====================*/
   /*---Terminate scheduler---*/
   /*====================*/
 
-  StepScheduler_dtor( &( sweeper->stepscheduler ) );
+  StepScheduler_destroy( &( sweeper->stepscheduler ) );
 }
 
 /*===========================================================================*/
@@ -710,19 +710,19 @@ void Sweeper_sweep(
       Assert( nstep >= nblock_z );  /*---Sanity check---*/
       if( do_block_send[i] )
       {
-        Pointer_ctor_alias(      &vi_b, vi, size_state_block * block_to_send[i],
+        Pointer_create_alias(    &vi_b, vi, size_state_block * block_to_send[i],
                                             size_state_block );
         Pointer_update_d_stream( &vi_b, Env_cuda_stream_send_block( env ) );
-        Pointer_dtor(            &vi_b );
+        Pointer_destroy(         &vi_b );
 
         /*---Initialize result array to zero if needed---*/
         /*---NOTE: this is not performance-optimal---*/
 #ifdef USE_OPENMP_VO_ATOMIC
-        Pointer_ctor_alias(    &vo_b, vi, size_state_block * block_to_send[i],
+        Pointer_create_alias(    &vo_b, vi, size_state_block * block_to_send[i],
                                           size_state_block );
         initialize_state_zero( Pointer_h( &vo_b ), sweeper->dims, NU );
         Pointer_update_d_stream( &vo_b, Env_cuda_stream_send_block( env ) );
-        Pointer_dtor(            &vo_b );
+        Pointer_destroy(         &vo_b );
 #endif
       }
     }
@@ -745,10 +745,10 @@ void Sweeper_sweep(
       Assert( nstep >= nblock_z );  /*---Sanity check---*/
       if( do_block_recv[i] )
       {
-        Pointer_ctor_alias(      &vo_b, vo, size_state_block * block_to_recv[i],
+        Pointer_create_alias(    &vo_b, vo, size_state_block * block_to_recv[i],
                                             size_state_block );
         Pointer_update_h_stream( &vo_b, Env_cuda_stream_recv_block( env ) );
-        Pointer_dtor(            &vo_b );
+        Pointer_destroy(         &vo_b );
       }
     }
 

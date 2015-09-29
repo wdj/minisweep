@@ -51,16 +51,16 @@ typedef struct
 /*===========================================================================*/
 /*---Pseudo-constructor for Faces struct---*/
 
-void Faces_ctor( Faces*      faces,
-                 Dimensions  dims_b,
-                 int         noctant_per_block,
-                 Bool_t      is_face_comm_async,
-                 Env*        env );
+void Faces_create( Faces*      faces,
+                   Dimensions  dims_b,
+                   int         noctant_per_block,
+                   Bool_t      is_face_comm_async,
+                   Env*        env );
 
 /*===========================================================================*/
 /*---Pseudo-destructor for Faces struct---*/
 
-void Faces_dtor( Faces* faces );
+void Faces_destroy( Faces* faces );
 
 /*===========================================================================*/
 /*---Is face communication done asynchronously---*/

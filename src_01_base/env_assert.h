@@ -58,6 +58,7 @@ static void insist_( const char *condition_string, const char *file, int line )
 /*---Static assertions---*/
 
 #ifndef NDEBUG
+/*---Fail compilation and (hopefully) give a filename/line number---*/
 #define Static_Assert( condition ) { int a[ ( condition ) ? 1 : -1 ]; (void)a; }
 #else
 #define Static_Assert( condition )

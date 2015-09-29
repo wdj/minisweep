@@ -38,7 +38,7 @@ extern "C"
 
 typedef int Bool_t;
 
-enum{ Bool_true = 1, Bool_false = 0 };
+enum{ Bool_true = (1==1), Bool_false = (0==1) };
 
 /*---Default floating point type---*/
 

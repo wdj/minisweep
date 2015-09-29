@@ -26,11 +26,11 @@ extern "C"
 /*===========================================================================*/
 /*---Pseudo-constructor for Sweeper struct---*/
 
-void Sweeper_ctor( Sweeper*          sweeper,
-                   Dimensions        dims,
-                   const Quantities* quan,
-                   Env*              env,
-                   Arguments*        args )
+void Sweeper_create( Sweeper*          sweeper,
+                     Dimensions        dims,
+                     const Quantities* quan,
+                     Env*              env,
+                     Arguments*        args )
 {
   Insist( Env_nproc( env ) == 1 &&
                              "This sweeper version runs only with one proc." );
@@ -51,8 +51,8 @@ void Sweeper_ctor( Sweeper*          sweeper,
 /*===========================================================================*/
 /*---Pseudo-destructor for Sweeper struct---*/
 
-void Sweeper_dtor( Sweeper* sweeper,
-                   Env*     env )
+void Sweeper_destroy( Sweeper* sweeper,
+                      Env*     env )
 {
   /*---Deallocate arrays---*/
 
