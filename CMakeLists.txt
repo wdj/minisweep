@@ -5,22 +5,27 @@ cmake_minimum_required(VERSION 2.8)
 project("minisweep")
 
 SET(INCLUDE_DIRS
-  ${CMAKE_SOURCE_DIR}/src_01_base
-  ${CMAKE_SOURCE_DIR}/src_02_sweeper_base
-  ${CMAKE_SOURCE_DIR}/src_03_sweeper
-  ${CMAKE_SOURCE_DIR}/src_04_driver
+  ${CMAKE_SOURCE_DIR}/src/1_base
+  ${CMAKE_SOURCE_DIR}/src/2_sweeper_base
+  ${CMAKE_SOURCE_DIR}/src/3_sweeper
+  ${CMAKE_SOURCE_DIR}/src/4_driver
   )
 
 SET(SOURCES
-  src_01_base/arguments.c
-  src_01_base/pointer.c
-  src_02_sweeper_base/dimensions.c
-  src_03_sweeper/faces_kba.c
-  src_03_sweeper/quantities.c
-  src_03_sweeper/stepscheduler_kba.c
-  src_03_sweeper/sweeper.c
-  src_03_sweeper/sweeper_kernels.c
-  src_04_driver/run_tools.c
+  src/1_base/arguments.c
+  src/1_base/env.c
+  src/1_base/env_assert.c
+  src/1_base/env_cuda.c
+  src/1_base/env_mpi.c
+  src/1_base/pointer.c
+  src/2_sweeper_base/array_operations.c
+  src/2_sweeper_base/dimensions.c
+  src/3_sweeper/faces_kba.c
+  src/3_sweeper/quantities.c
+  src/3_sweeper/stepscheduler_kba.c
+  src/3_sweeper/sweeper.c
+  src/3_sweeper/sweeper_kernels.c
+  src/4_driver/runner.c
   )
 
 SET(CUDA_SOURCES)
@@ -28,6 +33,8 @@ FOREACH(FILE IN LISTS SOURCES)
   STRING(REPLACE ".c" ".cu" FILE2 ${FILE})
   SET(CUDA_SOURCES ${CUDA_SOURCES} ${FILE2})
 ENDFOREACH()
+
+set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS} -Werror")
 
 IF(USE_MPI)
   find_package(MPI REQUIRED)
@@ -44,16 +51,16 @@ IF(USE_CUDA)
 #  SET(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}${NM_VALUE_DEF};-DUSE_CUDA")
   CUDA_INCLUDE_DIRECTORIES(${INCLUDE_DIRS})
   CUDA_ADD_LIBRARY(sweeper STATIC ${CUDA_SOURCES})
-  CUDA_ADD_EXECUTABLE(sweep src_04_driver/sweep.cu)
+  CUDA_ADD_EXECUTABLE(sweep src/4_driver/sweep.cu)
   TARGET_LINK_LIBRARIES(sweep sweeper)
-  CUDA_ADD_EXECUTABLE(tester src_04_driver/tester.cu)
+  CUDA_ADD_EXECUTABLE(tester src/4_driver/tester.cu)
   TARGET_LINK_LIBRARIES(tester sweeper)
 ELSE()
   INCLUDE_DIRECTORIES(${INCLUDE_DIRS})
   ADD_LIBRARY(sweeper STATIC ${SOURCES})
-  ADD_EXECUTABLE(sweep src_04_driver/sweep.c)
+  ADD_EXECUTABLE(sweep src/4_driver/sweep.c)
   TARGET_LINK_LIBRARIES(sweep sweeper)
-  ADD_EXECUTABLE(tester src_04_driver/tester.c)
+  ADD_EXECUTABLE(tester src/4_driver/tester.c)
   TARGET_LINK_LIBRARIES(tester sweeper)
 ENDIF()
 

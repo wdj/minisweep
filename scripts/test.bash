@@ -33,11 +33,12 @@ declare g_verbose=1
 #==============================================================================
 # Run the executable once.
 #==============================================================================
-function perform_runs_imp
+function perform_runs_impl
 {
   local exec_config_args="$(echo "$1" | tr '\n' ' ')"
   local application_args="$(echo "$2" | tr '\n' ' ')"
   local environment="${3:-}"
+  local executable="$4"
   if [ "$environment" = "" ] ; then
     local env_environment=""
   else
@@ -49,17 +50,17 @@ function perform_runs_imp
     local wd="$PWD"
     pushd "$MEMBERWORK" >/dev/null
     pwd
-    echo $env_environment aprun $exec_config_args "$wd/tester"
-    $env_environment aprun $exec_config_args "$wd/tester"
+    echo $env_environment aprun $exec_config_args "$wd/$executable"
+    $env_environment aprun $exec_config_args "$wd/$executable"
     #assert $? = 0
     popd >/dev/null
   elif [ "${IMICROOT:-}" != "" ] ; then
-    cp tester $TMPDIR/mic0
-    $env_environment micmpiexec -n 1 -wdir $TMPDIR -host ${HOSTNAME}-mic0 $TMPDIR/tester $application_arg
-    rm tester $TMPDIR/mic0
+    cp $executable $TMPDIR/mic0
+    $env_environment micmpiexec -n 1 -wdir $TMPDIR -host ${HOSTNAME}-mic0 $TMPDIR/$executable $application_arg
+    rm $executable $TMPDIR/mic0
   else
     #assert $exec_config_args = "-n1"
-    $env_environment ./tester
+    $env_environment ./$executable
     #assert $? = 0
   fi
 }
@@ -70,14 +71,17 @@ function perform_runs_imp
 #==============================================================================
 function perform_runs
 {
-  perform_runs_imp "$1" "$2" "${3:-}" | tee tmp_
+  local executable
+  for executable in "tester" "sweep" ; do
+    perform_runs_impl "$1" "$2" "${3:-}" "$executable" | tee tmp_
 
-  local ntest=$(        grep TESTS tmp_ | sed -e 's/.*TESTS *//'  -e 's/ .*//' )
-  local ntest_passed=$( grep TESTS tmp_ | sed -e 's/.*PASSED *//' -e 's/ .*//' )
-  rm -f tmp_
+    local ntest=$(       grep TESTS tmp_ | sed -e 's/.*TESTS *//'  -e 's/ .*//')
+    local ntest_passed=$(grep TESTS tmp_ | sed -e 's/.*PASSED *//' -e 's/ .*//')
+    rm -f tmp_
 
-  g_ntest=$((        $g_ntest        + $ntest ))
-  g_ntest_passed=$(( $g_ntest_passed + $ntest_passed ))
+    g_ntest=$((        $g_ntest        + $ntest ))
+    g_ntest_passed=$(( $g_ntest_passed + $ntest_passed ))
+  done
 }
 #==============================================================================
 
@@ -99,6 +103,39 @@ function initialize
   fi
 }
 #==============================================================================
+
+#==============================================================================
+# Output pass/fail results.
+#==============================================================================
+
+function print_results_summary
+{
+  local is_final="${1:-}"
+
+  local ntest_failed=$(( $g_ntest - $g_ntest_passed ))
+
+  echo
+  if [ "$is_final" = "" ] ; then
+    echo -n "RUNNING TOTAL: "
+  else
+    echo -n "FINAL TOTAL: "
+  fi
+  echo -n "TESTS $g_ntest"
+  echo -n "    "
+  echo -n "PASSED $g_ntest_passed"
+  echo -n "    "
+  echo -n "FAILED $(( $g_ntest - $g_ntest_passed ))"
+  echo -n "."
+  if [ "$is_final" != "" ] ; then
+    if [ $ntest_failed = 0 ] ; then
+      echo -n "          ========== SUCCESS =========="
+    fi
+  fi
+  echo
+  echo
+}
+#==============================================================================
+
 
 #==============================================================================
 function main
@@ -125,6 +162,113 @@ function main
   fi
 
   rm -f tmp_
+
+  #==============================
+  # Serial
+  #==============================
+
+  echo "--------------------------------------------------------"
+  echo "---Serial tests---"
+  echo "--------------------------------------------------------"
+
+  #make MPI_OPTION= NM_VALUE=4
+
+  rm -rf $BUILD_DIR
+  mkdir $BUILD_DIR
+  pushd $BUILD_DIR
+
+  env NM_VALUE=4 $SCRIPTS_DIR/cmake_serial.sh
+  make $VERBOSE_ARG
+
+  perform_runs "-n1" ""
+
+  popd
+  rm -rf $BUILD_DIR
+
+  print_results_summary
+
+  #==============================
+  # OpenMP
+  #==============================
+
+  echo "--------------------------------------------------------"
+  echo "---OpenMP tests---"
+  echo "--------------------------------------------------------"
+
+  #make MPI_OPTION= OPENMP_OPTION=THREADS NM_VALUE=4
+
+  rm -rf $BUILD_DIR
+  mkdir $BUILD_DIR
+  pushd $BUILD_DIR
+
+  env NM_VALUE=4 $SCRIPTS_DIR/cmake_openmp.sh
+  make $VERBOSE_ARG
+
+  perform_runs "-n1 -d16" ""
+
+  popd
+  rm -rf $BUILD_DIR
+
+  print_results_summary
+
+  #==============================
+  # OpenMP/tasks
+  #==============================
+
+  echo "--------------------------------------------------------"
+  echo "---OpenMP/tasks tests---"
+  echo "--------------------------------------------------------"
+
+  module swap gcc gcc/4.9.2
+
+  #make MPI_OPTION= OPENMP_OPTION=THREADS NM_VALUE=4
+
+  rm -rf $BUILD_DIR
+  mkdir $BUILD_DIR
+  pushd $BUILD_DIR
+
+  env NM_VALUE=4 $SCRIPTS_DIR/cmake_openmp_tasks.sh
+  make $VERBOSE_ARG
+
+  local num_threads
+  for num_threads in 1 2 4 8 16 32 ; do
+    perform_runs "-n1 -d16" "" "OMP_NUM_THREADS=$num_threads"
+  done
+
+  popd
+  rm -rf $BUILD_DIR
+
+  module swap gcc/4.9.2 gcc
+
+  print_results_summary
+
+  #==============================
+  # MPI.
+  #==============================
+
+  if [ "${PBS_NP:-}" != "" ] ; then
+
+    echo "--------------------------------------------------------"
+    echo "---MPI tests---"
+    echo "--------------------------------------------------------"
+
+    #make NM_VALUE=4
+
+    rm -rf $BUILD_DIR
+    mkdir $BUILD_DIR
+    pushd $BUILD_DIR
+
+    env NM_VALUE=4 $SCRIPTS_DIR/cmake_cray_xk7.sh
+    make $VERBOSE_ARG
+
+    perform_runs "-n16" ""
+
+    popd
+    rm -rf $BUILD_DIR
+
+  fi #---PBS_NP
+
+  print_results_summary
 
   #==============================
   # MPI + CUDA.
@@ -162,104 +306,7 @@ function main
     module unload cudatoolkit
   fi
 
-  #==============================
-  # Serial
-  #==============================
-
-  echo "--------------------------------------------------------"
-  echo "---Serial tests---"
-  echo "--------------------------------------------------------"
-
-  #make MPI_OPTION= NM_VALUE=4
-
-  rm -rf $BUILD_DIR
-  mkdir $BUILD_DIR
-  pushd $BUILD_DIR
-
-  env NM_VALUE=4 $SCRIPTS_DIR/cmake_serial.sh
-  make $VERBOSE_ARG
-
-  perform_runs "-n1" ""
-
-  popd
-  rm -rf $BUILD_DIR
-
-  #==============================
-  # OpenMP
-  #==============================
-
-  echo "--------------------------------------------------------"
-  echo "---OpenMP tests---"
-  echo "--------------------------------------------------------"
-
-  #make MPI_OPTION= OPENMP_OPTION=THREADS NM_VALUE=4
-
-  rm -rf $BUILD_DIR
-  mkdir $BUILD_DIR
-  pushd $BUILD_DIR
-
-  env NM_VALUE=4 $SCRIPTS_DIR/cmake_openmp.sh
-  make $VERBOSE_ARG
-
-  perform_runs "-n1 -d16" ""
-
-  popd
-  rm -rf $BUILD_DIR
-
-  #==============================
-  # OpenMP/tasks
-  #==============================
-
-  echo "--------------------------------------------------------"
-  echo "---OpenMP/tasks tests---"
-  echo "--------------------------------------------------------"
-
-  module swap gcc gcc/4.9.2
-
-  #make MPI_OPTION= OPENMP_OPTION=THREADS NM_VALUE=4
-
-  rm -rf $BUILD_DIR
-  mkdir $BUILD_DIR
-  pushd $BUILD_DIR
-
-  env NM_VALUE=4 $SCRIPTS_DIR/cmake_openmp_tasks.sh
-  make $VERBOSE_ARG
-
-  local num_threads
-  for num_threads in 1 2 4 8 16 32 ; do
-    perform_runs "-n1 -d16" "" "OMP_NUM_THREADS=$num_threads"
-  done
-
-  popd
-  rm -rf $BUILD_DIR
-
-  module swap gcc/4.9.2 gcc
-
-  #==============================
-  # MPI.
-  #==============================
-
-  if [ "${PBS_NP:-}" != "" ] ; then
-
-    echo "--------------------------------------------------------"
-    echo "---MPI tests---"
-    echo "--------------------------------------------------------"
-
-    #make NM_VALUE=4
-
-    rm -rf $BUILD_DIR
-    mkdir $BUILD_DIR
-    pushd $BUILD_DIR
-
-    env NM_VALUE=4 $SCRIPTS_DIR/cmake_cray_xk7.sh
-    make $VERBOSE_ARG
-
-    perform_runs "-n16" ""
-
-    popd
-    rm -rf $BUILD_DIR
-
-  fi #---PBS_NP
+  print_results_summary
 
   #==============================
   # Variants.
@@ -289,24 +336,14 @@ function main
 
   done #---alg_options
 
+  print_results_summary
+
   #==============================
   # Finalize.
   #==============================
 
-  local ntest_failed=$(( $g_ntest - $g_ntest_passed ))
+  print_results_summary FINAL
 
-  echo
-  echo -n "TOTAL: "
-  echo -n "TESTS $g_ntest"
-  echo -n "    "
-  echo -n "PASSED $g_ntest_passed"
-  echo -n "    "
-  echo -n "FAILED $(( $g_ntest - $g_ntest_passed ))"
-  echo -n "."
-  if [ $ntest_failed = 0 ] ; then
-    echo -n "          ========== SUCCESS =========="
-  fi
-  echo
 }
 #==============================================================================
 
