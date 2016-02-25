@@ -428,7 +428,7 @@ static void Sweeper_sweep_block_adapter(
                               proc_y_max,
                               stepinfoall,
                               do_block_init );
-    Assert( Env_cuda_last_call_succeeded( env ) );
+    Assert( Env_cuda_last_call_succeeded() );
   }
   else
   {

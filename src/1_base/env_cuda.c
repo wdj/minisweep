@@ -22,10 +22,11 @@ extern "C"
 {
 #endif
 
+
 /*===========================================================================*/
 /*---Error handling---*/
 
-Bool_t Env_cuda_last_call_succeeded( const Env* const env )
+Bool_t Env_cuda_last_call_succeeded()
 {
   Bool_t result = Bool_true;
 
@@ -50,13 +51,13 @@ void Env_cuda_initialize_( Env *env, int argc, char** argv )
 {
 #ifdef USE_CUDA
   cudaStreamCreate( & env->stream_send_block_ );
-  Assert( Env_cuda_last_call_succeeded(env) );
+  Assert( Env_cuda_last_call_succeeded() );
 
   cudaStreamCreate( & env->stream_recv_block_ );
-  Assert( Env_cuda_last_call_succeeded(env) );
+  Assert( Env_cuda_last_call_succeeded() );
 
   cudaStreamCreate( & env->stream_kernel_faces_ );
-  Assert( Env_cuda_last_call_succeeded(env) );
+  Assert( Env_cuda_last_call_succeeded() );
 #endif
 }
 
@@ -67,13 +68,13 @@ void Env_cuda_finalize_( Env* env )
 {
 #ifdef USE_CUDA
   cudaStreamDestroy( env->stream_send_block_ );
-  Assert( Env_cuda_last_call_succeeded(env) );
+  Assert( Env_cuda_last_call_succeeded() );
 
   cudaStreamDestroy( env->stream_recv_block_ );
-  Assert( Env_cuda_last_call_succeeded(env) );
+  Assert( Env_cuda_last_call_succeeded() );
 
   cudaStreamDestroy( env->stream_kernel_faces_ );
-  Assert( Env_cuda_last_call_succeeded(env) );
+  Assert( Env_cuda_last_call_succeeded() );
 #endif
 }
 
@@ -135,7 +136,7 @@ P* malloc_host_pinned_P( size_t n )
 
 #ifdef USE_CUDA
   cudaMallocHost( &result, n==0 ? ((size_t)1) : n*sizeof(P) );
-  Assert( Env_cuda_last_call_succeeded(env) );
+  Assert( Env_cuda_last_call_succeeded() );
 #else
   result = (P*)malloc( n * sizeof(P) );
 #endif
@@ -154,7 +155,7 @@ P* malloc_device_P( size_t n )
 
 #ifdef USE_CUDA
   cudaMalloc( &result, n==0 ? ((size_t)1) : n*sizeof(P) );
-  Assert( Env_cuda_last_call_succeeded(env) );
+  Assert( Env_cuda_last_call_succeeded() );
   Assert( result );
 #endif
 
@@ -184,7 +185,7 @@ void free_host_pinned_P( P* p )
   Assert( p );
 #ifdef USE_CUDA
   cudaFreeHost( p );
-  Assert( Env_cuda_last_call_succeeded(env) );
+  Assert( Env_cuda_last_call_succeeded() );
 #else
   free( (void*) p );
 #endif
@@ -196,7 +197,7 @@ void free_device_P( P* p )
 {
 #ifdef USE_CUDA
   cudaFree( p );
-  Assert( Env_cuda_last_call_succeeded(env) );
+  Assert( Env_cuda_last_call_succeeded() );
 #endif
 }
 
@@ -214,7 +215,7 @@ void cuda_copy_host_to_device_P( P*     p_d,
   Assert( n+1 >= 1 );
 
   cudaMemcpy( p_d, p_h, n*sizeof(P), cudaMemcpyHostToDevice );
-  Assert( Env_cuda_last_call_succeeded(env) );
+  Assert( Env_cuda_last_call_succeeded() );
 #endif
 }
 
@@ -230,7 +231,7 @@ void cuda_copy_device_to_host_P( P*     p_h,
   Assert( n+1 >= 1 );
 
   cudaMemcpy( p_h, p_d, n*sizeof(P), cudaMemcpyDeviceToHost );
-  Assert( Env_cuda_last_call_succeeded(env) );
+  Assert( Env_cuda_last_call_succeeded() );
 #endif
 }
 
@@ -247,7 +248,7 @@ void cuda_copy_host_to_device_stream_P( P*       p_d,
   Assert( n+1 >= 1 );
 
   cudaMemcpyAsync( p_d, p_h, n*sizeof(P), cudaMemcpyHostToDevice, stream );
-  Assert( Env_cuda_last_call_succeeded(env) );
+  Assert( Env_cuda_last_call_succeeded() );
 #endif
 }
 
@@ -264,7 +265,7 @@ void cuda_copy_device_to_host_stream_P( P*       p_h,
   Assert( n+1 >= 1 );
 
   cudaMemcpyAsync( p_h, p_d, n*sizeof(P), cudaMemcpyDeviceToHost, stream );
-  Assert( Env_cuda_last_call_succeeded(env) );
+  Assert( Env_cuda_last_call_succeeded() );
 #endif
 }
 
@@ -308,7 +309,7 @@ void Env_cuda_stream_wait( Env* env, Stream_t stream )
 {
 #ifdef USE_CUDA
   cudaStreamSynchronize( stream );
-  Assert( Env_cuda_last_call_succeeded(env) );
+  Assert( Env_cuda_last_call_succeeded() );
 #endif
 }
 

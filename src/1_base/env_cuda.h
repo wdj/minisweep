@@ -29,7 +29,7 @@ extern "C"
 /*===========================================================================*/
 /*---Error handling---*/
 
-Bool_t Env_cuda_last_call_succeeded( const Env* const env );
+Bool_t Env_cuda_last_call_succeeded(void);
 
 /*===========================================================================*/
 /*---Initialize CUDA---*/

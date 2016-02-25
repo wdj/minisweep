@@ -130,8 +130,8 @@ TODO: fix vectorization for this loop.
                                          NU,
                                          ix, iy, iz, ie, im, iu );
                   /*---Can use this for non-MIC case:
-                  /*--- *const_ref_state( vi_this, sweeper->dims_b, NU,
-                  /*---                   ix, iy, iz, ie, im, iu );
+                    --- *const_ref_state( vi_this, sweeper->dims_b, NU,
+                    ---                   ix, iy, iz, ie, im, iu );
                   ---*/
                 }
               } /*---for iu---*/
@@ -362,8 +362,8 @@ TODO: fix vectorization for this loop.
                       w[ iu_per_thread ] +=
                           m_from_a_this
                           /*---Can use this for non-MIC case:
-                          /*--- *const_ref_m_from_a( m_from_a, sweeper->dims_b,
-                          /*---                     im, ia, octant )
+                            --- *const_ref_m_from_a( m_from_a, sweeper->dims_b,
+                            ---                     im, ia, octant )
                           ---*/
                         * *const_ref_vslocal( vslocal, sweeper->dims_b, NU,
                                               NTHREAD_A, ia_in_block, iu );
@@ -403,8 +403,8 @@ TODO: fix vectorization for this loop.
                       w[ iu_per_thread ] += mask ?
                           m_from_a_this
                           /*---Can use this for non-MIC case:
-                          /*--- *const_ref_m_from_a( m_from_a, sweeper->dims_b,
-                          /*---                     im, ia, octant )
+                            --- *const_ref_m_from_a( m_from_a, sweeper->dims_b,
+                            ---                     im, ia, octant )
                           ---*/
                         * *const_ref_vslocal( vslocal, sweeper->dims_b, NU,
                                               NTHREAD_A, ia_in_block, iu )
@@ -482,7 +482,7 @@ TODO: fix vectorization for this loop.
               }
 #else /*---USE_OPENMP_VO_ATOMIC---*/
               if( ( ! do_block_init_this ) ||
-                  ( NM*1 > NTHREAD_M*1 && ! ia_base==0 ) )
+                  ( NM*1 > NTHREAD_M*1 && ! ( ia_base==0 ) ) )
               {
 #pragma unroll
                 for( iu_base=0; iu_base<NU; iu_base += NTHREAD_U )
@@ -492,8 +492,8 @@ TODO: fix vectorization for this loop.
                   if( (NU*1) % (NTHREAD_U*1) == 0 || iu < NU*1 )
                   {
                     /*---Can use this for non-MIC case:
-                    /*--- *ref_state( vo_this, sweeper->dims_b, NU,
-                    /*---             ix, iy, iz, ie, im, iu ) +=
+                      --- *ref_state( vo_this, sweeper->dims_b, NU,
+                      ---             ix, iy, iz, ie, im, iu ) +=
                     */
                     *ref_state_flat( vo_this,
                                      sweeper->dims_b.ncell_x,
@@ -518,8 +518,8 @@ TODO: fix vectorization for this loop.
                   if( (NU*1) % (NTHREAD_U*1) == 0 || iu < NU*1 )
                   {
                     /*---Can use this for non-MIC case:
-                    /*--- *ref_state( vo_this, sweeper->dims_b, NU,
-                    /*---             ix, iy, iz, ie, im, iu ) =
+                      --- *ref_state( vo_this, sweeper->dims_b, NU,
+                      ---             ix, iy, iz, ie, im, iu ) =
                     */
                     *ref_state_flat( vo_this,
                                      sweeper->dims_b.ncell_x,
