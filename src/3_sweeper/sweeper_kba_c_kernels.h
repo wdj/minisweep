@@ -58,6 +58,14 @@ TARGET_HD static inline void Sweeper_sweep_cell(
   const int sweeper_thread_m = Sweeper_thread_m( sweeper );
   const int sweeper_thread_u = Sweeper_thread_u( sweeper );
 
+  /*---For cases when the number of angles or the number of moments is
+       too large for the warp size, a 2-D blocking strategy is used
+       to keep the granularity of the work to be within warp---*/
+
+  /*---NOTE for computations threaded in angle, the unknowns axis U is
+       serial (looped), but for operations threaded in moment,
+       some threadiung in U is allowed---*/
+
   /*====================*/
   /*---Master loop over angle blocks---*/
   /*====================*/
@@ -609,11 +617,19 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
   int ix = 0, iy = 0, iz = 0;
 
   /*--------------------*/
-  /*---Loop over energy groups---*/
+  /*---First perform any required boundary initializations---*/
+  /*--------------------*/
+
+  /*--------------------*/
+  /*---Loop over energy groups owned by this energy thread---*/
   /*--------------------*/
 
   for( ie=iemin; ie<iemax; ++ie )
   {
+    /*--------------------*/
+    /*---Loop over cells in this subblock---*/
+    /*--------------------*/
+
     for( iz=izbeg; iz!=izend+dir_inc_z; iz+=dir_inc_z )
     {
     for( iy=iybeg; iy!=iyend+dir_inc_y; iy+=dir_inc_y )
@@ -645,7 +661,7 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
       if( is_elt_active )
       {
         /*--------------------*/
-        /*---Set boundary condition: xy---*/
+        /*---Set boundary condition if needed: xy---*/
         /*--------------------*/
 
         const int iz_g = iz + iz_base;
@@ -671,7 +687,7 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
         }
 
         /*--------------------*/
-        /*---Set boundary condition: xz---*/
+        /*---Set boundary condition if needed: xz---*/
         /*--------------------*/
 
         const int iy_g = iy + quan->iy_base;
@@ -697,7 +713,7 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
         }
 
         /*--------------------*/
-        /*---Set boundary condition: yz---*/
+        /*---Set boundary condition if needed: yz---*/
         /*--------------------*/
 
         const int ix_g = ix + quan->ix_base;
@@ -731,7 +747,11 @@ TARGET_HD static inline void Sweeper_sweep_subblock(
   } /*---ie---*/
 
   /*--------------------*/
-  /*---Loop over energy groups---*/
+  /*---Now perform actual sweep--*/
+  /*--------------------*/
+
+  /*--------------------*/
+  /*---Loop over energy groups owned by this energy thread---*/
   /*--------------------*/
 
   for( ie=iemin; ie<iemax; ++ie )
@@ -907,7 +927,7 @@ TARGET_HD static inline void Sweeper_sweep_semiblock(
     const int nchunk_y = iceil( nsubblock_y, nsubblock_y_per_chunk );
     const int nchunk_z = iceil( nsubblock_z, nsubblock_z_per_chunk );
 
-    /*---Upsize to insure dependencies satisfied---*/
+    /*---Upsize to ensure dependencies satisfied---*/
 
     const int nsubblock_x_per_chunk_up
         = imax( nsubblock_x_per_chunk,
@@ -1139,7 +1159,7 @@ TARGET_HD void Sweeper_sweep_block_impl(
     =========================================================================*/
 
     /*--------------------*/
-    /*---Loop over semiblocks---*/
+    /*---Loop over semiblock steps---*/
     /*--------------------*/
 
     for( semiblock_step=0; semiblock_step<nsemiblock; ++semiblock_step )
@@ -1165,6 +1185,8 @@ TARGET_HD void Sweeper_sweep_block_impl(
       /*---Loop over the space of all tasks to be launched---*/
       /*--------------------*/
 
+      /*---Here we assign one thread/task per subblock---*/
+
       int thread_z = 0;
       for( thread_z=0; thread_z<sweeper.nthread_z; ++thread_z)
       {
@@ -1181,7 +1203,7 @@ TARGET_HD void Sweeper_sweep_block_impl(
         sweeper.thread_x = thread_x;
 
       /*--------------------*/
-      /*---Launch this task---*/
+      /*---Determine dependencies---*/
       /*--------------------*/
 
       const char* __restrict__ dep_in_x = Sweeper_task_dependency( &sweeper,
@@ -1203,6 +1225,10 @@ TARGET_HD void Sweeper_sweep_block_impl(
                thread_x, thread_y, thread_z, thread_e, thread_octant,
                omp_get_thread_num(), omp_get_num_threads());
       */
+
+      /*--------------------*/
+      /*---Launch this task---*/
+      /*--------------------*/
 
 #pragma omp task \
       depend(in:  dep_in_x[0]) \
@@ -1278,7 +1304,8 @@ TARGET_HD void Sweeper_sweep_block_impl(
           sweeper.dims_b.ncell_z, DIM_Z, dir_z, semiblock_step, nsemiblock);
 
         /*--------------------*/
-        /*---Perform sweep on semiblock---*/
+        /*---Perform sweep over subblocks in semiblock---*/
+        /*---(for tasking case, this task sweeps one subblock in semiblock---*/
         /*--------------------*/
 
         const int iz_base = stepinfo.block_z * sweeper.dims_b.ncell_z;

@@ -205,7 +205,7 @@ done
 Example 3
 ---------
 
-Usage example on ORNL Titan system, CPU only, for executing a weak scaling
+Usage example on ORNL Titan system, CPU only, for executing a strong scaling
 study for cores on a node using OpenMP:
 
 qsub -I -Astf006 -lnodes=1 -lwalltime=2:0:0

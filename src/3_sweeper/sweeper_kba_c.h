@@ -394,9 +394,11 @@ static void Sweeper_sweep_block_adapter(
   unsigned long int      do_block_init,
   Env*                   env )
 {
-  /*---Call sweep block implementation function---*/
+  /*---Create lightweight version of Sweeper class that uses less GPU mem---*/
 
   SweeperLite sweeperlite = Sweeper_sweeperlite( sweeper );
+
+  /*---Call sweep block implementation function---*/
 
   if( Env_cuda_is_using_device( env ) )
   {
@@ -504,6 +506,8 @@ void Sweeper_sweep_block(
   }
 
   /*---Precalculate initialization schedule---*/
+  /*---Determine whether this is the first calculation for this sweep step
+       and semiblock step - in which case set values rather than add values---*/
 
   for( semiblock_step=0; semiblock_step<sweeper->nsemiblock; ++semiblock_step )
   {
@@ -620,9 +624,13 @@ void Sweeper_sweep(
   /*---Loop over kba parallel steps---*/
   /*--------------------*/
 
+  /*---Extra step at begin/end to fill/drain async pipeline---*/
+
   for( step=0-1; step<nstep+1; ++step )
   {
     const Bool_t is_sweep_step = step>=0 && step<nstep;
+
+    /*---Pointers to single active block of state vector---*/
 
     Pointer vi_b = Pointer_null();
     Pointer vo_b = Pointer_null();
