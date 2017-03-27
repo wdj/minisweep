@@ -65,6 +65,7 @@ int ceil_(int i, int j)
     return (i + j - 1 ) / j;
 }
 
+/*---------------------------------------------------------------------------*/
 
 void get_block_config_param(int ncellx, int ncelly, int *nbsizex, int *nbsizey, int *nbx, int *nby){
 
@@ -318,6 +319,8 @@ void solve_block_wavefronts(int nu, int ncellx, int ncelly,
     }
 }
 
+/*---------------------------------------------------------------------------*/
+
 void solve_dep(int nu, int ncellx, int ncelly,
                                   Float_t* __restrict__ vo,
                             const Float_t* __restrict__ vi,
@@ -353,6 +356,8 @@ void solve_dep(int nu, int ncellx, int ncelly,
     } // end taskgroup
     //printf("Finished Block (%d, %d)\n", ibx, iby);
 }
+
+/*---------------------------------------------------------------------------*/
 
 void process_block_dep(int ibx, int iby,int nbsizex, int nbsizey,
 							int nu, int ncellx, int ncelly,
@@ -390,6 +395,8 @@ void process_block_dep(int ibx, int iby,int nbsizex, int nbsizey,
     //printf("Finished Block (%d, %d)\n", ibx, iby);
 }
 
+/*---------------------------------------------------------------------------*/
+
 void process_block_parloop(int ibx, int iby,int nbsizex, int nbsizey,
 							int nu, int ncellx, int ncelly,
                                   Float_t* __restrict__ vo,
@@ -426,6 +433,8 @@ void process_block_parloop(int ibx, int iby,int nbsizex, int nbsizey,
     //printf("Finished Block (%d, %d)\n", ibx, iby);
 }
 
+/*---------------------------------------------------------------------------*/
+
 void solve_block_dep_dep(int nu, int ncellx, int ncelly,
                                   Float_t* __restrict__ vo,
                             const Float_t* __restrict__ vi,
@@ -460,6 +469,8 @@ void solve_block_dep_dep(int nu, int ncellx, int ncelly,
     }
 } //end omp single
 }
+
+/*---------------------------------------------------------------------------*/
 
 void solve_block_dep_parloop(int nu, int ncellx, int ncelly,
                                   Float_t* __restrict__ vo,
@@ -496,6 +507,8 @@ void solve_block_dep_parloop(int nu, int ncellx, int ncelly,
 } //end omp single
 }
 
+/*---------------------------------------------------------------------------*/
+
 void solve_block_parloop_dep(int nu, int ncellx, int ncelly,
                                   Float_t* __restrict__ vo,
                             const Float_t* __restrict__ vi,
@@ -526,6 +539,8 @@ void solve_block_parloop_dep(int nu, int ncellx, int ncelly,
         }
     }
 }
+
+/*---------------------------------------------------------------------------*/
 
 void solve_block_parloop_parloop(int nu, int ncellx, int ncelly,
                                   Float_t* __restrict__ vo,
