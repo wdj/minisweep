@@ -218,14 +218,43 @@ void Sweeper_sweep(
 
       for( iu=0; iu<NU; ++iu )
       for( ia=0; ia<sweeper->dims.na; ++ia )
-      {
-        P result = P_zero();
-        for( im=0; im<sweeper->dims.nm; ++im )
+      { 
+	P result = (P)0;
+	Dimensions dims = sweeper->dims;
+	P* v = (P*) Pointer_const_h( & quan->a_from_m);
+	P* vi_h = Pointer_h( vi );
+
+	/*--- const_ref_a_from_m inline ---*/
+	Assert( v );
+	Assert( ia >= 0 && ia < dims.na );
+	Assert( octant >= 0 && octant < NOCTANT );
+	Assert( ix >= 0 && ix < dims.ncell_x );
+	Assert( iy >= 0 && iy < dims.ncell_y );
+	Assert( iz >= 0 && iz < dims.ncell_z );
+	Assert( ie >= 0 && ie < dims.ne );
+	Assert( iu >= 0 && iu < NU && NU > 0);
+
+
+	//#pragma acc parallel loop copy(result), copyin(v[0:dims.nm * dims.na * NOCTANT], dims, NM, octant, NOCTANT), reduction(+:result)
+        for( im=0; im < dims.nm; ++im )
         {
-          result += *const_ref_a_from_m( Pointer_const_h( & quan->a_from_m ),
-                                         sweeper->dims, im, ia, octant )*
-                    *const_ref_state(    Pointer_h( vi ), sweeper->dims, NU,
-                                         ix, iy, iz, ie, im, iu );
+	  Assert( im >= 0 && im < dims.nm );
+
+	  result += (* &v[ ia     + dims.na * (
+	  	       im     +      NM * (
+	  	       octant + NOCTANT * (
+					   0 ))) ]) * 
+	    (* &vi_h[im + dims.nm      * (
+	    		  iu + NU           * (
+	    		  ix + dims.ncell_x * (
+                          iy + dims.ncell_y * (
+                          ie + dims.ne      * (
+                          iz + dims.ncell_z * ( /*---NOTE: This axis MUST be slowest-varying---*/
+	    				       0 ))))))]);
+          /* result += *const_ref_a_from_m( Pointer_const_h( & quan->a_from_m ), */
+          /*                                sweeper->dims, im, ia, octant ) * */
+          /*           *const_ref_state(    Pointer_h( vi ), sweeper->dims, NU, */
+          /*                                ix, iy, iz, ie, im, iu ); */
         }
         *ref_vslocal( sweeper->vslocal, sweeper->dims, NU,
                       sweeper->dims.na, ia, iu ) = result;

@@ -13,7 +13,9 @@
 
 #ifndef SWEEPER_SIMPLE
 #ifndef SWEEPER_TILEOCTANTS
-#define SWEEPER_KBA
+#ifndef SWEEPER_KBA
+#define SWEEPER_ACC
+#endif
 #endif
 #endif
 
@@ -27,6 +29,10 @@
 
 #ifdef SWEEPER_KBA
 #include "sweeper_kba.h"
+#endif
+
+#ifdef SWEEPER_ACC
+#include "sweeper_simple_acc.h"
 #endif
 
 #endif /*---_sweep_h_---*/
