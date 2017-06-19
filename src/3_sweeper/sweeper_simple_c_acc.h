@@ -78,6 +78,34 @@ void Sweeper_destroy( Sweeper* sweeper,
 }
 
 /*===========================================================================*/
+/*---Quantities_init_face inline routine---*/
+
+#pragma acc routine seq
+P Quantities_init_face(int ia, int ie, int iu, int scalefactor_space, int octant)
+{
+  /*--- Quantities_init_facexy inline ---*/
+
+  /*--- Quantities_affinefunction_ inline ---*/
+  return ( (P) (1 + ia) ) 
+
+    /*--- Quantities_scalefactor_angle_ inline ---*/
+    * ( (P) (1 << (ia & ( (1<<3) - 1))) ) 
+
+    /*--- Quantities_scalefactor_space_ inline ---*/
+    * ( (P) scalefactor_space)
+
+    /*--- Quantities_scalefactor_energy_ inline ---*/
+    * ( (P) (1 << ((( (ie) * 1366 + 150889) % 714025) & ( (1<<2) - 1))) )
+
+    /*--- Quantities_scalefactor_unknown_ inline ---*/
+    * ( (P) (1 << ((( (iu) * 741 + 60037) % 312500) & ( (1<<2) - 1))) )
+
+    /*--- Quantities_scalefactor_octant_ ---*/
+    * ( (P) 1 + octant);
+
+}
+
+/*===========================================================================*/
 /*---Perform a sweep---*/
 
 void Sweeper_sweep(
@@ -100,6 +128,15 @@ void Sweeper_sweep(
   int ia = 0;
   int iu = 0;
   int octant = 0;
+
+  /*--- Dimensions ---*/
+  int dims_ncell_x = sweeper->dims.ncell_x;
+  int dims_ncell_y = sweeper->dims.ncell_y;
+  int dims_ncell_z = sweeper->dims.ncell_z;
+  int dims_ne = sweeper->dims.ne;
+  int dims_nm = sweeper->dims.nm;
+  int dims_na = sweeper->dims.na;
+  Dimensions dims = sweeper->dims;
 
   /*---Initialize result array to zero---*/
 
@@ -137,35 +174,114 @@ void Sweeper_sweep(
          in that dimension.
     ---*/
 
+    /*--- Array Pointers ---*/
+    P* __restrict__ facexy = sweeper->facexy;
+    P* __restrict__ facexz = sweeper->facexz;
+    P* __restrict__ faceyz = sweeper->faceyz;
+    P* v_a_from_m = (P*) Pointer_const_h( & quan->a_from_m);
+    P* v_m_from_a = (P*) Pointer_const_h( & quan->m_from_a);
+    P* vi_h = Pointer_h( vi );
+    P* vo_h = Pointer_h( vo );
+    P* vs_local = sweeper->vslocal;
+
+    /*--- Array Sizes ---*/
+    int facexy_size = dims_ncell_x * dims_ncell_y * 
+      dims_ne * dims_na * NU * Sweeper_noctant_per_block( sweeper );
+    int facexz_size = dims_ncell_x * dims_ncell_z * 
+      dims_ne * dims_na * NU * Sweeper_noctant_per_block( sweeper );
+    int faceyz_size = dims_ncell_y * dims_ncell_z * 
+      dims_ne * dims_na * NU * Sweeper_noctant_per_block( sweeper );
+      int v_size = dims.nm * dims.na * NOCTANT;
+      int vi_h_size = dims.ncell_x * dims.ncell_y * dims.ncell_z * 
+                 	dims.ne * dims.nm * NU;
+      int vo_h_size = dims.ncell_x * dims.ncell_y * dims.ncell_z * 
+                 	dims.ne * dims.nm * NU;
+      int vs_local_size = dims.na * NU;
+
+#pragma acc parallel copy(facexy[:facexy_size], facexz[:facexz_size], faceyz[:faceyz_size])
+{
     {
-      iz = dir_z == DIR_UP ? -1 : sweeper->dims.ncell_z;
+      iz = dir_z == DIR_UP ? -1 : dims_ncell_z;
+
+#pragma acc loop seq
       for( iu=0; iu<NU; ++iu )
-      for( iy=0; iy<sweeper->dims.ncell_y; ++iy )
-      for( ix=0; ix<sweeper->dims.ncell_x; ++ix )
-      for( ie=0; ie<sweeper->dims.ne; ++ie )
-      for( ia=0; ia<sweeper->dims.na; ++ia )
+#pragma acc loop seq
+      for( iy=0; iy<dims_ncell_y; ++iy )
+#pragma acc loop seq
+      for( ix=0; ix<dims_ncell_x; ++ix )
+#pragma acc loop independent gang
+      for( ie=0; ie<dims_ne; ++ie )
+#pragma acc loop independent vector
+      for( ia=0; ia<dims_na; ++ia )
       {
-        *ref_facexy( sweeper->facexy, sweeper->dims, NU,
-                     Sweeper_noctant_per_block( sweeper ),
-                     ix, iy, ie, ia, iu, octant_in_block )
-             = Quantities_init_facexy(
-                         quan, ix, iy, iz, ie, ia, iu, octant, sweeper->dims );
+
+	/*--- Quantities_scalefactor_space_ inline ---*/
+	int scalefactor_space = 0;
+	scalefactor_space = ( (scalefactor_space+(ix+2))*8121 + 28411 ) % 134456;
+	scalefactor_space = ( (scalefactor_space+(iy+2))*8121 + 28411 ) % 134456;
+	scalefactor_space = ( (scalefactor_space+(iz+2))*8121 + 28411 ) % 134456;
+	scalefactor_space = ( (scalefactor_space+(ix+3*iy+7*iz+2))*8121 + 28411 ) % 134456;
+	scalefactor_space = ix+3*iy+7*iz+2;
+	scalefactor_space = scalefactor_space & ( (1<<2) - 1 );
+	scalefactor_space = 1 << scalefactor_space;
+
+	/*--- ref_facexy inline ---*/
+	facexy[ia + dims_na      * (
+			iu + NU           * (
+                        ix + dims_ncell_x * (
+                        iy + dims_ncell_y * (
+                        ie + dims_ne      * (
+                        octant_in_block ))))) ]
+
+	  /*--- Quantities_init_face routine ---*/
+	  = Quantities_init_face(ia, ie, iu, scalefactor_space, octant);
+
+        /* *ref_facexy( sweeper->facexy, sweeper->dims, NU, */ 
+	/*              Sweeper_noctant_per_block( sweeper ), */
+        /*              ix, iy, ie, ia, iu, octant_in_block ) */
+	/* = Quantities_init_facexy( */
+	/*             quan, ix, iy, iz, ie, ia, iu, octant, sweeper->dims ); */
       }
-    }
+      }
+
+/*--- #pragma acc parallel ---*/
+ }
 
     {
       iy = dir_y == DIR_UP ? -1 : sweeper->dims.ncell_y;
+
       for( iu=0; iu<NU; ++iu )
       for( iz=0; iz<sweeper->dims.ncell_z; ++iz )
       for( ix=0; ix<sweeper->dims.ncell_x; ++ix )
       for( ie=0; ie<sweeper->dims.ne; ++ie )
       for( ia=0; ia<sweeper->dims.na; ++ia )
       {
-        *ref_facexz( sweeper->facexz, sweeper->dims, NU,
-                     Sweeper_noctant_per_block( sweeper ),
-                     ix, iz, ie, ia, iu, octant_in_block )
-             = Quantities_init_facexz(
-                         quan, ix, iy, iz, ie, ia, iu, octant, sweeper->dims );
+	/*--- Quantities_scalefactor_space_ inline ---*/
+	int scalefactor_space = 0;
+	scalefactor_space = ( (scalefactor_space+(ix+2))*8121 + 28411 ) % 134456;
+	scalefactor_space = ( (scalefactor_space+(iy+2))*8121 + 28411 ) % 134456;
+	scalefactor_space = ( (scalefactor_space+(iz+2))*8121 + 28411 ) % 134456;
+	scalefactor_space = ( (scalefactor_space+(ix+3*iy+7*iz+2))*8121 + 28411 ) % 134456;
+	scalefactor_space = ix+3*iy+7*iz+2;
+	scalefactor_space = scalefactor_space & ( (1<<2) - 1 );
+	scalefactor_space = 1 << scalefactor_space;
+
+	/*--- ref_facexz inline ---*/
+	facexz[ia + dims_na      * (
+			iu + NU           * (
+                        ix + dims_ncell_x * (
+                        iz + dims_ncell_z * (
+                        ie + dims_ne      * (
+                        octant_in_block ))))) ]
+
+	  /*--- Quantities_init_face routine ---*/
+	  = Quantities_init_face(ia, ie, iu, scalefactor_space, octant);
+
+        /* *ref_facexz( sweeper->facexz, sweeper->dims, NU, */
+        /*              Sweeper_noctant_per_block( sweeper ), */
+        /*              ix, iz, ie, ia, iu, octant_in_block ) */
+        /*      = Quantities_init_facexz( */
+        /*                  quan, ix, iy, iz, ie, ia, iu, octant, sweeper->dims ); */
       }
     }
 
@@ -177,11 +293,32 @@ void Sweeper_sweep(
       for( ie=0; ie<sweeper->dims.ne; ++ie )
       for( ia=0; ia<sweeper->dims.na; ++ia )
       {
-        *ref_faceyz( sweeper->faceyz, sweeper->dims, NU,
-                     Sweeper_noctant_per_block( sweeper ),
-                     iy, iz, ie, ia, iu, octant_in_block )
-             = Quantities_init_faceyz(
-                         quan, ix, iy, iz, ie, ia, iu, octant, sweeper->dims );
+	/*--- Quantities_scalefactor_space_ inline ---*/
+	int scalefactor_space = 0;
+	scalefactor_space = ( (scalefactor_space+(ix+2))*8121 + 28411 ) % 134456;
+	scalefactor_space = ( (scalefactor_space+(iy+2))*8121 + 28411 ) % 134456;
+	scalefactor_space = ( (scalefactor_space+(iz+2))*8121 + 28411 ) % 134456;
+	scalefactor_space = ( (scalefactor_space+(ix+3*iy+7*iz+2))*8121 + 28411 ) % 134456;
+	scalefactor_space = ix+3*iy+7*iz+2;
+	scalefactor_space = scalefactor_space & ( (1<<2) - 1 );
+	scalefactor_space = 1 << scalefactor_space;
+
+	/*--- ref_faceyz inline ---*/
+	faceyz[ia + dims_na      * (
+			iu + NU           * (
+                        iy + dims_ncell_y * (
+                        iz + dims_ncell_z * (
+                        ie + dims_ne      * (
+                        octant_in_block ))))) ]
+
+	  /*--- Quantities_init_face routine ---*/
+	  = Quantities_init_face(ia, ie, iu, scalefactor_space, octant);
+
+        /* *ref_faceyz( sweeper->faceyz, sweeper->dims, NU, */
+        /*              Sweeper_noctant_per_block( sweeper ), */
+        /*              iy, iz, ie, ia, iu, octant_in_block ) */
+        /*      = Quantities_init_faceyz( */
+        /*                  quan, ix, iy, iz, ie, ia, iu, octant, sweeper->dims ); */
       }
     }
 
@@ -219,59 +356,50 @@ void Sweeper_sweep(
       for( iu=0; iu<NU; ++iu )
       for( ia=0; ia<sweeper->dims.na; ++ia )
       { 
+	// reset reduction
 	P result = (P)0;
-	Dimensions dims = sweeper->dims;
-	P* v = (P*) Pointer_const_h( & quan->a_from_m);
-	P* vi_h = Pointer_h( vi );
-
-	/*--- const_ref_a_from_m inline ---*/
-	Assert( v );
-	Assert( ia >= 0 && ia < dims.na );
-	Assert( octant >= 0 && octant < NOCTANT );
-	Assert( ix >= 0 && ix < dims.ncell_x );
-	Assert( iy >= 0 && iy < dims.ncell_y );
-	Assert( iz >= 0 && iz < dims.ncell_z );
-	Assert( ie >= 0 && ie < dims.ne );
-	Assert( iu >= 0 && iu < NU && NU > 0);
-
-
-	//#pragma acc parallel loop copy(result), copyin(v[0:dims.nm * dims.na * NOCTANT], dims, NM, octant, NOCTANT), reduction(+:result)
         for( im=0; im < dims.nm; ++im )
         {
-	  Assert( im >= 0 && im < dims.nm );
-
-	  result += (* &v[ ia     + dims.na * (
+	  /*--- const_ref_a_from_m inline ---*/
+	  result += (v_a_from_m[ ia     + dims.na * (
 	  	       im     +      NM * (
 	  	       octant + NOCTANT * (
 					   0 ))) ]) * 
-	    (* &vi_h[im + dims.nm      * (
+
+	    /*--- const_ref_state inline ---*/
+	    (vi_h[im + dims.nm      * (
 	    		  iu + NU           * (
 	    		  ix + dims.ncell_x * (
                           iy + dims.ncell_y * (
                           ie + dims.ne      * (
                           iz + dims.ncell_z * ( /*---NOTE: This axis MUST be slowest-varying---*/
 	    				       0 ))))))]);
+
           /* result += *const_ref_a_from_m( Pointer_const_h( & quan->a_from_m ), */
           /*                                sweeper->dims, im, ia, octant ) * */
           /*           *const_ref_state(    Pointer_h( vi ), sweeper->dims, NU, */
           /*                                ix, iy, iz, ie, im, iu ); */
         }
-        *ref_vslocal( sweeper->vslocal, sweeper->dims, NU,
-                      sweeper->dims.na, ia, iu ) = result;
+
+	/*--- ref_vslocal inline ---*/
+	vs_local[ ia + dims.na * (iu + NU  * (0) ) ] = result;
+
+        /* *ref_vslocal( sweeper->vslocal, sweeper->dims, NU, */
+        /*               sweeper->dims.na, ia, iu ) = result; */
       }
 
       /*--------------------*/
       /*---Perform solve---*/
       /*--------------------*/
 
-      for( ia=0; ia<sweeper->dims.na; ++ia )
+      for( ia=0; ia<dims.na; ++ia )
       {
-        Quantities_solve( quan, sweeper->vslocal, ia, ia, sweeper->dims.na,
+        Quantities_solve( quan, sweeper->vslocal, ia, ia, dims.na,
                           sweeper->facexy, sweeper->facexz, sweeper->faceyz,
                           ix, iy, iz, ie, ix, iy, iz,
                           octant, octant_in_block,
                           Sweeper_noctant_per_block( sweeper ),
-                          sweeper->dims, sweeper->dims, Bool_true );
+                          dims, dims, Bool_true );
       }
 
       /*--------------------*/
@@ -283,18 +411,39 @@ void Sweeper_sweep(
       ---*/
 
       for( iu=0; iu<NU; ++iu )
-      for( im=0; im<sweeper->dims.nm; ++im )
+      for( im=0; im<dims.nm; ++im )
       {
-        P result = P_zero();
-        for( ia=0; ia<sweeper->dims.na; ++ia )
+        P result = (P)0;
+        for( ia=0; ia<dims.na; ++ia )
         {
-          result += *const_ref_m_from_a( Pointer_const_h( & quan->m_from_a ),
-                                         sweeper->dims, im, ia, octant )*
-                    *const_ref_vslocal(  sweeper->vslocal, sweeper->dims, NU,
-                                         sweeper->dims.na, ia, iu );
+	  /*--- const_ref_m_from_a ---*/
+	  result += v_m_from_a[ im     +      NM * (
+         	  	       ia     + dims.na * (
+                               octant + NOCTANT * (
+                               0 ))) ] *
+
+	    /*--- const_ref_vslocal ---*/
+	    vs_local[ ia + dims.na * (
+                     iu + NU    * (
+                     0 )) ];
+
+          /* result += *const_ref_m_from_a( Pointer_const_h( & quan->m_from_a ), */
+          /*                                sweeper->dims, im, ia, octant )* */
+	  /* *const_ref_vslocal(  sweeper->vslocal, sweeper->dims, NU, */
+	  /*                      sweeper->dims.na, ia, iu ); */
         }
-        *ref_state( Pointer_h( vo ), sweeper->dims, NU,
-                    ix, iy, iz, ie, im, iu ) += result;
+
+	/*--- ref_state inline ---*/
+	vo_h[im + dims.nm      * (
+             iu + NU           * (
+             ix + dims.ncell_x * (
+             iy + dims.ncell_y * (
+             ie + dims.ne      * (
+             iz + dims.ncell_z * ( /*---NOTE: This axis MUST be slowest-varying---*/
+             0 ))))))] += result;
+
+        /* *ref_state( Pointer_h( vo ), sweeper->dims, NU, */
+        /*             ix, iy, iz, ie, im, iu ) += result; */
       }
 
     } /*---ix/iy/iz---*/
