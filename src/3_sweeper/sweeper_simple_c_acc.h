@@ -47,7 +47,7 @@ void Sweeper_create( Sweeper*          sweeper,
 
   /*---Allocate arrays---*/
 
-  sweeper->vslocal = malloc_host_P( dims.na * NU );
+  sweeper->vslocal = malloc_host_P( dims.na * dims.ne * NU );
   sweeper->facexy  = malloc_host_P( dims.ncell_x * dims.ncell_y * dims.ne *
                          dims.na * NU );
   sweeper->facexz  = malloc_host_P( dims.ncell_x * dims.ncell_z * dims.ne *
@@ -166,7 +166,7 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
   for( iu=0; iu<NU; ++iu )
     {
 
-      int vs_local_index = ia + dims.na * (iu + NU  * (0));
+      int vs_local_index = ia + dims.na * (ie + dims.ne * (iu + NU  * (0)));
 
       const P result = ( vs_local[vs_local_index] * scalefactor_space_r + 
                (
@@ -291,7 +291,7 @@ void Sweeper_sweep(
     dims.ne * dims.nm * NU;
   int vo_h_size = dims.ncell_x * dims.ncell_y * dims.ncell_z * 
     dims.ne * dims.nm * NU;
-  int vs_local_size = dims.na * NU;
+  int vs_local_size = dims.na * dims.ne * NU;
 
   /*---Initialize result array to zero---*/
 
@@ -462,9 +462,9 @@ void Sweeper_sweep(
     for( ix=ixbeg; ix!=ixend+Dir_inc(dir_x); ix+=Dir_inc(dir_x) )
     {
 
-    /*---Loop over energy groups---*/
-    for( ie=0; ie<dims.ne; ++ie )
-    {
+    /* /\*---Loop over energy groups---*\/ */
+    /* for( ie=0; ie<dims.ne; ++ie ) */
+    /* { */
 
       /*--------------------*/
       /*---Transform state vector from moments to angles---*/
@@ -483,7 +483,9 @@ void Sweeper_sweep(
 {
 #pragma acc loop seq
       for( iu=0; iu<NU; ++iu )
-#pragma acc loop independent gang, vector
+#pragma acc loop independent gang
+    for( ie=0; ie<dims.ne; ++ie )
+#pragma acc loop independent vector
       for( ia=0; ia<dims.na; ++ia )
       { 
 	// reset reduction
@@ -508,7 +510,7 @@ void Sweeper_sweep(
         }
 
 	/*--- ref_vslocal inline ---*/
-	vs_local[ ia + dims.na * (iu + NU  * (0) ) ] = result;
+	vs_local[ ia + dims.na * (ie + dims.ne * (iu + NU  * (0) )) ] = result;
       }
 
  /*--- #pragma acc parallel ---*/
@@ -523,7 +525,9 @@ void Sweeper_sweep(
 			     faceyz[:faceyz_size],	\
 			     vs_local[:vs_local_size])
  {
-#pragma acc loop independent gang, vector
+#pragma acc loop independent gang
+    for( ie=0; ie<dims.ne; ++ie )
+#pragma acc loop independent vector
       for( ia=0; ia<dims.na; ++ia )
       {
 	Quantities_solve_inline(vs_local, dims, facexy, facexz, faceyz, 
@@ -547,6 +551,8 @@ void Sweeper_sweep(
 #pragma acc loop seq
       for( iu=0; iu<NU; ++iu )
 #pragma acc loop independent gang
+    for( ie=0; ie<dims.ne; ++ie )
+#pragma acc loop seq
       for( im=0; im<dims.nm; ++im )
       {
         P result = (P)0;
@@ -561,8 +567,9 @@ void Sweeper_sweep(
 
 	    /*--- const_ref_vslocal ---*/
 	    vs_local[ ia + dims.na * (
+		     ie + dims.ne * (
                      iu + NU    * (
-                     0 )) ];
+				   0 ))) ];
         }
 
 	/*--- ref_state inline ---*/
@@ -578,7 +585,7 @@ void Sweeper_sweep(
  /*--- #pragma acc parallel ---*/
  }
 
-    } /*---ie---*/
+    /* } /\*---ie---*\/ */
 
     } /*---ix/iy/iz---*/
 
