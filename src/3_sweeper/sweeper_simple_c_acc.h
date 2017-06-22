@@ -132,15 +132,6 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
 			     int ix, int iy, int iz, int ie, int ia,
 			     int octant, int octant_in_block, int noctant_per_block)
 {
-  /*--- Array Sizes ---*/
-  int facexy_size = dims.ncell_x * dims.ncell_y * 
-    dims.ne * dims.na * NU;
-  int facexz_size = dims.ncell_x * dims.ncell_z * 
-    dims.ne * dims.na * NU;
-  int faceyz_size = dims.ncell_y * dims.ncell_z * 
-    dims.ne * dims.na * NU;
-  int vs_local_size = dims.na * NU;
-
   const int dir_x = Dir_x( octant );
   const int dir_y = Dir_y( octant );
   const int dir_z = Dir_z( octant );
@@ -308,7 +299,13 @@ void Sweeper_sweep(
 
   /*--- Data transfer to the GPU ---*/
 #pragma acc enter data copyin(v_a_from_m[:v_size], \
-			      v_m_from_a[:v_size])
+			      v_m_from_a[:v_size], \
+			      facexy[:facexy_size], \
+			      facexz[:facexz_size], \
+			      faceyz[:faceyz_size], \
+			      vi_h[:vi_h_size], \
+			      vo_h[:vo_h_size], \
+			      vs_local[vs_local_size])
 
   /*---Loop over octants---*/
 
@@ -342,7 +339,7 @@ void Sweeper_sweep(
          in that dimension.
     ---*/
 
-#pragma acc parallel copyout(facexy[:facexy_size])
+#pragma acc parallel present(facexy[:facexy_size])
 {
     {
       iz = dir_z == DIR_UP ? -1 : dims.ncell_z;
@@ -378,7 +375,7 @@ void Sweeper_sweep(
 /*--- #pragma acc parallel ---*/
  }
 
-#pragma acc parallel copyout(facexz[:facexz_size])
+#pragma acc parallel present(facexz[:facexz_size])
 {
      {
       iy = dir_y == DIR_UP ? -1 : dims.ncell_y;
@@ -413,7 +410,7 @@ void Sweeper_sweep(
 /*--- #pragma acc parallel ---*/
  }
 
-#pragma acc parallel copyout(faceyz[:faceyz_size])
+#pragma acc parallel present(faceyz[:faceyz_size])
 {
     {
       ix = dir_x == DIR_UP ? -1 : dims.ncell_x;
@@ -448,9 +445,6 @@ void Sweeper_sweep(
 /*--- #pragma acc parallel ---*/
  }
 
-    /*---Loop over energy groups---*/
-    for( ie=0; ie<dims.ne; ++ie )
-    {
       /*---Calculate spatial loop extents---*/
 
       int ixbeg = dir_x==DIR_UP ? 0 : dims.ncell_x-1;
@@ -468,6 +462,10 @@ void Sweeper_sweep(
     for( ix=ixbeg; ix!=ixend+Dir_inc(dir_x); ix+=Dir_inc(dir_x) )
     {
 
+    /*---Loop over energy groups---*/
+    for( ie=0; ie<dims.ne; ++ie )
+    {
+
       /*--------------------*/
       /*---Transform state vector from moments to angles---*/
       /*--------------------*/
@@ -479,17 +477,18 @@ void Sweeper_sweep(
            processor cache.
       ---*/
 
-#pragma acc parallel copyout(vs_local[:vs_local_size]), \
-  copyin(vi_h[:vi_h_size]), \
-  present(v_a_from_m[:v_size])
+#pragma acc parallel present(vs_local[:vs_local_size], \
+			     vi_h[:vi_h_size],	       \
+			     v_a_from_m[:v_size])
 {
-#pragma acc loop independent gang
+#pragma acc loop seq
       for( iu=0; iu<NU; ++iu )
-#pragma acc loop independent vector
+#pragma acc loop independent gang, vector
       for( ia=0; ia<dims.na; ++ia )
       { 
 	// reset reduction
 	P result = (P)0;
+#pragma acc loop seq
         for( im=0; im < dims.nm; ++im )
         {
 	  /*--- const_ref_a_from_m inline ---*/
@@ -519,12 +518,19 @@ void Sweeper_sweep(
       /*---Perform solve---*/
       /*--------------------*/
 
+#pragma acc parallel present(facexy[:facexy_size], \
+			     facexz[:facexz_size], \
+			     faceyz[:faceyz_size],	\
+			     vs_local[:vs_local_size])
+ {
+#pragma acc loop independent gang, vector
       for( ia=0; ia<dims.na; ++ia )
       {
 	Quantities_solve_inline(vs_local, dims, facexy, facexz, faceyz, 
 			     ix, iy, iz, ie, ia,
 			     octant, octant_in_block, noctant_per_block);
       }
+ }
 
       /*--------------------*/
       /*---Transform state vector from angles to moments---*/
@@ -534,10 +540,17 @@ void Sweeper_sweep(
            the result in the output state vector.
       ---*/
 
+#pragma acc parallel present(vs_local[:vs_local_size], \
+			     v_m_from_a[:v_size],      \
+			     vo_h[:vo_h_size])
+{
+#pragma acc loop seq
       for( iu=0; iu<NU; ++iu )
+#pragma acc loop independent gang
       for( im=0; im<dims.nm; ++im )
       {
         P result = (P)0;
+#pragma acc loop independent vector, reduction(+:result)
         for( ia=0; ia<dims.na; ++ia )
         {
 	  /*--- const_ref_m_from_a ---*/
@@ -562,11 +575,17 @@ void Sweeper_sweep(
              0 ))))))] += result;
       }
 
-    } /*---ix/iy/iz---*/
+ /*--- #pragma acc parallel ---*/
+ }
 
     } /*---ie---*/
 
+    } /*---ix/iy/iz---*/
+
   } /*---octant---*/
+
+  /*--- Data transfer of results to the host ---*/
+#pragma acc update host(vo_h[:vo_h_size])
 
 } /*---sweep---*/
 
