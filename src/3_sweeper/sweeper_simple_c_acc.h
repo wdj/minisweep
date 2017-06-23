@@ -445,26 +445,39 @@ void Sweeper_sweep(
 /*--- #pragma acc parallel ---*/
  }
 
-      /*---Calculate spatial loop extents---*/
+/*---Calculate spatial loop extents---*/
 
-      int ixbeg = dir_x==DIR_UP ? 0 : dims.ncell_x-1;
-      int iybeg = dir_y==DIR_UP ? 0 : dims.ncell_y-1;
-      int izbeg = dir_z==DIR_UP ? 0 : dims.ncell_z-1;
+ int ixbeg = dir_x==DIR_UP ? 0 : dims.ncell_x-1;
+ int iybeg = dir_y==DIR_UP ? 0 : dims.ncell_y-1;
+ int izbeg = dir_z==DIR_UP ? 0 : dims.ncell_z-1;
 
-      int ixend = dir_x==DIR_DN ? 0 : dims.ncell_x-1;
-      int iyend = dir_y==DIR_DN ? 0 : dims.ncell_y-1;
-      int izend = dir_z==DIR_DN ? 0 : dims.ncell_z-1;
+ int ixend = dir_x==DIR_DN ? 0 : dims.ncell_x-1;
+ int iyend = dir_y==DIR_DN ? 0 : dims.ncell_y-1;
+ int izend = dir_z==DIR_DN ? 0 : dims.ncell_z-1;
+
+
+#pragma acc parallel present(v_a_from_m[:v_size], \
+			     v_m_from_a[:v_size],   \
+			     facexy[:facexy_size],  \
+			     facexz[:facexz_size],  \
+			     faceyz[:faceyz_size],  \
+			     vi_h[:vi_h_size],	    \
+			     vo_h[:vo_h_size],		\
+			     vs_local[vs_local_size])
+ {
+    /*---Loop over energy groups---*/
+
+#pragma acc loop independent gang
+    for( ie=0; ie<dims.ne; ++ie )
+    {
 
       /*---Loop over cells, in proper direction---*/
 
+#pragma acc loop seq collapse(3)
     for( iz=izbeg; iz!=izend+Dir_inc(dir_z); iz+=Dir_inc(dir_z) )
     for( iy=iybeg; iy!=iyend+Dir_inc(dir_y); iy+=Dir_inc(dir_y) )
     for( ix=ixbeg; ix!=ixend+Dir_inc(dir_x); ix+=Dir_inc(dir_x) )
     {
-
-    /* /\*---Loop over energy groups---*\/ */
-    /* for( ie=0; ie<dims.ne; ++ie ) */
-    /* { */
 
       /*--------------------*/
       /*---Transform state vector from moments to angles---*/
@@ -477,14 +490,8 @@ void Sweeper_sweep(
            processor cache.
       ---*/
 
-#pragma acc parallel present(vs_local[:vs_local_size], \
-			     vi_h[:vi_h_size],	       \
-			     v_a_from_m[:v_size])
-{
 #pragma acc loop seq
       for( iu=0; iu<NU; ++iu )
-#pragma acc loop independent gang
-    for( ie=0; ie<dims.ne; ++ie )
 #pragma acc loop independent vector
       for( ia=0; ia<dims.na; ++ia )
       { 
@@ -513,20 +520,10 @@ void Sweeper_sweep(
 	vs_local[ ia + dims.na * (ie + dims.ne * (iu + NU  * (0) )) ] = result;
       }
 
- /*--- #pragma acc parallel ---*/
- }
-
       /*--------------------*/
       /*---Perform solve---*/
       /*--------------------*/
 
-#pragma acc parallel present(facexy[:facexy_size], \
-			     facexz[:facexz_size], \
-			     faceyz[:faceyz_size],	\
-			     vs_local[:vs_local_size])
- {
-#pragma acc loop independent gang
-    for( ie=0; ie<dims.ne; ++ie )
 #pragma acc loop independent vector
       for( ia=0; ia<dims.na; ++ia )
       {
@@ -534,7 +531,6 @@ void Sweeper_sweep(
 			     ix, iy, iz, ie, ia,
 			     octant, octant_in_block, noctant_per_block);
       }
- }
 
       /*--------------------*/
       /*---Transform state vector from angles to moments---*/
@@ -544,14 +540,8 @@ void Sweeper_sweep(
            the result in the output state vector.
       ---*/
 
-#pragma acc parallel present(vs_local[:vs_local_size], \
-			     v_m_from_a[:v_size],      \
-			     vo_h[:vo_h_size])
-{
 #pragma acc loop seq
       for( iu=0; iu<NU; ++iu )
-#pragma acc loop independent gang
-    for( ie=0; ie<dims.ne; ++ie )
 #pragma acc loop seq
       for( im=0; im<dims.nm; ++im )
       {
@@ -582,12 +572,11 @@ void Sweeper_sweep(
              0 ))))))] += result;
       }
 
- /*--- #pragma acc parallel ---*/
- }
-
-    /* } /\*---ie---*\/ */
-
     } /*---ix/iy/iz---*/
+
+    } /*---ie---*/
+
+ }   /*--- #pragma acc parallel ---*/
 
   } /*---octant---*/
 
