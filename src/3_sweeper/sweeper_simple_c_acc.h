@@ -474,12 +474,12 @@ void Sweeper_sweep(
     /* for( iy=iybeg; iy<=iyend; iy+=iyinc ) */
     /* for( ix=ixbeg; ix<=ixend; ix+=ixinc ) */
 
-   //#pragma acc loop independent gang, collapse(4)
+#pragma acc loop independent gang, collapse(4)
     for( iz=izbeg; iz<=izend; iz++ )
     for( iy=iybeg; iy<=iyend; iy++ )
     for( ix=ixbeg; ix<=ixend; ix++ )
     {
-#pragma acc loop independent gang
+
       for( ie=0; ie<dim_ne; ++ie )
       {
 
@@ -494,7 +494,7 @@ void Sweeper_sweep(
            processor cache.
       ---*/
 
-	//#pragma acc loop independent vector, collapse(2)
+#pragma acc loop independent vector, collapse(2)
       for( iu=0; iu<NU; ++iu )
       for( ia=0; ia<dim_na; ++ia )
       { 
