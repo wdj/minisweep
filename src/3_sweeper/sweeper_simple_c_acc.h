@@ -47,8 +47,8 @@ void Sweeper_create( Sweeper*          sweeper,
 
   /*---Allocate arrays---*/
 
-  sweeper->vslocal = malloc_host_P( dims.na * dims.ne * 
-				    dims.ncell_x * dims.ncell_y * dims.ncell_z * NU );
+  /* sweeper->vslocal = malloc_host_P( dims.na * dims.ne * */
+  /* 				 dims.ncell_x * dims.ncell_y * dims.ncell_z * NU ); */
   sweeper->facexy  = malloc_host_P( dims.ncell_x * dims.ncell_y * dims.ne *
                          dims.na * NU );
   sweeper->facexz  = malloc_host_P( dims.ncell_x * dims.ncell_z * dims.ne *
@@ -67,7 +67,7 @@ void Sweeper_destroy( Sweeper* sweeper,
 {
   /*---Deallocate arrays---*/
 
-  free_host_P( sweeper->vslocal );
+  //  free_host_P( sweeper->vslocal );
   free_host_P( sweeper->facexy );
   free_host_P( sweeper->facexz );
   free_host_P( sweeper->faceyz );
@@ -282,16 +282,6 @@ void Sweeper_sweep(
   int dim_na = dims.na;
   int dim_nm = dims.nm;
 
-  /*--- Array Pointers ---*/
-  P* __restrict__ facexy = sweeper->facexy;
-  P* __restrict__ facexz = sweeper->facexz;
-  P* __restrict__ faceyz = sweeper->faceyz;
-  P* v_a_from_m = (P*) Pointer_const_h( & quan->a_from_m);
-  P* v_m_from_a = (P*) Pointer_const_h( & quan->m_from_a);
-  P* vi_h = Pointer_h( vi );
-  P* vo_h = Pointer_h( vo );
-  P* vs_local = sweeper->vslocal;
-
   /*--- Array Sizes ---*/
   int facexy_size = dims.ncell_x * dims.ncell_y * 
     dims.ne * dims.na * NU;
@@ -307,6 +297,16 @@ void Sweeper_sweep(
   int vs_local_size = dims.na * dims.ne * 
     dims.ncell_x * dims.ncell_y * dims.ncell_z * NU;
 
+  /*--- Array Pointers ---*/
+  P* __restrict__ facexy = sweeper->facexy;
+  P* __restrict__ facexz = sweeper->facexz;
+  P* __restrict__ faceyz = sweeper->faceyz;
+  P* v_a_from_m = (P*) Pointer_const_h( & quan->a_from_m);
+  P* v_m_from_a = (P*) Pointer_const_h( & quan->m_from_a);
+  P* vi_h = Pointer_h( vi );
+  P* vo_h = Pointer_h( vo );
+  P* vs_local;
+
   /*---Initialize result array to zero---*/
 
   initialize_state_zero( Pointer_h( vo ), dims, NU );
@@ -318,8 +318,8 @@ void Sweeper_sweep(
 			      facexz[:facexz_size], \
 			      faceyz[:faceyz_size], \
 			      vi_h[:vi_h_size], \
-			      vo_h[:vo_h_size], \
-			      vs_local[vs_local_size])
+			      vo_h[:vo_h_size]), \
+  create(vs_local[vs_local_size])
 
   /*---Loop over octants---*/
 
