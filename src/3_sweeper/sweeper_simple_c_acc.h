@@ -47,8 +47,7 @@ void Sweeper_create( Sweeper*          sweeper,
 
   /*---Allocate arrays---*/
 
-  /* sweeper->vslocal = malloc_host_P( dims.na * dims.ne * */
-  /* 				 dims.ncell_x * dims.ncell_y * dims.ncell_z * NU ); */
+  sweeper->vslocal = malloc_host_P( dims.na * dims.ne * NU );
   sweeper->facexy  = malloc_host_P( dims.ncell_x * dims.ncell_y * dims.ne *
                          dims.na * NU );
   sweeper->facexz  = malloc_host_P( dims.ncell_x * dims.ncell_z * dims.ne *
@@ -67,7 +66,7 @@ void Sweeper_destroy( Sweeper* sweeper,
 {
   /*---Deallocate arrays---*/
 
-  //  free_host_P( sweeper->vslocal );
+  free_host_P( sweeper->vslocal );
   free_host_P( sweeper->facexy );
   free_host_P( sweeper->facexz );
   free_host_P( sweeper->faceyz );
@@ -133,9 +132,9 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
 			     int ix, int iy, int iz, int ie, int ia,
 			     int octant, int octant_in_block, int noctant_per_block)
 {
-  const int dir_x = DIR_UP; //Dir_x( octant );
-  const int dir_y = DIR_UP; //Dir_y( octant );
-  const int dir_z = DIR_UP; //Dir_z( octant );
+  const int dir_x = Dir_x( octant );
+  const int dir_y = Dir_y( octant );
+  const int dir_z = Dir_z( octant );
 
   int iu = 0;
 
@@ -167,13 +166,7 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
   for( iu=0; iu<NU; ++iu )
     {
 
-      int vs_local_index = iz + dims.ncell_z * (
-                           iy + dims.ncell_y * (
-                           ix + dims.ncell_x * (
-                           ie + dims.ne      * (
-                           ia + dims.na      * (
-                           iu + NU           * (
-						0))))));
+      int vs_local_index = ia + dims.na * (ie + dims.ne * (iu + NU  * (0)));
 
       const P result = ( vs_local[vs_local_index] * scalefactor_space_r + 
                (
@@ -282,6 +275,16 @@ void Sweeper_sweep(
   int dim_na = dims.na;
   int dim_nm = dims.nm;
 
+  /*--- Array Pointers ---*/
+  P* __restrict__ facexy = sweeper->facexy;
+  P* __restrict__ facexz = sweeper->facexz;
+  P* __restrict__ faceyz = sweeper->faceyz;
+  P* v_a_from_m = (P*) Pointer_const_h( & quan->a_from_m);
+  P* v_m_from_a = (P*) Pointer_const_h( & quan->m_from_a);
+  P* vi_h = Pointer_h( vi );
+  P* vo_h = Pointer_h( vo );
+  P* vs_local = sweeper->vslocal;
+
   /*--- Array Sizes ---*/
   int facexy_size = dims.ncell_x * dims.ncell_y * 
     dims.ne * dims.na * NU;
@@ -294,18 +297,7 @@ void Sweeper_sweep(
     dims.ne * dims.nm * NU;
   int vo_h_size = dims.ncell_x * dims.ncell_y * dims.ncell_z * 
     dims.ne * dims.nm * NU;
-  int vs_local_size = dims.na * dims.ne * 
-    dims.ncell_x * dims.ncell_y * dims.ncell_z * NU;
-
-  /*--- Array Pointers ---*/
-  P* __restrict__ facexy = sweeper->facexy;
-  P* __restrict__ facexz = sweeper->facexz;
-  P* __restrict__ faceyz = sweeper->faceyz;
-  P* v_a_from_m = (P*) Pointer_const_h( & quan->a_from_m);
-  P* v_m_from_a = (P*) Pointer_const_h( & quan->m_from_a);
-  P* vi_h = Pointer_h( vi );
-  P* vo_h = Pointer_h( vo );
-  P* vs_local;
+  int vs_local_size = dims.na * dims.ne * NU;
 
   /*---Initialize result array to zero---*/
 
@@ -318,8 +310,8 @@ void Sweeper_sweep(
 			      facexz[:facexz_size], \
 			      faceyz[:faceyz_size], \
 			      vi_h[:vi_h_size], \
-			      vo_h[:vo_h_size]), \
-  create(vs_local[vs_local_size])
+			      vo_h[:vo_h_size], \
+			      vs_local[vs_local_size])
 
   /*---Loop over octants---*/
 
@@ -331,9 +323,9 @@ void Sweeper_sweep(
 
     /*---Decode octant directions from octant number---*/
 
-    const int dir_x = DIR_UP; //Dir_x( octant );
-    const int dir_y = DIR_UP; //Dir_y( octant );
-    const int dir_z = DIR_UP; //Dir_z( octant );
+    const int dir_x = Dir_x( octant );
+    const int dir_y = Dir_y( octant );
+    const int dir_z = Dir_z( octant );
 
     /*---Initialize faces---*/
 
@@ -356,7 +348,7 @@ void Sweeper_sweep(
 #pragma acc parallel present(facexy[:facexy_size])
 {
     {
-      iz = -1; //dir_z == DIR_UP ? -1 : dim_z;
+      iz = dir_z == DIR_UP ? -1 : dim_z;
 
 #pragma acc loop independent gang collapse(3)
       for( iu=0; iu<NU; ++iu )
@@ -389,7 +381,7 @@ void Sweeper_sweep(
 #pragma acc parallel present(facexz[:facexz_size])
 {
      {
-       iy = -1; //dir_y == DIR_UP ? -1 : dim_y;
+      iy = dir_y == DIR_UP ? -1 : dim_y;
 
 #pragma acc loop independent gang collapse(3)
       for( iu=0; iu<NU; ++iu )
@@ -421,7 +413,7 @@ void Sweeper_sweep(
 #pragma acc parallel present(faceyz[:faceyz_size])
 {
     {
-      ix = -1; //dir_x == DIR_UP ? -1 : dim_x;
+      ix = dir_x == DIR_UP ? -1 : dim_x;
 
 #pragma acc loop independent gang collapse(3)
       for( iu=0; iu<NU; ++iu )
@@ -460,35 +452,33 @@ void Sweeper_sweep(
 			     vs_local[vs_local_size])
  {
 
-   /* /\*---Calculate spatial loop extents---*\/ */
+   /*---Calculate spatial loop extents---*/
 
-   /* int ixbeg = 0; //dir_x==DIR_UP ? 0 : dims.ncell_x-1; */
-   /* int iybeg = 0; //dir_y==DIR_UP ? 0 : dims.ncell_y-1; */
-   /* int izbeg = 0; //dir_z==DIR_UP ? 0 : dims.ncell_z-1; */
+   int ixbeg = dir_x==DIR_UP ? 0 : dims.ncell_x-1;
+   int iybeg = dir_y==DIR_UP ? 0 : dims.ncell_y-1;
+   int izbeg = dir_z==DIR_UP ? 0 : dims.ncell_z-1;
 
-   /* int ixend = dims.ncell_x-1; //(dir_x==DIR_DN ? 0 : dims.ncell_x-1) + Dir_inc(dir_x); */
-   /* int iyend = dims.ncell_y-1; //(dir_y==DIR_DN ? 0 : dims.ncell_y-1) + Dir_inc(dir_y); */
-   /* int izend = dims.ncell_z-1; //(dir_z==DIR_DN ? 0 : dims.ncell_z-1) + Dir_inc(dir_z); */
+   int ixend = (dir_x==DIR_DN ? 0 : dims.ncell_x-1) + Dir_inc(dir_x);
+   int iyend = (dir_y==DIR_DN ? 0 : dims.ncell_y-1) + Dir_inc(dir_y);
+   int izend = (dir_z==DIR_DN ? 0 : dims.ncell_z-1) + Dir_inc(dir_z);
 
-   /* int izinc = DIR_UP; //Dir_inc(dir_z); */
-   /* int iyinc = DIR_UP; //Dir_inc(dir_y); */
-   /* int ixinc = DIR_UP; //Dir_inc(dir_x); */
+   int izinc = Dir_inc(dir_z);
+   int iyinc = Dir_inc(dir_y);
+   int ixinc = Dir_inc(dir_x);
 
    /*---Loop over energy groups---*/
 
    /*---Loop over cells, in proper direction---*/
 
-    /* for( iz=izbeg; iz<=izend; iz+=izinc ) */
-    /* for( iy=iybeg; iy<=iyend; iy+=iyinc ) */
-    /* for( ix=ixbeg; ix<=ixend; ix+=ixinc ) */
+    for( iz=izbeg; iz!=izend; iz+=izinc )
+    for( iy=iybeg; iy!=iyend; iy+=iyinc )
+    for( ix=ixbeg; ix!=ixend; ix+=ixinc )
+    {
 
-#pragma acc loop independent gang, collapse(4)
+#pragma acc loop independent gang
       for( ie=0; ie<dim_ne; ++ie )
       {
-    for( iz=0; iz<dim_z; iz++ )
-    for( iy=0; iy<dim_y; iy++ )
-    for( ix=0; ix<dim_x; ix++ )
-    {
+
       /*--------------------*/
       /*---Transform state vector from moments to angles---*/
       /*--------------------*/
@@ -526,43 +516,12 @@ void Sweeper_sweep(
         }
 
 	/*--- ref_vslocal inline ---*/
-	vs_local[ iz + dims.ncell_z * (
-                  iy + dims.ncell_y * (
-                  ix + dims.ncell_x * (
-                  ie + dims.ne      * (
-                  ia + dims.na      * (
-                  iu + NU           * (
-				       0)))))) ] = result;
+	vs_local[ ia + dims.na * (ie + dims.ne * (iu + NU  * (0) )) ] = result;
       }
-
-      } /*---ix/iy/iz---*/
-    } /*---ie---*/
- }   /*--- #pragma acc parallel ---*/
 
       /*--------------------*/
       /*---Perform solve---*/
       /*--------------------*/
-#pragma acc parallel present(v_a_from_m[:v_size], \
-			     v_m_from_a[:v_size],   \
-			     facexy[:facexy_size],  \
-			     facexz[:facexz_size],  \
-			     faceyz[:faceyz_size],  \
-			     vi_h[:vi_h_size],	    \
-			     vo_h[:vo_h_size],		\
-			     vs_local[vs_local_size])
- {
-
-#pragma acc loop independent gang
-   for( ie=0; ie<dim_ne; ++ie )
-   {
-
-#pragma acc loop seq
-     for( iz=0; iz<dim_z; iz++ )
-#pragma acc loop seq
-     for( iy=0; iy<dim_y; iy++ )
-#pragma acc loop seq
-     for( ix=0; ix<dim_x; ix++ )
-     {
 
 #pragma acc loop independent vector
       for( ia=0; ia<dim_na; ++ia )
@@ -572,34 +531,13 @@ void Sweeper_sweep(
 			     octant, octant_in_block, noctant_per_block);
       }
 
-      } /*---ix/iy/iz---*/
-    } /*---ie---*/
- }   /*--- #pragma acc parallel ---*/
-
       /*--------------------*/
       /*---Transform state vector from angles to moments---*/
       /*--------------------*/
-#pragma acc parallel present(v_a_from_m[:v_size], \
-			     v_m_from_a[:v_size],   \
-			     facexy[:facexy_size],  \
-			     facexz[:facexz_size],  \
-			     faceyz[:faceyz_size],  \
-			     vi_h[:vi_h_size],	    \
-			     vo_h[:vo_h_size],		\
-			     vs_local[vs_local_size])
- {
 
       /*---Perform small dense matrix-vector products and store
            the result in the output state vector.
       ---*/
-
-#pragma acc loop independent gang, collapse(4)
-   for( ie=0; ie<dim_ne; ++ie )
-     {
-       for( iz=0; iz<dim_z; iz++ )
-       for( iy=0; iy<dim_y; iy++ )
-       for( ix=0; ix<dim_x; ix++ )
-       {
 
 #pragma acc loop independent vector, collapse(2)
       for( iu=0; iu<NU; ++iu )
@@ -616,13 +554,10 @@ void Sweeper_sweep(
                                0 ))) ] *
 
 	    /*--- const_ref_vslocal ---*/
-	    vs_local[iz + dims.ncell_z * (
-                     iy + dims.ncell_y * (
-                     ix + dims.ncell_x * (
-                     ie + dims.ne      * (
-                     ia + dims.na      * (
-                     iu + NU           * (
-					  0))))))];
+	    vs_local[ ia + dims.na * (
+		     ie + dims.ne * (
+                     iu + NU    * (
+				   0 ))) ];
         }
 
 	/*--- ref_state inline ---*/
@@ -635,9 +570,9 @@ void Sweeper_sweep(
              0 ))))))] += result;
       }
 
-    } /*---ix/iy/iz---*/
-
     } /*---ie---*/
+
+    } /*---ix/iy/iz---*/
 
  }   /*--- #pragma acc parallel ---*/
 
