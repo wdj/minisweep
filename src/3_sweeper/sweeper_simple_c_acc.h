@@ -444,12 +444,12 @@ void Sweeper_sweep(
 
 #pragma acc parallel present(v_a_from_m[:v_size], \
 			     v_m_from_a[:v_size],   \
-			     facexy[:facexy_size],  \
-			     facexz[:facexz_size],  \
-			     faceyz[:faceyz_size],  \
 			     vi_h[:vi_h_size],	    \
-			     vo_h[:vo_h_size],		\
-			     vs_local[vs_local_size])
+			     vo_h[:vo_h_size]), \
+  create(facexy[:facexy_size],	\
+	 facexz[:facexz_size],			    \
+	 faceyz[:faceyz_size],			    \
+	 vs_local[vs_local_size])
  {
 
    /*---Calculate spatial loop extents---*/
