@@ -30,12 +30,12 @@ cmake \
  \
   -DCMAKE_C_COMPILER:STRING=pgcc \
   -DCMAKE_CXX_COMPILER:STRING=pgc++ \
-  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE $ALG_OPTIONS -DUSE_ACC=ON -acc -Minfo=accel -ta=tesla,cc50" \
+  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE $ALG_OPTIONS -DUSE_ACC=ON -acc -Minfo=accel -ta=tesla,cc60" \
   -DCMAKE_C_FLAGS_DEBUG:STRING="-g" \
-  -DCMAKE_C_FLAGS_RELEASE:STRING="-O3 -fomit-frame-pointer -funroll-loops -finline-limit=10000000" \
-  -DCMAKE_CXX_FLAGS:STRING="-DNM_VALUE=$NM_VALUE $ALG_OPTIONS _DUSE_ACC=ON -acc -Minfo=accel -ta=tesla,cc50" \
+  -DCMAKE_C_FLAGS_RELEASE:STRING="-O3" \
+  -DCMAKE_CXX_FLAGS:STRING="-DNM_VALUE=$NM_VALUE $ALG_OPTIONS _DUSE_ACC=ON -acc -Minfo=accel -ta=tesla,cc60" \
   -DCMAKE_CXX_FLAGS_DEBUG:STRING="-g" \
-  -DCMAKE_CXX_FLAGS_RELEASE:STRING="-O3 -fomit-frame-pointer -funroll-loops -finline-limit=10000000" \
+  -DCMAKE_CXX_FLAGS_RELEASE:STRING="-O3" \
  \
   $SOURCE
 
