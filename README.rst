@@ -43,7 +43,7 @@ Nashville, TN, American Nuclear Society, LaGrange Park, 2015,
 https://www.ornl.gov/content/three-dimensional-discrete-ordinates-reactor-assembly-calculations-gpus,
 http://www.casl.gov/docs/CASL-U-2015-0172-000.pdf.
 
-O.E. Bronson Messer, Ed D'zevedo, Judy Hill, Wayne Joubert,
+O.E. Bronson Messer, Ed D'Azevedo, Judy Hill, Wayne Joubert,
 Mark Berrill, and Christopher Zimmer,
 "MiniApps derived from production HPC applications using multiple
 programing models,"
