@@ -54,11 +54,11 @@ void Sweeper_create( Sweeper*          sweeper,
   Bool_t is_face_comm_async = Arguments_consume_int_or_default( args,
                                            "--is_face_comm_async", Bool_true );
 
-  Insist( dims.ncell_x > 0 ?
+  InsistInterface( dims.ncell_x > 0 ?
                 "Currently required that all spatial blocks be nonempty" : 0 );
-  Insist( dims.ncell_y > 0 ?
+  InsistInterface( dims.ncell_y > 0 ?
                 "Currently required that all spatial blocks be nonempty" : 0 );
-  Insist( dims.ncell_z > 0 ?
+  InsistInterface( dims.ncell_z > 0 ?
                 "Currently required that all spatial blocks be nonempty" : 0 );
 
   /*====================*/
@@ -67,8 +67,9 @@ void Sweeper_create( Sweeper*          sweeper,
 
   sweeper->nblock_z = Arguments_consume_int_or_default( args, "--nblock_z", 1);
 
-  Insist( sweeper->nblock_z > 0 ? "Invalid z blocking factor supplied" : 0 );
-  Insist( dims.ncell_z % sweeper->nblock_z == 0
+  InsistInterface( sweeper->nblock_z > 0
+                   ? "Invalid z blocking factor supplied" : 0 );
+  InsistInterface( dims.ncell_z % sweeper->nblock_z == 0
                   ? "Currently require all blocks have same z dimension" : 0 );
 
   const int dims_b_ncell_z = dims.ncell_z / sweeper->nblock_z;
@@ -81,13 +82,13 @@ void Sweeper_create( Sweeper*          sweeper,
               = Arguments_consume_int_or_default( args, "--nthread_octant", 1);
 
   /*---Require a power of 2 between 1 and 8 inclusive---*/
-  Insist( sweeper->nthread_octant>0 && sweeper->nthread_octant<=NOCTANT
+  InsistInterface( sweeper->nthread_octant>0 && sweeper->nthread_octant<=NOCTANT
           && ((sweeper->nthread_octant&(sweeper->nthread_octant-1))==0)
                                        ? "Invalid thread count supplied" : 0 );
   /*---Don't allow threading in cases where it doesn't make sense---*/
-  Insist( sweeper->nthread_octant==1 || IS_USING_OPENMP_THREADS
-                                     || IS_USING_OPENMP_TASKS
-                                     || Env_cuda_is_using_device( env ) ?
+  InsistInterface( sweeper->nthread_octant==1 || IS_USING_OPENMP_THREADS
+                                              || IS_USING_OPENMP_TASKS
+                                              || Env_cuda_is_using_device( env ) ?
           "Threading not allowed for this case" : 0 );
 
   sweeper->noctant_per_block = sweeper->nthread_octant;
@@ -106,12 +107,12 @@ void Sweeper_create( Sweeper*          sweeper,
   sweeper->nsemiblock = Arguments_consume_int_or_default(
                                     args, "--nsemiblock", nsemiblock_default );
 
-  Insist( sweeper->nsemiblock>0 && sweeper->nsemiblock<=NOCTANT
+  InsistInterface( sweeper->nsemiblock>0 && sweeper->nsemiblock<=NOCTANT
           && ((sweeper->nsemiblock&(sweeper->nsemiblock-1))==0)
                                 ? "Invalid semiblock count supplied" : 0 );
-  Insist( ( sweeper->nsemiblock >= sweeper->nthread_octant ||
-            (sweeper->nthread_octant==8 && sweeper->nblock_z % 2 == 0
-                                        && sweeper->nsemiblock==4) ||
+  InsistInterface( ( sweeper->nsemiblock >= sweeper->nthread_octant ||
+                     (sweeper->nthread_octant==8 && sweeper->nblock_z % 2 == 0
+                                                 && sweeper->nsemiblock==4) ||
             IS_USING_OPENMP_VO_ATOMIC )
          ? "Incomplete set of semiblock steps requires atomic vo update" : 0 );
 
@@ -133,17 +134,17 @@ void Sweeper_create( Sweeper*          sweeper,
 
   sweeper->ncell_x_per_subblock = Arguments_consume_int_or_default(
                args, "--ncell_x_per_subblock", ncell_x_per_subblock_default );
-  Insist( sweeper->ncell_x_per_subblock>0 ?
+  InsistInterface( sweeper->ncell_x_per_subblock>0 ?
                                         "Invalid subblock size supplied" : 0 );
 
   sweeper->ncell_y_per_subblock = Arguments_consume_int_or_default(
                args, "--ncell_y_per_subblock", ncell_y_per_subblock_default );
-  Insist( sweeper->ncell_y_per_subblock>0 ?
+  InsistInterface( sweeper->ncell_y_per_subblock>0 ?
                                         "Invalid subblock size supplied" : 0 );
 
   sweeper->ncell_z_per_subblock = Arguments_consume_int_or_default(
                args, "--ncell_z_per_subblock", ncell_z_per_subblock_default );
-  Insist( sweeper->ncell_z_per_subblock>0 ?
+  InsistInterface( sweeper->ncell_z_per_subblock>0 ?
                                         "Invalid subblock size supplied" : 0 );
 
   /*====================*/
@@ -166,11 +167,12 @@ void Sweeper_create( Sweeper*          sweeper,
   sweeper->nthread_e
                    = Arguments_consume_int_or_default( args, "--nthread_e", 1);
 
-  Insist( sweeper->nthread_e > 0 ? "Invalid thread count supplied." : 0 );
+  InsistInterface( sweeper->nthread_e > 0
+                   ? "Invalid thread count supplied." : 0 );
   /*---Don't allow threading in cases where it doesn't make sense---*/
-  Insist( sweeper->nthread_e==1 || IS_USING_OPENMP_THREADS
-                                || IS_USING_OPENMP_TASKS
-                                || Env_cuda_is_using_device( env ) ?
+  InsistInterface( sweeper->nthread_e==1 || IS_USING_OPENMP_THREADS
+                                         || IS_USING_OPENMP_TASKS
+                                         || Env_cuda_is_using_device( env ) ?
           "Threading not allowed for this case" : 0 );
 
   /*====================*/
@@ -210,25 +212,25 @@ void Sweeper_create( Sweeper*          sweeper,
     sweeper->nthread_y
                    = Arguments_consume_int_or_default( args, "--nthread_y", 1);
 
-    Insist( sweeper->nthread_y > 0 ? "Invalid thread count supplied." : 0 );
+    InsistInterface( sweeper->nthread_y > 0 ? "Invalid thread count supplied." : 0 );
     /*---Don't allow threading in cases where it doesn't make sense---*/
-    Insist( sweeper->nthread_y==1 || IS_USING_OPENMP_THREADS
-                                  || IS_USING_OPENMP_TASKS
-                                  || Env_cuda_is_using_device( env ) ?
+    InsistInterface( sweeper->nthread_y==1 || IS_USING_OPENMP_THREADS
+                                           || IS_USING_OPENMP_TASKS
+                                           || Env_cuda_is_using_device( env ) ?
             "Threading not allowed for this case" : 0 );
-    Insist( sweeper->nthread_y==1 || ! IS_USING_OPENMP_TASKS ?
+    InsistInterface( sweeper->nthread_y==1 || ! IS_USING_OPENMP_TASKS ?
             "Spatial threading must be defined via subblock sizes." : 0 );
 
     sweeper->nthread_z
                    = Arguments_consume_int_or_default( args, "--nthread_z", 1);
 
-    Insist( sweeper->nthread_z > 0 ? "Invalid thread count supplied." : 0 );
+    InsistInterface( sweeper->nthread_z > 0 ? "Invalid thread count supplied." : 0 );
     /*---Don't allow threading in cases where it doesn't make sense---*/
-    Insist( sweeper->nthread_z==1 || IS_USING_OPENMP_THREADS
+    InsistInterface( sweeper->nthread_z==1 || IS_USING_OPENMP_THREADS
                                   || IS_USING_OPENMP_TASKS
                                   || Env_cuda_is_using_device( env ) ?
             "Threading not allowed for this case" : 0 );
-    Insist( sweeper->nthread_z==1 || ! IS_USING_OPENMP_TASKS ?
+    InsistInterface( sweeper->nthread_z==1 || ! IS_USING_OPENMP_TASKS ?
             "Spatial threading must be defined via subblock sizes." : 0 );
   }
 
@@ -243,23 +245,23 @@ void Sweeper_create( Sweeper*          sweeper,
   /*---Set up amu threads---*/
   /*====================*/
 
-  Insist( NU * 1 > 0 );
-  Insist(      Sweeper_nthread_u( sweeper, env ) > 0 );
-  Insist( NU % Sweeper_nthread_u( sweeper, env ) == 0 );
-  Insist( Sweeper_nthread_a( sweeper, env ) > 0 );
+  InsistInterface( NU * 1 > 0 );
+  InsistInterface(      Sweeper_nthread_u( sweeper, env ) > 0 );
+  InsistInterface( NU % Sweeper_nthread_u( sweeper, env ) == 0 );
+  InsistInterface( Sweeper_nthread_a( sweeper, env ) > 0 );
   if( ! IS_USING_MIC )
   {
-    Insist( Sweeper_nthread_a( sweeper, env ) %
-            Sweeper_nthread_u( sweeper, env ) == 0 );
-    Insist( Sweeper_nthread_a( sweeper, env ) ==
-            Sweeper_nthread_u( sweeper, env ) *
-            Sweeper_nthread_m( sweeper, env ) );
+    InsistInterface( Sweeper_nthread_a( sweeper, env ) %
+                     Sweeper_nthread_u( sweeper, env ) == 0 );
+    InsistInterface( Sweeper_nthread_a( sweeper, env ) ==
+                     Sweeper_nthread_u( sweeper, env ) *
+                     Sweeper_nthread_m( sweeper, env ) );
   }
   if( IS_USING_MIC )
   {
     /*---For alignment, make this assumption.  For user case, assume this
          may mean some padding---*/
-    Insist( dims.na % VEC_LEN == 0 );
+    InsistInterface( dims.na % VEC_LEN == 0 );
   }
 
   /*====================*/
@@ -430,7 +432,7 @@ static void Sweeper_sweep_block_adapter(
                               proc_y_max,
                               stepinfoall,
                               do_block_init );
-    Assert( Env_cuda_last_call_succeeded() );
+    Insist( Env_cuda_last_call_succeeded() );
   }
   else
   {
@@ -590,9 +592,7 @@ void Sweeper_sweep(
   const Quantities*      quan,
   Env*                   env )
 {
-  Assert( sweeper );
-  Assert( vi );
-  Assert( vo );
+  Insist( sweeper && vi && vo );
 
   /*---Declarations---*/
 
@@ -725,7 +725,7 @@ void Sweeper_sweep(
                                         ( nblock_z-1 ) -               stept };
       const Bool_t do_block_send[2] = { block_to_send[0] <  nblock_z/2,
                                         block_to_send[1] >= nblock_z/2 };
-      Assert( nstep >= nblock_z );  /*---Sanity check---*/
+      Insist( nstep >= nblock_z );  /*---Sanity check---*/
       if( do_block_send[i] )
       {
         Pointer_create_alias(    &vi_b, vi, size_state_block * block_to_send[i],
@@ -760,7 +760,7 @@ void Sweeper_sweep(
                                                          ( nstep-1 - stept ) };
       const Bool_t do_block_recv[2] = { block_to_recv[0] >= nblock_z/2,
                                         block_to_recv[1] <  nblock_z/2 };
-      Assert( nstep >= nblock_z );  /*---Sanity check---*/
+      Insist( nstep >= nblock_z );  /*---Sanity check---*/
       if( do_block_recv[i] )
       {
         Pointer_create_alias(    &vo_b, vo, size_state_block * block_to_recv[i],

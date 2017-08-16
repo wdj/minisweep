@@ -31,6 +31,10 @@ extern "C"
   (void)((condition) || (insist_ (#condition, __FILE__, __LINE__),0))
 #endif
 
+#ifndef InsistInterface
+#define InsistInterface( condition ) Insist( condition )
+#endif
+
 void insist_( const char *condition_string, const char *file, int line );
 
 /*===========================================================================*/
@@ -46,6 +50,7 @@ void insist_( const char *condition_string, const char *file, int line );
 
 #define Assert(v)
 #define Insist(v)
+#define InsistInterface(v)
 
 #endif /*---__CUDA_ARCH__---*/
 

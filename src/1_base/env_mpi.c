@@ -46,7 +46,7 @@ void Env_mpi_initialize_( Env *env, int argc, char** argv )
 #ifdef USE_MPI
   /*---Initialize for MPI execution---*/
   const int mpi_code = MPI_Init( &argc, &argv );
-  Assert( mpi_code == MPI_SUCCESS );
+  Insist( mpi_code == MPI_SUCCESS );
 #endif
   Env_mpi_nullify_values_( env );
 }
@@ -75,7 +75,7 @@ void Env_mpi_finalize_values_( Env* env )
     if( env->active_comm_ != MPI_COMM_WORLD )
     {
       const int mpi_code = MPI_Comm_free( &env->active_comm_ );
-      Assert( mpi_code == MPI_SUCCESS );
+      Insist( mpi_code == MPI_SUCCESS );
     }
   }
 #endif
@@ -90,7 +90,7 @@ void Env_mpi_finalize_( Env* env )
   Env_mpi_finalize_values_( env );
 #ifdef USE_MPI
   const int mpi_code = MPI_Finalize();
-  Assert( mpi_code == MPI_SUCCESS );
+  Insist( mpi_code == MPI_SUCCESS );
 #endif
 }
 
@@ -113,19 +113,19 @@ void Env_mpi_set_values_( Env *env, Arguments* args )
 
   env->nproc_x_ = Arguments_consume_int_or_default( args, "--nproc_x", 1 );
   env->nproc_y_ = Arguments_consume_int_or_default( args, "--nproc_y", 1 );
-  Insist( env->nproc_x_ > 0 ? "Invalid nproc_x supplied." : 0 );
-  Insist( env->nproc_y_ > 0 ? "Invalid nproc_y supplied." : 0 );
+  InsistInterface( env->nproc_x_ > 0 ? "Invalid nproc_x supplied." : 0 );
+  InsistInterface( env->nproc_y_ > 0 ? "Invalid nproc_y supplied." : 0 );
 
   const int nproc_requested = env->nproc_x_ * env->nproc_y_;
   int nproc_world = 0;
   mpi_code = MPI_Comm_size( MPI_COMM_WORLD, &nproc_world );
-  Assert( mpi_code == MPI_SUCCESS );
-  Insist( nproc_requested <= nproc_world ?
+  Insist( mpi_code == MPI_SUCCESS );
+  InsistInterface( nproc_requested <= nproc_world ?
                                       "Not enough processors available." : 0 );
 
   int rank = 0;
   mpi_code = MPI_Comm_rank( MPI_COMM_WORLD, &rank );
-  Assert( mpi_code == MPI_SUCCESS );
+  Insist( mpi_code == MPI_SUCCESS );
 
   /*---Set up a communicator for execution that may be smaller
        than the total number of ranks available, with consistent proc
@@ -133,7 +133,7 @@ void Env_mpi_set_values_( Env *env, Arguments* args )
   env->is_proc_active_ = rank < nproc_requested ? Bool_true : Bool_false;
   mpi_code = MPI_Comm_split( MPI_COMM_WORLD, env->is_proc_active_,
                                                    rank, &env->active_comm_ );
-  Assert( mpi_code == MPI_SUCCESS );
+  Insist( mpi_code == MPI_SUCCESS );
 
   env->tag_ = 0;
 #endif
@@ -297,10 +297,10 @@ int Env_proc_y_this( const Env* env )
 
 void Env_mpi_barrier( Env* env )
 {
-  Assert( Env_mpi_are_values_set_( env ) );
+  Insist( Env_mpi_are_values_set_( env ) );
 #ifdef USE_MPI
   const int mpi_code = MPI_Barrier( Env_mpi_active_comm_( env ) );
-  Assert( mpi_code == MPI_SUCCESS );
+  Insist( mpi_code == MPI_SUCCESS );
 #endif
 }
 
@@ -308,12 +308,12 @@ void Env_mpi_barrier( Env* env )
 
 double Env_sum_d( Env* env, double value )
 {
-  Assert( Env_mpi_are_values_set_( env ) );
+  Insist( Env_mpi_are_values_set_( env ) );
   double result = 0;
 #ifdef USE_MPI
   const int mpi_code = MPI_Allreduce( &value, &result, 1, MPI_DOUBLE, MPI_SUM,
                                                 Env_mpi_active_comm_( env ) );
-  Assert( mpi_code == MPI_SUCCESS );
+  Insist( mpi_code == MPI_SUCCESS );
 #else
   result = value;
 #endif
@@ -324,7 +324,7 @@ double Env_sum_d( Env* env, double value )
 
 P Env_sum_P( Env* env, P value )
 {
-  Assert( Env_mpi_are_values_set_( env ) );
+  Insist( Env_mpi_are_values_set_( env ) );
   Static_Assert( P_IS_DOUBLE );
   return Env_sum_d( env, value );
 }
@@ -333,11 +333,11 @@ P Env_sum_P( Env* env, P value )
 
 void Env_bcast_int( Env* env, int* data, int root )
 {
-  Assert( Env_mpi_are_values_set_( env ) );
+  Insist( Env_mpi_are_values_set_( env ) );
 #ifdef USE_MPI
   const int mpi_code = MPI_Bcast( data, 1, MPI_INT, root,
                                                 Env_mpi_active_comm_( env ) );
-  Assert( mpi_code == MPI_SUCCESS );
+  Insist( mpi_code == MPI_SUCCESS );
 #endif
 }
 
@@ -345,11 +345,11 @@ void Env_bcast_int( Env* env, int* data, int root )
 
 void Env_bcast_string( Env* env, char* data, int len, int root )
 {
-  Assert( Env_mpi_are_values_set_( env ) );
+  Insist( Env_mpi_are_values_set_( env ) );
 #ifdef USE_MPI
   const int mpi_code = MPI_Bcast( data, len, MPI_CHAR, root,
                                                 Env_mpi_active_comm_( env ) );
-  Assert( mpi_code == MPI_SUCCESS );
+  Insist( mpi_code == MPI_SUCCESS );
 #endif
 }
 
@@ -358,16 +358,16 @@ void Env_bcast_string( Env* env, char* data, int len, int root )
 
 void Env_send_i( Env* env, const int* data, size_t n, int proc, int tag )
 {
-  Assert( Env_mpi_are_values_set_( env ) );
-  Assert( data != NULL );
-  Assert( n+1 >= 1 );
-  Assert( proc>=0 && proc<Env_nproc( env ) );
-  Assert( tag>=0 );
+  Insist( Env_mpi_are_values_set_( env ) );
+  Insist( data );
+  Insist( n+1 >= 1 );
+  Insist( proc>=0 && proc<Env_nproc( env ) );
+  Insist( tag>=0 );
 
 #ifdef USE_MPI
   const int mpi_code = MPI_Send( (void*)data, n, MPI_INT, proc, tag,
                                                 Env_mpi_active_comm_( env ) );
-  Assert( mpi_code == MPI_SUCCESS );
+  Insist( mpi_code == MPI_SUCCESS );
 #endif
 }
 
@@ -375,17 +375,17 @@ void Env_send_i( Env* env, const int* data, size_t n, int proc, int tag )
 
 void Env_recv_i( Env* env, int* data, size_t n, int proc, int tag )
 {
-  Assert( Env_mpi_are_values_set_( env ) );
-  Assert( data != NULL );
-  Assert( n+1 >= 1 );
-  Assert( proc>=0 && proc<Env_nproc( env ) );
-  Assert( tag>=0 );
+  Insist( Env_mpi_are_values_set_( env ) );
+  Insist( data );
+  Insist( n+1 >= 1 );
+  Insist( proc>=0 && proc<Env_nproc( env ) );
+  Insist( tag>=0 );
 
 #ifdef USE_MPI
   MPI_Status status;
   const int mpi_code = MPI_Recv( (void*)data, n, MPI_INT, proc, tag,
                                        Env_mpi_active_comm_( env ), &status );
-  Assert( mpi_code == MPI_SUCCESS );
+  Insist( mpi_code == MPI_SUCCESS );
 #endif
 }
 
@@ -393,17 +393,17 @@ void Env_recv_i( Env* env, int* data, size_t n, int proc, int tag )
 
 void Env_send_P( Env* env, const P* data, size_t n, int proc, int tag )
 {
-  Assert( Env_mpi_are_values_set_( env ) );
+  Insist( Env_mpi_are_values_set_( env ) );
   Static_Assert( P_IS_DOUBLE );
-  Assert( data != NULL );
-  Assert( n+1 >= 1 );
-  Assert( proc>=0 && proc<Env_nproc( env ) );
-  Assert( tag>=0 );
+  Insist( data );
+  Insist( n+1 >= 1 );
+  Insist( proc>=0 && proc<Env_nproc( env ) );
+  Insist( tag>=0 );
 
 #ifdef USE_MPI
   const int mpi_code = MPI_Send( (void*)data, n, MPI_DOUBLE, proc, tag,
                                                 Env_mpi_active_comm_( env ) );
-  Assert( mpi_code == MPI_SUCCESS );
+  Insist( mpi_code == MPI_SUCCESS );
 #endif
 }
 
@@ -411,18 +411,18 @@ void Env_send_P( Env* env, const P* data, size_t n, int proc, int tag )
 
 void Env_recv_P( Env* env, P* data, size_t n, int proc, int tag )
 {
-  Assert( Env_mpi_are_values_set_( env ) );
+  Insist( Env_mpi_are_values_set_( env ) );
   Static_Assert( P_IS_DOUBLE );
-  Assert( data != NULL );
-  Assert( n+1 >= 1 );
-  Assert( proc>=0 && proc<Env_nproc( env ) );
-  Assert( tag>=0 );
+  Insist( data );
+  Insist( n+1 >= 1 );
+  Insist( proc>=0 && proc<Env_nproc( env ) );
+  Insist( tag>=0 );
 
 #ifdef USE_MPI
   MPI_Status status;
   const int mpi_code = MPI_Recv( (void*)data, n, MPI_DOUBLE, proc, tag,
                                        Env_mpi_active_comm_( env ), &status );
-  Assert( mpi_code == MPI_SUCCESS );
+  Insist( mpi_code == MPI_SUCCESS );
 #endif
 }
 
@@ -432,18 +432,18 @@ void Env_recv_P( Env* env, P* data, size_t n, int proc, int tag )
 void Env_asend_P( Env* env, const P* data, size_t n, int proc, int tag,
                                                           Request_t* request )
 {
-  Assert( Env_mpi_are_values_set_( env ) );
+  Insist( Env_mpi_are_values_set_( env ) );
   Static_Assert( P_IS_DOUBLE );
-  Assert( data != NULL );
-  Assert( n+1 >= 1 );
-  Assert( proc>=0 && proc<Env_nproc( env ) );
-  Assert( tag>=0 );
-  Assert( request != NULL );
+  Insist( data );
+  Insist( n+1 >= 1 );
+  Insist( proc>=0 && proc<Env_nproc( env ) );
+  Insist( tag>=0 );
+  Insist( request );
 
 #ifdef USE_MPI
   const int mpi_code = MPI_Isend( (void*)data, n, MPI_DOUBLE, proc, tag,
                                        Env_mpi_active_comm_( env ), request );
-  Assert( mpi_code == MPI_SUCCESS );
+  Insist( mpi_code == MPI_SUCCESS );
 #endif
 }
 
@@ -452,18 +452,18 @@ void Env_asend_P( Env* env, const P* data, size_t n, int proc, int tag,
 void Env_arecv_P( Env* env, const P* data, size_t n, int proc, int tag,
                                                           Request_t* request )
 {
-  Assert( Env_mpi_are_values_set_( env ) );
+  Insist( Env_mpi_are_values_set_( env ) );
   Static_Assert( P_IS_DOUBLE );
-  Assert( data != NULL );
-  Assert( n+1 >= 1 );
-  Assert( proc>=0 && proc<Env_nproc( env ) );
-  Assert( tag>=0 );
-  Assert( request != NULL );
+  Insist( data );
+  Insist( n+1 >= 1 );
+  Insist( proc>=0 && proc<Env_nproc( env ) );
+  Insist( tag>=0 );
+  Insist( request );
 
 #ifdef USE_MPI
   const int mpi_code = MPI_Irecv( (void*)data, n, MPI_DOUBLE, proc, tag,
                                        Env_mpi_active_comm_( env ), request );
-  Assert( mpi_code == MPI_SUCCESS );
+  Insist( mpi_code == MPI_SUCCESS );
 #endif
 }
 
@@ -474,7 +474,7 @@ void Env_wait( Env* env, Request_t* request )
 #ifdef USE_MPI
   MPI_Status status;
   const int mpi_code = MPI_Waitall( 1, request, &status );
-  Assert( mpi_code == MPI_SUCCESS );
+  Insist( mpi_code == MPI_SUCCESS );
 #endif
 }
 

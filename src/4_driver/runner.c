@@ -85,13 +85,13 @@ void Runner_run_case( Runner* runner, Arguments* args, Env* env )
   niterations = Arguments_consume_int_or_default( args, "--niterations", 1 );
   dims_g.nm   = NM;
 
-  Insist( dims_g.ncell_x > 0 ? "Invalid ncell_x supplied." : 0 );
-  Insist( dims_g.ncell_y > 0 ? "Invalid ncell_y supplied." : 0 );
-  Insist( dims_g.ncell_z > 0 ? "Invalid ncell_z supplied." : 0 );
-  Insist( dims_g.ne > 0      ? "Invalid ne supplied." : 0 );
-  Insist( dims_g.nm > 0      ? "Invalid nm supplied." : 0 );
-  Insist( dims_g.na > 0      ? "Invalid na supplied." : 0 );
-  Insist( niterations >= 0   ? "Invalid iteration count supplied." : 0 );
+  InsistInterface( dims_g.ncell_x > 0 ? "Invalid ncell_x supplied." : 0 );
+  InsistInterface( dims_g.ncell_y > 0 ? "Invalid ncell_y supplied." : 0 );
+  InsistInterface( dims_g.ncell_z > 0 ? "Invalid ncell_z supplied." : 0 );
+  InsistInterface( dims_g.ne > 0      ? "Invalid ne supplied." : 0 );
+  InsistInterface( dims_g.nm > 0      ? "Invalid nm supplied." : 0 );
+  InsistInterface( dims_g.na > 0      ? "Invalid na supplied." : 0 );
+  InsistInterface( niterations >= 0   ? "Invalid iteration count supplied." : 0 );
 
   /*---Initialize (local) dimensions - domain decomposition---*/
 
@@ -138,7 +138,7 @@ void Runner_run_case( Runner* runner, Arguments* args, Env* env )
 
   /*---Check that all command line args used---*/
 
-  Insist( Arguments_are_all_consumed( args )
+  InsistInterface( Arguments_are_all_consumed( args )
                                           ? "Invalid argument detected." : 0 );
 
   /*---Call sweeper---*/

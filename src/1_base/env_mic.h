@@ -23,9 +23,9 @@
 
 static int* malloc_host_int( size_t n )
 {
-  Assert( n+1 >= 1 );
+  Insist( n+1 >= 1 );
   int* result = (int*)malloc( n * sizeof(int) );
-  Assert( result );
+  Insist( result );
   return result;
 }
 
@@ -33,9 +33,9 @@ static int* malloc_host_int( size_t n )
 
 static P* malloc_host_P( size_t n )
 {
-  Assert( n+1 >= 1 );
+  Insist( n+1 >= 1 );
   P* result = _mm_malloc( n * sizeof(P), VEC_LEN * sizeof(P) );
-  Assert( result );
+  Insist( result );
   return result;
 }
 
@@ -50,7 +50,7 @@ static P* malloc_host_pinned_P( size_t n )
 
 static P* malloc_device_P( size_t n )
 {
-  Assert( n+1 >= 1 );
+  Insist( n+1 >= 1 );
   P* result = NULL;
   return result;
 }
@@ -59,7 +59,7 @@ static P* malloc_device_P( size_t n )
 
 static void free_host_int( int* p )
 {
-  Assert( p );
+  Insist( p );
   free( (void*) p );
 }
 
@@ -67,7 +67,7 @@ static void free_host_int( int* p )
 
 static void free_host_P( P* p )
 {
-  Assert( p );
+  Insist( p );
   _mm_free( p );
 }
 

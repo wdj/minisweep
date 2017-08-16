@@ -37,8 +37,8 @@ void Pointer_create( Pointer* p,
                      size_t   n,
                      Bool_t   is_using_device )
 {
-  Assert( p );
-  Assert( n+1 >= 1 );
+  Insist( p );
+  Insist( n+1 >= 1 );
 
   p->h_ = NULL;
   p->d_ = NULL;
@@ -55,11 +55,10 @@ void Pointer_create_alias( Pointer* p,
                            size_t   base,
                            size_t   n )
 {
-  Assert( p );
-  Assert( source );
-  Assert( base+1 >= 1 );
-  Assert( n+1 >= 1 );
-  Assert( base+n <= source->n_ );
+  Insist( p && source );
+  Insist( base+1 >= 1 );
+  Insist( n+1 >= 1 );
+  Insist( base+n <= source->n_ );
 
   p->h_ = NULL;
   if( source->h_ )
@@ -84,10 +83,10 @@ void Pointer_create_alias( Pointer* p,
 void Pointer_set_pinned( Pointer* p,
                          Bool_t   is_pinned )
 {
-  Assert( p );
-  Assert( ! p->h_
+  Insist( p );
+  Insist( ! p->h_
               ? "Currently cannot change pinnedness of allocated array" : 0 );
-  Assert( ! p->is_alias_ );
+  Insist( ! p->is_alias_ );
 
   p->is_pinned_ = is_pinned;
 }
@@ -97,7 +96,7 @@ void Pointer_set_pinned( Pointer* p,
 
 void Pointer_destroy( Pointer* p )
 {
-  Assert( p );
+  Insist( p );
 
   if( p->h_ && ! p->is_alias_ )
   {
@@ -128,9 +127,9 @@ void Pointer_destroy( Pointer* p )
 
 void Pointer_allocate_h_( Pointer* p )
 {
-  Assert( p );
-  Assert( ! p->is_alias_ );
-  Assert( ! p->h_ );
+  Insist( p );
+  Insist( ! p->is_alias_ );
+  Insist( ! p->h_ );
 
   if( p->is_pinned_ && p->is_using_device_ )
   {
@@ -140,22 +139,22 @@ void Pointer_allocate_h_( Pointer* p )
   {
     p->h_ = malloc_host_P( p->n_ );
   }
-  Assert( p->h_ );
+  Insist( p->h_ );
 }
 
 /*---------------------------------------------------------------------------*/
 
 void Pointer_allocate_d_( Pointer* p )
 {
-  Assert( p );
-  Assert( ! p->is_alias_ );
-  Assert( ! p->d_ );
+  Insist( p );
+  Insist( ! p->is_alias_ );
+  Insist( ! p->d_ );
 
   if( p->is_using_device_ )
   {
     p->d_ = malloc_device_P( p->n_ );
 
-    Assert( p->d_ );
+    Insist( p->d_ );
   }
 }
 
@@ -163,8 +162,8 @@ void Pointer_allocate_d_( Pointer* p )
 
 void Pointer_allocate( Pointer* p )
 {
-  Assert( p );
-  Assert( ! p->is_alias_ );
+  Insist( p );
+  Insist( ! p->is_alias_ );
 
   Pointer_allocate_h_( p );
   Pointer_allocate_d_( p );
@@ -174,9 +173,9 @@ void Pointer_allocate( Pointer* p )
 
 void Pointer_deallocate_h_( Pointer* p )
 {
-  Assert( p );
-  Assert( ! p->is_alias_ );
-  Assert( p->h_ );
+  Insist( p );
+  Insist( ! p->is_alias_ );
+  Insist( p->h_ );
 
   if( p->is_pinned_ && p->is_using_device_ )
   {
@@ -193,12 +192,12 @@ void Pointer_deallocate_h_( Pointer* p )
 
 void Pointer_deallocate_d_( Pointer* p )
 {
-  Assert( p );
-  Assert( ! p->is_alias_ );
+  Insist( p );
+  Insist( ! p->is_alias_ );
 
   if( p->is_using_device_ )
   {
-    Assert( p->d_ );
+    Insist( p->d_ );
 
     free_device_P( p->d_ );
 
@@ -210,8 +209,8 @@ void Pointer_deallocate_d_( Pointer* p )
 
 void Pointer_deallocate( Pointer* p )
 {
-  Assert( p );
-  Assert( ! p->is_alias_ );
+  Insist( p );
+  Insist( ! p->is_alias_ );
 
   Pointer_deallocate_h_( p );
   Pointer_deallocate_d_( p );
@@ -222,7 +221,7 @@ void Pointer_deallocate( Pointer* p )
 
 void Pointer_update_h( Pointer* p )
 {
-  Assert( p );
+  Insist( p );
 
   if( p->is_using_device_ )
   {
@@ -234,7 +233,7 @@ void Pointer_update_h( Pointer* p )
 
 void Pointer_update_d( Pointer* p )
 {
-  Assert( p );
+  Insist( p );
 
   if( p->is_using_device_ )
   {
@@ -246,7 +245,7 @@ void Pointer_update_d( Pointer* p )
 
 void Pointer_update_h_stream( Pointer* p, Stream_t stream )
 {
-  Assert( p );
+  Insist( p );
 
   if( p->is_using_device_ )
   {
@@ -258,7 +257,7 @@ void Pointer_update_h_stream( Pointer* p, Stream_t stream )
 
 void Pointer_update_d_stream( Pointer* p, Stream_t stream )
 {
-  Assert( p );
+  Insist( p );
 
   if( p->is_using_device_ )
   {

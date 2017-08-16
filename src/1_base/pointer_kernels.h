@@ -45,8 +45,7 @@ typedef struct
 
 TARGET_HD static inline P* __restrict__ Pointer_h( Pointer* p )
 {
-  Assert( p );
-  Assert( p->h_ );
+  Assert( p && p->h_ );
   return p->h_;
 }
 
@@ -54,8 +53,7 @@ TARGET_HD static inline P* __restrict__ Pointer_h( Pointer* p )
 
 TARGET_HD static inline const P* __restrict__ Pointer_const_h( const Pointer* p )
 {
-  Assert( p );
-  Assert( p->h_ );
+  Assert( p && p->h_ );
   return p->h_;
 }
 
@@ -63,9 +61,7 @@ TARGET_HD static inline const P* __restrict__ Pointer_const_h( const Pointer* p 
 
 TARGET_HD static inline P* __restrict__ Pointer_d( Pointer* p )
 {
-  Assert( p );
-  Assert( p->d_ );
-  Assert( p->is_using_device_ );
+  Assert( p && p->d_ && p->is_using_device_ );
   return p->d_;
 }
 
@@ -73,9 +69,7 @@ TARGET_HD static inline P* __restrict__ Pointer_d( Pointer* p )
 
 TARGET_HD static inline const P* __restrict__ Pointer_const_d( const Pointer* p )
 {
-  Assert( p );
-  Assert( p->d_ );
-  Assert( p->is_using_device_ );
+  Assert( p && p->d_ && p->is_using_device_ );
   return p->d_;
 }
 

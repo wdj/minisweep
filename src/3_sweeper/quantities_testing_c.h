@@ -272,7 +272,7 @@ void Quantities_init_decomp_( Quantities*       quan,
   quan->ix_base   = quan->ix_base_vals[ Env_proc_x_this( env ) ];
   quan->ncell_x_g = quan->ix_base_vals[ Env_nproc_x(     env ) ];
 
-  Assert( quan->ix_base_vals[ Env_proc_x_this( env )+1 ] -
+  Insist( quan->ix_base_vals[ Env_proc_x_this( env )+1 ] -
           quan->ix_base_vals[ Env_proc_x_this( env )   ] == dims.ncell_x );
 
   /*---------------------------------*/
@@ -327,7 +327,7 @@ void Quantities_init_decomp_( Quantities*       quan,
   quan->iy_base   = quan->iy_base_vals[ Env_proc_y_this( env ) ];
   quan->ncell_y_g = quan->iy_base_vals[ Env_nproc_y(     env ) ];
 
-  Assert( quan->iy_base_vals[ Env_proc_y_this( env )+1 ] -
+  Insist( quan->iy_base_vals[ Env_proc_y_this( env )+1 ] -
           quan->iy_base_vals[ Env_proc_y_this( env )   ] == dims.ncell_y );
 
 } /*---Quantities_init_decomp_---*/
