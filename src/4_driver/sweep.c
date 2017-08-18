@@ -52,10 +52,11 @@ int main( int argc, char** argv )
 
   if( Env_is_proc_master( &env ) )
   {
-    printf( "Normsq result: %.8e  diff: %.3e  %s  time: %.3f  GF/s: %.3f\n",
+    printf( "Normsq result: %.8e  diff: %.3e  %s  time: %.3f  GF/s: %.3f cpumem %.0f gpumem %.0f\n",
             (double)runner.normsq, (double)runner.normsqdiff,
             runner.normsqdiff==P_zero() ? "PASS" : "FAIL",
-            (double)runner.time, runner.floprate );
+            (double)runner.time, runner.floprate,
+            (double)runner.cpu_mem_max, (double)runner.gpu_mem_max );
     /*---If invoked with no arguments as part of tester, then ouptut
          pass/fail count banner to be parsed by testing script---*/
     if( argc == 1 )

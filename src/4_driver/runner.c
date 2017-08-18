@@ -62,6 +62,8 @@ void Runner_run_case( Runner* runner, Arguments* args, Env* env )
 
   runner->normsq     = P_zero();
   runner->normsqdiff = P_zero();
+  runner->cpu_mem_max = 0;
+  runner->gpu_mem_max = 0;
 
   int iteration   = 0;
   int niterations = 0;
@@ -167,6 +169,11 @@ void Runner_run_case( Runner* runner, Arguments* args, Env* env )
 
   runner->floprate = runner->time <= (Timer)0 ?
                                    0 : runner->flops / runner->time / 1e9;
+
+  /*---Compute memory high water marks---*/
+
+  runner->cpu_mem_max = Env_max_d( env, (double)(env->cpu_mem_max) );
+  runner->gpu_mem_max = Env_max_d( env, (double)(env->gpu_mem_max) );
 
   /*---Compute, print norm squared of result---*/
 

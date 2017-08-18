@@ -322,6 +322,22 @@ double Env_sum_d( Env* env, double value )
 
 /*---------------------------------------------------------------------------*/
 
+double Env_max_d( Env* env, double value )
+{
+  Insist( Env_mpi_are_values_set_( env ) );
+  double result = 0;
+#ifdef USE_MPI
+  const int mpi_code = MPI_Allreduce( &value, &result, 1, MPI_DOUBLE, MPI_MAX,
+                                                Env_mpi_active_comm_( env ) );
+  Insist( mpi_code == MPI_SUCCESS );
+#else
+  result = value;
+#endif
+  return result;
+}
+
+/*---------------------------------------------------------------------------*/
+
 P Env_sum_P( Env* env, P value )
 {
   Insist( Env_mpi_are_values_set_( env ) );

@@ -30,6 +30,8 @@ typedef struct
   double flops;
   double floprate;
   Timer  time;
+  double cpu_mem_max;
+  double gpu_mem_max;
 } Runner;
 
 /*===========================================================================*/
