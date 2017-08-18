@@ -50,66 +50,69 @@ static P* __restrict__ Pointer_const_active( const Pointer* p )
 
 void Pointer_create( Pointer* p,
                      size_t   n,
-                     Bool_t   is_using_device );
+                     Bool_t   is_using_device,
+                     Env*     env );
 
 /*---------------------------------------------------------------------------*/
 
 void Pointer_create_alias( Pointer* p,
                            Pointer* source,
                            size_t   base,
-                           size_t   n );
+                           size_t   n,
+                           Env*     env );
 
 /*---------------------------------------------------------------------------*/
 
 void Pointer_set_pinned( Pointer* p,
-                         Bool_t   is_pinned );
+                         Bool_t   is_pinned,
+                         Env* env );
 
 /*===========================================================================*/
 /*---Pseudo-destructor---*/
 
-void Pointer_destroy( Pointer* p );
+void Pointer_destroy( Pointer* p, Env* env );
 
 /*===========================================================================*/
 /*---De/allocate memory---*/
 
-void Pointer_allocate_h_( Pointer* p );
+void Pointer_allocate_h_( Pointer* p, Env* env );
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_allocate_d_( Pointer* p );
+void Pointer_allocate_d_( Pointer* p, Env* env );
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_allocate( Pointer* p );
+void Pointer_allocate( Pointer* p, Env* env );
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_deallocate_h_( Pointer* p );
+void Pointer_deallocate_h_( Pointer* p, Env* env );
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_deallocate_d_( Pointer* p );
+void Pointer_deallocate_d_( Pointer* p, Env* env );
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_deallocate( Pointer* p );
+void Pointer_deallocate( Pointer* p, Env* env );
 
 /*===========================================================================*/
 /*---Copy memory---*/
 
-void Pointer_update_h( Pointer* p );
+void Pointer_update_h( Pointer* p, Env* env );
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_update_d( Pointer* p );
+void Pointer_update_d( Pointer* p, Env* env );
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_update_h_stream( Pointer* p, Stream_t stream );
+void Pointer_update_h_stream( Pointer* p, Stream_t stream, Env* env );
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_update_d_stream( Pointer* p, Stream_t stream );
+void Pointer_update_d_stream( Pointer* p, Stream_t stream, Env* env );
 
 /*===========================================================================*/
 

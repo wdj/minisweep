@@ -270,15 +270,15 @@ void Sweeper_create( Sweeper*          sweeper,
 
   sweeper->vilocal_host_ = Env_cuda_is_using_device( env ) ?
                            ( (P*) NULL ) :
-                           malloc_host_P( Sweeper_nvilocal_( sweeper, env ) );
+                           malloc_host_P( Sweeper_nvilocal_( sweeper, env ), env );
 
   sweeper->vslocal_host_ = Env_cuda_is_using_device( env ) ?
                            ( (P*) NULL ) :
-                           malloc_host_P( Sweeper_nvslocal_( sweeper, env ) );
+                           malloc_host_P( Sweeper_nvslocal_( sweeper, env ), env );
 
   sweeper->volocal_host_ = Env_cuda_is_using_device( env ) ?
                            ( (P*) NULL ) :
-                           malloc_host_P( Sweeper_nvolocal_( sweeper, env ) );
+                           malloc_host_P( Sweeper_nvolocal_( sweeper, env ), env );
 
   /*====================*/
   /*---Allocate faces---*/
@@ -302,15 +302,18 @@ void Sweeper_destroy( Sweeper* sweeper,
   {
     if( sweeper->vilocal_host_ )
     {
-      free_host_P( sweeper->vilocal_host_ );
+      free_host_P( sweeper->vilocal_host_, Sweeper_nvilocal_( sweeper, env ),
+                   env );
     }
     if( sweeper->vslocal_host_ )
     {
-      free_host_P( sweeper->vslocal_host_ );
+      free_host_P( sweeper->vslocal_host_, Sweeper_nvslocal_( sweeper, env ),
+                   env );
     }
     if( sweeper->volocal_host_ )
     {
-      free_host_P( sweeper->volocal_host_ );
+      free_host_P( sweeper->volocal_host_, Sweeper_nvolocal_( sweeper, env ),
+                   env );
     }
     sweeper->vilocal_host_ = NULL;
     sweeper->vslocal_host_ = NULL;
@@ -321,7 +324,7 @@ void Sweeper_destroy( Sweeper* sweeper,
   /*---Deallocate faces---*/
   /*====================*/
 
-  Faces_destroy( &(sweeper->faces) );
+  Faces_destroy( &(sweeper->faces), env );
 
   /*====================*/
   /*---Terminate scheduler---*/
@@ -604,7 +607,7 @@ void Sweeper_sweep(
   const size_t size_state_block = Dimensions_size_state( sweeper->dims, NU )
                                                                    / nblock_z;
 
-  Bool_t* is_block_init = (Bool_t*) malloc( nblock_z * sizeof( Bool_t ) );
+  Bool_t* is_block_init = malloc_host_bool( nblock_z, env );
 
   int i = 0;
 
@@ -617,7 +620,7 @@ void Sweeper_sweep(
 
 #ifdef USE_OPENMP_VO_ATOMIC
   initialize_state_zero( Pointer_h( vo ), sweeper->dims, NU );
-  Pointer_update_d_stream( vo, Env_cuda_stream_kernel_faces( env ) );
+  Pointer_update_d_stream( vo, Env_cuda_stream_kernel_faces( env ), env );
 #endif
 
   /*--------------------*/
@@ -681,10 +684,10 @@ void Sweeper_sweep(
     {
       if( step == 0 )
       {
-        Pointer_update_d_stream( facexy, Env_cuda_stream_kernel_faces( env ) );
+        Pointer_update_d_stream( facexy, Env_cuda_stream_kernel_faces( env ), env );
       }
-      Pointer_update_d_stream(   facexz, Env_cuda_stream_kernel_faces( env ) );
-      Pointer_update_d_stream(   faceyz, Env_cuda_stream_kernel_faces( env ) );
+      Pointer_update_d_stream(   facexz, Env_cuda_stream_kernel_faces( env ), env );
+      Pointer_update_d_stream(   faceyz, Env_cuda_stream_kernel_faces( env ), env );
     }
     Env_cuda_stream_wait( env, Env_cuda_stream_kernel_faces( env ) );
 
@@ -729,18 +732,18 @@ void Sweeper_sweep(
       if( do_block_send[i] )
       {
         Pointer_create_alias(    &vi_b, vi, size_state_block * block_to_send[i],
-                                            size_state_block );
-        Pointer_update_d_stream( &vi_b, Env_cuda_stream_send_block( env ) );
-        Pointer_destroy(         &vi_b );
+                                            size_state_block, env );
+        Pointer_update_d_stream( &vi_b, Env_cuda_stream_send_block( env ), env );
+        Pointer_destroy(         &vi_b, env );
 
         /*---Initialize result array to zero if needed---*/
         /*---NOTE: this is not performance-optimal---*/
 #ifdef USE_OPENMP_VO_ATOMIC
         Pointer_create_alias(    &vo_b, vi, size_state_block * block_to_send[i],
-                                          size_state_block );
+                                          size_state_block, env );
         initialize_state_zero( Pointer_h( &vo_b ), sweeper->dims, NU );
-        Pointer_update_d_stream( &vo_b, Env_cuda_stream_send_block( env ) );
-        Pointer_destroy(         &vo_b );
+        Pointer_update_d_stream( &vo_b, Env_cuda_stream_send_block( env ), env );
+        Pointer_destroy(         &vo_b, env );
 #endif
       }
     }
@@ -764,9 +767,9 @@ void Sweeper_sweep(
       if( do_block_recv[i] )
       {
         Pointer_create_alias(    &vo_b, vo, size_state_block * block_to_recv[i],
-                                            size_state_block );
-        Pointer_update_h_stream( &vo_b, Env_cuda_stream_recv_block( env ) );
-        Pointer_destroy(         &vo_b );
+                                            size_state_block, env );
+        Pointer_update_h_stream( &vo_b, Env_cuda_stream_recv_block( env ), env );
+        Pointer_destroy(         &vo_b, env );
       }
     }
 
@@ -803,10 +806,10 @@ void Sweeper_sweep(
     {
       if( step == nstep-1 )
       {
-        Pointer_update_h_stream( facexy, Env_cuda_stream_kernel_faces( env ) );
+        Pointer_update_h_stream( facexy, Env_cuda_stream_kernel_faces( env ), env );
       }
-      Pointer_update_h_stream(   facexz, Env_cuda_stream_kernel_faces( env ) );
-      Pointer_update_h_stream(   faceyz, Env_cuda_stream_kernel_faces( env ) );
+      Pointer_update_h_stream(   facexz, Env_cuda_stream_kernel_faces( env ), env );
+      Pointer_update_h_stream(   faceyz, Env_cuda_stream_kernel_faces( env ), env );
     }
     Env_cuda_stream_wait( env, Env_cuda_stream_kernel_faces( env ) );
 
@@ -838,7 +841,7 @@ void Sweeper_sweep(
 
   /*---Finish---*/
 
-  free( (void*) is_block_init );
+  free_host_bool( is_block_init, nblock_z, env );
 
 } /*---sweep---*/
 

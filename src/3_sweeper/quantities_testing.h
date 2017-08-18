@@ -31,7 +31,7 @@ void Quantities_create( Quantities*       quan,
 /*===========================================================================*/
 /*---Pseudo-destructor for Quantities struct---*/
 
-void Quantities_destroy( Quantities* quan );
+void Quantities_destroy( Quantities* quan, Env* env );
 
 /*===========================================================================*/
 /*---Initialize Quantities a_from_m, m_from_a matrices---*/

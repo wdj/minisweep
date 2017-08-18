@@ -45,7 +45,7 @@ function perform_runs_impl
     local env_environment="env $environment"
   fi
 
-  if [ "${PBS_NP:-}" != "" -a "${CRAY_MPICH2_ROOTDIR:-}" != "" ] ; then
+  if [ "${PBS_NP:-}" != "" -a "${CRAY_MPICH_ROOTDIR:-}" != "" ] ; then
     #---If running on Cray back-end node, must cd to Lustre to do the aprun.
     local wd="$PWD"
     pushd "$MEMBERWORK" >/dev/null
@@ -90,7 +90,7 @@ function perform_runs
 #==============================================================================
 function initialize
 {
-  if [ "${CRAY_MPICH2_ROOTDIR:-}" != "" ] ; then
+  if [ "${CRAY_MPICH_ROOTDIR:-}" != "" ] ; then
     if [ "${PE_ENV:-}" != "GNU" ] ; then
       module swap PrgEnv-pgi PrgEnv-gnu
     fi
@@ -152,10 +152,11 @@ function main
   fi
 
   #BUILD_DIR=../../build_test
-  BUILD_DIR=/ccs/home/$(whoami)/atlas/minisweep_work/build_test
-  SCRIPTS_DIR=$PWD/../scripts
+  #BUILD_DIR=/ccs/home/$(whoami)/atlas/minisweep_work/build_test
+  BUILD_DIR=./build_test
+  SCRIPTS_DIR=$PWD/minisweep/scripts
 
-  if [ "${CRAY_MPICH2_ROOTDIR:-}" != "" ] ; then
+  if [ "${CRAY_MPICH_ROOTDIR:-}" != "" ] ; then
     local IS_TITAN=1
   else
     local IS_TITAN=0

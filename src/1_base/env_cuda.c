@@ -109,96 +109,144 @@ Bool_t Env_cuda_is_using_device( const Env* const env )
 
 #ifndef __MIC__
 
-int* malloc_host_int( size_t n )
+int* malloc_host_int( size_t n, Env* env )
 {
   Insist( n+1 >= 1 );
-  int* result = (int*)malloc( n * sizeof(int) );
-  Insist( result );
-  return result;
+
+  int* p = (int*)malloc( n * sizeof(*p) );
+  Insist( p );
+  env->cpu_mem += n * sizeof(*p);
+  env->cpu_mem_max = env->cpu_mem > env->cpu_mem_max ?
+                     env->cpu_mem : env->cpu_mem_max;
+  return p;
 }
 
 /*---------------------------------------------------------------------------*/
 
-P* malloc_host_P( size_t n )
+Bool_t* malloc_host_bool( size_t n, Env* env )
 {
   Insist( n+1 >= 1 );
-  P* result = (P*)malloc( n * sizeof(P) );
-  Insist( result );
-  return result;
+
+  Bool_t* p = (Bool_t*)malloc( n * sizeof(*p) );
+  Insist( p );
+  env->cpu_mem += n * sizeof(*p);
+  env->cpu_mem_max = env->cpu_mem > env->cpu_mem_max ?
+                     env->cpu_mem : env->cpu_mem_max;
+  return p;
 }
 
 /*---------------------------------------------------------------------------*/
 
-P* malloc_host_pinned_P( size_t n )
+P* malloc_host_P( size_t n, Env* env )
 {
   Insist( n+1 >= 1 );
 
-  P* result = NULL;
+  P* p = (P*)malloc( n * sizeof(*p) );
+  Insist( p );
+  env->cpu_mem += n * sizeof(*p);
+  env->cpu_mem_max = env->cpu_mem > env->cpu_mem_max ?
+                     env->cpu_mem : env->cpu_mem_max;
+  return p;
+}
 
+/*---------------------------------------------------------------------------*/
+
+P* malloc_host_pinned_P( size_t n, Env* env )
+{
+  Insist( n+1 >= 1 );
+
+  P* p = NULL;
 #ifdef USE_CUDA
-  cudaMallocHost( &result, n==0 ? ((size_t)1) : n*sizeof(P) );
+  cudaMallocHost( &p, n==0 ? ((size_t)1) : n*sizeof(*p) );
   Insist( Env_cuda_last_call_succeeded() );
 #else
-  result = (P*)malloc( n * sizeof(P) );
+  p = (P*)malloc( n * sizeof(P) );
 #endif
-  Insist( result );
-
-  return result;
+  Insist( p );
+  env->cpu_mem += n * sizeof(*p);
+  env->cpu_mem_max = env->cpu_mem > env->cpu_mem_max ?
+                     env->cpu_mem : env->cpu_mem_max;
+  return p;
 }
 
 /*---------------------------------------------------------------------------*/
 
-P* malloc_device_P( size_t n )
+P* malloc_device_P( size_t n, Env* env )
 {
   Insist( n+1 >= 1 );
 
-  P* result = NULL;
-
+  P* p = NULL;
 #ifdef USE_CUDA
-  cudaMalloc( &result, n==0 ? ((size_t)1) : n*sizeof(P) );
+  cudaMalloc( &p, n==0 ? ((size_t)1) : n*sizeof(*p) );
   Insist( Env_cuda_last_call_succeeded() );
-  Insist( result );
+  Insist( p );
+  env->gpu_mem += n * sizeof(*p);
+  env->gpu_mem_max = env->gpu_mem > env->gpu_mem_max ?
+                     env->gpu_mem : env->gpu_mem_max;
 #endif
-
-  return result;
+  return p;
 }
 
 /*---------------------------------------------------------------------------*/
 
-void free_host_int( int* p )
+void free_host_int( int* p, size_t n, Env* env )
 {
   Insist( p );
+  Insist( n+1 >= 1 );
+
   free( (void*) p );
+  env->cpu_mem -= n * sizeof(*p);
 }
 
 /*---------------------------------------------------------------------------*/
 
-void free_host_P( P* p )
+void free_host_bool( Bool_t* p, size_t n, Env* env )
 {
   Insist( p );
+  Insist( n+1 >= 1 );
+
   free( (void*) p );
+  env->cpu_mem -= n * sizeof(*p);
 }
 
 /*---------------------------------------------------------------------------*/
 
-void free_host_pinned_P( P* p )
+void free_host_P( P* p, size_t n, Env* env )
 {
   Insist( p );
+  Insist( n+1 >= 1 );
+
+  free( (void*) p );
+  env->cpu_mem -= n * sizeof(*p);
+}
+
+/*---------------------------------------------------------------------------*/
+
+void free_host_pinned_P( P* p, size_t n, Env* env )
+{
+  Insist( p );
+  Insist( n+1 >= 1 );
+
 #ifdef USE_CUDA
   cudaFreeHost( p );
   Insist( Env_cuda_last_call_succeeded() );
 #else
   free( (void*) p );
 #endif
+  env->cpu_mem -= n * sizeof(*p);
 }
 
 /*---------------------------------------------------------------------------*/
 
-void free_device_P( P* p )
+void free_device_P( P* p, size_t n, Env* env )
 {
+  Insist( p );
+  Insist( n+1 >= 1 );
+
 #ifdef USE_CUDA
   cudaFree( p );
   Insist( Env_cuda_last_call_succeeded() );
+  env->gpu_mem -= n * sizeof(*p);
 #endif
 }
 

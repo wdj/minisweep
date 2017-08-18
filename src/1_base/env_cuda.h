@@ -56,35 +56,43 @@ Bool_t Env_cuda_is_using_device( const Env* const env );
 
 #ifndef __MIC__
 
-int* malloc_host_int( size_t n );
+int* malloc_host_int( size_t n, Env* env );
 
 /*---------------------------------------------------------------------------*/
 
-P* malloc_host_P( size_t n );
+Bool_t* malloc_host_bool( size_t n, Env* env );
 
 /*---------------------------------------------------------------------------*/
 
-P* malloc_host_pinned_P( size_t n );
+P* malloc_host_P( size_t n, Env* env );
 
 /*---------------------------------------------------------------------------*/
 
-P* malloc_device_P( size_t n );
+P* malloc_host_pinned_P( size_t n, Env* env );
 
 /*---------------------------------------------------------------------------*/
 
-void free_host_int( int* p );
+P* malloc_device_P( size_t n, Env* env );
 
 /*---------------------------------------------------------------------------*/
 
-void free_host_P( P* p );
+void free_host_int( int* p, size_t n, Env* env );
 
 /*---------------------------------------------------------------------------*/
 
-void free_host_pinned_P( P* p );
+void free_host_bool( Bool_t* p, size_t n, Env* env );
 
 /*---------------------------------------------------------------------------*/
 
-void free_device_P( P* p );
+void free_host_P( P* p, size_t n, Env* env );
+
+/*---------------------------------------------------------------------------*/
+
+void free_host_pinned_P( P* p, size_t n, Env* env );
+
+/*---------------------------------------------------------------------------*/
+
+void free_device_P( P* p, size_t n, Env* env );
 
 #endif /*---__MIC__---*/
 

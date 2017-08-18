@@ -36,6 +36,11 @@ void Env_initialize( Env *env, int argc, char** argv )
 {
   Env_mpi_initialize_(  env, argc, argv );
   Env_cuda_initialize_( env, argc, argv );
+
+  env->cpu_mem = 0;
+  env->cpu_mem_max = 0;
+  env->gpu_mem = 0;
+  env->gpu_mem_max = 0;
 }
 
 /*===========================================================================*/
@@ -70,7 +75,7 @@ Bool_t Env_is_proc_master( Env* env )
 Timer Env_get_time( Env* env )
 {
   struct timeval tv;
-  int i = gettimeofday( &tv, NULL );
+  gettimeofday( &tv, NULL );
   Timer result = ( (Timer) tv.tv_sec +
                    (Timer) tv.tv_usec * 1.e-6 );
   return result;

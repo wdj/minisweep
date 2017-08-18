@@ -46,7 +46,7 @@ cmake \
   -DCMAKE_C_COMPILER:STRING="$(which cc)" \
   -DMPI_C_COMPILER="$(which cc)" \
   -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE -DUSE_OPENMP -DUSE_OPENMP_TASKS $OMP_ARGS" \
-  -DCMAKE_C_FLAGS_DEBUG:STRING="-g" \
+  -DCMAKE_C_FLAGS_DEBUG:STRING="-g -Wall -Wno-unused-function -Werror -Wno-error=unknown-pragmas" \
   -DCMAKE_C_FLAGS_RELEASE:STRING="$OPT_ARGS" \
  \
   -DUSE_MPI:BOOL=ON \

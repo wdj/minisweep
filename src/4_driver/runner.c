@@ -112,14 +112,14 @@ void Runner_run_case( Runner* runner, Arguments* args, Env* env )
   /*---Allocate arrays---*/
 
   Pointer_create( &vi, Dimensions_size_state( dims, NU ),
-                                            Env_cuda_is_using_device( env ) );
-  Pointer_set_pinned( &vi, Bool_true );
-  Pointer_allocate( &vi );
+                                            Env_cuda_is_using_device( env ), env );
+  Pointer_set_pinned( &vi, Bool_true, env );
+  Pointer_allocate( &vi, env );
 
   Pointer_create( &vo, Dimensions_size_state( dims, NU ),
-                                            Env_cuda_is_using_device( env ) );
-  Pointer_set_pinned( &vo, Bool_true );
-  Pointer_allocate( &vo );
+                                            Env_cuda_is_using_device( env ), env );
+  Pointer_set_pinned( &vo, Bool_true, env );
+  Pointer_allocate( &vo, env );
 
   /*---Initialize input state array---*/
 
@@ -174,11 +174,11 @@ void Runner_run_case( Runner* runner, Arguments* args, Env* env )
                      dims, NU, &runner->normsq, &runner->normsqdiff, env );
 
   /*---Deallocations---*/
-  Pointer_destroy( &vi );
-  Pointer_destroy( &vo );
+  Pointer_destroy( &vi, env );
+  Pointer_destroy( &vo, env );
 
   Sweeper_destroy( &sweeper, env );
-  Quantities_destroy( &quan );
+  Quantities_destroy( &quan, env );
 }
 
 /*===========================================================================*/
@@ -204,6 +204,8 @@ Bool_t compare_runs( const char* argstring1, const char* argstring2, Env* env )
   if( Env_is_proc_active( env ) )
   {
     Runner_run_case( &runner1, &args1, env );
+    Insist(env->cpu_mem == 0);
+    Insist(env->gpu_mem == 0);
   }
 
   Arguments_create_from_string( &args2, argstring2 );
@@ -216,6 +218,8 @@ Bool_t compare_runs( const char* argstring1, const char* argstring2, Env* env )
   if( Env_is_proc_active( env ) )
   {
     Runner_run_case( &runner2, &args2, env );
+    Insist(env->cpu_mem == 0);
+    Insist(env->gpu_mem == 0);
   }
 
   Bool_t pass = Env_is_proc_master( env ) ?

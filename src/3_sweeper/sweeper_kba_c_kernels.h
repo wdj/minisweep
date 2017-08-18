@@ -54,9 +54,11 @@ TARGET_HD static inline void Sweeper_sweep_cell(
 
   int ia_base = 0;
 
+#ifdef __CUDA_ARCH__
   const int sweeper_thread_a = Sweeper_thread_a( sweeper );
   const int sweeper_thread_m = Sweeper_thread_m( sweeper );
   const int sweeper_thread_u = Sweeper_thread_u( sweeper );
+#endif
 
   /*---For cases when the number of angles or the number of moments is
        too large for the warp size, a 2-D blocking strategy is used
@@ -923,7 +925,9 @@ TARGET_HD static inline void Sweeper_sweep_semiblock(
 
     /*---Number of chunks, rounded up as needed---*/
 
+#if 0
     const int nchunk_x = iceil( nsubblock_x, nsubblock_x_per_chunk );
+#endif
     const int nchunk_y = iceil( nsubblock_y, nsubblock_y_per_chunk );
     const int nchunk_z = iceil( nsubblock_z, nsubblock_z_per_chunk );
 

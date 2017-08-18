@@ -47,13 +47,17 @@ void Sweeper_create( Sweeper*          sweeper,
 
   /*---Allocate arrays---*/
 
-  sweeper->vslocal = malloc_host_P( dims.na * NU );
-  sweeper->facexy  = malloc_host_P( dims.ncell_x * dims.ncell_y * dims.ne *
-                         dims.na * NU * Sweeper_noctant_per_block( sweeper ) );
-  sweeper->facexz  = malloc_host_P( dims.ncell_x * dims.ncell_z * dims.ne *
-                         dims.na * NU * Sweeper_noctant_per_block( sweeper ) );
-  sweeper->faceyz  = malloc_host_P( dims.ncell_y * dims.ncell_z * dims.ne *
-                         dims.na * NU * Sweeper_noctant_per_block( sweeper ) );
+  const size_t size_vslocal = dims.na * NU;
+  const size_t elts_per_face_cell = dims.ne * dims.na * NU *
+                                    Sweeper_noctant_per_block( sweeper );
+  const size_t size_facexy = dims.ncell_x * dims.ncell_y * elts_per_face_cell;
+  const size_t size_facexz = dims.ncell_x * dims.ncell_z * elts_per_face_cell;
+  const size_t size_faceyz = dims.ncell_y * dims.ncell_z * elts_per_face_cell;
+
+  sweeper->vslocal = malloc_host_P( size_vslocal, env );
+  sweeper->facexy  = malloc_host_P( size_facexy , env );
+  sweeper->facexz  = malloc_host_P( size_facexz, env);
+  sweeper->faceyz  = malloc_host_P( size_faceyz, env);
 
   sweeper->dims = dims;
 }
@@ -66,10 +70,19 @@ void Sweeper_destroy( Sweeper* sweeper,
 {
   /*---Deallocate arrays---*/
 
-  free_host_P( sweeper->vslocal );
-  free_host_P( sweeper->facexy );
-  free_host_P( sweeper->facexz );
-  free_host_P( sweeper->faceyz );
+  Dimensions dims = sweeper->dims;
+
+  const size_t size_vslocal = dims.na * NU;
+  const size_t elts_per_face_cell = dims.ne * dims.na * NU *
+                                    Sweeper_noctant_per_block( sweeper );
+  const size_t size_facexy = dims.ncell_x * dims.ncell_y * elts_per_face_cell;
+  const size_t size_facexz = dims.ncell_x * dims.ncell_z * elts_per_face_cell;
+  const size_t size_faceyz = dims.ncell_y * dims.ncell_z * elts_per_face_cell;
+
+  free_host_P( sweeper->vslocal, size_vslocal, env );
+  free_host_P( sweeper->facexy, size_facexy, env );
+  free_host_P( sweeper->facexz, size_facexz, env );
+  free_host_P( sweeper->faceyz, size_faceyz, env );
 
   sweeper->vslocal = NULL;
   sweeper->facexy  = NULL;

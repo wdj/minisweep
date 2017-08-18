@@ -37,34 +37,34 @@ void Faces_create( Faces*      faces,
 
   Pointer_create(       Faces_facexy( faces, 0 ),
     Dimensions_size_facexy( dims_b, NU, noctant_per_block ),
-    Env_cuda_is_using_device( env ) );
-  Pointer_set_pinned( Faces_facexy( faces, 0 ), Bool_true );
-  Pointer_allocate(     Faces_facexy( faces, 0 ) );
+    Env_cuda_is_using_device( env ), env );
+  Pointer_set_pinned( Faces_facexy( faces, 0 ), Bool_true, env );
+  Pointer_allocate(     Faces_facexy( faces, 0 ), env );
 
   for( i = 0; i < ( Faces_is_face_comm_async( faces ) ? NDIM : 1 ); ++i )
   {
     Pointer_create(       Faces_facexz( faces, i ),
       Dimensions_size_facexz( dims_b, NU, noctant_per_block ),
-      Env_cuda_is_using_device( env ) );
-    Pointer_set_pinned( Faces_facexz( faces, i ), Bool_true );
+      Env_cuda_is_using_device( env ), env );
+    Pointer_set_pinned( Faces_facexz( faces, i ), Bool_true, env );
 
     Pointer_create(       Faces_faceyz( faces, i ),
       Dimensions_size_faceyz( dims_b, NU, noctant_per_block ),
-      Env_cuda_is_using_device( env ) );
-    Pointer_set_pinned( Faces_faceyz( faces, i ), Bool_true );
+      Env_cuda_is_using_device( env ), env );
+    Pointer_set_pinned( Faces_faceyz( faces, i ), Bool_true, env );
   }
 
   for( i = 0; i < ( Faces_is_face_comm_async( faces ) ? NDIM : 1 ); ++i )
   {
-    Pointer_allocate( Faces_facexz( faces, i ) );
-    Pointer_allocate( Faces_faceyz( faces, i ) );
+    Pointer_allocate( Faces_facexz( faces, i ), env );
+    Pointer_allocate( Faces_faceyz( faces, i ), env );
   }
 }
 
 /*===========================================================================*/
 /*---Pseudo-destructor for Faces struct---*/
 
-void Faces_destroy( Faces* faces )
+void Faces_destroy( Faces* faces, Env* env )
 {
   int i = 0;
 
@@ -72,12 +72,12 @@ void Faces_destroy( Faces* faces )
   /*---Deallocate faces---*/
   /*====================*/
 
-  Pointer_destroy( Faces_facexy( faces, 0 ) );
+  Pointer_destroy( Faces_facexy( faces, 0 ), env );
 
   for( i = 0; i < ( Faces_is_face_comm_async( faces ) ? NDIM : 1 ); ++i )
   {
-    Pointer_destroy( Faces_facexz( faces, i ) );
-    Pointer_destroy( Faces_faceyz( faces, i ) );
+    Pointer_destroy( Faces_facexz( faces, i ), env );
+    Pointer_destroy( Faces_faceyz( faces, i ), env );
   }
 }
 /*===========================================================================*/
@@ -102,8 +102,8 @@ void Faces_communicate_faces(
 
   /*---Allocate temporary face buffers---*/
 
-  P* __restrict__ buf_xz  = malloc_host_P( size_facexz_per_octant );
-  P* __restrict__ buf_yz  = malloc_host_P( size_faceyz_per_octant );
+  P* __restrict__ buf_xz  = malloc_host_P( size_facexz_per_octant, env );
+  P* __restrict__ buf_yz  = malloc_host_P( size_faceyz_per_octant, env );
 
   /*---Loop over octants---*/
 
@@ -216,8 +216,8 @@ void Faces_communicate_faces(
 
   /*---Deallocations---*/
 
-  free_host_P( buf_xz );
-  free_host_P( buf_yz );
+  free_host_P( buf_xz, size_facexz_per_octant, env );
+  free_host_P( buf_yz, size_faceyz_per_octant, env );
 }
 
 /*===========================================================================*/
@@ -306,9 +306,6 @@ void Faces_send_faces_end(
   Env*            env )
 {
   Insist( Faces_is_face_comm_async( faces ) );
-
-  const int proc_x = Env_proc_x_this( env );
-  const int proc_y = Env_proc_y_this( env );
 
   /*---Loop over octants---*/
 
@@ -433,14 +430,6 @@ void Faces_recv_faces_end(
   Env*            env )
 {
   Insist( Faces_is_face_comm_async( faces ) );
-
-  const int proc_x = Env_proc_x_this( env );
-  const int proc_y = Env_proc_y_this( env );
-
-  const size_t size_facexz_per_octant = Dimensions_size_facexz( dims_b,
-                 NU, faces->noctant_per_block ) / faces->noctant_per_block;
-  const size_t size_faceyz_per_octant = Dimensions_size_faceyz( dims_b,
-                 NU, faces->noctant_per_block ) / faces->noctant_per_block;
 
   /*---Loop over octants---*/
 

@@ -46,7 +46,7 @@ extern "C"
 
 /*---NOTE: these should NOT be accessed outside of the Sweeper pseudo-class---*/
 
-enum{ NTHREAD_DEVICE_U = VEC_LEN <= NU                  ? VEC_LEN :
+enum{ NTHREAD_DEVICE_U = VEC_LEN * 1 <= NU * 1          ? VEC_LEN :
                          ( NU * NM * 1 <= VEC_LEN * 1 ) ? NU :
                            NM - 0 == 16 && NU - 0 == 4  ?  2 :
                                                           NU };

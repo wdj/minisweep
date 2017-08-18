@@ -66,6 +66,10 @@ typedef struct
   Stream_t stream_recv_block_;
   Stream_t stream_kernel_faces_;
 #endif
+  size_t cpu_mem;
+  size_t cpu_mem_max;
+  size_t gpu_mem;
+  size_t gpu_mem_max;
 } Env;
 
 /*===========================================================================*/

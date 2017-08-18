@@ -51,12 +51,12 @@ void Quantities_init_am_matrices_( Quantities*       quan,
   /*---Allocate arrays---*/
 
   Pointer_create( & quan->a_from_m, dims.nm * dims.na * NOCTANT,
-                                             Env_cuda_is_using_device( env ) );
+                  Env_cuda_is_using_device( env ), env );
   Pointer_create( & quan->m_from_a, dims.nm * dims.na * NOCTANT,
-                                             Env_cuda_is_using_device( env ) );
+                  Env_cuda_is_using_device( env ), env );
 
-  Pointer_allocate( & quan->a_from_m );
-  Pointer_allocate( & quan->m_from_a );
+  Pointer_allocate( & quan->a_from_m, env );
+  Pointer_allocate( & quan->m_from_a, env );
 
   /*-----------------------------*/
   /*---Set entries of a_from_m---*/
@@ -195,8 +195,8 @@ void Quantities_init_am_matrices_( Quantities*       quan,
                                  /= Quantities_scalefactor_angle_( dims, ia );
   }
 
-  Pointer_update_d( & quan->a_from_m );
-  Pointer_update_d( & quan->m_from_a );
+  Pointer_update_d( & quan->a_from_m, env );
+  Pointer_update_d( & quan->m_from_a, env );
 
 } /*---Quantities_init_am_matrices_---*/
 
@@ -217,8 +217,8 @@ void Quantities_init_decomp_( Quantities*       quan,
 
   /*---Allocate arrays---*/
 
-  quan->ix_base_vals = malloc_host_int( Env_nproc_x( env ) + 1 );
-  quan->iy_base_vals = malloc_host_int( Env_nproc_y( env ) + 1 );
+  quan->ix_base_vals = malloc_host_int( Env_nproc_x( env ) + 1, env );
+  quan->iy_base_vals = malloc_host_int( Env_nproc_y( env ) + 1, env );
 
   /*---------------------------------*/
   /*---Set entries of ix_base_vals---*/
@@ -335,15 +335,15 @@ void Quantities_init_decomp_( Quantities*       quan,
 /*===========================================================================*/
 /*---Pseudo-destructor for Quantities struct---*/
 
-void Quantities_destroy( Quantities* quan )
+void Quantities_destroy( Quantities* quan, Env* env )
 {
   /*---Deallocate arrays---*/
 
-  Pointer_destroy( & quan->a_from_m );
-  Pointer_destroy( & quan->m_from_a );
+  Pointer_destroy( & quan->a_from_m, env );
+  Pointer_destroy( & quan->m_from_a, env );
 
-  free_host_int( quan->ix_base_vals );
-  free_host_int( quan->iy_base_vals );
+  free_host_int( quan->ix_base_vals, Env_nproc_x( env ) + 1, env );
+  free_host_int( quan->iy_base_vals, Env_nproc_y( env ) + 1, env );
 
   quan->ix_base_vals = NULL;
   quan->iy_base_vals = NULL;

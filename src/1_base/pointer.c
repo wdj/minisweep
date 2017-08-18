@@ -35,7 +35,8 @@ Pointer Pointer_null()
 
 void Pointer_create( Pointer* p,
                      size_t   n,
-                     Bool_t   is_using_device )
+                     Bool_t   is_using_device,
+                     Env*     env )
 {
   Insist( p );
   Insist( n+1 >= 1 );
@@ -53,7 +54,8 @@ void Pointer_create( Pointer* p,
 void Pointer_create_alias( Pointer* p,
                            Pointer* source,
                            size_t   base,
-                           size_t   n )
+                           size_t   n,
+                           Env*     env )
 {
   Insist( p && source );
   Insist( base+1 >= 1 );
@@ -81,7 +83,8 @@ void Pointer_create_alias( Pointer* p,
 /*---------------------------------------------------------------------------*/
 
 void Pointer_set_pinned( Pointer* p,
-                         Bool_t   is_pinned )
+                         Bool_t   is_pinned,
+                         Env*     env )
 {
   Insist( p );
   Insist( ! p->h_
@@ -94,7 +97,7 @@ void Pointer_set_pinned( Pointer* p,
 /*===========================================================================*/
 /*---Pseudo-destructor---*/
 
-void Pointer_destroy( Pointer* p )
+void Pointer_destroy( Pointer* p, Env* env )
 {
   Insist( p );
 
@@ -102,18 +105,18 @@ void Pointer_destroy( Pointer* p )
   {
     if( p->is_pinned_ && p->is_using_device_ )
     {
-      free_host_pinned_P( p->h_ );
+      free_host_pinned_P( p->h_, p->n_, env );
     }
     else
     {
-      free_host_P( p->h_ );
+      free_host_P( p->h_, p->n_, env );
     }
   }
   p->h_ = NULL;
 
   if( p->d_ && ! p->is_alias_ )
   {
-    free_device_P( p->d_ );
+    free_device_P( p->d_, p->n_, env );
   }
   p->d_ = NULL;
 
@@ -125,7 +128,7 @@ void Pointer_destroy( Pointer* p )
 /*===========================================================================*/
 /*---De/allocate memory---*/
 
-void Pointer_allocate_h_( Pointer* p )
+void Pointer_allocate_h_( Pointer* p, Env* env )
 {
   Insist( p );
   Insist( ! p->is_alias_ );
@@ -133,18 +136,18 @@ void Pointer_allocate_h_( Pointer* p )
 
   if( p->is_pinned_ && p->is_using_device_ )
   {
-    p->h_ = malloc_host_pinned_P( p->n_ );
+    p->h_ = malloc_host_pinned_P( p->n_, env );
   }
   else
   {
-    p->h_ = malloc_host_P( p->n_ );
+    p->h_ = malloc_host_P( p->n_, env );
   }
   Insist( p->h_ );
 }
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_allocate_d_( Pointer* p )
+void Pointer_allocate_d_( Pointer* p, Env* env )
 {
   Insist( p );
   Insist( ! p->is_alias_ );
@@ -152,26 +155,25 @@ void Pointer_allocate_d_( Pointer* p )
 
   if( p->is_using_device_ )
   {
-    p->d_ = malloc_device_P( p->n_ );
-
+    p->d_ = malloc_device_P( p->n_, env );
     Insist( p->d_ );
   }
 }
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_allocate( Pointer* p )
+void Pointer_allocate( Pointer* p, Env* env )
 {
   Insist( p );
   Insist( ! p->is_alias_ );
 
-  Pointer_allocate_h_( p );
-  Pointer_allocate_d_( p );
+  Pointer_allocate_h_( p, env );
+  Pointer_allocate_d_( p, env );
 }
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_deallocate_h_( Pointer* p )
+void Pointer_deallocate_h_( Pointer* p, Env* env )
 {
   Insist( p );
   Insist( ! p->is_alias_ );
@@ -179,18 +181,18 @@ void Pointer_deallocate_h_( Pointer* p )
 
   if( p->is_pinned_ && p->is_using_device_ )
   {
-    free_host_pinned_P( p->h_ );
+    free_host_pinned_P( p->h_, p->n_, env );
   }
   else
   {
-    free_host_P( p->h_ );
+    free_host_P( p->h_, p->n_, env );
   }
   p->h_ = NULL;
 }
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_deallocate_d_( Pointer* p )
+void Pointer_deallocate_d_( Pointer* p, Env* env )
 {
   Insist( p );
   Insist( ! p->is_alias_ );
@@ -199,7 +201,7 @@ void Pointer_deallocate_d_( Pointer* p )
   {
     Insist( p->d_ );
 
-    free_device_P( p->d_ );
+    free_device_P( p->d_, p->n_, env );
 
     p->d_ = NULL;
   }
@@ -207,19 +209,19 @@ void Pointer_deallocate_d_( Pointer* p )
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_deallocate( Pointer* p )
+void Pointer_deallocate( Pointer* p, Env* env )
 {
   Insist( p );
   Insist( ! p->is_alias_ );
 
-  Pointer_deallocate_h_( p );
-  Pointer_deallocate_d_( p );
+  Pointer_deallocate_h_( p, env );
+  Pointer_deallocate_d_( p, env );
 }
 
 /*===========================================================================*/
 /*---Copy memory---*/
 
-void Pointer_update_h( Pointer* p )
+void Pointer_update_h( Pointer* p, Env* env )
 {
   Insist( p );
 
@@ -231,7 +233,7 @@ void Pointer_update_h( Pointer* p )
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_update_d( Pointer* p )
+void Pointer_update_d( Pointer* p, Env* env )
 {
   Insist( p );
 
@@ -243,7 +245,7 @@ void Pointer_update_d( Pointer* p )
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_update_h_stream( Pointer* p, Stream_t stream )
+void Pointer_update_h_stream( Pointer* p, Stream_t stream, Env* env )
 {
   Insist( p );
 
@@ -255,7 +257,7 @@ void Pointer_update_h_stream( Pointer* p, Stream_t stream )
 
 /*---------------------------------------------------------------------------*/
 
-void Pointer_update_d_stream( Pointer* p, Stream_t stream )
+void Pointer_update_d_stream( Pointer* p, Stream_t stream, Env* env )
 {
   Insist( p );
 

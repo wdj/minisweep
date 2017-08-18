@@ -60,7 +60,7 @@ void Faces_create( Faces*      faces,
 /*===========================================================================*/
 /*---Pseudo-destructor for Faces struct---*/
 
-void Faces_destroy( Faces* faces );
+void Faces_destroy( Faces* faces, Env* env );
 
 /*===========================================================================*/
 /*---Is face communication done asynchronously---*/
