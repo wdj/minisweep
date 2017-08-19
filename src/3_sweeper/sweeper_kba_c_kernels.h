@@ -109,7 +109,7 @@ TARGET_HD static inline void Sweeper_sweep_cell(
 #pragma simd assert, vectorlengthfor( P )
 TODO: fix vectorization for this loop.
 */
-#pragma simd vectorlengthfor( P )
+//FIX2 #pragma simd vectorlengthfor( P )
         for( sweeper_thread_m=0; sweeper_thread_m<NTHREAD_M;
                                                           ++sweeper_thread_m )
 #endif
@@ -147,7 +147,7 @@ TODO: fix vectorization for this loop.
               } /*---for iu---*/
             }
           }
-        }
+        } /*---for sweeper_thread---*/
       }
 
       /*====================*/
@@ -173,7 +173,7 @@ TODO: fix vectorization for this loop.
 #ifndef __CUDA_ARCH__
         int sweeper_thread_a = 0;
 #pragma ivdep
-#pragma simd assert, vectorlengthfor( P )
+//FIX2 #pragma simd assert, vectorlengthfor( P )
         for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A;
                                                            ++sweeper_thread_a )
 #endif
@@ -263,7 +263,7 @@ TODO: fix vectorization for this loop.
 #ifndef __CUDA_ARCH__
     int sweeper_thread_a = 0;
 #pragma ivdep
-#pragma simd assert, vectorlengthfor( P )
+//FIX2 #pragma simd assert, vectorlengthfor( P )
     for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A; ++sweeper_thread_a )
 #endif
     {
@@ -308,7 +308,7 @@ TODO: fix vectorization for this loop.
         for( sweeper_thread_u=0; sweeper_thread_u<NTHREAD_U;
                                                            ++sweeper_thread_u )
 #pragma ivdep
-#pragma simd assert, vectorlengthfor( P )
+//FIX #pragma simd assert, vectorlengthfor( P )
         for( sweeper_thread_m=0; sweeper_thread_m<NTHREAD_M;
                                                            ++sweeper_thread_m )
 #endif
@@ -339,13 +339,13 @@ TODO: fix vectorization for this loop.
 
             /*---TODO: set up logic here to run fast for all cases---*/
 
-#ifdef __MIC__
+#ifdef IS_MIC
             if( ia_base + NTHREAD_A == sweeper->dims_b.na )
 #else
             if( Bool_false )
 #endif
             {
-#ifdef __MIC__
+#ifdef IS_MIC
 /* "If applied to outer loop nests, the current implementation supports complete outer loop unrolling." */
 #pragma unroll
 #else
@@ -384,7 +384,7 @@ TODO: fix vectorization for this loop.
             }
             else /*---ia_base---*/
             {
-#ifdef __MIC__
+#ifdef IS_MIC
 /* "If applied to outer loop nests, the current implementation supports complete outer loop unrolling." */
 #pragma unroll
 #else

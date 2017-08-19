@@ -70,7 +70,7 @@ install(TARGETS sweep DESTINATION bin)
 SET(CMAKE_SHARED_LIBRARY_LINK_C_FLAGS)
 
 IF(CMAKE_C_COMPILER_ID STREQUAL "GNU")
-  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ansi -Wmissing-prototypes -Dinline=")
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wmissing-prototypes -Dinline=")
 ENDIF()
 
 IF(CMAKE_C_COMPILER_ID STREQUAL "Intel")

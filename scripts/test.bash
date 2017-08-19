@@ -45,7 +45,8 @@ function perform_runs_impl
     local env_environment="env $environment"
   fi
 
-  if [ "${PBS_NP:-}" != "" -a "${CRAY_MPICH_ROOTDIR:-}" != "" ] ; then
+  if [ "${PBS_NP:-}" != "" -a "${CRAY_CPU_TARGET:-}" != "" ] ; then
+
     #---If running on Cray back-end node, must cd to Lustre to do the aprun.
     local wd="$PWD"
     pushd "$MEMBERWORK" >/dev/null
@@ -54,14 +55,19 @@ function perform_runs_impl
     $env_environment aprun $exec_config_args "$wd/$executable"
     #assert $? = 0
     popd >/dev/null
-  elif [ "${IMICROOT:-}" != "" ] ; then
+
+  elif [ "$CRAY_CPU_TARGET" = "mic-knl" ] ; then
+
     cp $executable $TMPDIR/mic0
     $env_environment micmpiexec -n 1 -wdir $TMPDIR -host ${HOSTNAME}-mic0 $TMPDIR/$executable $application_arg
     rm $executable $TMPDIR/mic0
+
   else
+
     #assert $exec_config_args = "-n1"
     $env_environment ./$executable
     #assert $? = 0
+
   fi
 }
 #==============================================================================
@@ -90,7 +96,7 @@ function perform_runs
 #==============================================================================
 function initialize
 {
-  if [ "${CRAY_MPICH_ROOTDIR:-}" != "" ] ; then
+  if [ "$CRAY_CPU_TARGET" = "interlagos" ] ; then
     if [ "${PE_ENV:-}" != "GNU" ] ; then
       module swap PrgEnv-pgi PrgEnv-gnu
     fi
@@ -156,12 +162,6 @@ function main
   BUILD_DIR=./build_test
   SCRIPTS_DIR=$PWD/minisweep/scripts
 
-  if [ "${CRAY_MPICH_ROOTDIR:-}" != "" ] ; then
-    local IS_TITAN=1
-  else
-    local IS_TITAN=0
-  fi
-
   rm -f tmp_
 
   #==============================
@@ -216,11 +216,11 @@ function main
   # OpenMP/tasks
   #==============================
 
+  if [ "$CRAY_CPU_TARGET" = "interlagos" ] ; then
+
   echo "--------------------------------------------------------"
   echo "---OpenMP/tasks tests---"
   echo "--------------------------------------------------------"
-
-  module swap gcc gcc/4.9.2
 
   #make MPI_OPTION= OPENMP_OPTION=THREADS NM_VALUE=4
 
@@ -243,9 +243,13 @@ function main
 
   print_results_summary
 
+  fi
+
   #==============================
   # MPI.
   #==============================
+
+  if [ "$CRAY_CPU_TARGET" = "interlagos" ] ; then
 
   if [ "${PBS_NP:-}" != "" ] ; then
 
@@ -271,13 +275,14 @@ function main
 
   print_results_summary
 
+  fi
+
   #==============================
   # MPI + CUDA.
   #==============================
 
-  if [ $IS_TITAN = 1 ] ; then
+  if [ "$CRAY_CPU_TARGET" = "interlagos" ] ; then
     module load cudatoolkit
-  fi
 
   if [ "${PBS_NP:-}" != "" ] ; then
   if [ "${PBS_NP:-}" -ge 4 ] ; then
@@ -303,11 +308,13 @@ function main
   fi #---PBS_NP
   fi #---PBS_NP
 
-  if [ $IS_TITAN = 1 ] ; then
+  if [ "$CRAY_CPU_TARGET" = "interlagos" ] ; then
     module unload cudatoolkit
   fi
 
   print_results_summary
+
+  fi
 
   #==============================
   # Variants.

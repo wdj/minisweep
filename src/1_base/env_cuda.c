@@ -107,7 +107,7 @@ Bool_t Env_cuda_is_using_device( const Env* const env )
 /*===========================================================================*/
 /*---Memory management, for CUDA and all platforms ex. MIC---*/
 
-#ifndef __MIC__
+#ifndef IS_MIC
 
 int* malloc_host_int( size_t n, Env* env )
 {
@@ -250,7 +250,7 @@ void free_device_P( P* p, size_t n, Env* env )
 #endif
 }
 
-#endif /*---__MIC__---*/
+#endif /*---IS_MIC---*/
 
 /*---------------------------------------------------------------------------*/
 

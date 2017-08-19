@@ -169,6 +169,7 @@ void Quantities_init_am_matrices_( Quantities*       quan,
        entries that do not affect the scaled-affine input values expected.
   ---*/
 
+#if 0
   for( octant=0; octant<NOCTANT; ++octant )
   for( im=0;     im<dims.nm;     ++im )
   for( ia=0;     ia<dims.na-2;   ++ia )
@@ -181,6 +182,34 @@ void Quantities_init_am_matrices_( Quantities*       quan,
                                                          2*P_one() * randvalue;
     *ref_m_from_a( Pointer_h( & quan->m_from_a ), dims, im, ia+2, octant ) +=
                                                           -P_one() * randvalue;
+  }
+#endif
+
+  /* break out into multiple loops to avoid Intel compiler optimization bug */
+  for( octant=0; octant<NOCTANT; ++octant )
+  for( im=0;     im<dims.nm;     ++im )
+  {
+  for( ia=0;     ia<dims.na-2;   ++ia )
+  {
+    const int randvalue = 37 + ( im + dims.nm * ia ) % 19;
+
+    *ref_m_from_a( Pointer_h( & quan->m_from_a ), dims, im, ia+0, octant ) +=
+                                                          -P_one() * randvalue;
+  }
+  for( ia=0;     ia<dims.na-2;   ++ia )
+  {
+    const int randvalue = 37 + ( im + dims.nm * ia ) % 19;
+
+    *ref_m_from_a( Pointer_h( & quan->m_from_a ), dims, im, ia+1, octant ) +=
+                                                         2*P_one() * randvalue;
+  }
+  for( ia=0;     ia<dims.na-2;   ++ia )
+  {
+    const int randvalue = 37 + ( im + dims.nm * ia ) % 19;
+
+    *ref_m_from_a( Pointer_h( & quan->m_from_a ), dims, im, ia+2, octant ) +=
+                                                          -P_one() * randvalue;
+  }
   }
 
   /*---Scale matrix to compensate for 8 octants and also angle scale factor---*/

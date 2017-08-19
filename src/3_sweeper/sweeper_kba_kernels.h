@@ -58,7 +58,7 @@ enum{ NTHREAD_DEVICE_A = NTHREAD_DEVICE_U * NTHREAD_DEVICE_M };
   enum{ NTHREAD_M = NTHREAD_DEVICE_M };
   enum{ NTHREAD_U = NTHREAD_DEVICE_U };
 #else
-#ifdef __MIC__
+#ifdef IS_MIC
   enum{ NTHREAD_A = VEC_LEN * 4 }; /*---tuning parameter---*/
   enum{ NTHREAD_M = NM };
   enum{ NTHREAD_U = NU };

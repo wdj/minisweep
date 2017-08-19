@@ -55,7 +55,7 @@ cmake \
   -DMPI_C_LIBRARIES:STRING=$MPI_LIB \
  \
   -DUSE_CUDA:BOOL=ON \
-  -DCUDA_NVCC_FLAGS:STRING="${COMPILER_FLAG}${COMPILER_FLAGS_HOST}${DEBUG_FLAG}-I$MPICH_DIR/include;-gencode;arch=compute_35,code=sm_35;-O3;-use_fast_math;--maxrregcount;128;-Xptxas=-v" \
+  -DCUDA_NVCC_FLAGS:STRING="${COMPILER_FLAG}${COMPILER_FLAGS_HOST}${DEBUG_FLAG}-I$MPICH_DIR/include;-gencode;arch=compute_35,code=sm_35;-O3;-use_fast_math;-DNDEBUG;--maxrregcount;128;-Xptxas=-v" \
   -DCUDA_HOST_COMPILER:STRING=/usr/bin/gcc \
   -DCUDA_PROPAGATE_HOST_FLAGS:BOOL=ON \
  \

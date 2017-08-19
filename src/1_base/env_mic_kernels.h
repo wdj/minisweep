@@ -22,20 +22,20 @@ extern "C"
 /*===========================================================================*/
 /*---Enums---*/
 
-#ifdef __MIC__
+#ifdef IS_MIC
 enum{ IS_USING_MIC = Bool_true };
 #else
 enum{ IS_USING_MIC = Bool_false };
 #endif
 
-#ifdef __MIC__
+#ifdef IS_MIC
 enum{ VEC_LEN = P_IS_DOUBLE ? 8 : 16 };
 #endif
 
 /*===========================================================================*/
 /*---Define dummy function/macros for non-MIC case---*/
 
-#ifndef __MIC__
+#ifndef IS_MIC
 #define __assume( a )
 #define __assume_aligned( a, b )
 #define __declspec( a )

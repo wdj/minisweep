@@ -21,14 +21,18 @@
 /*===========================================================================*/
 /*---Memory management---*/
 
-#ifdef __MIC__
+#ifdef IS_MIC
 
 static int* malloc_host_int( size_t n, Env* env )
 {
   Insist( n+1 >= 1 );
-  int* result = (int*)malloc( n * sizeof(int) );
-  Insist( result );
-  return result;
+
+  int* p = (int*)malloc( n * sizeof(*p) );
+  Insist( p );
+  env->cpu_mem += n * sizeof(*p);
+  env->cpu_mem_max = env->cpu_mem > env->cpu_mem_max ?
+                     env->cpu_mem : env->cpu_mem_max;
+  return p;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -36,9 +40,13 @@ static int* malloc_host_int( size_t n, Env* env )
 static Bool_t* malloc_host_bool( size_t n, Env* env )
 {
   Insist( n+1 >= 1 );
-  Bool_t* result = (Bool_t*)malloc( n * sizeof(*result) );
-  Insist( result );
-  return result;
+
+  Bool_t* p = (Bool_t*)malloc( n * sizeof(*p) );
+  Insist( p );
+  env->cpu_mem += n * sizeof(*p);
+  env->cpu_mem_max = env->cpu_mem > env->cpu_mem_max ?
+                     env->cpu_mem : env->cpu_mem_max;
+  return p;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -46,16 +54,20 @@ static Bool_t* malloc_host_bool( size_t n, Env* env )
 static P* malloc_host_P( size_t n, Env* env )
 {
   Insist( n+1 >= 1 );
-  P* result = _mm_malloc( n * sizeof(P), VEC_LEN * sizeof(P) );
-  Insist( result );
-  return result;
+
+  P* p = _mm_malloc( n * sizeof(*p), VEC_LEN * sizeof(*p) );
+  Insist( p );
+  env->cpu_mem += n * sizeof(*p);
+  env->cpu_mem_max = env->cpu_mem > env->cpu_mem_max ?
+                     env->cpu_mem : env->cpu_mem_max;
+  return p;
 }
 
 /*---------------------------------------------------------------------------*/
 
 static P* malloc_host_pinned_P( size_t n, Env* env )
 {
-  return malloc_host_P( n );
+  return malloc_host_P( n, env );
 }
 
 /*---------------------------------------------------------------------------*/
@@ -63,8 +75,8 @@ static P* malloc_host_pinned_P( size_t n, Env* env )
 static P* malloc_device_P( size_t n, Env* env )
 {
   Insist( n+1 >= 1 );
-  P* result = NULL;
-  return result;
+  P* p = NULL;
+  return p;
 }
 
 /*---------------------------------------------------------------------------*/
@@ -72,7 +84,9 @@ static P* malloc_device_P( size_t n, Env* env )
 static void free_host_int( int* p, size_t n, Env* env )
 {
   Insist( p );
+
   free( (void*) p );
+  env->cpu_mem -= n * sizeof(*p);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -80,31 +94,36 @@ static void free_host_int( int* p, size_t n, Env* env )
 static void free_host_bool( Bool_t* p, size_t n, Env* env )
 {
   Insist( p );
+
   free( (void*) p );
+  env->cpu_mem -= n * sizeof(*p);
 }
 
 /*---------------------------------------------------------------------------*/
 
-static void free_host_P( P* p, Env* env )
+static void free_host_P( P* p, size_t n, Env* env )
 {
   Insist( p );
+
   _mm_free( p );
+  env->cpu_mem -= n * sizeof(*p);
 }
 
 /*---------------------------------------------------------------------------*/
 
-static void free_host_pinned_P( P* p, Env* env )
+static void free_host_pinned_P( P* p, size_t n, Env* env )
 {
-  free_host_P( p );
+  free_host_P( p, n, env );
+  env->cpu_mem -= n * sizeof(*p);
 }
 
 /*---------------------------------------------------------------------------*/
 
-static void free_device_P( P* p, Env* env )
+static void free_device_P( P* p, size_t n, Env* env )
 {
 }
 
-#endif /*---__MIC__---*/
+#endif /*---IS_MIC---*/
 
 /*===========================================================================*/
 
