@@ -11,6 +11,8 @@
 #ifndef _sweeper_tileoctants_h_
 #define _sweeper_tileoctants_h_
 
+#ifdef SWEEPER_TILEOCTANTS
+
 #include "env.h"
 #include "definitions.h"
 #include "dimensions.h"
@@ -86,6 +88,8 @@ void Sweeper_sweep(
 #ifdef __cplusplus
 } /*---extern "C"---*/
 #endif
+
+#endif /*---SWEEPER_TILEOCTANTS---*/
 
 #endif /*---_sweeper_tileoctants_h_---*/
 

@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   sweeper_kba_c_kernels.h
+ * \file   sweeper_kba_kernels.c
  * \author Wayne Joubert
  * \date   Tue Jan 28 16:37:41 EST 2014
  * \brief  sweeper_kba_c, code for comp. kernel.
@@ -8,8 +8,7 @@
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _sweeper_kba_c_kernels_h_
-#define _sweeper_kba_c_kernels_h_
+#ifdef SWEEPER_KBA
 
 #include "types_kernels.h"
 #include "env_kernels.h"
@@ -1392,6 +1391,6 @@ TARGET_G void Sweeper_sweep_block_impl_global(
 } /*---extern "C"---*/
 #endif
 
-#endif /*---_sweeper_kba_c_kernels_h_---*/
+#endif /*---SWEEPER_KBA---*/
 
 /*---------------------------------------------------------------------------*/

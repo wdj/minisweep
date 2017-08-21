@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   sweeper_tileoctants_c.h
+ * \file   sweeper_tileoctants.c
  * \author Wayne Joubert
  * \date   Wed Jan 15 16:06:28 EST 2014
  * \brief  Definitions for performing a sweep, tileoctants version.
@@ -8,8 +8,7 @@
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _sweeper_tileoctants_c_h_
-#define _sweeper_tileoctants_c_h_
+#ifdef SWEEPER_TILEOCTANTS
 
 #include "env.h"
 #include "definitions.h"
@@ -367,6 +366,6 @@ void Sweeper_sweep(
 } /*---extern "C"---*/
 #endif
 
-#endif /*---_sweeper_tileoctants_c_h_---*/
+#endif /*---SWEEPER_TILEOCTANTS---*/
 
 /*---------------------------------------------------------------------------*/

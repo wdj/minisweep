@@ -11,6 +11,8 @@
 #ifndef _sweeper_kba_h_
 #define _sweeper_kba_h_
 
+#ifdef SWEEPER_KBA
+
 #include "types.h"
 #include "env.h"
 #include "definitions.h"
@@ -261,6 +263,8 @@ void Sweeper_sweep(
 #ifdef __cplusplus
 } /*---extern "C"---*/
 #endif
+
+#endif /*---SWEEPER_KBA---*/
 
 #endif /*---_sweeper_kba_h_---*/
 

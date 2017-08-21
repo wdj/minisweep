@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   sweeper_kba_c.h
+ * \file   sweeper_kba.c
  * \author Wayne Joubert
  * \date   Tue Jan 28 16:37:41 EST 2014
  * \brief  Definitions for performing a sweep, kba version.
@@ -8,8 +8,7 @@
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _sweeper_kba_c_h_
-#define _sweeper_kba_c_h_
+#ifdef SWEEPER_KBA
 
 #include "types.h"
 #include "env.h"
@@ -851,6 +850,6 @@ void Sweeper_sweep(
 } /*---extern "C"---*/
 #endif
 
-#endif /*---_sweeper_kba_c_h_---*/
+#endif /*---SWEEPER_KBA---*/
 
 /*---------------------------------------------------------------------------*/

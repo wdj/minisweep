@@ -55,6 +55,9 @@ if [ "$NM_VALUE" = "" ] ; then
   NM_VALUE=4
 fi
 
+if [ "$SWEEPER_TYPE" = "" ] ; then
+  SWEEPER_TYPE=SWEEPER_KBA
+fi
 
 #------------------------------------------------------------------------------
 
@@ -68,7 +71,7 @@ cmake \
  \
   -DCMAKE_C_COMPILER:STRING="$CC" \
   -DCMAKE_CXX_COMPILER:STRING="$CXX" \
-  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE -I$MPI_INCLUDE_DIR $OMP_ARGS" \
+  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE -D$SWEEPER_TYPE -I$MPI_INCLUDE_DIR $OMP_ARGS" \
   -DCMAKE_C_FLAGS_DEBUG:STRING="-g" \
   -DCMAKE_C_FLAGS_RELEASE:STRING="$OPT_ARGS -DNDEBUG" \
  \

@@ -326,15 +326,15 @@ function main
 
   local alg_options
 
-  for alg_options in -DSWEEPER_SIMPLE -DSWEEPER_TILEOCTANTS ; do
+  for SWEEPER_TYPE in SWEEPER_SIMPLE SWEEPER_TILEOCTANTS ; do
 
-    #make MPI_OPTION= ALG_OPTIONS="$alg_options" NM_VALUE=16
+    #make MPI_OPTION= SWEEPER_TYPE="$SWEEPER_TYPE" NM_VALUE=16
 
     rm -rf $BUILD_DIR
     mkdir $BUILD_DIR
     pushd $BUILD_DIR
 
-    env NM_VALUE=16 ALG_OPTIONS=$alg_options $SCRIPTS_DIR/cmake_serial.sh
+    env NM_VALUE=16 SWEEPER_TYPE="$SWEEPER_TYPE" $SCRIPTS_DIR/cmake_serial.sh
     make $VERBOSE_ARG
 
     perform_runs "-n1" ""

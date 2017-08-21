@@ -27,6 +27,16 @@ if [ "$NM_VALUE" = "" ] ; then
   NM_VALUE=4
 fi
 
+if [ "$SWEEPER_TYPE" = "" ] ; then
+  SWEEPER_TYPE=SWEEPER_KBA
+fi
+
+if [ "$BUILD" = "Release" ] ; then
+  DEBUG_FLAG=";-DNDEBUG"
+else
+  DEBUG_FLAG=""
+fi
+
 #------------------------------------------------------------------------------
 
 cmake \
@@ -35,12 +45,12 @@ cmake \
  \
   -DCMAKE_C_COMPILER:STRING="$(which cc)" \
   -DMPI_C_COMPILER="$(which cc)" \
-  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE" \
+  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE -D$SWEEPER_TYPE" \
  \
   -DUSE_MPI:BOOL=ON \
  \
   -DUSE_CUDA:BOOL=ON \
-  -DCUDA_NVCC_FLAGS:STRING="-I$MPICH_DIR/include;-arch=sm_35;-O3;-use_fast_math;-DNDEBUG;--maxrregcount;128;-Xcompiler;-fstrict-aliasing;-Xcompiler;-fargument-noalias-global;-Xcompiler;-O3;-Xcompiler;-fomit-frame-pointer;-Xcompiler;-funroll-loops;-Xcompiler;-finline-limit=100000000;-Xptxas=-v" \
+  -DCUDA_NVCC_FLAGS:STRING="-I$MPICH_DIR/include;-arch=sm_35;-O3;-use_fast_math;-DNDEBUG;--maxrregcount;128;-Xcompiler;-fstrict-aliasing;-Xcompiler;-fargument-noalias-global;-Xcompiler;-O3;-Xcompiler;-fomit-frame-pointer;-Xcompiler;-funroll-loops;-Xcompiler;-finline-limit=100000000;-Xptxas=-v$DEBUG_FLAG" \
   -DCUDA_HOST_COMPILER:STRING=/usr/bin/gcc \
   -DCUDA_PROPAGATE_HOST_FLAGS:BOOL=ON \
  \

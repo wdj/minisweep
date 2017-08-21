@@ -26,6 +26,10 @@ if [ "$NM_VALUE" = "" ] ; then
   NM_VALUE=4
 fi
 
+if [ "$SWEEPER_TYPE" = "" ] ; then
+  SWEEPER_TYPE=SWEEPER_KBA
+fi
+
 if [ $PE_ENV = GNU ] ; then
   OMP_ARGS="-fopenmp"
   OPT_ARGS="-O3 -fomit-frame-pointer -funroll-loops -finline-limit=10000000"
@@ -45,7 +49,7 @@ cmake \
  \
   -DCMAKE_C_COMPILER:STRING="$(which cc)" \
   -DMPI_C_COMPILER="$(which cc)" \
-  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE -DUSE_OPENMP -DUSE_OPENMP_TASKS $OMP_ARGS  -std=c99" \
+  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE -D$SWEEPER_TYPE -DUSE_OPENMP -DUSE_OPENMP_TASKS $OMP_ARGS  -std=c99" \
   -DCMAKE_C_FLAGS_DEBUG:STRING="-g -Wall -Wno-unused-function -Werror -Wno-error=unknown-pragmas" \
   -DCMAKE_C_FLAGS_RELEASE:STRING="$OPT_ARGS -DNDEBUG" \
  \

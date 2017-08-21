@@ -31,8 +31,12 @@ if [ "$NM_VALUE" = "" ] ; then
   NM_VALUE=4
 fi
 
+if [ "$SWEEPER_TYPE" = "" ] ; then
+  SWEEPER_TYPE=SWEEPER_KBA
+fi
+
 if [ "$BUILD" = "Release" ] ; then
-  DEBUG_FLAG="-DNDEBUG;"
+  DEBUG_FLAG=";-DNDEBUG"
 else
   DEBUG_FLAG=""
 fi
@@ -48,14 +52,14 @@ cmake \
   -DCMAKE_INSTALL_PREFIX:PATH="$INSTALL" \
  \
   -DCMAKE_C_COMPILER:STRING="gcc" \
-  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE -I$MPI_INCLUDE_DIR" \
+  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE -D$SWEEPER_TYPE -I$MPI_INCLUDE_DIR" \
  \
   -DUSE_MPI:BOOL=ON \
   -DMPI_C_INCLUDE_PATH:STRING=$MPI_INCLUDE_DIR \
   -DMPI_C_LIBRARIES:STRING=$MPI_LIB \
  \
   -DUSE_CUDA:BOOL=ON \
-  -DCUDA_NVCC_FLAGS:STRING="${COMPILER_FLAG}${COMPILER_FLAGS_HOST}${DEBUG_FLAG}-I$MPICH_DIR/include;-gencode;arch=compute_35,code=sm_35;-O3;-use_fast_math;-DNDEBUG;--maxrregcount;128;-Xptxas=-v" \
+  -DCUDA_NVCC_FLAGS:STRING="${COMPILER_FLAG}${COMPILER_FLAGS_HOST}${DEBUG_FLAG}-I$MPICH_DIR/include;-gencode;arch=compute_35,code=sm_35;-O3;-use_fast_math;-DNDEBUG;--maxrregcount;128;-Xptxas=-v$DEBUG_FLAG" \
   -DCUDA_HOST_COMPILER:STRING=/usr/bin/gcc \
   -DCUDA_PROPAGATE_HOST_FLAGS:BOOL=ON \
  \

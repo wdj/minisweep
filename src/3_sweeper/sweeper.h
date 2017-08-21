@@ -8,27 +8,15 @@
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _sweep_h_
-#define _sweep_h_
+#ifndef _sweeper_h_
+#define _sweeper_h_
 
-#ifndef SWEEPER_SIMPLE
-#ifndef SWEEPER_TILEOCTANTS
-#define SWEEPER_KBA
-#endif
-#endif
-
-#ifdef SWEEPER_SIMPLE
 #include "sweeper_simple.h"
-#endif
 
-#ifdef SWEEPER_TILEOCTANTS
 #include "sweeper_tileoctants.h"
-#endif
 
-#ifdef SWEEPER_KBA
 #include "sweeper_kba.h"
-#endif
 
-#endif /*---_sweep_h_---*/
+#endif /*---_sweeper_h_---*/
 
 /*---------------------------------------------------------------------------*/

@@ -23,14 +23,17 @@ SET(SOURCES
   src/3_sweeper/faces_kba.c
   src/3_sweeper/quantities.c
   src/3_sweeper/stepscheduler_kba.c
-  src/3_sweeper/sweeper.c
-  src/3_sweeper/sweeper_kernels.c
+  src/3_sweeper/sweeper_simple.c
+  src/3_sweeper/sweeper_tileoctants.c
+  src/3_sweeper/sweeper_kba.c
+  src/3_sweeper/sweeper_kba_kernels.c
   src/4_driver/runner.c
   )
 
 SET(CUDA_SOURCES)
 FOREACH(FILE IN LISTS SOURCES)
-  STRING(REPLACE ".c" ".cu" FILE2 ${FILE})
+  #STRING(REPLACE ".c" ".cu" FILE2 ${FILE})
+  STRING(REGEX REPLACE "([^/]*)\\.c" "../cuda/\\1.cu" FILE2 ${FILE})
   SET(CUDA_SOURCES ${CUDA_SOURCES} ${FILE2})
 ENDFOREACH()
 
@@ -51,9 +54,9 @@ IF(USE_CUDA)
 #  SET(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}${NM_VALUE_DEF};-DUSE_CUDA")
   CUDA_INCLUDE_DIRECTORIES(${INCLUDE_DIRS})
   CUDA_ADD_LIBRARY(sweeper STATIC ${CUDA_SOURCES})
-  CUDA_ADD_EXECUTABLE(sweep src/4_driver/sweep.cu)
+  CUDA_ADD_EXECUTABLE(sweep src/4_driver/../cuda/sweep.cu)
   TARGET_LINK_LIBRARIES(sweep sweeper)
-  CUDA_ADD_EXECUTABLE(tester src/4_driver/tester.cu)
+  CUDA_ADD_EXECUTABLE(tester src/4_driver/../cuda/tester.cu)
   TARGET_LINK_LIBRARIES(tester sweeper)
 ELSE()
   INCLUDE_DIRECTORIES(${INCLUDE_DIRS})

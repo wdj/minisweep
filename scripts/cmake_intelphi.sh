@@ -18,6 +18,14 @@ if [ "$BUILD" = "" ] ; then
   #BUILD=Release
 fi
 
+if [ "$NM_VALUE" = "" ] ; then
+  NM_VALUE=4
+fi
+
+if [ "$SWEEPER_TYPE" = "" ] ; then
+  SWEEPER_TYPE=SWEEPER_KBA
+fi
+
 OPT_ARGS="-qopt-report=5 -ip -prec-div -O3 -align -ansi-alias -fargument-noalias -fno-alias -fargument-noalias" #  -xmic-avx512"
 # -mmic
 # -vec-report1
@@ -32,7 +40,7 @@ cmake \
   -DCMAKE_INSTALL_PREFIX:PATH="$INSTALL" \
  \
   -DCMAKE_C_COMPILER:STRING=$COMPILER_PHI \
-  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE -DUSE_OPENMP -DUSE_OPENMP_THREADS -qopenmp -DUSE_MPI -std=c99 -DIS_MIC" \
+  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE -D$SWEEPER_TYPE -DUSE_OPENMP -DUSE_OPENMP_THREADS -qopenmp -DUSE_MPI -std=c99 -DIS_MIC" \
   -DCMAKE_C_FLAGS_DEBUG:STRING="-g $OPT_ARGS" \
   -DCMAKE_C_FLAGS_RELEASE:STRING="$OPT_ARGS -DNDEBUG" \
  \

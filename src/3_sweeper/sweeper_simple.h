@@ -11,6 +11,8 @@
 #ifndef _sweeper_simple_h_
 #define _sweeper_simple_h_
 
+#ifdef SWEEPER_SIMPLE
+
 #include "env.h"
 #include "definitions.h"
 #include "dimensions.h"
@@ -78,6 +80,8 @@ void Sweeper_sweep(
 #ifdef __cplusplus
 } /*---extern "C"---*/
 #endif
+
+#endif /*=---SWEEPER_SIMPLE---*/
 
 #endif /*---_sweeper_simple_h_---*/
 
