@@ -16,11 +16,6 @@
 #include "types_kernels.h"
 #include "env_assert_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Enums---*/
 
@@ -74,10 +69,6 @@ TARGET_HD static inline const P* __restrict__ Pointer_const_d( const Pointer* p 
 }
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_pointer_kernels_h_---*/
 

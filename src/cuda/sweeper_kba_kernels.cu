@@ -18,11 +18,6 @@
 #include "stepscheduler_kba_kernels.h"
 #include "sweeper_kba_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Perform a sweep for a cell---*/
 
@@ -1386,10 +1381,6 @@ TARGET_G void Sweeper_sweep_block_impl_global(
 }
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---SWEEPER_KBA---*/
 

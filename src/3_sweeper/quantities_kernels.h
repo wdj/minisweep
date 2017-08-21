@@ -16,11 +16,6 @@
 #include "array_accessors_kernels.h"
 #include "pointer_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Type of boundary conditions---*/
 
@@ -447,10 +442,6 @@ TARGET_HD static inline void Quantities_solve(
 } /*---Quantities_solve---*/
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_quantities_kernels_h_---*/
 

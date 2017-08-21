@@ -25,11 +25,6 @@ Its entries are "read-once": when an entry is read, it is deleted.
 
 #include "types.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /* Struct to hold command line arguments being processed---*/
 
@@ -88,10 +83,6 @@ int Arguments_consume_int_or_default( Arguments*  args,
 Bool_t Arguments_are_all_consumed( const Arguments* args );
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_arguments_h_---*/
 

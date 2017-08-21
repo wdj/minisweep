@@ -14,11 +14,6 @@
 #include "pointer.h"
 #include "quantities.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Pseudo-constructor for Quantities struct---*/
 
@@ -385,9 +380,3 @@ double Quantities_flops_per_solve( const Dimensions dims )
 }
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
-
-/*---------------------------------------------------------------------------*/

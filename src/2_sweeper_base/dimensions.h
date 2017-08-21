@@ -17,11 +17,6 @@
 #include "types.h"
 #include "dimensions_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Null object---*/
 
@@ -57,10 +52,6 @@ size_t Dimensions_size_faceyz( const Dimensions dims,
                                int num_face_octants_allocated );
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_dimensions_h_---*/
 

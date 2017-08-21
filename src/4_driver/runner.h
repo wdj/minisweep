@@ -15,11 +15,6 @@
 #include "env.h"
 #include "definitions.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Struct to hold run result data---*/
 
@@ -60,10 +55,6 @@ void Runner_run_case( Runner* runner, Arguments* args, Env* env );
 Bool_t compare_runs( const char* argstring1, const char* argstring2, Env* env );
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_runner_h_---*/
 

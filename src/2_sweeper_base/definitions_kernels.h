@@ -13,11 +13,6 @@
 
 #include "types_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Basic initializations---*/
 
@@ -90,10 +85,6 @@ TARGET_HD static inline int iceil( const int i,
 }
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_definitions_kernels_h_---*/
 

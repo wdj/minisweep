@@ -11,11 +11,6 @@
 #ifndef _types_kernels_h_
 #define _types_kernels_h_
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Function attributes---*/
 
@@ -49,10 +44,6 @@ TARGET_HD static inline P P_zero() { return (P)0; }
 TARGET_HD static inline P P_one()  { return (P)1; }
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_types_kernels_h_---*/
 

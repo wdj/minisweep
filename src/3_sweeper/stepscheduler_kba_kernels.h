@@ -14,11 +14,6 @@
 #include "types_kernels.h"
 #include "definitions_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Struct with info describing a sweep step---*/
 
@@ -38,10 +33,6 @@ typedef struct
 } StepInfoAll;
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_stepscheduler_kba_kernels_h_---*/
 

@@ -14,11 +14,6 @@
 #include "types_kernels.h"
 #include "env_assert_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Enums---*/
 
@@ -42,10 +37,6 @@ enum{ VEC_LEN = P_IS_DOUBLE ? 8 : 16 };
 #endif
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_env_mic_kernels_h_---*/
 

@@ -21,11 +21,6 @@
 #include "arguments.h"
 #include "env_assert.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Initialize mpi---*/
 
@@ -170,10 +165,6 @@ void Env_arecv_P( Env* env, const P* data, size_t n, int proc, int tag,
 void Env_wait( Env* env, Request_t* request );
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_env_mpi_h_---*/
 

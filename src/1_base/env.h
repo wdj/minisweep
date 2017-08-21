@@ -34,13 +34,6 @@ which are activated if being used.
 #include "env_mic.h"
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
-/*===========================================================================*/
 /*---Null object---*/
 
 Env Env_null(void);
@@ -80,10 +73,6 @@ Timer Env_get_time( Env* env );
 Timer Env_get_synced_time( Env* env );
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_env_h_---*/
 

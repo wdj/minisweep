@@ -12,11 +12,6 @@
 #include "faces_kba.h"
 #include "array_operations.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Pseudo-constructor for Faces struct---*/
 
@@ -468,9 +463,3 @@ void Faces_recv_faces_end(
 }
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
-
-/*---------------------------------------------------------------------------*/

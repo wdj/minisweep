@@ -17,11 +17,6 @@
 #include "env.h"
 #include "pointer_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Null object---*/
   
@@ -115,10 +110,6 @@ void Pointer_update_h_stream( Pointer* p, Stream_t stream, Env* env );
 void Pointer_update_d_stream( Pointer* p, Stream_t stream, Env* env );
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_pointer_h_---*/
 

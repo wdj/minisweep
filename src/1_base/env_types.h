@@ -26,11 +26,6 @@ since these are tightly coupled to the data structure.
 #include "cuda.h"
 #endif
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Types---*/
 
@@ -73,10 +68,6 @@ typedef struct
 } Env;
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_env_types_h_---*/
 

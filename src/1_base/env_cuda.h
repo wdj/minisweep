@@ -21,11 +21,6 @@
 #include "types.h"
 #include "env_cuda_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Error handling---*/
 
@@ -140,10 +135,6 @@ Stream_t Env_cuda_stream_kernel_faces( Env* env );
 void Env_cuda_stream_wait( Env* env, Stream_t stream );
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_env_cuda_h_---*/
 

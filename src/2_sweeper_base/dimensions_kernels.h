@@ -13,11 +13,6 @@
 
 #include "types_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Enums for compile-time sizes---*/
 
@@ -56,10 +51,6 @@ typedef struct
 } Dimensions;
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_dimensions_kernels_h_---*/
 

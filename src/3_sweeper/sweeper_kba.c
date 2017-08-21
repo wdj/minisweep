@@ -22,11 +22,6 @@
 
 #include "sweeper_kba_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Null object---*/
 
@@ -845,10 +840,6 @@ void Sweeper_sweep(
 } /*---sweep---*/
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---SWEEPER_KBA---*/
 

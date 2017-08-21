@@ -18,11 +18,6 @@
 #include "quantities.h"
 #include "stepscheduler_kba.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Struct with face info---*/
 
@@ -192,10 +187,6 @@ void Faces_recv_faces_end(
   Env*            env );
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_faces_kba_h_---*/
 

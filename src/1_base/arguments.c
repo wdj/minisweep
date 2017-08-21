@@ -16,11 +16,6 @@
 #include "types.h"
 #include "env_assert.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Null object---*/
 
@@ -191,11 +186,5 @@ Bool_t Arguments_are_all_consumed( const Arguments* args )
 
   return result;
 }
-
-/*===========================================================================*/
-  
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 /*===========================================================================*/

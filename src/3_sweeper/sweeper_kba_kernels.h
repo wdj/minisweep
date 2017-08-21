@@ -18,11 +18,6 @@
 #include "pointer_kernels.h"
 #include "quantities_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Set up enums---*/
 
@@ -480,10 +475,6 @@ TARGET_G void Sweeper_sweep_block_impl_global(
   unsigned long int      do_block_init );
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_sweeper_kba_kernels_h_---*/
 

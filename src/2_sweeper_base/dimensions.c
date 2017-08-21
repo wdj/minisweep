@@ -15,11 +15,6 @@
 #include "definitions.h"
 #include "dimensions.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Null object---*/
 
@@ -101,9 +96,3 @@ size_t Dimensions_size_faceyz( const Dimensions dims,
 }
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
-
-/*---------------------------------------------------------------------------*/

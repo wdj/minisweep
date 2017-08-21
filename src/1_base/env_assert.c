@@ -16,11 +16,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Assertions---*/
 
@@ -32,10 +27,6 @@ void insist_( const char *condition_string, const char *file, int line )
 }
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---__CUDA_ARCH__---*/
 

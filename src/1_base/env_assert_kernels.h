@@ -14,11 +14,6 @@
 #ifndef __CUDA_ARCH__
 /*---Do the following on the HDST---*/
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 #include <assert.h>
 
 /*===========================================================================*/
@@ -38,10 +33,6 @@ extern "C"
 void insist_( const char *condition_string, const char *file, int line );
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #else /*---__CUDA_ARCH__---*/
 /*---Do the following on the DEVICE---*/

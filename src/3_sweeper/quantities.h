@@ -16,11 +16,6 @@
 
 #include "quantities_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Pseudo-constructor for Quantities struct---*/
 
@@ -90,10 +85,6 @@ static inline P Quantities_init_state(
 }
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_quantities_h_---*/
 

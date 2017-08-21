@@ -15,11 +15,6 @@
 #include "quantities.h"
 #include "array_operations.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Initialize state vector to required input value---*/
 
@@ -125,9 +120,3 @@ void copy_vector(       P* const __restrict__ vo,
 }
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
-
-/*---------------------------------------------------------------------------*/

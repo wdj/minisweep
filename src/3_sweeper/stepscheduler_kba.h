@@ -15,11 +15,6 @@
 
 #include "stepscheduler_kba_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Struct with info to define the sweep step schedule---*/
 
@@ -102,10 +97,6 @@ Bool_t StepScheduler_must_do_recv(
   Env*           env );
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_stepscheduler_kba_h_---*/
 

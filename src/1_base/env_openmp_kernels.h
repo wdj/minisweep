@@ -18,11 +18,6 @@
 #include "types_kernels.h"
 #include "env_assert_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Enums---*/
 
@@ -57,10 +52,6 @@ TARGET_HD static inline Bool_t Env_omp_in_parallel()
 }
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_env_openmp_kernels_h_---*/
 

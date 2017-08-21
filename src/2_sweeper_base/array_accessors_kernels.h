@@ -19,11 +19,6 @@
 #include "definitions_kernels.h"
 #include "dimensions_kernels.h"
 
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-
 /*===========================================================================*/
 /*---Multidimensional indexing function---*/
 
@@ -647,10 +642,6 @@ TARGET_HD static inline const P* const_ref_faceyz(
 }
 
 /*===========================================================================*/
-
-#ifdef __cplusplus
-} /*---extern "C"---*/
-#endif
 
 #endif /*---_array_accessors_kernels_h_---*/
 
