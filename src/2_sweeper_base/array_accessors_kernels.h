@@ -36,13 +36,13 @@ TARGET_HD static inline size_t ind_state_flat(
     const int im,
     const int iu )
 {
-  Assert( nu > 0 );
-  Assert( ix >= 0 && ix < dims_ncell_x );
-  Assert( iy >= 0 && iy < dims_ncell_y );
-  Assert( iz >= 0 && iz < dims_ncell_z );
-  Assert( ie >= 0 && ie < dims_ne );
-  Assert( im >= 0 && im < dims_nm );
-  Assert( iu >= 0 && iu < nu );
+  ASSERT( nu > 0 );
+  ASSERT( ix >= 0 && ix < dims_ncell_x );
+  ASSERT( iy >= 0 && iy < dims_ncell_y );
+  ASSERT( iz >= 0 && iz < dims_ncell_z );
+  ASSERT( ie >= 0 && ie < dims_ne );
+  ASSERT( im >= 0 && im < dims_nm );
+  ASSERT( iu >= 0 && iu < nu );
 
   return  im + dims_nm      * (
           iu + nu           * (
@@ -66,13 +66,13 @@ TARGET_HD static inline size_t ind_state(
     const int        im,
     const int        iu )
 {
-  Assert( nu > 0 );
-  Assert( ix >= 0 && ix < dims.ncell_x );
-  Assert( iy >= 0 && iy < dims.ncell_y );
-  Assert( iz >= 0 && iz < dims.ncell_z );
-  Assert( ie >= 0 && ie < dims.ne );
-  Assert( im >= 0 && im < dims.nm );
-  Assert( iu >= 0 && iu < nu );
+  ASSERT( nu > 0 );
+  ASSERT( ix >= 0 && ix < dims.ncell_x );
+  ASSERT( iy >= 0 && iy < dims.ncell_y );
+  ASSERT( iz >= 0 && iz < dims.ncell_z );
+  ASSERT( ie >= 0 && ie < dims.ne );
+  ASSERT( im >= 0 && im < dims.nm );
+  ASSERT( iu >= 0 && iu < nu );
 
   return  im + dims.nm      * (
           iu + nu           * (
@@ -101,14 +101,14 @@ TARGET_HD static inline P* ref_state_flat(
     const int              im,
     const int              iu )
 {
-  Assert( v );
-  Assert( nu > 0 );
-  Assert( ix >= 0 && ix < dims_ncell_x );
-  Assert( iy >= 0 && iy < dims_ncell_y );
-  Assert( iz >= 0 && iz < dims_ncell_z );
-  Assert( ie >= 0 && ie < dims_ne );
-  Assert( im >= 0 && im < dims_nm );
-  Assert( iu >= 0 && iu < nu );
+  ASSERT( v );
+  ASSERT( nu > 0 );
+  ASSERT( ix >= 0 && ix < dims_ncell_x );
+  ASSERT( iy >= 0 && iy < dims_ncell_y );
+  ASSERT( iz >= 0 && iz < dims_ncell_z );
+  ASSERT( ie >= 0 && ie < dims_ne );
+  ASSERT( im >= 0 && im < dims_nm );
+  ASSERT( iu >= 0 && iu < nu );
 
   return & v[ ind_state_flat( dims_ncell_x, dims_ncell_y, dims_ncell_z,
                               dims_ne, dims_nm, nu,
@@ -129,14 +129,14 @@ TARGET_HD static inline P* ref_state(
     const int              im,
     const int              iu )
 {
-  Assert( v );
-  Assert( nu > 0 );
-  Assert( ix >= 0 && ix < dims.ncell_x );
-  Assert( iy >= 0 && iy < dims.ncell_y );
-  Assert( iz >= 0 && iz < dims.ncell_z );
-  Assert( ie >= 0 && ie < dims.ne );
-  Assert( im >= 0 && im < dims.nm );
-  Assert( iu >= 0 && iu < nu );
+  ASSERT( v );
+  ASSERT( nu > 0 );
+  ASSERT( ix >= 0 && ix < dims.ncell_x );
+  ASSERT( iy >= 0 && iy < dims.ncell_y );
+  ASSERT( iz >= 0 && iz < dims.ncell_z );
+  ASSERT( ie >= 0 && ie < dims.ne );
+  ASSERT( im >= 0 && im < dims.nm );
+  ASSERT( iu >= 0 && iu < nu );
 
   return & v[ ind_state( dims, nu, ix, iy, iz, ie, im, iu ) ];
 }
@@ -159,14 +159,14 @@ TARGET_HD static inline const P* const_ref_state_flat(
     const int                    im,
     const int                    iu )
 {
-  Assert( v );
-  Assert( nu > 0 );
-  Assert( ix >= 0 && ix < dims_ncell_x );
-  Assert( iy >= 0 && iy < dims_ncell_y );
-  Assert( iz >= 0 && iz < dims_ncell_z );
-  Assert( ie >= 0 && ie < dims_ne );
-  Assert( im >= 0 && im < dims_nm );
-  Assert( iu >= 0 && iu < nu );
+  ASSERT( v );
+  ASSERT( nu > 0 );
+  ASSERT( ix >= 0 && ix < dims_ncell_x );
+  ASSERT( iy >= 0 && iy < dims_ncell_y );
+  ASSERT( iz >= 0 && iz < dims_ncell_z );
+  ASSERT( ie >= 0 && ie < dims_ne );
+  ASSERT( im >= 0 && im < dims_nm );
+  ASSERT( iu >= 0 && iu < nu );
 
   return & v[ ind_state_flat( dims_ncell_x, dims_ncell_y, dims_ncell_z,
                               dims_ne, dims_nm, nu,
@@ -187,14 +187,14 @@ TARGET_HD static inline const P* const_ref_state(
     const int                    im,
     const int                    iu )
 {
-  Assert( v );
-  Assert( nu > 0 );
-  Assert( ix >= 0 && ix < dims.ncell_x );
-  Assert( iy >= 0 && iy < dims.ncell_y );
-  Assert( iz >= 0 && iz < dims.ncell_z );
-  Assert( ie >= 0 && ie < dims.ne );
-  Assert( im >= 0 && im < dims.nm );
-  Assert( iu >= 0 && iu < nu );
+  ASSERT( v );
+  ASSERT( nu > 0 );
+  ASSERT( ix >= 0 && ix < dims.ncell_x );
+  ASSERT( iy >= 0 && iy < dims.ncell_y );
+  ASSERT( iz >= 0 && iz < dims.ncell_z );
+  ASSERT( ie >= 0 && ie < dims.ne );
+  ASSERT( im >= 0 && im < dims.nm );
+  ASSERT( iu >= 0 && iu < nu );
 
   return & v[ ind_state( dims, nu, ix, iy, iz, ie, im, iu ) ];
 }
@@ -210,10 +210,10 @@ TARGET_HD static inline P* ref_vilocal(
     const int              im,
     const int              iu )
 {
-  Assert( v );
-  Assert( nu > 0 );
-  Assert( im >= 0 && im < immax );
-  Assert( iu >= 0 && iu < nu );
+  ASSERT( v );
+  ASSERT( nu > 0 );
+  ASSERT( im >= 0 && im < immax );
+  ASSERT( iu >= 0 && iu < nu );
 
   return & v[ im + immax * (
               iu + nu    * (
@@ -231,10 +231,10 @@ TARGET_HD static inline const P* const_ref_vilocal(
     const int                    im,
     const int                    iu )
 {
-  Assert( v );
-  Assert( nu > 0 );
-  Assert( im >= 0 && im < immax );
-  Assert( iu >= 0 && iu < nu );
+  ASSERT( v );
+  ASSERT( nu > 0 );
+  ASSERT( im >= 0 && im < immax );
+  ASSERT( iu >= 0 && iu < nu );
 
   return & v[ im + immax * (
               iu + nu    * (
@@ -251,9 +251,9 @@ TARGET_HD static inline int ind_vslocal(
     const int        ia,
     const int        iu )
 {
-  Assert( nu > 0 );
-  Assert( ia >= 0 && ia < iamax );
-  Assert( iu >= 0 && iu < nu );
+  ASSERT( nu > 0 );
+  ASSERT( ia >= 0 && ia < iamax );
+  ASSERT( iu >= 0 && iu < nu );
 
   return ia + iamax * (
          iu + nu    * (
@@ -271,10 +271,10 @@ TARGET_HD static inline P* ref_vslocal(
     const int              ia,
     const int              iu )
 {
-  Assert( v );
-  Assert( nu > 0 );
-  Assert( ia >= 0 && ia < iamax );
-  Assert( iu >= 0 && iu < nu );
+  ASSERT( v );
+  ASSERT( nu > 0 );
+  ASSERT( ia >= 0 && ia < iamax );
+  ASSERT( iu >= 0 && iu < nu );
 
   return & v[ ia + iamax * (
               iu + nu    * (
@@ -292,10 +292,10 @@ TARGET_HD static inline const P* const_ref_vslocal(
     const int                    ia,
     const int                    iu )
 {
-  Assert( v );
-  Assert( nu > 0 );
-  Assert( ia >= 0 && ia < iamax );
-  Assert( iu >= 0 && iu < nu );
+  ASSERT( v );
+  ASSERT( nu > 0 );
+  ASSERT( ia >= 0 && ia < iamax );
+  ASSERT( iu >= 0 && iu < nu );
 
   return & v[ ia + iamax * (
               iu + nu    * (
@@ -313,10 +313,10 @@ TARGET_HD static inline P* ref_volocal(
     const int              im,
     const int              iu )
 {
-  Assert( v );
-  Assert( nu > 0 );
-  Assert( im >= 0 && im < immax );
-  Assert( iu >= 0 && iu < nu );
+  ASSERT( v );
+  ASSERT( nu > 0 );
+  ASSERT( im >= 0 && im < immax );
+  ASSERT( iu >= 0 && iu < nu );
 
   return & v[ im + immax * (
               iu + nu    * (
@@ -333,10 +333,10 @@ TARGET_HD static inline P* ref_a_from_m(
     const int              ia,
     const int              octant )
 {
-  Assert( v );
-  Assert( im >= 0 && im < dims.nm );
-  Assert( ia >= 0 && ia < dims.na );
-  Assert( octant >= 0 && octant < NOCTANT );
+  ASSERT( v );
+  ASSERT( im >= 0 && im < dims.nm );
+  ASSERT( ia >= 0 && ia < dims.na );
+  ASSERT( octant >= 0 && octant < NOCTANT );
 
   return & v[ ia     + dims.na * (
               im     +      NM * (
@@ -354,10 +354,10 @@ TARGET_HD static inline const P* const_ref_a_from_m(
     const int                    ia,
     const int                    octant )
 {
-  Assert( v );
-  Assert( im >= 0 && im < dims.nm );
-  Assert( ia >= 0 && ia < dims.na );
-  Assert( octant >= 0 && octant < NOCTANT );
+  ASSERT( v );
+  ASSERT( im >= 0 && im < dims.nm );
+  ASSERT( ia >= 0 && ia < dims.na );
+  ASSERT( octant >= 0 && octant < NOCTANT );
 
   return & v[ ia     + dims.na * (
               im     +      NM * (
@@ -376,10 +376,10 @@ TARGET_HD static inline const P* __restrict__ const_ref_a_from_m_flat(
     const int                    ia,
     const int                    octant )
 {
-  Assert( v );
-  Assert( im >= 0 && im < dims_nm );
-  Assert( ia >= 0 && ia < dims_na );
-  Assert( octant >= 0 && octant < NOCTANT );
+  ASSERT( v );
+  ASSERT( im >= 0 && im < dims_nm );
+  ASSERT( ia >= 0 && ia < dims_na );
+  ASSERT( octant >= 0 && octant < NOCTANT );
 
   return & v[ ia     + dims_na * (
               im     +      NM * (
@@ -397,10 +397,10 @@ TARGET_HD static inline P* ref_m_from_a(
     const int              ia,
     const int              octant )
 {
-  Assert( v );
-  Assert( im >= 0 && im < dims.nm );
-  Assert( ia >= 0 && ia < dims.na );
-  Assert( octant >= 0 && octant < NOCTANT );
+  ASSERT( v );
+  ASSERT( im >= 0 && im < dims.nm );
+  ASSERT( ia >= 0 && ia < dims.na );
+  ASSERT( octant >= 0 && octant < NOCTANT );
 
   return & v[ im     +      NM * (
               ia     + dims.na * (
@@ -418,10 +418,10 @@ TARGET_HD static inline const P* const_ref_m_from_a(
     const int                    ia,
     const int                    octant )
 {
-  Assert( v );
-  Assert( im >= 0 && im < dims.nm );
-  Assert( ia >= 0 && ia < dims.na );
-  Assert( octant >= 0 && octant < NOCTANT );
+  ASSERT( v );
+  ASSERT( im >= 0 && im < dims.nm );
+  ASSERT( ia >= 0 && ia < dims.na );
+  ASSERT( octant >= 0 && octant < NOCTANT );
 
   return & v[ im     +      NM * (
               ia     + dims.na * (
@@ -439,9 +439,9 @@ TARGET_HD static inline int ind_m_from_a_flat(
     const int ia,
     const int octant )
 {
-  Assert( im >= 0 && im < dims_nm );
-  Assert( ia >= 0 && ia < dims_na );
-  Assert( octant >= 0 && octant < NOCTANT );
+  ASSERT( im >= 0 && im < dims_nm );
+  ASSERT( ia >= 0 && ia < dims_na );
+  ASSERT( octant >= 0 && octant < NOCTANT );
 
   return im     +      NM * (
          ia     + dims_na * (
@@ -464,14 +464,14 @@ TARGET_HD static inline P* ref_facexy(
     const int              iu,
     const int              octant_in_block )
 {
-  Assert( v );
-  Assert( nu > 0 );
-  Assert( ix >= 0 && ix < dims.ncell_x );
-  Assert( iy >= 0 && iy < dims.ncell_y );
-  Assert( ie >= 0 && ie < dims.ne );
-  Assert( ia >= 0 && ia < dims.na );
-  Assert( iu >= 0 && iu < nu );
-  Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
+  ASSERT( v );
+  ASSERT( nu > 0 );
+  ASSERT( ix >= 0 && ix < dims.ncell_x );
+  ASSERT( iy >= 0 && iy < dims.ncell_y );
+  ASSERT( ie >= 0 && ie < dims.ne );
+  ASSERT( ia >= 0 && ia < dims.na );
+  ASSERT( iu >= 0 && iu < nu );
+  ASSERT( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na      * (
               iu + nu           * (
@@ -496,14 +496,14 @@ TARGET_HD static inline const P* const_ref_facexy(
     const int                    iu,
     const int                    octant_in_block )
 {
-  Assert( v );
-  Assert( nu > 0 );
-  Assert( ix >= 0 && ix < dims.ncell_x );
-  Assert( iy >= 0 && iy < dims.ncell_y );
-  Assert( ie >= 0 && ie < dims.ne );
-  Assert( ia >= 0 && ia < dims.na );
-  Assert( iu >= 0 && iu < nu );
-  Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
+  ASSERT( v );
+  ASSERT( nu > 0 );
+  ASSERT( ix >= 0 && ix < dims.ncell_x );
+  ASSERT( iy >= 0 && iy < dims.ncell_y );
+  ASSERT( ie >= 0 && ie < dims.ne );
+  ASSERT( ia >= 0 && ia < dims.na );
+  ASSERT( iu >= 0 && iu < nu );
+  ASSERT( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na      * (
               iu + nu           * (
@@ -528,14 +528,14 @@ TARGET_HD static inline P* ref_facexz(
     const int              iu,
     const int              octant_in_block )
 {
-  Assert( v );
-  Assert( nu > 0 );
-  Assert( ix >= 0 && ix < dims.ncell_x );
-  Assert( iz >= 0 && iz < dims.ncell_z );
-  Assert( ie >= 0 && ie < dims.ne );
-  Assert( ia >= 0 && ia < dims.na );
-  Assert( iu >= 0 && iu < nu );
-  Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
+  ASSERT( v );
+  ASSERT( nu > 0 );
+  ASSERT( ix >= 0 && ix < dims.ncell_x );
+  ASSERT( iz >= 0 && iz < dims.ncell_z );
+  ASSERT( ie >= 0 && ie < dims.ne );
+  ASSERT( ia >= 0 && ia < dims.na );
+  ASSERT( iu >= 0 && iu < nu );
+  ASSERT( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na      * (
               iu + nu           * (
@@ -560,14 +560,14 @@ TARGET_HD static inline const P* const_ref_facexz(
     const int                    iu,
     const int                    octant_in_block )
 {
-  Assert( v );
-  Assert( nu > 0 );
-  Assert( ix >= 0 && ix < dims.ncell_x );
-  Assert( iz >= 0 && iz < dims.ncell_z );
-  Assert( ie >= 0 && ie < dims.ne );
-  Assert( ia >= 0 && ia < dims.na );
-  Assert( iu >= 0 && iu < nu );
-  Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
+  ASSERT( v );
+  ASSERT( nu > 0 );
+  ASSERT( ix >= 0 && ix < dims.ncell_x );
+  ASSERT( iz >= 0 && iz < dims.ncell_z );
+  ASSERT( ie >= 0 && ie < dims.ne );
+  ASSERT( ia >= 0 && ia < dims.na );
+  ASSERT( iu >= 0 && iu < nu );
+  ASSERT( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na      * (
               iu + nu           * (
@@ -592,14 +592,14 @@ TARGET_HD static inline P* ref_faceyz(
     const int             iu,
     const int             octant_in_block )
 {
-  Assert( v );
-  Assert( nu > 0 );
-  Assert( iy >= 0 && iy < dims.ncell_y );
-  Assert( iz >= 0 && iz < dims.ncell_z );
-  Assert( ie >= 0 && ie < dims.ne );
-  Assert( ia >= 0 && ia < dims.na );
-  Assert( iu >= 0 && iu < nu );
-  Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
+  ASSERT( v );
+  ASSERT( nu > 0 );
+  ASSERT( iy >= 0 && iy < dims.ncell_y );
+  ASSERT( iz >= 0 && iz < dims.ncell_z );
+  ASSERT( ie >= 0 && ie < dims.ne );
+  ASSERT( ia >= 0 && ia < dims.na );
+  ASSERT( iu >= 0 && iu < nu );
+  ASSERT( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na      * (
               iu + nu           * (
@@ -624,14 +624,14 @@ TARGET_HD static inline const P* const_ref_faceyz(
     const int                    iu,
     const int                    octant_in_block )
 {
-  Assert( v );
-  Assert( nu > 0 );
-  Assert( iy >= 0 && iy < dims.ncell_y );
-  Assert( iz >= 0 && iz < dims.ncell_z );
-  Assert( ie >= 0 && ie < dims.ne );
-  Assert( ia >= 0 && ia < dims.na );
-  Assert( iu >= 0 && iu < nu );
-  Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
+  ASSERT( v );
+  ASSERT( nu > 0 );
+  ASSERT( iy >= 0 && iy < dims.ncell_y );
+  ASSERT( iz >= 0 && iz < dims.ncell_z );
+  ASSERT( ie >= 0 && ie < dims.ne );
+  ASSERT( ia >= 0 && ia < dims.na );
+  ASSERT( iu >= 0 && iu < nu );
+  ASSERT( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   return & v[ ia + dims.na      * (
               iu + nu           * (

@@ -50,7 +50,7 @@ TARGET_HD static inline int Quantities_scalefactor_energy_( int ie,
   /*---Random power-of-two multiplier for each energy group,
        to help catch errors regarding indexing of energy groups.
   ---*/
-  Assert( ie >= 0 && ie < dims.ne );
+  ASSERT( ie >= 0 && ie < dims.ne );
 
   const int im = 714025;
   const int ia = 1366;
@@ -72,7 +72,7 @@ TARGET_HD static inline int Quantities_scalefactor_unknown_( int iu )
   /*---Random power-of-two multiplier for each cell unknown,
        to help catch errors regarding indexing of cell unknowns.
   ---*/
-  Assert( iu >= 0 && iu < NU );
+  ASSERT( iu >= 0 && iu < NU );
 
   const int im = 312500;
   const int ia = 741;
@@ -97,9 +97,9 @@ TARGET_HD static inline int Quantities_scalefactor_space_(
 {
   /*---Create power of 2 based on hash of the spatial location.
   ---*/
-  Assert( ix_g >= -1 && ix_g <= quan->ncell_x_g );
-  Assert( iy_g >= -1 && iy_g <= quan->ncell_y_g );
-  Assert( iz_g >= -1 && iz_g <= quan->ncell_z_g );
+  ASSERT( ix_g >= -1 && ix_g <= quan->ncell_x_g );
+  ASSERT( iy_g >= -1 && iy_g <= quan->ncell_y_g );
+  ASSERT( iz_g >= -1 && iz_g <= quan->ncell_z_g );
 
   int result = 0;
 
@@ -130,7 +130,7 @@ TARGET_HD static inline int Quantities_scalefactor_angle_( Dimensions dims,
   /*---Create a "random" power of 2. Limit the size by taking only
        the low order bits of ia
   ---*/
-  Assert( ia >= 0 && ia < dims.na );
+  ASSERT( ia >= 0 && ia < dims.na );
 
   return 1 << ( ia & ( (1<<3) - 1 ) );
 }
@@ -142,7 +142,7 @@ TARGET_HD static inline int Quantities_scalefactor_angle_( Dimensions dims,
 TARGET_HD static inline P Quantities_xfluxweight_( Dimensions dims,
                                                     int ia )
 {
-  Assert( ia >= 0 && ia < dims.na );
+  ASSERT( ia >= 0 && ia < dims.na );
 
   return (P) ( 1 / (P) 2 );
 }
@@ -154,7 +154,7 @@ TARGET_HD static inline P Quantities_xfluxweight_( Dimensions dims,
 TARGET_HD static inline P Quantities_yfluxweight_( Dimensions dims,
                                                     int ia )
 {
-  Assert( ia >= 0 && ia < dims.na );
+  ASSERT( ia >= 0 && ia < dims.na );
 
   return (P) ( 1 / (P) 4 );
 }
@@ -186,7 +186,7 @@ TARGET_HD static inline P Quantities_zfluxweight_( Dimensions dims,
        Powers of 2 are used so that the divides are exact in
        floating point arithmetic.
   ---*/
-  Assert( ia >= 0 && ia < dims.na );
+  ASSERT( ia >= 0 && ia < dims.na );
 
   return (P) ( 1 / (P) 4 - 1 / (P) Quantities_scalefactor_angle_( dims, ia ) );
 }
@@ -197,7 +197,7 @@ TARGET_HD static inline P Quantities_zfluxweight_( Dimensions dims,
 
 TARGET_HD static inline int Quantities_scalefactor_octant_( int octant )
 {
-  Assert( octant>=0 && octant<NOCTANT );
+  ASSERT( octant>=0 && octant<NOCTANT );
 
 #ifndef RELAXED_TESTING
   const int result = 1 + octant;
@@ -222,14 +222,14 @@ TARGET_HD static inline P Quantities_init_facexy(
   int                octant,
   const Dimensions   dims_g )
 {
-  Assert( ix_g >=  0 && ix_g <  dims_g.ncell_x );
-  Assert( iy_g >=  0 && iy_g <  dims_g.ncell_y );
-  Assert( ( iz_g == -1             && Dir_z(octant)==DIR_UP ) ||
+  ASSERT( ix_g >=  0 && ix_g <  dims_g.ncell_x );
+  ASSERT( iy_g >=  0 && iy_g <  dims_g.ncell_y );
+  ASSERT( ( iz_g == -1             && Dir_z(octant)==DIR_UP ) ||
           ( iz_g == dims_g.ncell_z && Dir_z(octant)==DIR_DN ) );
-  Assert( ie >=  0 && ie < dims_g.ne );
-  Assert( ia >=  0 && ia < dims_g.na );
-  Assert( iu >=  0 && iu < NU );
-  Assert( octant >= 0 && octant < NOCTANT );
+  ASSERT( ie >=  0 && ie < dims_g.ne );
+  ASSERT( ia >=  0 && ia < dims_g.na );
+  ASSERT( iu >=  0 && iu < NU );
+  ASSERT( octant >= 0 && octant < NOCTANT );
 
   /*---NOTE: this is constructed to be affine in ia (except for scale factor)
        and independent of ix, iy, iz, to facilitate calculating the
@@ -264,14 +264,14 @@ TARGET_HD static inline P Quantities_init_facexz(
   int                octant,
   const Dimensions   dims_g )
 {
-  Assert( ix_g >=  0 && ix_g < dims_g.ncell_x );
-  Assert( ( iy_g == -1             && Dir_y(octant)==DIR_UP ) ||
+  ASSERT( ix_g >=  0 && ix_g < dims_g.ncell_x );
+  ASSERT( ( iy_g == -1             && Dir_y(octant)==DIR_UP ) ||
           ( iy_g == dims_g.ncell_y && Dir_y(octant)==DIR_DN ) );
-  Assert( iz_g >=  0 && iz_g < dims_g.ncell_z );
-  Assert( ie >=  0 && ie < dims_g.ne );
-  Assert( ia >=  0 && ia < dims_g.na );
-  Assert( iu >=  0 && iu < NU );
-  Assert( octant >= 0 && octant < NOCTANT );
+  ASSERT( iz_g >=  0 && iz_g < dims_g.ncell_z );
+  ASSERT( ie >=  0 && ie < dims_g.ne );
+  ASSERT( ia >=  0 && ia < dims_g.na );
+  ASSERT( iu >=  0 && iu < NU );
+  ASSERT( octant >= 0 && octant < NOCTANT );
 
   if( Quantities_bc_vacuum() )
   {
@@ -302,14 +302,14 @@ TARGET_HD static inline P Quantities_init_faceyz(
   int                octant,
   const Dimensions   dims_g )
 {
-  Assert( ( ix_g == -1             && Dir_x(octant)==DIR_UP ) ||
+  ASSERT( ( ix_g == -1             && Dir_x(octant)==DIR_UP ) ||
           ( ix_g == dims_g.ncell_x && Dir_x(octant)==DIR_DN ) );
-  Assert( iy_g >=  0 && iy_g < dims_g.ncell_y );
-  Assert( iz_g >=  0 && iz_g < dims_g.ncell_z );
-  Assert( ie >=  0 && ie < dims_g.ne );
-  Assert( ia >=  0 && ia < dims_g.na );
-  Assert( iu >=  0 && iu < NU );
-  Assert( octant >= 0 && octant < NOCTANT );
+  ASSERT( iy_g >=  0 && iy_g < dims_g.ncell_y );
+  ASSERT( iz_g >=  0 && iz_g < dims_g.ncell_z );
+  ASSERT( ie >=  0 && ie < dims_g.ne );
+  ASSERT( ia >=  0 && ia < dims_g.na );
+  ASSERT( iu >=  0 && iu < NU );
+  ASSERT( octant >= 0 && octant < NOCTANT );
 
   if( Quantities_bc_vacuum() )
   {
@@ -352,25 +352,25 @@ TARGET_HD static inline void Quantities_solve(
   const Dimensions      dims_g,
   const Bool_t          is_cell_active )
 {
-  Assert( vslocal );
+  ASSERT( vslocal );
   /*
-  Assert( ia >= 0 && ia < dims_b.na );
+  ASSERT( ia >= 0 && ia < dims_b.na );
   */
-  Assert( ia >= 0 );
-  Assert( iaind >= 0 && iaind < iamax );
-  Assert( iamax >= 0 );
-  Assert( facexy );
-  Assert( facexz );
-  Assert( faceyz );
-  Assert( ( ix_b >= 0 && ix_b < dims_b.ncell_x ) || ! is_cell_active );
-  Assert( ( iy_b >= 0 && iy_b < dims_b.ncell_y ) || ! is_cell_active );
-  Assert( ( iz_b >= 0 && iz_b < dims_b.ncell_z ) || ! is_cell_active );
-  Assert( ( ix_g >= 0 && ix_g < dims_g.ncell_x ) || ! is_cell_active );
-  Assert( ( iy_g >= 0 && iy_g < dims_g.ncell_y ) || ! is_cell_active );
-  Assert( ( iz_g >= 0 && iz_g < dims_g.ncell_z ) || ! is_cell_active );
-  Assert( ie   >= 0 && ie   < dims_b.ne );
-  Assert( octant >= 0 && octant < NOCTANT );
-  Assert( octant_in_block >= 0 && octant_in_block < noctant_per_block );
+  ASSERT( ia >= 0 );
+  ASSERT( iaind >= 0 && iaind < iamax );
+  ASSERT( iamax >= 0 );
+  ASSERT( facexy );
+  ASSERT( facexz );
+  ASSERT( faceyz );
+  ASSERT( ( ix_b >= 0 && ix_b < dims_b.ncell_x ) || ! is_cell_active );
+  ASSERT( ( iy_b >= 0 && iy_b < dims_b.ncell_y ) || ! is_cell_active );
+  ASSERT( ( iz_b >= 0 && iz_b < dims_b.ncell_z ) || ! is_cell_active );
+  ASSERT( ( ix_g >= 0 && ix_g < dims_g.ncell_x ) || ! is_cell_active );
+  ASSERT( ( iy_g >= 0 && iy_g < dims_g.ncell_y ) || ! is_cell_active );
+  ASSERT( ( iz_g >= 0 && iz_g < dims_g.ncell_z ) || ! is_cell_active );
+  ASSERT( ie   >= 0 && ie   < dims_b.ne );
+  ASSERT( octant >= 0 && octant < NOCTANT );
+  ASSERT( octant_in_block >= 0 && octant_in_block < noctant_per_block );
 
   if( ia < dims_b.na && is_cell_active )
   {

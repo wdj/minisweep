@@ -69,7 +69,7 @@ TARGET_HD static inline int imax( const int i,
 TARGET_HD static inline int ifloor( const int i,
                                     const int j )
 {
-    Assert( j > 0 );
+    ASSERT( j > 0 );
 
     return i >= 0 ? i/j : (i-j+1)/j;
 }
@@ -79,7 +79,7 @@ TARGET_HD static inline int ifloor( const int i,
 TARGET_HD static inline int iceil( const int i,
                                    const int j )
 {
-    Assert( j > 0 );
+    ASSERT( j > 0 );
 
     return - ifloor( -i, j );
 }

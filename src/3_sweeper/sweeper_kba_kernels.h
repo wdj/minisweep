@@ -106,13 +106,13 @@ typedef struct
 TARGET_HD static inline int Sweeper_thread_e( const SweeperLite* sweeper )
 {
 #ifdef USE_OPENMP_TASKS
-  Assert(sweeper->thread_e >= 0);
+  ASSERT(sweeper->thread_e >= 0);
   return sweeper->thread_e;
 #else
 #ifdef __CUDA_ARCH__
   return Env_cuda_threadblock( 0 );
 #else
-  Assert( sweeper->nthread_e *
+  ASSERT( sweeper->nthread_e *
           sweeper->nthread_octant *
           sweeper->nthread_y *
           sweeper->nthread_z == 1 || Env_omp_in_parallel() );
@@ -126,13 +126,13 @@ TARGET_HD static inline int Sweeper_thread_e( const SweeperLite* sweeper )
 TARGET_HD static inline int Sweeper_thread_octant( const SweeperLite* sweeper )
 {
 #ifdef USE_OPENMP_TASKS
-  Assert(sweeper->thread_octant >= 0);
+  ASSERT(sweeper->thread_octant >= 0);
   return sweeper->thread_octant;
 #else
 #ifdef __CUDA_ARCH__
   return Env_cuda_thread_in_threadblock( 1 );
 #else
-  Assert( sweeper->nthread_e *
+  ASSERT( sweeper->nthread_e *
           sweeper->nthread_octant *
           sweeper->nthread_y *
           sweeper->nthread_z == 1 || Env_omp_in_parallel() );
@@ -147,7 +147,7 @@ TARGET_HD static inline int Sweeper_thread_octant( const SweeperLite* sweeper )
 TARGET_HD static inline int Sweeper_thread_x( const SweeperLite* sweeper )
 {
 #ifdef USE_OPENMP_TASKS
-  Assert(sweeper->thread_x >= 0);
+  ASSERT(sweeper->thread_x >= 0);
   return sweeper->thread_x;
 #else
   return 0;
@@ -159,13 +159,13 @@ TARGET_HD static inline int Sweeper_thread_x( const SweeperLite* sweeper )
 TARGET_HD static inline int Sweeper_thread_y( const SweeperLite* sweeper )
 {
 #ifdef USE_OPENMP_TASKS
-  Assert(sweeper->thread_y >= 0);
+  ASSERT(sweeper->thread_y >= 0);
   return sweeper->thread_y;
 #else
 #ifdef __CUDA_ARCH__
   return Env_cuda_thread_in_threadblock( 2 ) % sweeper->nthread_y ;
 #else
-  Assert( sweeper->nthread_e *
+  ASSERT( sweeper->nthread_e *
           sweeper->nthread_octant *
           sweeper->nthread_y *
           sweeper->nthread_z == 1 || Env_omp_in_parallel() );
@@ -181,13 +181,13 @@ TARGET_HD static inline int Sweeper_thread_y( const SweeperLite* sweeper )
 TARGET_HD static inline int Sweeper_thread_z( const SweeperLite* sweeper )
 {
 #ifdef USE_OPENMP_TASKS
-  Assert(sweeper->thread_z >= 0);
+  ASSERT(sweeper->thread_z >= 0);
   return sweeper->thread_z;
 #else
 #ifdef __CUDA_ARCH__
   return Env_cuda_thread_in_threadblock( 2 ) / sweeper->nthread_y;
 #else
-  Assert( sweeper->nthread_e *
+  ASSERT( sweeper->nthread_e *
           sweeper->nthread_octant *
           sweeper->nthread_y *
           sweeper->nthread_z == 1 || Env_omp_in_parallel() );
@@ -395,8 +395,8 @@ TARGET_HD static inline Bool_t is_axis_semiblocked(int nsemiblock, int dim)
   /* Indicate whether the block is broken into semiblocks along the axis */
   /* Note as we increase nsemiblock, we semiblock in x, then add y, then z */
 
-  Assert( nsemiblock >= 0 && nsemiblock <= NOCTANT );
-  Assert( dim >= 0 && dim < NDIM );
+  ASSERT( nsemiblock >= 0 && nsemiblock <= NOCTANT );
+  ASSERT( dim >= 0 && dim < NDIM );
 
   return nsemiblock > (1<<dim);
 }
@@ -409,10 +409,10 @@ TARGET_HD static inline Bool_t is_semiblock_min_when_semiblocked(
   /* On this semiblock step for this thread, do we process the lower
      semiblock along the relevant axis.  Only meaningful if is_semiblocked. */
 
-  Assert( nsemiblock >= 0 && nsemiblock <= NOCTANT );
-  Assert( semiblock_step >= 0 && semiblock_step < nsemiblock );
-  Assert( dim >= 0 && dim < NDIM );
-  Assert( dir == DIR_UP || dir == DIR_DN );
+  ASSERT( nsemiblock >= 0 && nsemiblock <= NOCTANT );
+  ASSERT( semiblock_step >= 0 && semiblock_step < nsemiblock );
+  ASSERT( dim >= 0 && dim < NDIM );
+  ASSERT( dir == DIR_UP || dir == DIR_DN );
 
   return ( ( semiblock_step & (1<<dim) ) == 0 )  ==  ( dir == DIR_UP );
 }

@@ -62,12 +62,12 @@ static inline P Quantities_init_state(
   int                iu,
   const Dimensions   dims )
 {
-  Assert( ix >= 0 && ix < dims.ncell_x);
-  Assert( iy >= 0 && iy < dims.ncell_y );
-  Assert( iz >= 0 && iz < dims.ncell_z );
-  Assert( ie >= 0 && ie < dims.ne );
-  Assert( im >= 0 && im < dims.nm );
-  Assert( iu >= 0 && iu < NU );
+  ASSERT( ix >= 0 && ix < dims.ncell_x);
+  ASSERT( iy >= 0 && iy < dims.ncell_y );
+  ASSERT( iz >= 0 && iz < dims.ncell_z );
+  ASSERT( ie >= 0 && ie < dims.ne );
+  ASSERT( im >= 0 && im < dims.nm );
+  ASSERT( iu >= 0 && iu < NU );
 
   if( Quantities_bc_vacuum() )
   {

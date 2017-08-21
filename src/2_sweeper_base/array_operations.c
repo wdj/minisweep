@@ -69,7 +69,7 @@ void get_state_norms( const P* const __restrict__ vi,
                       P* const __restrict__       normsqdiffp,
                       Env* const                  env )
 {
-  Insist( normsqp && normsqdiffp);
+  INSIST( normsqp && normsqdiffp);
 
   int ix = 0;
   int iy = 0;
@@ -94,8 +94,8 @@ void get_state_norms( const P* const __restrict__ vi,
     normsq        += val_vo * val_vo;
     normsqdiff    += diff   * diff;
   }
-  Insist( normsq     >= P_zero() );
-  Insist( normsqdiff >= P_zero() );
+  INSIST( normsq     >= P_zero() );
+  INSIST( normsqdiff >= P_zero() );
   normsq     = Env_sum_P( env, normsq );
   normsqdiff = Env_sum_P( env, normsqdiff );
 
@@ -110,7 +110,7 @@ void copy_vector(       P* const __restrict__ vo,
                   const P* const __restrict__ vi,
                   const size_t                n )
 {
-  Assert( n+1 >= 1 );
+  ASSERT( n+1 >= 1 );
   size_t i = 0;
 
   for( i=0; i<n; ++i )

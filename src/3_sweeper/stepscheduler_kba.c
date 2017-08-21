@@ -30,7 +30,7 @@ void StepScheduler_create( StepScheduler* stepscheduler,
                            int             nblock_octant,
                            Env*            env )
 {
-  InsistInterface( nblock_z > 0 ? "Invalid z blocking factor supplied." : 0 );
+  INSIST_UI( nblock_z > 0 ? "Invalid z blocking factor supplied." : 0 );
   stepscheduler->nblock_z_          = nblock_z;
   stepscheduler->nproc_x_           = Env_nproc_x( env );
   stepscheduler->nproc_y_           = Env_nproc_y( env );
@@ -103,7 +103,7 @@ int StepScheduler_nstep( const StepScheduler* stepscheduler )
       break;
 
     default:
-      Insist( Bool_false );
+      INSIST( Bool_false );
       break;
   }
 
@@ -119,7 +119,7 @@ StepInfo StepScheduler_stepinfo( const StepScheduler* stepscheduler,
                                  const int            proc_x,
                                  const int            proc_y )
 {
-  Insist( octant_in_block>=0 &&
+  INSIST( octant_in_block>=0 &&
           octant_in_block * stepscheduler->nblock_octant_ < NOCTANT );
 
   /*

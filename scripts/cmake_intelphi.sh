@@ -26,7 +26,9 @@ if [ "$SWEEPER_TYPE" = "" ] ; then
   SWEEPER_TYPE=SWEEPER_KBA
 fi
 
-OPT_ARGS="-qopt-report=5 -ip -prec-div -O3 -align -ansi-alias -fargument-noalias -fno-alias -fargument-noalias" #  -xmic-avx512"
+OPT_ARGS=" -qopt-report-phase=loop,vec -ip -prec-div -O3 -align -ansi-alias -fargument-noalias -fno-alias -fargument-noalias"
+# -qopt-report=5
+#  -xmic-avx512"
 # -mmic
 # -vec-report1
 

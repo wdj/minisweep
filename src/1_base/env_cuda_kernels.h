@@ -46,7 +46,7 @@ TARGET_HD static char* Env_cuda_shared_memory()
 
 TARGET_HD static int Env_cuda_threadblock( int axis )
 {
-  Assert( axis >= 0 && axis < 3 );
+  ASSERT( axis >= 0 && axis < 3 );
 
 #ifdef __CUDA_ARCH__
   return axis==0 ? blockIdx.x :
@@ -61,7 +61,7 @@ TARGET_HD static int Env_cuda_threadblock( int axis )
 
 TARGET_HD static int Env_cuda_thread_in_threadblock( int axis )
 {
-  Assert( axis >= 0 && axis < 3 );
+  ASSERT( axis >= 0 && axis < 3 );
 
 #ifdef __CUDA_ARCH__
   return axis==0 ? threadIdx.x :

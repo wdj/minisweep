@@ -85,7 +85,7 @@ void Faces_communicate_faces(
   int             step,
   Env*            env )
 {
-  Insist( ! Faces_is_face_comm_async( faces ) );
+  INSIST( ! Faces_is_face_comm_async( faces ) );
 
   const int proc_x = Env_proc_x_this( env );
   const int proc_y = Env_proc_y_this( env );
@@ -225,7 +225,7 @@ void Faces_send_faces_start(
   int             step,
   Env*            env )
 {
-  Insist( Faces_is_face_comm_async( faces ) );
+  INSIST( Faces_is_face_comm_async( faces ) );
 
   const int proc_x = Env_proc_x_this( env );
   const int proc_y = Env_proc_y_this( env );
@@ -300,7 +300,7 @@ void Faces_send_faces_end(
   int             step,
   Env*            env )
 {
-  Insist( Faces_is_face_comm_async( faces ) );
+  INSIST( Faces_is_face_comm_async( faces ) );
 
   /*---Loop over octants---*/
 
@@ -349,7 +349,7 @@ void Faces_recv_faces_start(
   int             step,
   Env*            env )
 {
-  Insist( Faces_is_face_comm_async( faces ) );
+  INSIST( Faces_is_face_comm_async( faces ) );
 
   const int proc_x = Env_proc_x_this( env );
   const int proc_y = Env_proc_y_this( env );
@@ -424,7 +424,7 @@ void Faces_recv_faces_end(
   int             step,
   Env*            env )
 {
-  Insist( Faces_is_face_comm_async( faces ) );
+  INSIST( Faces_is_face_comm_async( faces ) );
 
   /*---Loop over octants---*/
 

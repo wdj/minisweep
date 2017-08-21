@@ -36,7 +36,7 @@ void Sweeper_create( Sweeper*          sweeper,
                      Env*              env,
                      Arguments*        args )
 {
-  InsistInterface( Env_nproc( env ) == 1 && 
+  INSIST_UI( Env_nproc( env ) == 1 && 
                              "This sweeper version runs only with one proc." );
 
   /*---Allocate arrays---*/
@@ -94,7 +94,7 @@ void Sweeper_sweep(
   const Quantities*      quan,
   Env*                   env )
 {
-  Insist( sweeper && vi && vo );
+  INSIST( sweeper && vi && vo );
 
   /*---Declarations---*/
   int ix = 0;
@@ -115,7 +115,7 @@ void Sweeper_sweep(
   for( octant=0; octant<NOCTANT; ++octant )
   {
     const int octant_in_block = 0;
-    Insist( octant_in_block >= 0 &&
+    INSIST( octant_in_block >= 0 &&
             octant_in_block < Sweeper_noctant_per_block( sweeper ) );
 
     /*---Decode octant directions from octant number---*/

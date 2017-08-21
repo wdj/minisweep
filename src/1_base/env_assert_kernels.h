@@ -17,17 +17,17 @@
 #include <assert.h>
 
 /*===========================================================================*/
-/*---Assertions---*/
+/*---ASSERTions---*/
 
-#define Assert(v) assert(v)
+#define ASSERT(v) assert(v)
 
-#ifndef Insist
-#define Insist( condition ) \
+#ifndef INSIST
+#define INSIST( condition ) \
   (void)((condition) || (insist_ (#condition, __FILE__, __LINE__),0))
 #endif
 
-#ifndef InsistInterface
-#define InsistInterface( condition ) Insist( condition )
+#ifndef INSIST_UI
+#define INSIST_UI( condition ) INSIST( condition )
 #endif
 
 void insist_( const char *condition_string, const char *file, int line );
@@ -39,9 +39,9 @@ void insist_( const char *condition_string, const char *file, int line );
 
 /*---Ignore on device.---*/
 
-#define Assert(v)
-#define Insist(v)
-#define InsistInterface(v)
+#define ASSERT(v)
+#define INSIST(v)
+#define INSIST_UI(v)
 
 #endif /*---__CUDA_ARCH__---*/
 
@@ -50,9 +50,9 @@ void insist_( const char *condition_string, const char *file, int line );
 
 #ifndef NDEBUG
 /*---Fail compilation and (hopefully) give a filename/line number---*/
-#define Static_Assert( condition ) { int a[ ( condition ) ? 1 : -1 ]; (void)a; }
+#define STATIC_ASSERT( condition ) { int a[ ( condition ) ? 1 : -1 ]; (void)a; }
 #else
-#define Static_Assert( condition )
+#define STATIC_ASSERT( condition )
 #endif
 
 #endif /*---_env_assert_h_kernels_---*/

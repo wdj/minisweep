@@ -17,11 +17,11 @@
 #include <stdio.h>
 
 /*===========================================================================*/
-/*---Assertions---*/
+/*---ASSERTions---*/
 
 void insist_( const char *condition_string, const char *file, int line )
 {
-  fprintf( stderr, "Insist error: \"%s\". At file %s, line %i.\n",
+  fprintf( stderr, "INSIST error: \"%s\". At file %s, line %i.\n",
                    condition_string, file, line );
   exit( EXIT_FAILURE );
 }

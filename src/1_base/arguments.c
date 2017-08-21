@@ -33,8 +33,8 @@ void Arguments_create( Arguments* args,
                        int        argc,
                        char**     argv )
 {
-  Insist( args && argv );
-  Insist( argc > 0 );
+  INSIST( args && argv );
+  INSIST( argc > 0 );
   int i = 0;
 
   args->argc = argc;
@@ -43,7 +43,7 @@ void Arguments_create( Arguments* args,
 
   for( i=0; i<argc; ++i )
   {
-    Insist( argv[i] ? "Null command line argument encountered" : 0);
+    INSIST( argv[i] ? "Null command line argument encountered" : 0);
     args->argv_unconsumed[i] = argv[i];
   }
 } /*---Arguments_create---*/
@@ -54,7 +54,7 @@ void Arguments_create( Arguments* args,
 void Arguments_create_from_string( Arguments*  args,
                                    const char* argstring )
 {
-  Insist( args && argstring );
+  INSIST( args && argstring );
 
   size_t len = strlen( argstring );
 
@@ -90,7 +90,7 @@ void Arguments_create_from_string( Arguments*  args,
 
 void Arguments_destroy( Arguments* args )
 {
-  Insist( args );
+  INSIST( args );
 
   free( (void*) args->argv_unconsumed );
   if( args->argstring )
@@ -105,7 +105,7 @@ void Arguments_destroy( Arguments* args )
 Bool_t Arguments_exists( const Arguments*  args,
                          const char* arg_name )
 {
-  Insist( args && arg_name );
+  INSIST( args && arg_name );
 
   Bool_t result = Bool_false;
   int i = 0;
@@ -128,7 +128,7 @@ Bool_t Arguments_exists( const Arguments*  args,
 int Arguments_consume_int_( Arguments*  args,
                             const char* arg_name )
 {
-  Insist( args && arg_name );
+  INSIST( args && arg_name );
 
   int result = 0;
   Bool_t found = Bool_false;
@@ -146,13 +146,13 @@ int Arguments_consume_int_( Arguments*  args,
       found = Bool_true;
       args->argv_unconsumed[i] = NULL;
       ++i;
-      InsistInterface( i<args->argc );
+      INSIST_UI( i<args->argc );
       result = atoi( args->argv_unconsumed[i] );
       args->argv_unconsumed[i] = NULL;
     }
   }
 
-  InsistInterface( found ? "Invalid use of argument." : 0 );
+  INSIST_UI( found ? "Invalid use of argument." : 0 );
   return result;
 }
 
@@ -163,7 +163,7 @@ int Arguments_consume_int_or_default( Arguments*  args,
                                       const char* arg_name,
                                       int         default_value )
 {
-  Insist( args && arg_name );
+  INSIST( args && arg_name );
 
   return Arguments_exists( args, arg_name ) ?
                      Arguments_consume_int_( args, arg_name ) : default_value;
@@ -174,7 +174,7 @@ int Arguments_consume_int_or_default( Arguments*  args,
 
 Bool_t Arguments_are_all_consumed( const Arguments* args )
 {
-  Insist( args );
+  INSIST( args );
 
   Bool_t result = Bool_true;
   int i = 0;

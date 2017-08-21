@@ -75,8 +75,8 @@ static int Faces_is_face_comm_async( Faces* faces )
 
 static Pointer* Faces_facexy( Faces* faces, int i )
 {
-  Assert( faces );
-  Assert( i >= 0 && i < 1 );
+  ASSERT( faces );
+  ASSERT( i >= 0 && i < 1 );
   return & faces->facexy0;
 }
 
@@ -84,8 +84,8 @@ static Pointer* Faces_facexy( Faces* faces, int i )
 
 static Pointer* Faces_facexz( Faces* faces, int i )
 {
-  Assert( faces );
-  Assert( i >= 0 && i < ( Faces_is_face_comm_async( faces ) ? NDIM : 1 ) );
+  ASSERT( faces );
+  ASSERT( i >= 0 && i < ( Faces_is_face_comm_async( faces ) ? NDIM : 1 ) );
   Pointer* facesxz[NDIM] = { & faces->facexz0,
                              & faces->facexz1,
                              & faces->facexz2 };
@@ -96,8 +96,8 @@ static Pointer* Faces_facexz( Faces* faces, int i )
 
 static Pointer* Faces_faceyz( Faces* faces, int i )
 {
-  Assert( faces );
-  Assert( i >= 0 && i < ( Faces_is_face_comm_async( faces ) ? NDIM : 1 ) );
+  ASSERT( faces );
+  ASSERT( i >= 0 && i < ( Faces_is_face_comm_async( faces ) ? NDIM : 1 ) );
   Pointer* facesyz[NDIM] = { & faces->faceyz0,
                              & faces->faceyz1,
                              & faces->faceyz2 };
@@ -109,8 +109,8 @@ static Pointer* Faces_faceyz( Faces* faces, int i )
 
 static Pointer* Faces_facexy_step( Faces* faces, int step )
 {
-  Assert( faces );
-  Assert( step >= -1 );
+  ASSERT( faces );
+  ASSERT( step >= -1 );
   return Faces_facexy( faces, 0 );
 }
 
@@ -118,8 +118,8 @@ static Pointer* Faces_facexy_step( Faces* faces, int step )
 
 static Pointer* Faces_facexz_step( Faces* faces, int step )
 {
-  Assert( faces );
-  Assert( step >= -1 );
+  ASSERT( faces );
+  ASSERT( step >= -1 );
 
   return Faces_facexz( faces,
                        Faces_is_face_comm_async( faces ) ? (step+3)%3 : 0 );
@@ -129,8 +129,8 @@ static Pointer* Faces_facexz_step( Faces* faces, int step )
 
 static Pointer* Faces_faceyz_step( Faces* faces, int step )
 {
-  Assert( faces );
-  Assert( step >= -1 );
+  ASSERT( faces );
+  ASSERT( step >= -1 );
 
   return Faces_faceyz( faces,
                        Faces_is_face_comm_async( faces ) ? (step+3)%3 : 0 );

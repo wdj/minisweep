@@ -99,11 +99,10 @@ TARGET_HD static inline void Sweeper_sweep_cell(
         for( sweeper_thread_u=0; sweeper_thread_u<NTHREAD_U;
                                                           ++sweeper_thread_u )
 #pragma ivdep
-/*
-#pragma simd assert, vectorlengthfor( P )
-TODO: fix vectorization for this loop.
-*/
-//FIX2 #pragma simd vectorlengthfor( P )
+#ifdef NDEBUG
+//#pragma simd assert vectorlengthfor( P )
+#pragma omp simd
+#endif
         for( sweeper_thread_m=0; sweeper_thread_m<NTHREAD_M;
                                                           ++sweeper_thread_m )
 #endif
@@ -167,7 +166,8 @@ TODO: fix vectorization for this loop.
 #ifndef __CUDA_ARCH__
         int sweeper_thread_a = 0;
 #pragma ivdep
-//FIX2 #pragma simd assert, vectorlengthfor( P )
+//#pragma simd assert, vectorlengthfor( P )
+#pragma omp simd
         for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A;
                                                            ++sweeper_thread_a )
 #endif
@@ -257,7 +257,8 @@ TODO: fix vectorization for this loop.
 #ifndef __CUDA_ARCH__
     int sweeper_thread_a = 0;
 #pragma ivdep
-//FIX2 #pragma simd assert, vectorlengthfor( P )
+//FIX #pragma simd assert, vectorlengthfor( P )
+//FIX #pragma omp simd
     for( sweeper_thread_a=0; sweeper_thread_a<NTHREAD_A; ++sweeper_thread_a )
 #endif
     {
@@ -302,7 +303,10 @@ TODO: fix vectorization for this loop.
         for( sweeper_thread_u=0; sweeper_thread_u<NTHREAD_U;
                                                            ++sweeper_thread_u )
 #pragma ivdep
-//FIX #pragma simd assert, vectorlengthfor( P )
+#ifdef NDEBUG
+//#pragma simd assert, vectorlengthfor( P )
+#pragma omp simd
+#endif
         for( sweeper_thread_m=0; sweeper_thread_m<NTHREAD_M;
                                                            ++sweeper_thread_m )
 #endif

@@ -33,8 +33,8 @@ void Pointer_create( Pointer* p,
                      Bool_t   is_using_device,
                      Env*     env )
 {
-  Insist( p );
-  Insist( n+1 >= 1 );
+  INSIST( p );
+  INSIST( n+1 >= 1 );
 
   p->h_ = NULL;
   p->d_ = NULL;
@@ -52,10 +52,10 @@ void Pointer_create_alias( Pointer* p,
                            size_t   n,
                            Env*     env )
 {
-  Insist( p && source );
-  Insist( base+1 >= 1 );
-  Insist( n+1 >= 1 );
-  Insist( base+n <= source->n_ );
+  INSIST( p && source );
+  INSIST( base+1 >= 1 );
+  INSIST( n+1 >= 1 );
+  INSIST( base+n <= source->n_ );
 
   p->h_ = NULL;
   if( source->h_ )
@@ -81,10 +81,10 @@ void Pointer_set_pinned( Pointer* p,
                          Bool_t   is_pinned,
                          Env*     env )
 {
-  Insist( p );
-  Insist( ! p->h_
+  INSIST( p );
+  INSIST( ! p->h_
               ? "Currently cannot change pinnedness of allocated array" : 0 );
-  Insist( ! p->is_alias_ );
+  INSIST( ! p->is_alias_ );
 
   p->is_pinned_ = is_pinned;
 }
@@ -94,7 +94,7 @@ void Pointer_set_pinned( Pointer* p,
 
 void Pointer_destroy( Pointer* p, Env* env )
 {
-  Insist( p );
+  INSIST( p );
 
   if( p->h_ && ! p->is_alias_ )
   {
@@ -125,9 +125,9 @@ void Pointer_destroy( Pointer* p, Env* env )
 
 void Pointer_allocate_h_( Pointer* p, Env* env )
 {
-  Insist( p );
-  Insist( ! p->is_alias_ );
-  Insist( ! p->h_ );
+  INSIST( p );
+  INSIST( ! p->is_alias_ );
+  INSIST( ! p->h_ );
 
   if( p->is_pinned_ && p->is_using_device_ )
   {
@@ -137,21 +137,21 @@ void Pointer_allocate_h_( Pointer* p, Env* env )
   {
     p->h_ = malloc_host_P( p->n_, env );
   }
-  Insist( p->h_ );
+  INSIST( p->h_ );
 }
 
 /*---------------------------------------------------------------------------*/
 
 void Pointer_allocate_d_( Pointer* p, Env* env )
 {
-  Insist( p );
-  Insist( ! p->is_alias_ );
-  Insist( ! p->d_ );
+  INSIST( p );
+  INSIST( ! p->is_alias_ );
+  INSIST( ! p->d_ );
 
   if( p->is_using_device_ )
   {
     p->d_ = malloc_device_P( p->n_, env );
-    Insist( p->d_ );
+    INSIST( p->d_ );
   }
 }
 
@@ -159,8 +159,8 @@ void Pointer_allocate_d_( Pointer* p, Env* env )
 
 void Pointer_allocate( Pointer* p, Env* env )
 {
-  Insist( p );
-  Insist( ! p->is_alias_ );
+  INSIST( p );
+  INSIST( ! p->is_alias_ );
 
   Pointer_allocate_h_( p, env );
   Pointer_allocate_d_( p, env );
@@ -170,9 +170,9 @@ void Pointer_allocate( Pointer* p, Env* env )
 
 void Pointer_deallocate_h_( Pointer* p, Env* env )
 {
-  Insist( p );
-  Insist( ! p->is_alias_ );
-  Insist( p->h_ );
+  INSIST( p );
+  INSIST( ! p->is_alias_ );
+  INSIST( p->h_ );
 
   if( p->is_pinned_ && p->is_using_device_ )
   {
@@ -189,12 +189,12 @@ void Pointer_deallocate_h_( Pointer* p, Env* env )
 
 void Pointer_deallocate_d_( Pointer* p, Env* env )
 {
-  Insist( p );
-  Insist( ! p->is_alias_ );
+  INSIST( p );
+  INSIST( ! p->is_alias_ );
 
   if( p->is_using_device_ )
   {
-    Insist( p->d_ );
+    INSIST( p->d_ );
 
     free_device_P( p->d_, p->n_, env );
 
@@ -206,8 +206,8 @@ void Pointer_deallocate_d_( Pointer* p, Env* env )
 
 void Pointer_deallocate( Pointer* p, Env* env )
 {
-  Insist( p );
-  Insist( ! p->is_alias_ );
+  INSIST( p );
+  INSIST( ! p->is_alias_ );
 
   Pointer_deallocate_h_( p, env );
   Pointer_deallocate_d_( p, env );
@@ -218,7 +218,7 @@ void Pointer_deallocate( Pointer* p, Env* env )
 
 void Pointer_update_h( Pointer* p, Env* env )
 {
-  Insist( p );
+  INSIST( p );
 
   if( p->is_using_device_ )
   {
@@ -230,7 +230,7 @@ void Pointer_update_h( Pointer* p, Env* env )
 
 void Pointer_update_d( Pointer* p, Env* env )
 {
-  Insist( p );
+  INSIST( p );
 
   if( p->is_using_device_ )
   {
@@ -242,7 +242,7 @@ void Pointer_update_d( Pointer* p, Env* env )
 
 void Pointer_update_h_stream( Pointer* p, Stream_t stream, Env* env )
 {
-  Insist( p );
+  INSIST( p );
 
   if( p->is_using_device_ )
   {
@@ -254,7 +254,7 @@ void Pointer_update_h_stream( Pointer* p, Stream_t stream, Env* env )
 
 void Pointer_update_d_stream( Pointer* p, Stream_t stream, Env* env )
 {
-  Insist( p );
+  INSIST( p );
 
   if( p->is_using_device_ )
   {

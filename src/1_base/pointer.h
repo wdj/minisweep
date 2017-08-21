@@ -27,7 +27,7 @@ Pointer Pointer_null(void);
 
 static P* __restrict__ Pointer_active( Pointer* p )
 {
-  Assert( p );
+  ASSERT( p );
   return p->is_using_device_ ? p->d_ : p->h_;
 }
 
@@ -36,7 +36,7 @@ static P* __restrict__ Pointer_active( Pointer* p )
 
 static P* __restrict__ Pointer_const_active( const Pointer* p )
 {
-  Assert( p );
+  ASSERT( p );
   return p->is_using_device_ ? p->d_ : p->h_;
 }
 

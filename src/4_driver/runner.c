@@ -87,13 +87,13 @@ void Runner_run_case( Runner* runner, Arguments* args, Env* env )
   niterations = Arguments_consume_int_or_default( args, "--niterations", 1 );
   dims_g.nm   = NM;
 
-  InsistInterface( dims_g.ncell_x > 0 ? "Invalid ncell_x supplied." : 0 );
-  InsistInterface( dims_g.ncell_y > 0 ? "Invalid ncell_y supplied." : 0 );
-  InsistInterface( dims_g.ncell_z > 0 ? "Invalid ncell_z supplied." : 0 );
-  InsistInterface( dims_g.ne > 0      ? "Invalid ne supplied." : 0 );
-  InsistInterface( dims_g.nm > 0      ? "Invalid nm supplied." : 0 );
-  InsistInterface( dims_g.na > 0      ? "Invalid na supplied." : 0 );
-  InsistInterface( niterations >= 0   ? "Invalid iteration count supplied." : 0 );
+  INSIST_UI( dims_g.ncell_x > 0 ? "Invalid ncell_x supplied." : 0 );
+  INSIST_UI( dims_g.ncell_y > 0 ? "Invalid ncell_y supplied." : 0 );
+  INSIST_UI( dims_g.ncell_z > 0 ? "Invalid ncell_z supplied." : 0 );
+  INSIST_UI( dims_g.ne > 0      ? "Invalid ne supplied." : 0 );
+  INSIST_UI( dims_g.nm > 0      ? "Invalid nm supplied." : 0 );
+  INSIST_UI( dims_g.na > 0      ? "Invalid na supplied." : 0 );
+  INSIST_UI( niterations >= 0   ? "Invalid iteration count supplied." : 0 );
 
   /*---Initialize (local) dimensions - domain decomposition---*/
 
@@ -140,7 +140,7 @@ void Runner_run_case( Runner* runner, Arguments* args, Env* env )
 
   /*---Check that all command line args used---*/
 
-  InsistInterface( Arguments_are_all_consumed( args )
+  INSIST_UI( Arguments_are_all_consumed( args )
                                           ? "Invalid argument detected." : 0 );
 
   /*---Call sweeper---*/
@@ -211,8 +211,8 @@ Bool_t compare_runs( const char* argstring1, const char* argstring2, Env* env )
   if( Env_is_proc_active( env ) )
   {
     Runner_run_case( &runner1, &args1, env );
-    Insist(env->cpu_mem == 0);
-    Insist(env->gpu_mem == 0);
+    INSIST(env->cpu_mem == 0);
+    INSIST(env->gpu_mem == 0);
   }
 
   Arguments_create_from_string( &args2, argstring2 );
@@ -225,8 +225,8 @@ Bool_t compare_runs( const char* argstring1, const char* argstring2, Env* env )
   if( Env_is_proc_active( env ) )
   {
     Runner_run_case( &runner2, &args2, env );
-    Insist(env->cpu_mem == 0);
-    Insist(env->gpu_mem == 0);
+    INSIST(env->cpu_mem == 0);
+    INSIST(env->gpu_mem == 0);
   }
 
   Bool_t pass = Env_is_proc_master( env ) ?

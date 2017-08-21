@@ -25,10 +25,10 @@
 
 static int* malloc_host_int( size_t n, Env* env )
 {
-  Insist( n+1 >= 1 );
+  INSIST( n+1 >= 1 );
 
   int* p = (int*)malloc( n * sizeof(*p) );
-  Insist( p );
+  INSIST( p );
   env->cpu_mem += n * sizeof(*p);
   env->cpu_mem_max = env->cpu_mem > env->cpu_mem_max ?
                      env->cpu_mem : env->cpu_mem_max;
@@ -39,10 +39,10 @@ static int* malloc_host_int( size_t n, Env* env )
 
 static Bool_t* malloc_host_bool( size_t n, Env* env )
 {
-  Insist( n+1 >= 1 );
+  INSIST( n+1 >= 1 );
 
   Bool_t* p = (Bool_t*)malloc( n * sizeof(*p) );
-  Insist( p );
+  INSIST( p );
   env->cpu_mem += n * sizeof(*p);
   env->cpu_mem_max = env->cpu_mem > env->cpu_mem_max ?
                      env->cpu_mem : env->cpu_mem_max;
@@ -53,10 +53,10 @@ static Bool_t* malloc_host_bool( size_t n, Env* env )
 
 static P* malloc_host_P( size_t n, Env* env )
 {
-  Insist( n+1 >= 1 );
+  INSIST( n+1 >= 1 );
 
   P* p = _mm_malloc( n * sizeof(*p), VEC_LEN * sizeof(*p) );
-  Insist( p );
+  INSIST( p );
   env->cpu_mem += n * sizeof(*p);
   env->cpu_mem_max = env->cpu_mem > env->cpu_mem_max ?
                      env->cpu_mem : env->cpu_mem_max;
@@ -74,7 +74,7 @@ static P* malloc_host_pinned_P( size_t n, Env* env )
 
 static P* malloc_device_P( size_t n, Env* env )
 {
-  Insist( n+1 >= 1 );
+  INSIST( n+1 >= 1 );
   P* p = NULL;
   return p;
 }
@@ -83,7 +83,7 @@ static P* malloc_device_P( size_t n, Env* env )
 
 static void free_host_int( int* p, size_t n, Env* env )
 {
-  Insist( p );
+  INSIST( p );
 
   free( (void*) p );
   env->cpu_mem -= n * sizeof(*p);
@@ -93,7 +93,7 @@ static void free_host_int( int* p, size_t n, Env* env )
 
 static void free_host_bool( Bool_t* p, size_t n, Env* env )
 {
-  Insist( p );
+  INSIST( p );
 
   free( (void*) p );
   env->cpu_mem -= n * sizeof(*p);
@@ -103,7 +103,7 @@ static void free_host_bool( Bool_t* p, size_t n, Env* env )
 
 static void free_host_P( P* p, size_t n, Env* env )
 {
-  Insist( p );
+  INSIST( p );
 
   _mm_free( p );
   env->cpu_mem -= n * sizeof(*p);

@@ -46,8 +46,8 @@ int main( int argc, char** argv )
   if( Env_is_proc_active( &env ) )
   {
     Runner_run_case( &runner, &args, &env );
-    Insist(env.cpu_mem == 0);
-    Insist(env.gpu_mem == 0);
+    INSIST(env.cpu_mem == 0);
+    INSIST(env.gpu_mem == 0);
   }
 
   if( Env_is_proc_master( &env ) )
