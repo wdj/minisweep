@@ -61,9 +61,8 @@ fi
 
 #------------------------------------------------------------------------------
 
-# See also `which mpcc`
-MPI_INCLUDE_DIR=/opt/ibmhpc/pecurrent/mpich/gnu/include64
-MPI_LIB=/opt/ibmhpc/pecurrent/mpich/gnu/lib64/libmpi.so
+MPI_INCLUDE_DIR=$OMPI_DIR/include
+MPI_LIB=$OMPI_DIR/lib/libmpi_ibm.so
 
 cmake \
   -DCMAKE_BUILD_TYPE:STRING="$BUILD" \
