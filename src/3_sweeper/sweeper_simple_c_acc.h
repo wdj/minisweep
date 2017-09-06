@@ -47,13 +47,13 @@ void Sweeper_create( Sweeper*          sweeper,
 
   /*---Allocate arrays---*/
 
-  sweeper->vslocal = malloc_host_P( dims.na * dims.ne * NU );
+  sweeper->vslocal = malloc_host_P( dims.na * NU * dims.ne * NOCTANT );
   sweeper->facexy  = malloc_host_P( dims.ncell_x * dims.ncell_y * dims.ne *
-                         dims.na * NU );
+                         dims.na * NU * NOCTANT);
   sweeper->facexz  = malloc_host_P( dims.ncell_x * dims.ncell_z * dims.ne *
-                         dims.na * NU );
+                         dims.na * NU * NOCTANT);
   sweeper->faceyz  = malloc_host_P( dims.ncell_y * dims.ncell_z * dims.ne *
-                         dims.na * NU );
+                         dims.na * NU * NOCTANT);
 
   sweeper->dims = dims;
 }
@@ -132,9 +132,9 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
 			     int ix, int iy, int iz, int ie, int ia,
 			     int octant, int octant_in_block, int noctant_per_block)
 {
-  const int dir_x = Dir_x( octant );
-  const int dir_y = Dir_y( octant );
-  const int dir_z = Dir_z( octant );
+  const int dir_x = DIR_UP; //Dir_x( octant );
+  const int dir_y = DIR_UP; //Dir_y( octant );
+  const int dir_z = DIR_UP; //Dir_z( octant );
 
   int iu = 0;
 
@@ -166,17 +166,22 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
   for( iu=0; iu<NU; ++iu )
     {
 
-      int vs_local_index = ia + dims.na * (ie + dims.ne * (iu + NU  * (0)));
+      int vs_local_index = ia + dims.na * (
+			   iu + NU  * (
+			   ie + dims.ne * (
+			   octant + NOCTANT * (
+					       0))));
 
       const P result = ( vs_local[vs_local_index] * scalefactor_space_r + 
                (
 		/*--- ref_facexy inline ---*/
 		facexy[ia + dims.na      * (
 			iu + NU           * (
+                        ie + dims.ne      * (
+			octant + NOCTANT * (
                         ix + dims.ncell_x * (
                         iy + dims.ncell_y * (
-                        ie + dims.ne      * (
-                        octant_in_block ))))) ]
+					     0 )))))) ]
 
 		/*--- Quantities_xfluxweight_ inline ---*/
 	       * (P) ( 1 / (P) 2 )
@@ -186,10 +191,11 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
 		/*--- ref_facexz inline ---*/
 	       + facexz[ia + dims.na      * (
 			iu + NU           * (
+                        ie + dims.ne      * (
+			octant + NOCTANT * (
                         ix + dims.ncell_x * (
                         iz + dims.ncell_z * (
-                        ie + dims.ne      * (
-                        octant_in_block ))))) ]
+					     0 )))))) ]
 
 		/*--- Quantities_yfluxweight_ inline ---*/
 	       * (P) ( 1 / (P) 4 )
@@ -199,10 +205,11 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
 		/*--- ref_faceyz inline ---*/
 	       + faceyz[ia + dims.na      * (
 			iu + NU           * (
+                        ie + dims.ne      * (
+			octant + NOCTANT * (
                         iy + dims.ncell_y * (
                         iz + dims.ncell_z * (
-                        ie + dims.ne      * (
-                        octant_in_block ))))) ]
+					     0 )))))) ]
 
 		/*--- Quantities_zfluxweight_ inline ---*/
 		* (P) ( 1 / (P) 4 - 1 / (P) (1 << ( ia & ( (1<<3) - 1 ) )) )
@@ -217,26 +224,29 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
       /*--- ref_facexy inline ---*/
       facexy[ia + dims.na      * (
 	     iu + NU           * (
+             ie + dims.ne      * (
+	     octant + NOCTANT * (
              ix + dims.ncell_x * (
              iy + dims.ncell_y * (
-             ie + dims.ne      * (
-	     octant_in_block ))))) ] = result_scaled;
+				  0 )))))) ] = result_scaled;
 
       /*--- ref_facexz inline ---*/
       facexz[ia + dims.na      * (
 	     iu + NU           * (
+             ie + dims.ne      * (
+	     octant + NOCTANT * (
              ix + dims.ncell_x * (
              iz + dims.ncell_z * (
-             ie + dims.ne      * (
-	     octant_in_block ))))) ] = result_scaled;
+				  0 )))))) ] = result_scaled;
 
       /*--- ref_faceyz inline ---*/
       faceyz[ia + dims.na      * (
 	     iu + NU           * (
+             ie + dims.ne      * (
+	     octant + NOCTANT * (
              iy + dims.ncell_y * (
              iz + dims.ncell_z * (
-             ie + dims.ne      * (
-	     octant_in_block ))))) ] = result_scaled;
+				  0 )))))) ] = result_scaled;
 
     } /*---for---*/
 }
@@ -287,17 +297,17 @@ void Sweeper_sweep(
 
   /*--- Array Sizes ---*/
   int facexy_size = dims.ncell_x * dims.ncell_y * 
-    dims.ne * dims.na * NU;
+    dims.ne * dims.na * NU * NOCTANT;
   int facexz_size = dims.ncell_x * dims.ncell_z * 
-    dims.ne * dims.na * NU;
+    dims.ne * dims.na * NU * NOCTANT;
   int faceyz_size = dims.ncell_y * dims.ncell_z * 
-    dims.ne * dims.na * NU;
+    dims.ne * dims.na * NU * NOCTANT;
   int v_size = dims.nm * dims.na * NOCTANT;
   int vi_h_size = dims.ncell_x * dims.ncell_y * dims.ncell_z * 
     dims.ne * dims.nm * NU;
   int vo_h_size = dims.ncell_x * dims.ncell_y * dims.ncell_z * 
     dims.ne * dims.nm * NU;
-  int vs_local_size = dims.na * dims.ne * NU;
+  int vs_local_size = dims.na * NU * dims.ne * NOCTANT;
 
   /*---Initialize result array to zero---*/
 
@@ -306,26 +316,15 @@ void Sweeper_sweep(
   /*--- Data transfer to the GPU ---*/
 #pragma acc enter data copyin(v_a_from_m[:v_size], \
 			      v_m_from_a[:v_size], \
-			      facexy[:facexy_size], \
-			      facexz[:facexz_size], \
-			      faceyz[:faceyz_size], \
 			      vi_h[:vi_h_size], \
-			      vo_h[:vo_h_size], \
-			      vs_local[vs_local_size])
+			      vo_h[:vo_h_size]), \
+  create(facexy[:facexy_size], \
+	 facexz[:facexz_size], \
+	 faceyz[:faceyz_size])
 
-  /*---Loop over octants---*/
-
-  for( octant=0; octant<NOCTANT; ++octant )
-  {
-    const int octant_in_block = 0;
-    /* Assert( octant_in_block >= 0 && */
-    /*         octant_in_block < noctant_per_block ); */
-
-    /*---Decode octant directions from octant number---*/
-
-    const int dir_x = Dir_x( octant );
-    const int dir_y = Dir_y( octant );
-    const int dir_z = Dir_z( octant );
+  const int octant_in_block = 0;
+  /* Assert( octant_in_block >= 0 && */
+  /*         octant_in_block < noctant_per_block ); */
 
     /*---Initialize faces---*/
 
@@ -347,17 +346,21 @@ void Sweeper_sweep(
 
 #pragma acc parallel present(facexy[:facexy_size])
 {
-    {
-      iz = dir_z == DIR_UP ? -1 : dim_z;
 
-#pragma acc loop independent gang collapse(3)
-      for( iu=0; iu<NU; ++iu )
+#pragma acc loop independent gang collapse(2)
       for( iy=0; iy<dim_y; ++iy )
       for( ix=0; ix<dim_x; ++ix )
-#pragma acc loop independent vector collapse(2)
+#pragma acc loop independent vector collapse(4)
+      for( octant=0; octant<NOCTANT; ++octant )
       for( ie=0; ie<dim_ne; ++ie )
+      for( iu=0; iu<NU; ++iu )
       for( ia=0; ia<dim_na; ++ia )
       {
+
+	/* const int dir_z = DIR_UP; //Dir_z( octant ); */
+	/* iz = dir_z == DIR_UP ? -1 : dim_z; */
+
+	iz = -1;
 
 	/*--- Quantities_scalefactor_space_ inline ---*/
 	int scalefactor_space = Quantities_scalefactor_space_inline(ix, iy, iz);
@@ -365,79 +368,89 @@ void Sweeper_sweep(
 	/*--- ref_facexy inline ---*/
 	facexy[ia + dims.na      * (
 			iu + NU           * (
+                        ie + dims.ne      * (
+	                octant + NOCTANT * (
                         ix + dims.ncell_x * (
                         iy + dims.ncell_y * (
-                        ie + dims.ne      * (
-                        octant_in_block ))))) ]
+					     0 )))))) ]
 
 	  /*--- Quantities_init_face routine ---*/
 	  = Quantities_init_face(ia, ie, iu, scalefactor_space, octant);
       }
-    }
 
 /*--- #pragma acc parallel ---*/
  }
 
 #pragma acc parallel present(facexz[:facexz_size])
 {
-     {
-      iy = dir_y == DIR_UP ? -1 : dim_y;
-
-#pragma acc loop independent gang collapse(3)
-      for( iu=0; iu<NU; ++iu )
+ 
+#pragma acc loop independent gang collapse(2)
       for( iz=0; iz<dim_z; ++iz )
       for( ix=0; ix<dim_x; ++ix )
-#pragma acc loop independent vector collapse(2)
+#pragma acc loop independent vector collapse(4)
+      for( octant=0; octant<NOCTANT; ++octant )
       for( ie=0; ie<dim_ne; ++ie )
+      for( iu=0; iu<NU; ++iu )
       for( ia=0; ia<dim_na; ++ia )
       {
+
+	/* const int dir_y = DIR_UP; //Dir_y( octant ); */
+	/* iy = dir_y == DIR_UP ? -1 : dim_y; */
+
+	iy = -1;
+
 	/*--- Quantities_scalefactor_space_ inline ---*/
 	int scalefactor_space = Quantities_scalefactor_space_inline(ix, iy, iz);
 
 	/*--- ref_facexz inline ---*/
 	facexz[ia + dims.na      * (
 			iu + NU           * (
+                        ie + dims.ne      * (
+	                octant + NOCTANT * (
                         ix + dims.ncell_x * (
                         iz + dims.ncell_z * (
-                        ie + dims.ne      * (
-                        octant_in_block ))))) ]
+					     0 )))))) ]
 
 	  /*--- Quantities_init_face routine ---*/
 	  = Quantities_init_face(ia, ie, iu, scalefactor_space, octant);
       }
-     }
 
 /*--- #pragma acc parallel ---*/
  }
 
 #pragma acc parallel present(faceyz[:faceyz_size])
 {
-    {
-      ix = dir_x == DIR_UP ? -1 : dim_x;
 
-#pragma acc loop independent gang collapse(3)
-      for( iu=0; iu<NU; ++iu )
+#pragma acc loop independent gang collapse(2)
       for( iz=0; iz<dim_z; ++iz )
       for( iy=0; iy<dim_y; ++iy )
-#pragma acc loop independent vector collapse(2)
+#pragma acc loop independent vector collapse(4)
+      for( octant=0; octant<NOCTANT; ++octant )
       for( ie=0; ie<dim_ne; ++ie )
+      for( iu=0; iu<NU; ++iu )
       for( ia=0; ia<dim_na; ++ia )
       {
+
+	/* const int dir_x = Dir_x( octant ); */
+	/* ix = dir_x == DIR_UP ? -1 : dim_x; */
+
+	ix = -1;
+
 	/*--- Quantities_scalefactor_space_ inline ---*/
 	int scalefactor_space = Quantities_scalefactor_space_inline(ix, iy, iz);
 
 	/*--- ref_faceyz inline ---*/
 	faceyz[ia + dims.na      * (
 			iu + NU           * (
+                        ie + dims.ne      * (
+	                octant + NOCTANT * (
                         iy + dims.ncell_y * (
                         iz + dims.ncell_z * (
-                        ie + dims.ne      * (
-                        octant_in_block ))))) ]
+					     0 )))))) ]
 
 	  /*--- Quantities_init_face routine ---*/
 	  = Quantities_init_face(ia, ie, iu, scalefactor_space, octant);
       }
-    }
 
 /*--- #pragma acc parallel ---*/
  }
@@ -452,30 +465,36 @@ void Sweeper_sweep(
   create(vs_local[vs_local_size])
  {
 
+    /*---Decode octant directions from octant number---*/
    /*---Calculate spatial loop extents---*/
 
-   int ixbeg = dir_x==DIR_UP ? 0 : dims.ncell_x-1;
-   int iybeg = dir_y==DIR_UP ? 0 : dims.ncell_y-1;
-   int izbeg = dir_z==DIR_UP ? 0 : dims.ncell_z-1;
+   /* int ixbeg = dir_x==DIR_UP ? 0 : dims.ncell_x-1; */
+   /* int iybeg = dir_y==DIR_UP ? 0 : dims.ncell_y-1; */
+   /* int izbeg = dir_z==DIR_UP ? 0 : dims.ncell_z-1; */
 
-   int ixend = (dir_x==DIR_DN ? 0 : dims.ncell_x-1) + Dir_inc(dir_x);
-   int iyend = (dir_y==DIR_DN ? 0 : dims.ncell_y-1) + Dir_inc(dir_y);
-   int izend = (dir_z==DIR_DN ? 0 : dims.ncell_z-1) + Dir_inc(dir_z);
+   /* int ixend = (dir_x==DIR_DN ? 0 : dims.ncell_x-1) + Dir_inc(dir_x); */
+   /* int iyend = (dir_y==DIR_DN ? 0 : dims.ncell_y-1) + Dir_inc(dir_y); */
+   /* int izend = (dir_z==DIR_DN ? 0 : dims.ncell_z-1) + Dir_inc(dir_z); */
 
-   int izinc = Dir_inc(dir_z);
-   int iyinc = Dir_inc(dir_y);
-   int ixinc = Dir_inc(dir_x);
-
-   /*---Loop over energy groups---*/
+   /* int izinc = Dir_inc(dir_z); */
+   /* int iyinc = Dir_inc(dir_y); */
+   /* int ixinc = Dir_inc(dir_x); */
 
    /*---Loop over cells, in proper direction---*/
 
-    for( iz=izbeg; iz!=izend; iz+=izinc )
-    for( iy=iybeg; iy!=iyend; iy+=iyinc )
-    for( ix=ixbeg; ix!=ixend; ix+=ixinc )
+    for( iz=0; iz<dims.ncell_z; iz+=1 )
+    for( iy=0; iy<dims.ncell_y; iy+=1 )
+    for( ix=0; ix<dims.ncell_x; ix+=1 )
     {
 
-#pragma acc loop independent gang
+   /*---Loop over octants---*/
+
+#pragma acc loop independent gang, collapse(2)
+   for( octant=0; octant<NOCTANT; ++octant )
+     {
+
+   /*---Loop over energy groups---*/
+       //#pragma acc loop independent gang
       for( ie=0; ie<dim_ne; ++ie )
       {
 
@@ -516,7 +535,11 @@ void Sweeper_sweep(
         }
 
 	/*--- ref_vslocal inline ---*/
-	vs_local[ ia + dims.na * (ie + dims.ne * (iu + NU  * (0) )) ] = result;
+	vs_local[ ia + dims.na * (
+		  iu + NU  * (
+		  ie + dims.ne * (
+		  octant + NOCTANT * (
+				      0)))) ] = result;
       }
 
       /*--------------------*/
@@ -555,12 +578,14 @@ void Sweeper_sweep(
 
 	    /*--- const_ref_vslocal ---*/
 	    vs_local[ ia + dims.na * (
-		     ie + dims.ne * (
                      iu + NU    * (
-				   0 ))) ];
+		     ie + dims.ne * (
+		     octant + NOCTANT * (
+					 0 )))) ];
         }
 
 	/*--- ref_state inline ---*/
+#pragma acc atomic update
 	vo_h[im + dims.nm      * (
              iu + NU           * (
              ix + dims.ncell_x * (
@@ -572,11 +597,11 @@ void Sweeper_sweep(
 
     } /*---ie---*/
 
+  } /*---octant---*/
+
     } /*---ix/iy/iz---*/
 
  }   /*--- #pragma acc parallel ---*/
-
-  } /*---octant---*/
 
   /*--- Data transfer of results to the host ---*/
 #pragma acc exit data copyout(vo_h[:vo_h_size])
