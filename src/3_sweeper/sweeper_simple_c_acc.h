@@ -531,8 +531,8 @@ void Sweeper_sweep(
    /*---Loop over cells, in proper direction---*/
 
 #pragma acc loop independent gang, collapse(3)
-    for( iz=0; iz<dim_z; ++iz )
     for( iy=0; iy<dim_y; ++iy )
+    for( ix=0; ix<dim_x; ++ix )
     {
 
    /*---Loop over octants---*/
@@ -544,8 +544,8 @@ void Sweeper_sweep(
 	    If x < 0 or x > wavefront number, we are out of bounds.
 	    X also shouldn't exceed the spacial bound for the x dimension.
       ---*/
-      int ix = wavefront - (iz + iy);
-      if (ix >= 0 && ix <= wavefront && ix < dims.ncell_x)
+      int iz = wavefront - (ix + iy);
+      if (iz >= 0 && iz <= wavefront && iz < dims.ncell_z)
 	{
 
 
@@ -665,9 +665,9 @@ void Sweeper_sweep(
 
   } /*---octant---*/
    
-	} /*--- ix ---*/
+	} /*--- iz ---*/
 
-    } /*---iy/iz/wavefront---*/
+    } /*---ix/iy/wavefront---*/
 
  }   /*--- #pragma acc parallel ---*/
 
