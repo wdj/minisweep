@@ -47,7 +47,7 @@ void Sweeper_create( Sweeper*          sweeper,
 
   /*---Allocate arrays---*/
 
-  sweeper->vslocal = malloc_host_P( dims.na * NU * dims.ne * NOCTANT );
+  sweeper->vslocal = malloc_host_P( dims.na * NU * dims.ne * NOCTANT * dims.ncell_z * dims.ncell_y );
   sweeper->facexy  = malloc_host_P( dims.ncell_x * dims.ncell_y * dims.ne *
                          dims.na * NU * NOCTANT);
   sweeper->facexz  = malloc_host_P( dims.ncell_x * dims.ncell_z * dims.ne *
@@ -169,8 +169,10 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
       int vs_local_index = ia + dims.na * (
 			   iu + NU  * (
 			   ie + dims.ne * (
-			   octant + NOCTANT * (
-					       0))));
+   			   octant + NOCTANT * (
+			   iy + dims.ncell_y * (
+			   iz + dims.ncell_z * (
+						0))))));
 
       const P result = ( vs_local[vs_local_index] * scalefactor_space_r + 
                (
@@ -266,6 +268,7 @@ void Sweeper_sweep(
   Assert( vo );
 
   /*---Declarations---*/
+  int wavefront = 0;
   int ix = 0;
   int iy = 0;
   int iz = 0;
@@ -307,7 +310,7 @@ void Sweeper_sweep(
     dims.ne * dims.nm * NU;
   int vo_h_size = dims.ncell_x * dims.ncell_y * dims.ncell_z * 
     dims.ne * dims.nm * NU;
-  int vs_local_size = dims.na * NU * dims.ne * NOCTANT;
+  int vs_local_size = dims.na * NU * dims.ne * NOCTANT * dims.ncell_z * dims.ncell_y;
 
   /*---Initialize result array to zero---*/
 
@@ -455,6 +458,49 @@ void Sweeper_sweep(
 /*--- #pragma acc parallel ---*/
  }
 
+/*    int num_wavefronts = (dims.ncell_z + dims.ncell_y + dims.ncell_x) - 2; */
+/*    int cell_count = 0; */
+
+/*    /\*--- Loop over wavefronts ---*\/ */
+/*    for (wavefront = 0; wavefront < num_wavefronts; wavefront+=1) */
+/*      { */
+/*      printf("\nWavefront: %d\n", wavefront); */
+
+/*    /\*---Loop over cells, in proper direction---*\/ */
+
+/*     for( iz=0; iz<dims.ncell_z; iz+=1 ) */
+/*     for( iy=0; iy<dims.ncell_y; iy+=1 ) */
+/*     { */
+
+/*       /\*--- Solve for X dimension, and check bounds. */
+/* 	    The sum of the dimensions should equal the wavefront number. */
+/* 	    If x < 0 or x > wavefront number, we are out of bounds. */
+/* 	    X also shouldn't exceed the spacial bound for the x dimension. */
+/*       ---*\/ */
+/*       int ix = wavefront - iz - iy; */
+/*       if (ix >= 0 && ix <= wavefront && ix < dims.ncell_x) */
+/* 	{ */
+
+/* 	  //  Display dimensions */
+/* 	  printf("iz = %d, iy = %d, ix = %d\n", iz, iy, ix); */
+/* 	  cell_count++; */
+/* 	} */
+/*     } */
+/*      } */
+
+/* printf("\nCell count = %d\n", cell_count); */
+
+   /*--- KBA sweep ---*/
+
+   /*--- Number of wavefronts equals the sum of the dimension sizes
+         minus the number of dimensions minus one. In our case, we have
+	 three total dimensions, so we add the sizes and subtract 2. 
+   ---*/
+   int num_wavefronts = (dims.ncell_z + dims.ncell_y + dims.ncell_x) - 2;
+
+   /*--- Loop over wavefronts ---*/
+   for (wavefront = 0; wavefront < num_wavefronts; wavefront+=1)
+
 #pragma acc parallel present(v_a_from_m[:v_size], \
 			     v_m_from_a[:v_size],   \
 			     vi_h[:vi_h_size],	    \
@@ -480,21 +526,31 @@ void Sweeper_sweep(
    /* int iyinc = Dir_inc(dir_y); */
    /* int ixinc = Dir_inc(dir_x); */
 
+   /*--- KBA sweep ---*/
+
    /*---Loop over cells, in proper direction---*/
 
-    for( iz=0; iz<dims.ncell_z; iz+=1 )
-    for( iy=0; iy<dims.ncell_y; iy+=1 )
-    for( ix=0; ix<dims.ncell_x; ix+=1 )
+#pragma acc loop independent gang, collapse(3)
+    for( iz=0; iz<dim_z; ++iz )
+    for( iy=0; iy<dim_y; ++iy )
     {
 
    /*---Loop over octants---*/
-
-#pragma acc loop independent gang, collapse(2)
    for( octant=0; octant<NOCTANT; ++octant )
      {
 
+      /*--- Solve for X dimension, and check bounds.
+	    The sum of the dimensions should equal the wavefront number.
+	    If x < 0 or x > wavefront number, we are out of bounds.
+	    X also shouldn't exceed the spacial bound for the x dimension.
+      ---*/
+      int ix = wavefront - (iz + iy);
+      if (ix >= 0 && ix <= wavefront && ix < dims.ncell_x)
+	{
+
+
    /*---Loop over energy groups---*/
-       //#pragma acc loop independent gang
+#pragma acc loop independent vector, collapse(3)
       for( ie=0; ie<dim_ne; ++ie )
       {
 
@@ -509,7 +565,6 @@ void Sweeper_sweep(
            processor cache.
       ---*/
 
-#pragma acc loop independent vector, collapse(2)
       for( iu=0; iu<NU; ++iu )
       for( ia=0; ia<dim_na; ++ia )
       { 
@@ -539,14 +594,19 @@ void Sweeper_sweep(
 		  iu + NU  * (
 		  ie + dims.ne * (
 		  octant + NOCTANT * (
-				      0)))) ] = result;
+		  iy + dims.ncell_y * (
+		  iz + dims.ncell_z * (
+				       0)))))) ] = result;
+      }
       }
 
       /*--------------------*/
       /*---Perform solve---*/
       /*--------------------*/
 
-#pragma acc loop independent vector
+   /*---Loop over energy groups---*/
+#pragma acc loop independent vector, collapse(2)
+      for( ie=0; ie<dim_ne; ++ie )
       for( ia=0; ia<dim_na; ++ia )
       {
 	Quantities_solve_inline(vs_local, dims, facexy, facexz, faceyz, 
@@ -562,7 +622,11 @@ void Sweeper_sweep(
            the result in the output state vector.
       ---*/
 
-#pragma acc loop independent vector, collapse(2)
+   /*---Loop over energy groups---*/
+#pragma acc loop independent vector, collapse(3)
+      for( ie=0; ie<dim_ne; ++ie )
+      {
+
       for( iu=0; iu<NU; ++iu )
       for( im=0; im<dim_nm; ++im )
       {
@@ -581,7 +645,9 @@ void Sweeper_sweep(
                      iu + NU    * (
 		     ie + dims.ne * (
 		     octant + NOCTANT * (
-					 0 )))) ];
+		     iy + dims.ncell_y * (
+		     iz + dims.ncell_z * (
+					  0 )))))) ];
         }
 
 	/*--- ref_state inline ---*/
@@ -595,11 +661,13 @@ void Sweeper_sweep(
              0 ))))))] += result;
       }
 
-    } /*---ie---*/
+      } /*---ie---*/
 
   } /*---octant---*/
+   
+	} /*--- ix ---*/
 
-    } /*---ix/iy/iz---*/
+    } /*---iy/iz/wavefront---*/
 
  }   /*--- #pragma acc parallel ---*/
 
