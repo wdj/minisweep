@@ -47,7 +47,7 @@ void Sweeper_create( Sweeper*          sweeper,
 
   /*---Allocate arrays---*/
 
-  sweeper->vslocal = malloc_host_P( dims.na * NU * dims.ne * NOCTANT * dims.ncell_z * dims.ncell_y );
+  sweeper->vslocal = malloc_host_P( dims.na * NU * dims.ne * NOCTANT * dims.ncell_x * dims.ncell_y );
   sweeper->facexy  = malloc_host_P( dims.ncell_x * dims.ncell_y * dims.ne *
                          dims.na * NU * NOCTANT);
   sweeper->facexz  = malloc_host_P( dims.ncell_x * dims.ncell_z * dims.ne *
@@ -170,8 +170,8 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
 			   iu + NU  * (
 			   ie + dims.ne * (
    			   octant + NOCTANT * (
+			   ix + dims.ncell_x * (
 			   iy + dims.ncell_y * (
-			   iz + dims.ncell_z * (
 						0))))));
 
       const P result = ( vs_local[vs_local_index] * scalefactor_space_r + 
@@ -310,7 +310,7 @@ void Sweeper_sweep(
     dims.ne * dims.nm * NU;
   int vo_h_size = dims.ncell_x * dims.ncell_y * dims.ncell_z * 
     dims.ne * dims.nm * NU;
-  int vs_local_size = dims.na * NU * dims.ne * NOCTANT * dims.ncell_z * dims.ncell_y;
+  int vs_local_size = dims.na * NU * dims.ne * NOCTANT * dims.ncell_x * dims.ncell_y;
 
   /*---Initialize result array to zero---*/
 
@@ -594,8 +594,8 @@ void Sweeper_sweep(
 		  iu + NU  * (
 		  ie + dims.ne * (
 		  octant + NOCTANT * (
+		  ix + dims.ncell_x * (
 		  iy + dims.ncell_y * (
-		  iz + dims.ncell_z * (
 				       0)))))) ] = result;
       }
       }
@@ -645,8 +645,8 @@ void Sweeper_sweep(
                      iu + NU    * (
 		     ie + dims.ne * (
 		     octant + NOCTANT * (
+		     ix + dims.ncell_x * (
 		     iy + dims.ncell_y * (
-		     iz + dims.ncell_z * (
 					  0 )))))) ];
         }
 
