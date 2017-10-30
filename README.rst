@@ -11,7 +11,7 @@ Copyright and Licensing
 
 Copyright (C) 2015-2017 Oak Ridge National Laboratory, UT-Battelle, LLC.
 
-For copyright/licensing details, see https://github.com/ORNL-CEES/Profugus.
+This code is part of the Profugus project.  For copyright/licensing details, see https://github.com/ORNL-CEES/Profugus.
 
 Usage
 =====
