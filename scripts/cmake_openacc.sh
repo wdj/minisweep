@@ -14,8 +14,8 @@ if [ "$INSTALL" = "" ] ; then
 fi
 
 if [ "$BUILD" = "" ] ; then
-  BUILD=Debug
-  #BUILD=Release
+  #BUILD=Debug
+  BUILD=Release
 fi
 
 if [ "$NM_VALUE" = "" ] ; then
@@ -30,12 +30,14 @@ cmake \
  \
   -DCMAKE_C_COMPILER:STRING=pgcc \
   -DCMAKE_CXX_COMPILER:STRING=pgc++ \
-  -DCMAKE_C_FLAGS:STRING="-DNM_VALUE=$NM_VALUE $ALG_OPTIONS -DUSE_ACC=ON -acc -Minfo=accel -ta=tesla,cc60" \
+  -DCMAKE_C_FLAGS:STRING="-O3 -DNM_VALUE=$NM_VALUE $ALG_OPTIONS -DUSE_ACC=ON -acc -Minfo=accel -Msafeptr -ta=tesla,cc35" \
+\
   -DCMAKE_C_FLAGS_DEBUG:STRING="-g" \
-  -DCMAKE_C_FLAGS_RELEASE:STRING="-O3" \
-  -DCMAKE_CXX_FLAGS:STRING="-DNM_VALUE=$NM_VALUE $ALG_OPTIONS _DUSE_ACC=ON -acc -Minfo=accel -ta=tesla,cc60" \
+  -DCMAKE_C_FLAGS_RELEASE:STRING="" \
+  -DCMAKE_CXX_FLAGS:STRING="-O3 -DNM_VALUE=$NM_VALUE $ALG_OPTIONS _DUSE_ACC=ON -acc -Minfo=accel -Msafeptr -ta=tesla,cc35" \
+\
   -DCMAKE_CXX_FLAGS_DEBUG:STRING="-g" \
-  -DCMAKE_CXX_FLAGS_RELEASE:STRING="-O3" \
+  -DCMAKE_CXX_FLAGS_RELEASE:STRING="" \
  \
   $SOURCE
 
