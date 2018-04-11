@@ -1,10 +1,10 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   sweeper_simple_c.h
- * \author Wayne Joubert
- * \date   Wed Jan 15 16:06:28 EST 2014
- * \brief  Definitions for performing a sweep, simple version.
- * \note   Copyright (C) 2014 Oak Ridge National Laboratory, UT-Battelle, LLC.
+ * \file   sweeper_simple_c_acc.h
+ * \author Robert Searles, Wayne Joubert
+ * \date   Wed Apr 11 9:12:00 EST 2018
+ * \brief  Definitions for performing a sweep, OpenACC/KBA version.
+ * \note   Copyright (C) 2018 Oak Ridge National Laboratory, UT-Battelle, LLC.
  */
 /*---------------------------------------------------------------------------*/
 
@@ -16,7 +16,7 @@
 #include "quantities.h"
 #include "array_accessors.h"
 #include "array_operations.h"
-#include "sweeper_simple.h"
+#include "sweeper_simple_acc.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -132,9 +132,13 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
 			     int ix, int iy, int iz, int ie, int ia,
 			     int octant, int octant_in_block, int noctant_per_block)
 {
-  const int dir_x = DIR_UP; //Dir_x( octant );
-  const int dir_y = DIR_UP; //Dir_y( octant );
-  const int dir_z = DIR_UP; //Dir_z( octant );
+  /* const int dir_x = DIR_UP; //Dir_x( octant ); */
+  /* const int dir_y = DIR_UP; //Dir_y( octant ); */
+  /* const int dir_z = DIR_UP; //Dir_z( octant ); */
+
+  const int dir_x = Dir_x( octant );
+  const int dir_y = Dir_y( octant );
+  const int dir_z = Dir_z( octant );
 
   int iu = 0;
 
@@ -169,9 +173,9 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
       int vs_local_index = ia + dims.na * (
 			   iu + NU  * (
 			   ie + dims.ne * (
-   			   octant + NOCTANT * (
 			   ix + dims.ncell_x * (
 			   iy + dims.ncell_y * (
+   			   octant + NOCTANT * (
 						0))))));
 
       const P result = ( vs_local[vs_local_index] * scalefactor_space_r + 
@@ -180,9 +184,9 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
 		facexy[ia + dims.na      * (
 			iu + NU           * (
                         ie + dims.ne      * (
-			octant + NOCTANT * (
                         ix + dims.ncell_x * (
                         iy + dims.ncell_y * (
+			octant + NOCTANT * (
 					     0 )))))) ]
 
 		/*--- Quantities_xfluxweight_ inline ---*/
@@ -194,9 +198,9 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
 	       + facexz[ia + dims.na      * (
 			iu + NU           * (
                         ie + dims.ne      * (
-			octant + NOCTANT * (
                         ix + dims.ncell_x * (
                         iz + dims.ncell_z * (
+			octant + NOCTANT * (
 					     0 )))))) ]
 
 		/*--- Quantities_yfluxweight_ inline ---*/
@@ -208,9 +212,9 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
 	       + faceyz[ia + dims.na      * (
 			iu + NU           * (
                         ie + dims.ne      * (
-			octant + NOCTANT * (
                         iy + dims.ncell_y * (
                         iz + dims.ncell_z * (
+			octant + NOCTANT * (
 					     0 )))))) ]
 
 		/*--- Quantities_zfluxweight_ inline ---*/
@@ -224,33 +228,218 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
 
       const P result_scaled = result * scalefactor_octant;
       /*--- ref_facexy inline ---*/
+#pragma acc atomic write
       facexy[ia + dims.na      * (
 	     iu + NU           * (
              ie + dims.ne      * (
-	     octant + NOCTANT * (
              ix + dims.ncell_x * (
              iy + dims.ncell_y * (
+	     octant + NOCTANT * (
 				  0 )))))) ] = result_scaled;
 
       /*--- ref_facexz inline ---*/
+#pragma acc atomic write
       facexz[ia + dims.na      * (
 	     iu + NU           * (
              ie + dims.ne      * (
-	     octant + NOCTANT * (
              ix + dims.ncell_x * (
              iz + dims.ncell_z * (
+	     octant + NOCTANT * (
 				  0 )))))) ] = result_scaled;
 
       /*--- ref_faceyz inline ---*/
+#pragma acc atomic write
       faceyz[ia + dims.na      * (
 	     iu + NU           * (
              ie + dims.ne      * (
-	     octant + NOCTANT * (
              iy + dims.ncell_y * (
              iz + dims.ncell_z * (
+	     octant + NOCTANT * (
 				  0 )))))) ] = result_scaled;
 
     } /*---for---*/
+}
+
+/*===========================================================================*/
+/*---In-gricell computations---*/
+#pragma acc routine vector
+void Sweeper_in_gridcell(  Dimensions dims,
+			     int wavefront,
+			     int octant,
+			     int ix, int iy,
+			     int dir_x, int dir_y, int dir_z,
+			     P* __restrict__ facexy,
+			     P* __restrict__ facexz,
+			     P* __restrict__ faceyz,
+			     P* v_a_from_m,
+			     P* v_m_from_a,
+			     P* vi_h,
+			     P* vo_h,
+			     P* vs_local
+			     )
+{
+  /*---Declarations---*/
+  /* int wavefront = 0; */
+  /* int ix = 0; */
+  /* int iy = 0; */
+  int iz = 0;
+  int ie = 0;
+  int im = 0;
+  int ia = 0;
+  int iu = 0;
+  /* int octant = 0; */
+  int noctant_per_block = 1;
+  const int octant_in_block = 0;
+
+  /*--- Dimensions ---*/
+  int dim_x = dims.ncell_x;
+  int dim_y = dims.ncell_y;
+  int dim_z = dims.ncell_z;
+  int dim_ne = dims.ne;
+  int dim_na = dims.na;
+  int dim_nm = dims.nm;
+
+  /*--- Solve for Z dimension, and check bounds.
+    The sum of the dimensions should equal the wavefront number.
+    If z < 0 or z > wavefront number, we are out of bounds.
+    Z also shouldn't exceed the spacial bound for the z dimension.
+
+    The calculation is adjusted for the direction of each axis
+    in a given octant.
+  ---*/
+
+  int ixwav, iywav, izwav;
+  if (dir_x==DIR_UP) { ixwav = ix; } else { ixwav = (dim_x-1) - ix; }
+  if (dir_y==DIR_UP) { iywav = iy; } else { iywav = (dim_y-1) - iy; }
+  
+  if (dir_z==DIR_UP) {
+    iz = wavefront - (ixwav + iywav); } 
+  else { 
+    iz = (dim_z-1) - (wavefront - (ixwav + iywav));
+  }
+
+  /*--- Bounds check ---*/
+  if ((iz >= 0 && iz < dim_z) )// &&
+    /* ((dir_z==DIR_UP && iz <= wavefront) || */
+    /*  (dir_z==DIR_DN && (dim_z-1-iz) <= wavefront))) */
+    {
+
+   /*---Loop over energy groups---*/
+#pragma acc loop independent vector, collapse(3)
+      for( ie=0; ie<dim_ne; ++ie )
+      {
+
+      /*--------------------*/
+      /*---Transform state vector from moments to angles---*/
+      /*--------------------*/
+
+      /*---This loads values from the input state vector,
+           does the small dense matrix-vector product,
+           and stores the result in a relatively small local
+           array that is hopefully small enough to fit into
+           processor cache.
+      ---*/
+
+      for( iu=0; iu<NU; ++iu )
+      for( ia=0; ia<dim_na; ++ia )
+      { 
+	// reset reduction
+	P result = (P)0;
+#pragma acc loop seq
+        for( im=0; im < dim_nm; ++im )
+        {
+	  /*--- const_ref_a_from_m inline ---*/
+	  result += v_a_from_m[ ia     + dims.na * (
+         	  	        im     +      NM * (
+	  	                octant + NOCTANT * (
+						    0 ))) ] * 
+
+	    /*--- const_ref_state inline ---*/
+	    vi_h[im + dims.nm      * (
+	    		  iu + NU           * (
+	    		  ix + dims.ncell_x * (
+                          iy + dims.ncell_y * (
+                          ie + dims.ne      * (
+                          iz + dims.ncell_z * ( /*---NOTE: This axis MUST be slowest-varying---*/
+	    				       0 ))))))];
+        }
+
+	/*--- ref_vslocal inline ---*/
+	//#pragma acc atomic write
+	vs_local[ ia + dims.na * (
+		  iu + NU  * (
+		  ie + dims.ne * (
+		  ix + dims.ncell_x * (
+		  iy + dims.ncell_y * (
+		  octant + NOCTANT * (
+				       0)))))) ] = result;
+      }
+      }
+
+      /*--------------------*/
+      /*---Perform solve---*/
+      /*--------------------*/
+
+   /*---Loop over energy groups---*/
+#pragma acc loop independent vector, collapse(2)
+      for( ie=0; ie<dim_ne; ++ie )
+      for( ia=0; ia<dim_na; ++ia )
+      {
+	Quantities_solve_inline(vs_local, dims, facexy, facexz, faceyz, 
+			     ix, iy, iz, ie, ia,
+			     octant, octant_in_block, noctant_per_block);
+      }
+
+      /*--------------------*/
+      /*---Transform state vector from angles to moments---*/
+      /*--------------------*/
+
+      /*---Perform small dense matrix-vector products and store
+           the result in the output state vector.
+      ---*/
+
+   /*---Loop over energy groups---*/
+#pragma acc loop independent vector, collapse(3)
+      for( ie=0; ie<dim_ne; ++ie )
+      {
+
+      for( iu=0; iu<NU; ++iu )
+      for( im=0; im<dim_nm; ++im )
+      {
+        P result = (P)0;
+#pragma acc loop seq
+        for( ia=0; ia<dim_na; ++ia )
+        {
+	  /*--- const_ref_m_from_a ---*/
+	  result += v_m_from_a[ im     +      NM * (
+         	  	       ia     + dims.na * (
+                               octant + NOCTANT * (
+                               0 ))) ] *
+
+	    /*--- const_ref_vslocal ---*/
+	    vs_local[ ia + dims.na * (
+                     iu + NU    * (
+		     ie + dims.ne * (
+		     ix + dims.ncell_x * (
+		     iy + dims.ncell_y * (
+		     octant + NOCTANT * (
+					  0 )))))) ];
+        }
+
+	/*--- ref_state inline ---*/
+#pragma acc atomic update
+	vo_h[im + dims.nm      * (
+             iu + NU           * (
+             ix + dims.ncell_x * (
+             iy + dims.ncell_y * (
+             ie + dims.ne      * (
+             iz + dims.ncell_z * ( /*---NOTE: This axis MUST be slowest-varying---*/
+             0 ))))))] += result;
+      }
+
+      } /*---ie---*/
+
+	} /*--- iz ---*/
 }
 
 /*===========================================================================*/
@@ -320,7 +509,8 @@ void Sweeper_sweep(
 #pragma acc enter data copyin(v_a_from_m[:v_size], \
 			      v_m_from_a[:v_size], \
 			      vi_h[:vi_h_size], \
-			      vo_h[:vo_h_size]), \
+			      vo_h[:vo_h_size], \
+                              dims),	\
   create(facexy[:facexy_size], \
 	 facexz[:facexz_size], \
 	 faceyz[:faceyz_size])
@@ -350,20 +540,18 @@ void Sweeper_sweep(
 #pragma acc parallel present(facexy[:facexy_size])
 {
 
-#pragma acc loop independent gang collapse(2)
+#pragma acc loop independent gang collapse(3)
+      for( octant=0; octant<NOCTANT; ++octant )
       for( iy=0; iy<dim_y; ++iy )
       for( ix=0; ix<dim_x; ++ix )
-#pragma acc loop independent vector collapse(4)
-      for( octant=0; octant<NOCTANT; ++octant )
+#pragma acc loop independent vector collapse(3)
       for( ie=0; ie<dim_ne; ++ie )
       for( iu=0; iu<NU; ++iu )
       for( ia=0; ia<dim_na; ++ia )
       {
 
-	/* const int dir_z = DIR_UP; //Dir_z( octant ); */
-	/* iz = dir_z == DIR_UP ? -1 : dim_z; */
-
-	iz = -1;
+	const int dir_z = Dir_z( octant );
+	iz = dir_z == DIR_UP ? -1 : dim_z;
 
 	/*--- Quantities_scalefactor_space_ inline ---*/
 	int scalefactor_space = Quantities_scalefactor_space_inline(ix, iy, iz);
@@ -372,9 +560,9 @@ void Sweeper_sweep(
 	facexy[ia + dims.na      * (
 			iu + NU           * (
                         ie + dims.ne      * (
-	                octant + NOCTANT * (
                         ix + dims.ncell_x * (
                         iy + dims.ncell_y * (
+	                octant + NOCTANT * (
 					     0 )))))) ]
 
 	  /*--- Quantities_init_face routine ---*/
@@ -387,20 +575,18 @@ void Sweeper_sweep(
 #pragma acc parallel present(facexz[:facexz_size])
 {
  
-#pragma acc loop independent gang collapse(2)
+#pragma acc loop independent gang collapse(3)
+      for( octant=0; octant<NOCTANT; ++octant )
       for( iz=0; iz<dim_z; ++iz )
       for( ix=0; ix<dim_x; ++ix )
-#pragma acc loop independent vector collapse(4)
-      for( octant=0; octant<NOCTANT; ++octant )
+#pragma acc loop independent vector collapse(3)
       for( ie=0; ie<dim_ne; ++ie )
       for( iu=0; iu<NU; ++iu )
       for( ia=0; ia<dim_na; ++ia )
       {
 
-	/* const int dir_y = DIR_UP; //Dir_y( octant ); */
-	/* iy = dir_y == DIR_UP ? -1 : dim_y; */
-
-	iy = -1;
+	const int dir_y = Dir_y( octant );
+	iy = dir_y == DIR_UP ? -1 : dim_y;
 
 	/*--- Quantities_scalefactor_space_ inline ---*/
 	int scalefactor_space = Quantities_scalefactor_space_inline(ix, iy, iz);
@@ -409,9 +595,9 @@ void Sweeper_sweep(
 	facexz[ia + dims.na      * (
 			iu + NU           * (
                         ie + dims.ne      * (
-	                octant + NOCTANT * (
                         ix + dims.ncell_x * (
                         iz + dims.ncell_z * (
+	                octant + NOCTANT * (
 					     0 )))))) ]
 
 	  /*--- Quantities_init_face routine ---*/
@@ -424,20 +610,18 @@ void Sweeper_sweep(
 #pragma acc parallel present(faceyz[:faceyz_size])
 {
 
-#pragma acc loop independent gang collapse(2)
+#pragma acc loop independent gang collapse(3)
+      for( octant=0; octant<NOCTANT; ++octant )
       for( iz=0; iz<dim_z; ++iz )
       for( iy=0; iy<dim_y; ++iy )
-#pragma acc loop independent vector collapse(4)
-      for( octant=0; octant<NOCTANT; ++octant )
+#pragma acc loop independent vector collapse(3)
       for( ie=0; ie<dim_ne; ++ie )
       for( iu=0; iu<NU; ++iu )
       for( ia=0; ia<dim_na; ++ia )
       {
 
-	/* const int dir_x = Dir_x( octant ); */
-	/* ix = dir_x == DIR_UP ? -1 : dim_x; */
-
-	ix = -1;
+	const int dir_x = Dir_x( octant );
+	ix = dir_x == DIR_UP ? -1 : dim_x;
 
 	/*--- Quantities_scalefactor_space_ inline ---*/
 	int scalefactor_space = Quantities_scalefactor_space_inline(ix, iy, iz);
@@ -446,9 +630,9 @@ void Sweeper_sweep(
 	faceyz[ia + dims.na      * (
 			iu + NU           * (
                         ie + dims.ne      * (
-	                octant + NOCTANT * (
                         iy + dims.ncell_y * (
                         iz + dims.ncell_z * (
+	                octant + NOCTANT * (
 					     0 )))))) ]
 
 	  /*--- Quantities_init_face routine ---*/
@@ -457,222 +641,113 @@ void Sweeper_sweep(
 
 /*--- #pragma acc parallel ---*/
  }
-
-/*    int num_wavefronts = (dims.ncell_z + dims.ncell_y + dims.ncell_x) - 2; */
-/*    int cell_count = 0; */
-
-/*    /\*--- Loop over wavefronts ---*\/ */
-/*    for (wavefront = 0; wavefront < num_wavefronts; wavefront+=1) */
-/*      { */
-/*      printf("\nWavefront: %d\n", wavefront); */
-
-/*    /\*---Loop over cells, in proper direction---*\/ */
-
-/*     for( iz=0; iz<dims.ncell_z; iz+=1 ) */
-/*     for( iy=0; iy<dims.ncell_y; iy+=1 ) */
-/*     { */
-
-/*       /\*--- Solve for X dimension, and check bounds. */
-/* 	    The sum of the dimensions should equal the wavefront number. */
-/* 	    If x < 0 or x > wavefront number, we are out of bounds. */
-/* 	    X also shouldn't exceed the spacial bound for the x dimension. */
-/*       ---*\/ */
-/*       int ix = wavefront - iz - iy; */
-/*       if (ix >= 0 && ix <= wavefront && ix < dims.ncell_x) */
-/* 	{ */
-
-/* 	  //  Display dimensions */
-/* 	  printf("iz = %d, iy = %d, ix = %d\n", iz, iy, ix); */
-/* 	  cell_count++; */
-/* 	} */
-/*     } */
-/*      } */
-
-/* printf("\nCell count = %d\n", cell_count); */
-
-   /*--- KBA sweep ---*/
-
-   /*--- Number of wavefronts equals the sum of the dimension sizes
-         minus the number of dimensions minus one. In our case, we have
-	 three total dimensions, so we add the sizes and subtract 2. 
-   ---*/
-   int num_wavefronts = (dims.ncell_z + dims.ncell_y + dims.ncell_x) - 2;
-
-   /*--- Loop over wavefronts ---*/
-   for (wavefront = 0; wavefront < num_wavefronts; wavefront+=1)
-
-#pragma acc parallel present(v_a_from_m[:v_size], \
+     
+#pragma acc data present(v_a_from_m[:v_size], \
 			     v_m_from_a[:v_size],   \
 			     vi_h[:vi_h_size],	    \
 			     vo_h[:vo_h_size], \
                              facexy[:facexy_size],				    \
 	                     facexz[:facexz_size],			    \
-	                     faceyz[:faceyz_size]),			\
+	                     faceyz[:faceyz_size], \
+			     dims),			   \
   create(vs_local[vs_local_size])
  {
 
-    /*---Decode octant directions from octant number---*/
-   /*---Calculate spatial loop extents---*/
+/*---Loop over octants---*/
+for( octant=0; octant<NOCTANT; ++octant )
+  {
 
-   /* int ixbeg = dir_x==DIR_UP ? 0 : dims.ncell_x-1; */
-   /* int iybeg = dir_y==DIR_UP ? 0 : dims.ncell_y-1; */
-   /* int izbeg = dir_z==DIR_UP ? 0 : dims.ncell_z-1; */
+   /*---Decode octant directions from octant number---*/
 
-   /* int ixend = (dir_x==DIR_DN ? 0 : dims.ncell_x-1) + Dir_inc(dir_x); */
-   /* int iyend = (dir_y==DIR_DN ? 0 : dims.ncell_y-1) + Dir_inc(dir_y); */
-   /* int izend = (dir_z==DIR_DN ? 0 : dims.ncell_z-1) + Dir_inc(dir_z); */
-
-   /* int izinc = Dir_inc(dir_z); */
-   /* int iyinc = Dir_inc(dir_y); */
-   /* int ixinc = Dir_inc(dir_x); */
+   const int dir_x = Dir_x( octant );
+   const int dir_y = Dir_y( octant );
+   const int dir_z = Dir_z( octant );
 
    /*--- KBA sweep ---*/
 
-   /*---Loop over cells, in proper direction---*/
-
-#pragma acc loop independent gang, collapse(3)
-    for( iy=0; iy<dim_y; ++iy )
-    for( ix=0; ix<dim_x; ++ix )
-    {
-
-   /*---Loop over octants---*/
-   for( octant=0; octant<NOCTANT; ++octant )
+   /*--- Number of wavefronts equals the sum of the dimension sizes
+     minus the number of dimensions minus one. In our case, we have
+     three total dimensions, so we add the sizes and subtract 2. 
+   ---*/
+   int num_wavefronts = (dims.ncell_z + dims.ncell_y + dims.ncell_x) - 2;
+ 
+   /*--- Loop over wavefronts ---*/
+   for (wavefront = 0; wavefront < num_wavefronts; wavefront++)
      {
 
-      /*--- Solve for X dimension, and check bounds.
-	    The sum of the dimensions should equal the wavefront number.
-	    If x < 0 or x > wavefront number, we are out of bounds.
-	    X also shouldn't exceed the spacial bound for the x dimension.
-      ---*/
-      int iz = wavefront - (ix + iy);
-      if (iz >= 0 && iz <= wavefront && iz < dims.ncell_z)
-	{
+#pragma acc parallel async(octant)
+     {
 
+       /*---Loop over cells, in proper direction---*/
+       if (dir_y==DIR_UP && dir_x==DIR_UP) {
+#pragma acc loop independent gang, collapse(2)
+	 for( iy=0; iy<dim_y; ++iy )
+	   for( ix=0; ix<dim_x; ++ix )
+	     {
+	       /*--- In-gridcell computations ---*/
+	       Sweeper_in_gridcell( dims, wavefront, octant, ix, iy,
+				    dir_x, dir_y, dir_z,
+				    facexy, facexz, faceyz,
+				    v_a_from_m, v_m_from_a,
+				    vi_h, vo_h, vs_local );
+	     } /*---ix/iy---*/
+       } else if (dir_y==DIR_UP && dir_x==DIR_DN) {
+#pragma acc loop independent gang, collapse(2)
+	 for( iy=0; iy<dim_y; ++iy )
+	   for( ix=dim_x-1; ix>=0; --ix )
+	     {
+	       /*--- In-gridcell computations ---*/
+	       Sweeper_in_gridcell( dims, wavefront, octant, ix, iy,
+				    dir_x, dir_y, dir_z,
+				    facexy, facexz, faceyz,
+				    v_a_from_m, v_m_from_a,
+				    vi_h, vo_h, vs_local );	 
+	     } /*---ix/iy---*/
+       } else if (dir_y==DIR_DN && dir_x==DIR_UP) {
+#pragma acc loop independent gang, collapse(2)
+	 for( iy=dim_y-1; iy>=0; --iy )
+	   for( ix=0; ix<dim_x; ++ix )
+	     {
+	       /*--- In-gridcell computations ---*/
+	       Sweeper_in_gridcell( dims, wavefront, octant, ix, iy,
+				    dir_x, dir_y, dir_z,
+				    facexy, facexz, faceyz,
+				    v_a_from_m, v_m_from_a,
+				    vi_h, vo_h, vs_local );	 
+	     } /*---ix/iy---*/
+       } else {
+#pragma acc loop independent gang, collapse(2)
+	 for( iy=dim_y-1; iy>=0; --iy )
+	   for( ix=dim_x-1; ix>=0; --ix )
+	     {
+	       /*--- In-gridcell computations ---*/
+	       Sweeper_in_gridcell( dims, wavefront, octant, ix, iy,
+				    dir_x, dir_y, dir_z,
+				    facexy, facexz, faceyz,
+				    v_a_from_m, v_m_from_a,
+				    vi_h, vo_h, vs_local );	 
+	     } /*---ix/iy---*/
+       }
 
-   /*---Loop over energy groups---*/
-#pragma acc loop independent vector, collapse(3)
-      for( ie=0; ie<dim_ne; ++ie )
-      {
+     } /*--- #pragma acc parallel ---*/
 
-      /*--------------------*/
-      /*---Transform state vector from moments to angles---*/
-      /*--------------------*/
-
-      /*---This loads values from the input state vector,
-           does the small dense matrix-vector product,
-           and stores the result in a relatively small local
-           array that is hopefully small enough to fit into
-           processor cache.
-      ---*/
-
-      for( iu=0; iu<NU; ++iu )
-      for( ia=0; ia<dim_na; ++ia )
-      { 
-	// reset reduction
-	P result = (P)0;
-#pragma acc loop seq
-        for( im=0; im < dim_nm; ++im )
-        {
-	  /*--- const_ref_a_from_m inline ---*/
-	  result += v_a_from_m[ ia     + dims.na * (
-         	  	        im     +      NM * (
-	  	                octant + NOCTANT * (
-						    0 ))) ] * 
-
-	    /*--- const_ref_state inline ---*/
-	    vi_h[im + dims.nm      * (
-	    		  iu + NU           * (
-	    		  ix + dims.ncell_x * (
-                          iy + dims.ncell_y * (
-                          ie + dims.ne      * (
-                          iz + dims.ncell_z * ( /*---NOTE: This axis MUST be slowest-varying---*/
-	    				       0 ))))))];
-        }
-
-	/*--- ref_vslocal inline ---*/
-	vs_local[ ia + dims.na * (
-		  iu + NU  * (
-		  ie + dims.ne * (
-		  octant + NOCTANT * (
-		  ix + dims.ncell_x * (
-		  iy + dims.ncell_y * (
-				       0)))))) ] = result;
-      }
-      }
-
-      /*--------------------*/
-      /*---Perform solve---*/
-      /*--------------------*/
-
-   /*---Loop over energy groups---*/
-#pragma acc loop independent vector, collapse(2)
-      for( ie=0; ie<dim_ne; ++ie )
-      for( ia=0; ia<dim_na; ++ia )
-      {
-	Quantities_solve_inline(vs_local, dims, facexy, facexz, faceyz, 
-			     ix, iy, iz, ie, ia,
-			     octant, octant_in_block, noctant_per_block);
-      }
-
-      /*--------------------*/
-      /*---Transform state vector from angles to moments---*/
-      /*--------------------*/
-
-      /*---Perform small dense matrix-vector products and store
-           the result in the output state vector.
-      ---*/
-
-   /*---Loop over energy groups---*/
-#pragma acc loop independent vector, collapse(3)
-      for( ie=0; ie<dim_ne; ++ie )
-      {
-
-      for( iu=0; iu<NU; ++iu )
-      for( im=0; im<dim_nm; ++im )
-      {
-        P result = (P)0;
-	//#pragma acc loop independent vector, reduction(+:result)
-        for( ia=0; ia<dim_na; ++ia )
-        {
-	  /*--- const_ref_m_from_a ---*/
-	  result += v_m_from_a[ im     +      NM * (
-         	  	       ia     + dims.na * (
-                               octant + NOCTANT * (
-                               0 ))) ] *
-
-	    /*--- const_ref_vslocal ---*/
-	    vs_local[ ia + dims.na * (
-                     iu + NU    * (
-		     ie + dims.ne * (
-		     octant + NOCTANT * (
-		     ix + dims.ncell_x * (
-		     iy + dims.ncell_y * (
-					  0 )))))) ];
-        }
-
-	/*--- ref_state inline ---*/
-#pragma acc atomic update
-	vo_h[im + dims.nm      * (
-             iu + NU           * (
-             ix + dims.ncell_x * (
-             iy + dims.ncell_y * (
-             ie + dims.ne      * (
-             iz + dims.ncell_z * ( /*---NOTE: This axis MUST be slowest-varying---*/
-             0 ))))))] += result;
-      }
-
-      } /*---ie---*/
+     } /*--- wavefront ---*/
 
   } /*---octant---*/
+ 
+ }   /*--- #pragma acc enter data ---*/
+
+#pragma acc wait
    
-	} /*--- iz ---*/
-
-    } /*---ix/iy/wavefront---*/
-
- }   /*--- #pragma acc parallel ---*/
-
   /*--- Data transfer of results to the host ---*/
-#pragma acc exit data copyout(vo_h[:vo_h_size])
+#pragma acc exit data copyout(vo_h[:vo_h_size]), delete(v_a_from_m[:v_size], \
+                                                        v_m_from_a[:v_size], \
+			                                vi_h[:vi_h_size], \
+                                                        facexy[:facexy_size], \
+	                                                facexz[:facexz_size], \
+	                                                faceyz[:faceyz_size], \
+							vs_local[:vs_local_size])
+			      
 
 } /*---sweep---*/
 

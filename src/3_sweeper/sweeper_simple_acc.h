@@ -1,15 +1,15 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   sweeper_simple.h
- * \author Wayne Joubert
- * \date   Wed Jan 15 16:06:28 EST 2014
- * \brief  Declarations for performing a sweep, simple version.
- * \note   Copyright (C) 2014 Oak Ridge National Laboratory, UT-Battelle, LLC.
+ * \file   sweeper_simple_c_acc.h
+ * \author Robert Searles, Wayne Joubert
+ * \date   Wed Apr 11 9:12:00 EST 2018
+ * \brief  Definitions for performing a sweep, OpenACC/KBA version.
+ * \note   Copyright (C) 2018 Oak Ridge National Laboratory, UT-Battelle, LLC.
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _sweeper_simple_h_
-#define _sweeper_simple_h_
+#ifndef _sweeper_simple_acc_h_
+#define _sweeper_simple_acc_h_
 
 #include "env.h"
 #include "definitions.h"
@@ -64,6 +64,24 @@ static int Sweeper_noctant_per_block( const Sweeper* sweeper )
 }
 
 /*===========================================================================*/
+/*---In-gricell computations---*/
+#pragma acc routine vector
+void Sweeper_in_gridcell(  Dimensions dims,
+			     int wavefront,
+			     int octant,
+			     int ix, int iy,
+			     int dir_x, int dir_y, int dir_z,
+			     P* __restrict__ facexy,
+			     P* __restrict__ facexz,
+			     P* __restrict__ faceyz,
+			     P* v_a_from_m,
+			     P* v_m_from_a,
+			     P* vi_h,
+			     P* vo_h,
+			     P* vs_local
+			   );
+
+/*===========================================================================*/
 /*---Perform a sweep---*/
 
 void Sweeper_sweep(
@@ -79,6 +97,6 @@ void Sweeper_sweep(
 } /*---extern "C"---*/
 #endif
 
-#endif /*---_sweeper_simple_h_---*/
+#endif /*---_sweeper_simple_acc_h_---*/
 
 /*---------------------------------------------------------------------------*/
