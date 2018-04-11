@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   sweeper_simple_c_acc.h
+ * \file   sweeper_acc_c.h
  * \author Robert Searles, Wayne Joubert
  * \date   Wed Apr 11 9:12:00 EST 2018
  * \brief  Definitions for performing a sweep, OpenACC/KBA version.
@@ -8,15 +8,15 @@
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _sweeper_simple_c_h_
-#define _sweeper_simple_c_h_
+#ifndef _sweeper_acc_c_h_
+#define _sweeper_acc_c_h_
 
 #include "env.h"
 #include "definitions.h"
 #include "quantities.h"
 #include "array_accessors.h"
 #include "array_operations.h"
-#include "sweeper_simple_acc.h"
+#include "sweeper_acc.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -132,10 +132,6 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
 			     int ix, int iy, int iz, int ie, int ia,
 			     int octant, int octant_in_block, int noctant_per_block)
 {
-  /* const int dir_x = DIR_UP; //Dir_x( octant ); */
-  /* const int dir_y = DIR_UP; //Dir_y( octant ); */
-  /* const int dir_z = DIR_UP; //Dir_z( octant ); */
-
   const int dir_x = Dir_x( octant );
   const int dir_y = Dir_y( octant );
   const int dir_z = Dir_z( octant );
@@ -279,9 +275,6 @@ void Sweeper_in_gridcell(  Dimensions dims,
 			     )
 {
   /*---Declarations---*/
-  /* int wavefront = 0; */
-  /* int ix = 0; */
-  /* int iy = 0; */
   int iz = 0;
   int ie = 0;
   int im = 0;
@@ -365,7 +358,6 @@ void Sweeper_in_gridcell(  Dimensions dims,
         }
 
 	/*--- ref_vslocal inline ---*/
-	//#pragma acc atomic write
 	vs_local[ ia + dims.na * (
 		  iu + NU  * (
 		  ie + dims.ne * (
@@ -516,8 +508,6 @@ void Sweeper_sweep(
 	 faceyz[:faceyz_size])
 
   const int octant_in_block = 0;
-  /* Assert( octant_in_block >= 0 && */
-  /*         octant_in_block < noctant_per_block ); */
 
     /*---Initialize faces---*/
 
@@ -675,6 +665,7 @@ for( octant=0; octant<NOCTANT; ++octant )
    for (wavefront = 0; wavefront < num_wavefronts; wavefront++)
      {
 
+/*--- Create an asynchronous queue for each octant ---*/
 #pragma acc parallel async(octant)
      {
 
@@ -757,6 +748,6 @@ for( octant=0; octant<NOCTANT; ++octant )
 } /*---extern "C"---*/
 #endif
 
-#endif /*---_sweeper_simple_c_h_---*/
+#endif /*---_sweeper_acc_c_h_---*/
 
 /*---------------------------------------------------------------------------*/

@@ -23,7 +23,7 @@
 #endif
 
 #ifdef SWEEPER_ACC
-#include "sweeper_simple_c_acc.h"
+#include "sweeper_acc_c.h"
 #endif
 
 /*---------------------------------------------------------------------------*/

@@ -32,7 +32,7 @@
 #endif
 
 #ifdef SWEEPER_ACC
-#include "sweeper_simple_acc.h"
+#include "sweeper_acc.h"
 #endif
 
 #endif /*---_sweep_h_---*/

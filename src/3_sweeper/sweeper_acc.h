@@ -1,6 +1,6 @@
 /*---------------------------------------------------------------------------*/
 /*!
- * \file   sweeper_simple_c_acc.h
+ * \file   sweeper_acc.h
  * \author Robert Searles, Wayne Joubert
  * \date   Wed Apr 11 9:12:00 EST 2018
  * \brief  Definitions for performing a sweep, OpenACC/KBA version.
@@ -8,8 +8,8 @@
  */
 /*---------------------------------------------------------------------------*/
 
-#ifndef _sweeper_simple_acc_h_
-#define _sweeper_simple_acc_h_
+#ifndef _sweeper_acc_h_
+#define _sweeper_acc_h_
 
 #include "env.h"
 #include "definitions.h"
@@ -97,6 +97,6 @@ void Sweeper_sweep(
 } /*---extern "C"---*/
 #endif
 
-#endif /*---_sweeper_simple_acc_h_---*/
+#endif /*---_sweeper_acc_h_---*/
 
 /*---------------------------------------------------------------------------*/
