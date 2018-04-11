@@ -11,12 +11,18 @@
 #ifndef _sweep_h_
 #define _sweep_h_
 
-#ifndef SWEEPER_SIMPLE
-#ifndef SWEEPER_TILEOCTANTS
-#ifndef SWEEPER_KBA
+/* #ifndef SWEEPER_SIMPLE */
+/* #ifndef SWEEPER_TILEOCTANTS */
+/* #ifndef SWEEPER_KBA */
+/* #define SWEEPER_ACC */
+/* #endif */
+/* #endif */
+/* #endif */
+
+#ifdef USE_ACC
 #define SWEEPER_ACC
-#endif
-#endif
+#else
+#define SWEEPER_KBA
 #endif
 
 #ifdef SWEEPER_SIMPLE
