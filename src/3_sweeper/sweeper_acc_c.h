@@ -18,6 +18,10 @@
 #include "array_operations.h"
 #include "sweeper_acc.h"
 
+#ifdef USE_MPI
+#include "openacc.h"
+#endif
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -42,8 +46,8 @@ void Sweeper_create( Sweeper*          sweeper,
                      Env*              env,
                      Arguments*        args )
 {
-  Insist( Env_nproc( env ) == 1 && 
-                             "This sweeper version runs only with one proc." );
+  /* Insist( Env_nproc( env ) == 1 &&  */
+  /*                            "This sweeper version runs only with one proc." ); */
 
   /*---Allocate arrays---*/
 
@@ -447,6 +451,15 @@ void Sweeper_sweep(
   Assert( sweeper );
   Assert( vi );
   Assert( vo );
+
+  /*--- Set OpenACC device based on MPI rank ---*/
+#ifdef USE_MPI
+  int num_devices = acc_get_num_devices(acc_device_nvidia);
+  int mpi_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &mpi_rank);
+  int device_num = mpi_rank % num_devices;
+  acc_set_device_num( device_num, acc_device_nvidia );
+#endif
 
   /*---Declarations---*/
   int wavefront = 0;

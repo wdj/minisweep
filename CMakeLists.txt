@@ -28,7 +28,7 @@ SET(SOURCES
   src/4_driver/runner.c
   )
 
-SET_SOURCE_FILES_PROPERTIES( src/1_base/env.c src/4_driver/sweep.c src/4_driver/tester.c PROPERTIES LANGUAGE CXX )
+#SET_SOURCE_FILES_PROPERTIES( src/1_base/env.c src/4_driver/sweep.c src/4_driver/tester.c PROPERTIES LANGUAGE CXX )
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 
 SET(CUDA_SOURCES)
