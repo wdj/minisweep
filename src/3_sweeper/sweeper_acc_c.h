@@ -228,7 +228,6 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
 
       const P result_scaled = result * scalefactor_octant;
       /*--- ref_facexy inline ---*/
-#pragma acc atomic write
       facexy[ia + dims.na      * (
 	     iu + NU           * (
              ie + dims.ne      * (
@@ -238,7 +237,6 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
 				  0 )))))) ] = result_scaled;
 
       /*--- ref_facexz inline ---*/
-#pragma acc atomic write
       facexz[ia + dims.na      * (
 	     iu + NU           * (
              ie + dims.ne      * (
@@ -248,7 +246,6 @@ void Quantities_solve_inline(P* vs_local, Dimensions dims, P* facexy, P* facexz,
 				  0 )))))) ] = result_scaled;
 
       /*--- ref_faceyz inline ---*/
-#pragma acc atomic write
       faceyz[ia + dims.na      * (
 	     iu + NU           * (
              ie + dims.ne      * (
