@@ -22,4 +22,8 @@
 #include "sweeper_kba_c.h"
 #endif
 
+#ifdef SWEEPER_ACC
+#include "sweeper_acc_c.h"
+#endif
+
 /*---------------------------------------------------------------------------*/

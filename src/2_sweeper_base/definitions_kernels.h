@@ -40,16 +40,19 @@ enum{ DIR_DN = -1 };
 enum{ DIR_HI = +1 }; /*---high side or low side---*/
 enum{ DIR_LO = -1 };
 
+#pragma acc routine seq
 TARGET_HD static inline int Dir_x( int octant ) { return octant & (1<<0)
                                                                ? DIR_DN*1
                                                                : DIR_UP*1; }
+#pragma acc routine seq
 TARGET_HD static inline int Dir_y( int octant ) { return octant & (1<<1)
                                                                ? DIR_DN*1
                                                                : DIR_UP*1; }
+#pragma acc routine seq
 TARGET_HD static inline int Dir_z( int octant ) { return octant & (1<<2)
                                                                ? DIR_DN*1
                                                                : DIR_UP*1; }
-
+#pragma acc routine seq
 TARGET_HD static inline int Dir_inc( int dir ) { return dir; }
 
 /*===========================================================================*/

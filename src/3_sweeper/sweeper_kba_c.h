@@ -482,6 +482,8 @@ void Sweeper_sweep_block(
 {
   /*---Declarations---*/
 
+  const int block_init_size = sweeper->nblock_z * sizeof( Bool_t );
+
   const int proc_x = Env_proc_x_this( env );
   const int proc_y = Env_proc_y_this( env );
 

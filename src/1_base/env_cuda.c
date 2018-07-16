@@ -37,7 +37,7 @@ Bool_t Env_cuda_last_call_succeeded()
   if ( error != cudaSuccess )
   {
       result = Bool_false;
-      printf( "CUDA error detected: %s\n", cudaGetErrorString( error ) );
+      //printf( "CUDA error detected: %s\n", cudaGetErrorString( error ) );
   }
 #endif
 
