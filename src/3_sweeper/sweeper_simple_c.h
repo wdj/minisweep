@@ -186,7 +186,6 @@ void Sweeper_sweep(
     }
 
     /*---Loop over energy groups---*/
-
     for( ie=0; ie<sweeper->dims.ne; ++ie )
     {
       /*---Calculate spatial loop extents---*/
