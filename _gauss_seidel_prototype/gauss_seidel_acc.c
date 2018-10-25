@@ -42,21 +42,21 @@ double get_time()
 
 /*===========================================================================*/
 /*---Utility functions---*/
-
+#pragma acc routine seq
 int min(int i, int j)
 {
     return i < j ? i : j;
 }
 
 /*---------------------------------------------------------------------------*/
-
+#pragma acc routine seq
 int max(int i, int j)
 {
     return i > j ? i : j;
 }
 
 /*---------------------------------------------------------------------------*/
-
+#pragma acc routine seq
 int ceil_(int i, int j)
 {
     return (i + j - 1 ) / j;
@@ -120,7 +120,7 @@ const Float_t* const_refv(const Float_t* __restrict__ a, int iu, int ix, int iy,
 /*===========================================================================*/
 /*---5-point stencil operation applied at a gridcell---*/
 
-#pragma acc routine gang
+#pragma acc routine vector
 void process_cell(int ix, int iy, int nu, int ncellx, int ncelly,
                         Float_t* __restrict__ vo,
                   const Float_t* __restrict__ vi,
@@ -135,14 +135,15 @@ void process_cell(int ix, int iy, int nu, int ncellx, int ncelly,
     /*---South, east connections use "old" values, north, west use "new"---*/
     /*---The connection operation is matrix-vector product---*/
 
-#pragma acc loop independent gang
+#pragma acc loop independent vector
     for (iu=0; iu<nu; ++iu)
     {
 
       Float_t sum = 0.0;
       vo[iu+nu*(ix+ncellx*iy)] = 0.0;
 
-#pragma acc loop independent vector, reduction(+:sum)
+      //#pragma acc loop independent vector, reduction(+:sum)
+#pragma acc loop seq
         for (ju=0; ju<nu; ++ju)
         {
 	  sum +=
@@ -184,7 +185,6 @@ void process_cell(int ix, int iy, int nu, int ncellx, int ncelly,
 /*===========================================================================*/
 /*---Perform Gauss-Seidel sweep with standard order of operations---*/
 
-#pragma acc routine gang
 void solve_standard(int nu, int ncellx, int ncelly,
                           Float_t* __restrict__ vo,
                     const Float_t* __restrict__ vi,
@@ -195,11 +195,9 @@ void solve_standard(int nu, int ncellx, int ncelly,
 {
     /*---Loop over interior gridcells---*/
     int iy = 0;
-#pragma acc loop seq
     for (iy=1; iy<ncelly-1; ++iy)
     {
         int ix = 0;
-#pragma acc loop seq
         for (ix=1; ix<ncellx-1; ++ix)
         {
             process_cell(ix, iy, nu, ncellx, ncelly, vo, vi, an, as, ae, aw);
@@ -210,7 +208,6 @@ void solve_standard(int nu, int ncellx, int ncelly,
 /*===========================================================================*/
 /*---Perform Gauss-Seidel sweep with wavefront order of operations---*/
 /*---Note all required recursion dependencies are satisfied---*/
-
 void solve_wavefronts(int nu, int ncellx, int ncelly,
                             Float_t* __restrict__ vo,
                       const Float_t* __restrict__ vi,
@@ -219,21 +216,36 @@ void solve_wavefronts(int nu, int ncellx, int ncelly,
                       const Float_t* __restrict__ ae,
                       const Float_t* __restrict__ aw)
 {
-    const int nwavefronts = ncellx + ncelly - 2;
+    const int nwavefronts = (ncellx + ncelly) - 1;
     int wavefront = 0;
 
     /*---Loop over wavefronts---*/
+#pragma acc loop seq
     for (wavefront=0; wavefront<nwavefronts; ++wavefront)
     {
-        const int ixmin = max(1, wavefront-ncelly+2);
-        const int ixmax = min(ncellx-1, wavefront);
-        int ix = 0;
+        /* const int ixmin = max(1, wavefront-ncelly+2); */
+        /* const int ixmax = min(ncellx-1, wavefront); */
+        /* int ix = 0; */
+
+    /*---Sizes---*/
+    int v_size = nu*ncellx*ncelly;
+    int a_size = nu*nu*ncellx*ncelly;
+
+#pragma acc parallel present (vo[v_size], vi[v_size], \
+			      an[a_size], as[a_size], \
+			      ae[a_size], aw[a_size])
+    {
+
+      int ix;
         /*---Loop over gridcells in wavefront---*/
-        for (ix=ixmin; ix<ixmax; ++ix)
+#pragma acc loop independent gang
+        for (ix=1; ix<ncellx-1; ++ix)
         {
             const int iy = wavefront - ix;
-            process_cell(ix, iy, nu, ncellx, ncelly, vo, vi, an, as, ae, aw);
+	    if (iy > 1 && iy < ncelly-1)
+	      process_cell(ix, iy, nu, ncellx, ncelly, vo, vi, an, as, ae, aw);
         }
+    } /*--- #pragma acc parallel ---*/
     }
 }
 
@@ -376,12 +388,12 @@ int main( int argc, char** argv )
 {
     /*---Settings---*/
 
-    const int niterations = 10;
+    const int niterations = 1;
     const int ncellx = 200;
     const int ncelly = 200;
     const int nu = 32;
 
-    const int solve_method = solve_method_standard;
+    const int solve_method = solve_method_wavefronts;
 
     /*
     const int solve_method = solve_method_standard;
@@ -482,13 +494,7 @@ int main( int argc, char** argv )
     double tbeg = get_time();
 
     /*---Iteration loop---*/
-#pragma acc parallel present (v1[v_size], v2[v_size], \
-			      an[a_size], as[a_size], \
-			      ae[a_size], aw[a_size])
-    {
     int iteration = 0;
-
-#pragma acc loop seq
     for (iteration=0; iteration<niterations; ++iteration)
     {
         const Float_t* const __restrict__ vi = iteration%2 ? v1 : v2;
@@ -497,27 +503,11 @@ int main( int argc, char** argv )
         if (solve_method==solve_method_standard)
             solve_standard(nu, ncellx, ncelly, vo, vi, an, as, ae, aw);
 
-    }
+        if (solve_method==solve_method_wavefronts)
+            solve_wavefronts(nu, ncellx, ncelly, vo, vi, an, as, ae, aw);
 
-    /* /\*---Iteration loop---*\/ */
-
-    /* double tbeg = get_time(); */
-
-    /* int iteration = 0; */
-    /* for (iteration=0; iteration<niterations; ++iteration) */
-    /* { */
-    /*     const Float_t* const __restrict__ vi = iteration%2 ? v1 : v2; */
-    /*           Float_t* const __restrict__ vo = iteration%2 ? v2 : v1; */
-
-    /*     if (solve_method==solve_method_standard) */
-    /*         solve_standard(nu, ncellx, ncelly, vo, vi, an, as, ae, aw); */
-
-    /*     if (solve_method==solve_method_wavefronts) */
-    /*         solve_wavefronts(nu, ncellx, ncelly, vo, vi, an, as, ae, aw); */
-
-    /*     if (solve_method==solve_method_block_wavefronts) */
-    /*         solve_block_wavefronts(nu, ncellx, ncelly, vo, vi, an, as, ae, aw); */
-    /* } */
+        if (solve_method==solve_method_block_wavefronts)
+            solve_block_wavefronts(nu, ncellx, ncelly, vo, vi, an, as, ae, aw);
 
     /*---Finish---*/
     }
