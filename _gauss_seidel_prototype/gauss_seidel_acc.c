@@ -388,10 +388,10 @@ int main( int argc, char** argv )
 {
     /*---Settings---*/
 
-    const int niterations = 1;
-    const int ncellx = 200;
-    const int ncelly = 200;
-    const int nu = 32;
+    const int niterations = 10;
+    const int ncellx = 1024;
+    const int ncelly = 1024;
+    const int nu = 10;
 
     const int solve_method = solve_method_wavefronts;
 

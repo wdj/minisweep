@@ -60,6 +60,15 @@ void Sweeper_create( Sweeper*          sweeper,
                          dims.na * NU * NOCTANT);
 
   sweeper->dims = dims;
+
+    sweeper->nblock_z = Arguments_consume_int_or_default( args, "--nblock_z", 1);
+
+  Insist( sweeper->nblock_z > 0 ? "Invalid z blocking factor supplied" : 0 );
+  Insist( dims.ncell_z % sweeper->nblock_z == 0
+                  ? "Currently require all blocks have same z dimension" : 0 );
+
+  const int dims_b_ncell_z = dims.ncell_z / sweeper->nblock_z;
+
 }
 
 /*===========================================================================*/

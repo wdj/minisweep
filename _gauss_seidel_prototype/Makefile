@@ -1,5 +1,5 @@
 
-CFLAGS = -O3 -acc -Minfo=accel -ta=tesla,cc60 
+CFLAGS = -O3 -Minfo=accel -acc -ta=tesla,cc60
 
 #all: atomics locks locks_llvm locks_xlc atomics_xlc
 TARGETS = gauss_seidel gauss_seidel_acc
