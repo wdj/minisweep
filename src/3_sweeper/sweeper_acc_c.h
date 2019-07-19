@@ -19,7 +19,7 @@
 #include "sweeper_acc.h"
 
 #ifdef USE_MPI
-#include "openacc.h"
+#include <openacc.h>
 #endif
 
 #ifdef __cplusplus
